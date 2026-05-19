@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logInscricao } from "@/lib/log-inscricao";
 
 const bodySchema = z.object({
   inscricaoId: z.string().uuid(),
@@ -62,6 +63,18 @@ export async function POST(req: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  await logInscricao({
+    inscricaoId,
+    etapa: `pagamento_${status}`,
+    sucesso: status === "pago",
+    mensagem:
+      status === "pago"
+        ? "Pagamento confirmado pelo Asaas"
+        : `Pagamento marcado como ${status}`,
+    detalhe: asaasPaymentId ? { asaasPaymentId } : null,
+    origem: "n8n",
+  });
 
   return NextResponse.json({
     ok: true,

@@ -10,6 +10,22 @@
 --   tickets.tipo_ingresso_id → tipos_ingresso.id (set null se tipo for removido)
 -- =============================================================
 
+-- Se já existe uma tabela 'tickets' antiga (de sistemas anteriores)
+-- sem a coluna 'inscricao_id', renomeia pra preservar os dados
+-- antes de criar a nova com schema diferente.
+do $$
+begin
+  if exists (
+    select 1 from information_schema.tables
+    where table_schema='public' and table_name='tickets'
+  ) and not exists (
+    select 1 from information_schema.columns
+    where table_schema='public' and table_name='tickets' and column_name='inscricao_id'
+  ) then
+    alter table public.tickets rename to tickets_legacy;
+  end if;
+end $$;
+
 create table if not exists public.tickets (
   id                uuid primary key default uuid_generate_v4(),
   inscricao_id      uuid not null references public.inscricoes(id) on delete cascade,

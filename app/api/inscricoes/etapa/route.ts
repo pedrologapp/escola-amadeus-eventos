@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logInscricao } from "@/lib/log-inscricao";
 
 const bodySchema = z.object({
   inscricaoId: z.string().uuid(),
@@ -82,6 +83,17 @@ export async function POST(req: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  await logInscricao({
+    inscricaoId,
+    etapa: `${etapa}_${sucesso ? "enviado" : "falhou"}`,
+    sucesso,
+    mensagem: sucesso
+      ? `${etapa === "confirmacao" ? "Confirmação WhatsApp" : "QR Code"} enviado com sucesso`
+      : `Falha ao enviar ${etapa === "confirmacao" ? "confirmação" : "QR Code"}`,
+    detalhe: erro ? { erro } : null,
+    origem: "n8n",
+  });
 
   return NextResponse.json({ ok: true, inscricao: data });
 }

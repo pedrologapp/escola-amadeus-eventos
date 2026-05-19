@@ -26,6 +26,7 @@ import { createClient } from "@/lib/supabase/server";
 import { formatCurrency, formatDate, formatDateTimeBrt } from "@/lib/utils";
 import { DeleteButton } from "./delete-button";
 import { DuplicateButton } from "./duplicate-button";
+import { LogsDisclosure } from "./logs-disclosure";
 
 const statusConfig: Record<
   string,
@@ -73,6 +74,31 @@ export default async function EventoDetailPage({ params }: PageProps) {
     .order("created_at", { ascending: false });
 
   const lista = inscricoes ?? [];
+
+  // Logs de todas as inscrições deste evento, agrupados por inscricao_id
+  const idsInscricoes = lista.map((i) => i.id);
+  const logsPorInscricao = new Map<
+    string,
+    { etapa: string; sucesso: boolean; mensagem: string | null; created_at: string }[]
+  >();
+  if (idsInscricoes.length > 0) {
+    const { data: logs } = await supabase
+      .from("inscricao_logs")
+      .select("inscricao_id, etapa, sucesso, mensagem, created_at")
+      .in("inscricao_id", idsInscricoes)
+      .order("created_at", { ascending: true });
+    for (const log of logs ?? []) {
+      const arr = logsPorInscricao.get(log.inscricao_id) ?? [];
+      arr.push({
+        etapa: log.etapa,
+        sucesso: log.sucesso,
+        mensagem: log.mensagem,
+        created_at: log.created_at,
+      });
+      logsPorInscricao.set(log.inscricao_id, arr);
+    }
+  }
+
   const tipos = (evento.tipos_ingresso ?? []).sort(
     (a, b) => (a.ordem ?? 0) - (b.ordem ?? 0),
   );
@@ -273,6 +299,7 @@ export default async function EventoDetailPage({ params }: PageProps) {
                       <th className="py-3 pr-4 font-semibold">Pagamento</th>
                       <th className="py-3 pr-4 font-semibold">Status</th>
                       <th className="py-3 pr-4 font-semibold">Envios</th>
+                      <th className="py-3 pr-4 font-semibold">Histórico</th>
                       <th className="py-3 font-semibold">Data</th>
                     </tr>
                   </thead>
@@ -330,6 +357,11 @@ export default async function EventoDetailPage({ params }: PageProps) {
                               tipo="QR code"
                               enviadoEm={i.qrcode_enviado_em}
                               erro={i.qrcode_erro}
+                            />
+                          </td>
+                          <td className="py-3 pr-4">
+                            <LogsDisclosure
+                              logs={logsPorInscricao.get(i.id) ?? []}
                             />
                           </td>
                           <td className="py-3 text-xs text-muted-foreground">

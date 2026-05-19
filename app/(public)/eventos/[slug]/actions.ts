@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { calcularTotal } from "@/lib/pricing";
+import { logInscricao } from "@/lib/log-inscricao";
 import { validarCPF, telefoneValido } from "@/lib/validators";
 
 const itemSchema = z.object({
@@ -218,6 +219,20 @@ export async function submitInscricao(
         webhookData.asaasPaymentId ?? webhookData.paymentId ?? null,
     })
     .eq("id", inscricao.id);
+
+  await logInscricao({
+    inscricaoId: inscricao.id,
+    etapa: "inscricao_criada",
+    sucesso: true,
+    mensagem: `Inscrição criada e cobrança gerada (${d.metodo_pagamento.toUpperCase()})`,
+    detalhe: {
+      valor_total: valorTotal,
+      metodo: d.metodo_pagamento,
+      parcelas: d.parcelas,
+      asaasPaymentId: webhookData.asaasPaymentId ?? webhookData.paymentId ?? null,
+    },
+    origem: "site",
+  });
 
   return {
     ok: true,
