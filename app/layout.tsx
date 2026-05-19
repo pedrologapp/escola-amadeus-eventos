@@ -9,12 +9,21 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  ),
   title: {
-    default: "Escola Amadeus",
+    default: "Centro Educacional Amadeus",
     template: "%s · Escola Amadeus",
   },
   description:
     "Centro Educacional Amadeus — Eventos, inscrições e pagamentos online.",
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    siteName: "Centro Educacional Amadeus",
+    images: ["/logo-amadeus.png"],
+  },
 };
 
 export default function RootLayout({

@@ -1,0 +1,227 @@
+"use server";
+
+import { z } from "zod";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { calcularTotal } from "@/lib/pricing";
+import { validarCPF, telefoneValido } from "@/lib/validators";
+
+const itemSchema = z.object({
+  tipo_id: z.string().uuid(),
+  nome: z.string(),
+  qtd: z.number().int().min(0),
+  preco_unitario: z.number().min(0),
+});
+
+const inscricaoSchema = z.object({
+  evento_id: z.string().uuid(),
+  evento_slug: z.string(),
+  aluno_id: z.string().uuid(),
+  responsavel_nome: z.string().min(2, "Nome muito curto"),
+  cpf: z
+    .string()
+    .refine((v) => validarCPF(v), "CPF inválido"),
+  email: z.string().email("E-mail inválido"),
+  telefone: z
+    .string()
+    .refine((v) => telefoneValido(v), "Telefone inválido"),
+  itens: z.array(itemSchema).min(1, "Selecione pelo menos um ingresso"),
+  metodo_pagamento: z.enum(["pix", "cartao"]),
+  parcelas: z.number().int().min(1).max(12),
+});
+
+export type InscricaoInput = z.infer<typeof inscricaoSchema>;
+
+export type SubmitState =
+  | { ok: true; paymentUrl: string; inscricaoId: string }
+  | { ok: false; error: string };
+
+export async function submitInscricao(
+  data: unknown,
+): Promise<SubmitState> {
+  const parsed = inscricaoSchema.safeParse(data);
+  if (!parsed.success) {
+    const first = parsed.error.issues[0];
+    return {
+      ok: false,
+      error: first?.message ?? "Verifique os dados do formulário.",
+    };
+  }
+  const d = parsed.data;
+
+  const itensComQtd = d.itens.filter((i) => i.qtd > 0);
+  if (itensComQtd.length === 0) {
+    return { ok: false, error: "Selecione pelo menos um ingresso." };
+  }
+
+  const valorBase = itensComQtd.reduce(
+    (sum, i) => sum + i.qtd * i.preco_unitario,
+    0,
+  );
+  const { valorTotal } = calcularTotal(
+    valorBase,
+    d.metodo_pagamento,
+    d.parcelas,
+  );
+
+  const admin = createAdminClient();
+
+  // 1. Insere inscrição (status pendente)
+  const { data: inscricao, error: insertErr } = await admin
+    .from("inscricoes")
+    .insert({
+      evento_id: d.evento_id,
+      aluno_id: d.aluno_id,
+      responsavel_nome: d.responsavel_nome,
+      cpf: d.cpf,
+      email: d.email,
+      telefone: d.telefone,
+      itens: itensComQtd,
+      valor_base: valorBase,
+      valor_total: valorTotal,
+      metodo_pagamento: d.metodo_pagamento,
+      parcelas: d.parcelas,
+      status_pagamento: "pendente",
+    })
+    .select("id")
+    .single();
+
+  if (insertErr || !inscricao) {
+    return {
+      ok: false,
+      error: `Erro ao registrar inscrição: ${insertErr?.message ?? "desconhecido"}`,
+    };
+  }
+
+  // 2. Dados auxiliares pro payload do webhook
+  const [alunoRes, eventoRes] = await Promise.all([
+    admin
+      .from("alunos")
+      .select("nome_completo, serie, turma")
+      .eq("id", d.aluno_id)
+      .maybeSingle(),
+    admin
+      .from("eventos")
+      .select("nome, slug")
+      .eq("id", d.evento_id)
+      .maybeSingle(),
+  ]);
+  const aluno = alunoRes.data;
+  const eventoNome = eventoRes.data?.nome ?? "";
+
+  // 3. Compatibilidade com o fluxo n8n atual (Dia das Mães):
+  //    extrai "senhasMae" e "senhasExtras" se houver tipos com esses nomes.
+  const senhasMae =
+    itensComQtd.find((i) => /m[aã]e/i.test(i.nome))?.qtd ?? 0;
+  const senhasExtras =
+    itensComQtd.find((i) => /extra/i.test(i.nome))?.qtd ?? 0;
+  const ticketQuantity = itensComQtd.reduce((sum, i) => sum + i.qtd, 0);
+
+  // 4. Envia pro webhook n8n
+  const webhookUrl = process.env.N8N_WEBHOOK_URL;
+  if (!webhookUrl) {
+    await admin
+      .from("inscricoes")
+      .update({ status_pagamento: "cancelado" })
+      .eq("id", inscricao.id);
+    return { ok: false, error: "Webhook não configurado no servidor." };
+  }
+
+  let webhookData: {
+    success?: boolean;
+    message?: string;
+    paymentUrl?: string;
+    asaasPaymentId?: string;
+    paymentId?: string;
+  };
+
+  try {
+    const resp = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        inscricaoId: inscricao.id,
+        eventoId: d.evento_id,
+        eventoSlug: d.evento_slug,
+        event: eventoNome,
+        // Aluno
+        studentName: aluno?.nome_completo ?? "",
+        studentGrade: aluno?.serie ?? "",
+        studentClass: aluno?.turma ?? "",
+        // Responsável
+        parentName: d.responsavel_nome,
+        cpf: d.cpf,
+        email: d.email,
+        phone: d.telefone,
+        // Pagamento
+        paymentMethod: d.metodo_pagamento === "pix" ? "pix" : "credit",
+        installments: d.parcelas,
+        // Compat com fluxo antigo
+        senhasMae,
+        senhasExtras,
+        ticketQuantity,
+        amount: valorTotal,
+        // Estrutura granular nova
+        itens: itensComQtd,
+        timestamp: new Date().toISOString(),
+      }),
+    });
+
+    if (!resp.ok) {
+      await admin
+        .from("inscricoes")
+        .update({ status_pagamento: "cancelado" })
+        .eq("id", inscricao.id);
+      return {
+        ok: false,
+        error: "Erro ao processar pagamento. Tente novamente.",
+      };
+    }
+
+    webhookData = await resp.json();
+  } catch (err) {
+    await admin
+      .from("inscricoes")
+      .update({ status_pagamento: "cancelado" })
+      .eq("id", inscricao.id);
+    return {
+      ok: false,
+      error: "Não foi possível conectar ao servidor de pagamento. Tente novamente.",
+    };
+  }
+
+  if (webhookData.success === false) {
+    await admin
+      .from("inscricoes")
+      .update({ status_pagamento: "cancelado" })
+      .eq("id", inscricao.id);
+    return {
+      ok: false,
+      error: webhookData.message ?? "O servidor recusou a inscrição.",
+    };
+  }
+
+  const paymentUrl = webhookData.paymentUrl;
+  if (!paymentUrl) {
+    return {
+      ok: false,
+      error:
+        "Link de pagamento não foi retornado pelo servidor. Entre em contato com a secretaria.",
+    };
+  }
+
+  // 5. Atualiza inscrição com payment_url + asaas id
+  await admin
+    .from("inscricoes")
+    .update({
+      payment_url: paymentUrl,
+      asaas_payment_id:
+        webhookData.asaasPaymentId ?? webhookData.paymentId ?? null,
+    })
+    .eq("id", inscricao.id);
+
+  return {
+    ok: true,
+    paymentUrl,
+    inscricaoId: inscricao.id,
+  };
+}

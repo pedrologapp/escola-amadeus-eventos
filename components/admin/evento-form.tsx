@@ -1,0 +1,873 @@
+"use client";
+
+import Link from "next/link";
+import Image from "next/image";
+import { useActionState, useRef, useState } from "react";
+import {
+  AlertCircle,
+  ImagePlus,
+  Plus,
+  Trash2,
+  X,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  SERIES_DISPONIVEIS,
+  SERIES_GRUPOS,
+  TURMAS_DISPONIVEIS,
+} from "@/lib/constants";
+import type { CreateEventoState } from "@/app/admin/(authed)/eventos/actions";
+
+type LoteLinha = {
+  nome: string;
+  preco: string;
+  valido_ate: string; // datetime-local "YYYY-MM-DDTHH:mm" or ""
+};
+
+type TipoLinha = {
+  id?: string;
+  nome: string;
+  preco: string;
+  descricao: string;
+  lotes: LoteLinha[];
+};
+
+const NOVO_LOTE: LoteLinha = { nome: "", preco: "", valido_ate: "" };
+
+/**
+ * Converte ISO UTC vindo do banco para datetime-local em horário de Brasília
+ * (formato "YYYY-MM-DDTHH:mm" que o input[type=datetime-local] aceita).
+ */
+function isoUtcToBrtLocal(iso: string): string {
+  const d = new Date(iso);
+  const partes = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+    .format(d)
+    .replace(" ", "T");
+  return partes;
+}
+
+/** Converte datetime-local interpretado como Brasília pra ISO UTC. */
+function brtLocalToIsoUtc(localValue: string): string | null {
+  if (!localValue) return null;
+  // localValue = "2026-05-30T23:59" — interpretado como -03:00
+  const withOffset = `${localValue}:00-03:00`;
+  const d = new Date(withOffset);
+  if (isNaN(d.getTime())) return null;
+  return d.toISOString();
+}
+
+export interface EventoFormInitial {
+  nome: string;
+  descricao_curta: string | null;
+  descricao_longa: string | null;
+  data_evento: string;
+  hora_evento: string | null;
+  local: string | null;
+  imagem_capa_url: string | null;
+  cor_tematica: string;
+  series_permitidas: string[] | null;
+  turmas_permitidas: string[] | null;
+  metodos_pagamento: string[];
+  max_parcelas: number;
+  prazo_inscricao: string | null;
+  status: string;
+  destinacao_valores: string | null;
+  infos_importantes: string[] | null;
+}
+
+export interface EventoFormTipoInitialLote {
+  nome: string;
+  preco: number;
+  valido_ate: string | null;
+}
+
+export interface EventoFormTipoInitial {
+  id?: string;
+  nome: string;
+  preco: number;
+  descricao: string | null;
+  lotes?: EventoFormTipoInitialLote[] | null;
+}
+
+interface Props {
+  initial?: EventoFormInitial;
+  initialTipos?: EventoFormTipoInitial[];
+  submitAction: (
+    state: CreateEventoState,
+    formData: FormData,
+  ) => Promise<CreateEventoState>;
+  submitLabel?: string;
+  cancelHref?: string;
+}
+
+export function EventoForm({
+  initial,
+  initialTipos,
+  submitAction,
+  submitLabel,
+  cancelHref = "/admin/eventos",
+}: Props) {
+  const isEdit = !!initial;
+  const [state, action, isPending] = useActionState(submitAction, null);
+
+  const [tipos, setTipos] = useState<TipoLinha[]>(() => {
+    if (initialTipos && initialTipos.length > 0) {
+      return initialTipos.map((t) => ({
+        id: t.id,
+        nome: t.nome,
+        preco: t.preco.toString().replace(".", ","),
+        descricao: t.descricao ?? "",
+        lotes: (t.lotes ?? []).map((l) => ({
+          nome: l.nome,
+          preco: l.preco.toString().replace(".", ","),
+          valido_ate: l.valido_ate ? isoUtcToBrtLocal(l.valido_ate) : "",
+        })),
+      }));
+    }
+    return [{ nome: "", preco: "", descricao: "", lotes: [] }];
+  });
+
+  const [imagemPreview, setImagemPreview] = useState<string | null>(
+    initial?.imagem_capa_url ?? null,
+  );
+  const [removerImagem, setRemoverImagem] = useState(false);
+  const [novoArquivoSelecionado, setNovoArquivoSelecionado] = useState(false);
+  const [cor, setCor] = useState(initial?.cor_tematica ?? "#1B3B7C");
+  const [publicar, setPublicar] = useState(initial?.status === "publicado");
+  const [series, setSeries] = useState<string[]>(
+    initial?.series_permitidas ?? [],
+  );
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function toggleSerie(serie: string) {
+    setSeries((prev) =>
+      prev.includes(serie) ? prev.filter((s) => s !== serie) : [...prev, serie],
+    );
+  }
+  function setSeriesEquals(novas: readonly string[]) {
+    setSeries([...novas]);
+  }
+  function limparSeries() {
+    setSeries([]);
+  }
+  function isGrupoSelecionado(grupo: readonly string[]) {
+    return grupo.every((s) => series.includes(s));
+  }
+
+  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) {
+      // Voltou pro estado original (sem novo arquivo)
+      setImagemPreview(initial?.imagem_capa_url ?? null);
+      setNovoArquivoSelecionado(false);
+      setRemoverImagem(false);
+      return;
+    }
+    setImagemPreview(URL.createObjectURL(file));
+    setNovoArquivoSelecionado(true);
+    setRemoverImagem(false);
+  }
+
+  function removeImage() {
+    setImagemPreview(null);
+    setRemoverImagem(true);
+    setNovoArquivoSelecionado(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  function updateTipo(idx: number, patch: Partial<TipoLinha>) {
+    setTipos((prev) =>
+      prev.map((t, i) => (i === idx ? { ...t, ...patch } : t)),
+    );
+  }
+  function addTipo() {
+    setTipos((prev) => [
+      ...prev,
+      { nome: "", preco: "", descricao: "", lotes: [] },
+    ]);
+  }
+  function removeTipo(idx: number) {
+    setTipos((prev) => prev.filter((_, i) => i !== idx));
+  }
+  function addLote(tipoIdx: number) {
+    setTipos((prev) =>
+      prev.map((t, i) =>
+        i === tipoIdx ? { ...t, lotes: [...t.lotes, { ...NOVO_LOTE }] } : t,
+      ),
+    );
+  }
+  function removeLote(tipoIdx: number, loteIdx: number) {
+    setTipos((prev) =>
+      prev.map((t, i) =>
+        i === tipoIdx
+          ? { ...t, lotes: t.lotes.filter((_, j) => j !== loteIdx) }
+          : t,
+      ),
+    );
+  }
+  function updateLote(
+    tipoIdx: number,
+    loteIdx: number,
+    patch: Partial<LoteLinha>,
+  ) {
+    setTipos((prev) =>
+      prev.map((t, i) =>
+        i === tipoIdx
+          ? {
+              ...t,
+              lotes: t.lotes.map((l, j) =>
+                j === loteIdx ? { ...l, ...patch } : l,
+              ),
+            }
+          : t,
+      ),
+    );
+  }
+
+  function submit(formData: FormData) {
+    formData.set(
+      "tipos_ingresso",
+      JSON.stringify(
+        tipos.map((t) => {
+          const lotesParsed = t.lotes.map((l) => ({
+            nome: l.nome.trim(),
+            preco: parseFloat(l.preco.replace(",", ".")) || 0,
+            valido_ate: brtLocalToIsoUtc(l.valido_ate),
+          }));
+          // preco fallback: se houver lotes, usa o do primeiro (cronologicamente
+          // mais cedo); senão usa o preço único informado.
+          const precoFallback =
+            lotesParsed.length > 0
+              ? lotesParsed[0].preco
+              : parseFloat(t.preco.replace(",", ".")) || 0;
+          return {
+            id: t.id,
+            nome: t.nome.trim(),
+            preco: precoFallback,
+            descricao: t.descricao.trim() || null,
+            lotes: lotesParsed,
+          };
+        }),
+      ),
+    );
+    formData.set("status", publicar ? "publicado" : "rascunho");
+    formData.set("remover_imagem", removerImagem ? "1" : "0");
+    action(formData);
+  }
+
+  const erros = state?.fieldErrors;
+  const horaInicial = initial?.hora_evento
+    ? initial.hora_evento.slice(0, 5)
+    : "";
+  const prazoInicial = initial?.prazo_inscricao
+    ? initial.prazo_inscricao.slice(0, 16)
+    : "";
+  const infosInicial = initial?.infos_importantes?.join("\n") ?? "";
+
+  return (
+    <form action={submit} className="space-y-6">
+      {state?.error && (
+        <div className="flex items-start gap-3 rounded-2xl border-2 border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          <AlertCircle className="size-5 shrink-0" />
+          <span>{state.error}</span>
+        </div>
+      )}
+
+      {/* ===== Básico ===== */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Informações básicas</CardTitle>
+          <CardDescription>
+            Os dados principais que aparecem no card e no topo da página do
+            evento.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Field label="Nome do evento *" error={erros?.nome}>
+            <Input
+              name="nome"
+              placeholder="Ex: Dia das Mães 2026"
+              defaultValue={initial?.nome ?? ""}
+              required
+            />
+          </Field>
+          <Field
+            label="Descrição curta"
+            hint="Aparece abaixo do título no card e no hero. Capriche em uma frase."
+            error={erros?.descricao_curta}
+          >
+            <Input
+              name="descricao_curta"
+              placeholder="Ex: Uma tarde de carinho para celebrar nossas mães"
+              defaultValue={initial?.descricao_curta ?? ""}
+              maxLength={140}
+            />
+          </Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Data do evento *" error={erros?.data_evento}>
+              <Input
+                name="data_evento"
+                type="date"
+                defaultValue={initial?.data_evento ?? ""}
+                required
+              />
+            </Field>
+            <Field label="Horário" error={erros?.hora_evento}>
+              <Input
+                name="hora_evento"
+                type="time"
+                defaultValue={horaInicial}
+              />
+            </Field>
+          </div>
+          <Field label="Local" error={erros?.local}>
+            <Input
+              name="local"
+              placeholder="Ex: Novo Auditório da Escola Amadeus"
+              defaultValue={initial?.local ?? ""}
+            />
+          </Field>
+        </CardContent>
+      </Card>
+
+      {/* ===== Visual ===== */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Identidade visual</CardTitle>
+          <CardDescription>
+            Uma boa foto e uma cor temática deixam o evento muito mais
+            convidativo.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Field
+            label="Imagem de capa"
+            hint="JPG ou PNG. Idealmente 1600×900px (16:9)."
+          >
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+              <label
+                htmlFor="imagem_capa"
+                className="group relative grid h-32 w-full cursor-pointer place-items-center overflow-hidden rounded-2xl border-2 border-dashed border-input bg-amadeus-blue-50/30 transition-colors hover:border-amadeus-blue/40 sm:w-56"
+              >
+                {imagemPreview ? (
+                  <Image
+                    src={imagemPreview}
+                    alt="Pré-visualização da capa"
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="text-center text-amadeus-blue">
+                    <ImagePlus className="mx-auto size-7" />
+                    <span className="mt-1 block text-xs font-semibold">
+                      {isEdit ? "Trocar imagem" : "Selecionar"}
+                    </span>
+                  </div>
+                )}
+                <input
+                  ref={fileInputRef}
+                  id="imagem_capa"
+                  name="imagem_capa"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="sr-only"
+                  onChange={handleImageChange}
+                />
+              </label>
+              {(imagemPreview || novoArquivoSelecionado) && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={removeImage}
+                >
+                  <X />
+                  Remover imagem
+                </Button>
+              )}
+            </div>
+          </Field>
+          <Field
+            label="Cor temática"
+            hint="Será aplicada nos botões e destaques da página do evento."
+            error={erros?.cor_tematica}
+          >
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                name="cor_tematica"
+                value={cor}
+                onChange={(e) => setCor(e.target.value)}
+                className="h-11 w-16 cursor-pointer rounded-xl border border-input"
+              />
+              <Input
+                value={cor}
+                onChange={(e) => setCor(e.target.value)}
+                className="max-w-[140px]"
+                pattern="^#[0-9A-Fa-f]{6}$"
+              />
+            </div>
+          </Field>
+        </CardContent>
+      </Card>
+
+      {/* ===== Tipos de ingresso ===== */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Tipos de ingresso</CardTitle>
+              <CardDescription>
+                Cada tipo vira uma opção pros pais escolherem na inscrição.
+              </CardDescription>
+            </div>
+            <Badge variant="muted">{tipos.length}</Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {tipos.map((tipo, idx) => {
+            const usaLotes = tipo.lotes.length > 0;
+            return (
+              <div
+                key={idx}
+                className="rounded-2xl border border-border/70 bg-white p-4"
+              >
+                <div className="grid gap-3 sm:grid-cols-[1fr_120px_auto]">
+                  <Input
+                    placeholder="Nome (ex: Senha de Mãe)"
+                    value={tipo.nome}
+                    onChange={(e) => updateTipo(idx, { nome: e.target.value })}
+                  />
+                  {usaLotes ? (
+                    <div className="grid h-11 place-items-center rounded-xl border border-dashed border-amadeus-blue/30 bg-amadeus-blue-50/40 text-xs font-semibold text-amadeus-blue">
+                      Por lotes
+                    </div>
+                  ) : (
+                    <Input
+                      placeholder="R$ 0,00"
+                      inputMode="decimal"
+                      value={tipo.preco}
+                      onChange={(e) => updateTipo(idx, { preco: e.target.value })}
+                    />
+                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeTipo(idx)}
+                    disabled={tipos.length === 1}
+                    title="Remover"
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
+                <Input
+                  placeholder="Descrição opcional (ex: por mãe)"
+                  value={tipo.descricao}
+                  onChange={(e) =>
+                    updateTipo(idx, { descricao: e.target.value })
+                  }
+                  className="mt-3"
+                />
+
+                {/* Lotes */}
+                <div className="mt-4 rounded-xl border border-amadeus-blue/15 bg-amadeus-blue-50/30 p-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-amadeus-blue">
+                        Lotes (preço varia ao longo do tempo)
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Opcional. Se ativado, o preço acima é ignorado e cada
+                        lote tem seu próprio preço + prazo.
+                      </p>
+                    </div>
+                    {!usaLotes && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => addLote(idx)}
+                      >
+                        <Plus />
+                        Ativar lotes
+                      </Button>
+                    )}
+                  </div>
+
+                  {usaLotes && (
+                    <div className="mt-3 space-y-2">
+                      {tipo.lotes.map((lote, lidx) => (
+                        <div
+                          key={lidx}
+                          className="grid gap-2 rounded-xl border border-border/60 bg-white p-3 sm:grid-cols-[1fr_110px_1fr_auto]"
+                        >
+                          <Input
+                            placeholder={`${lidx + 1}º Lote`}
+                            value={lote.nome}
+                            onChange={(e) =>
+                              updateLote(idx, lidx, { nome: e.target.value })
+                            }
+                          />
+                          <Input
+                            placeholder="R$ 0,00"
+                            inputMode="decimal"
+                            value={lote.preco}
+                            onChange={(e) =>
+                              updateLote(idx, lidx, { preco: e.target.value })
+                            }
+                          />
+                          <Input
+                            type="datetime-local"
+                            value={lote.valido_ate}
+                            onChange={(e) =>
+                              updateLote(idx, lidx, {
+                                valido_ate: e.target.value,
+                              })
+                            }
+                            title="Válido até (deixe vazio para sem prazo / último lote)"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeLote(idx, lidx)}
+                            title="Remover lote"
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs text-muted-foreground">
+                          💡 Horário de Brasília. Deixe &quot;Válido até&quot;
+                          vazio no <strong>último lote</strong> (sem prazo).
+                        </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => addLote(idx)}
+                        >
+                          <Plus />
+                          Adicionar lote
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+          {erros?.tipos_ingresso && (
+            <p className="text-sm text-destructive">
+              {erros.tipos_ingresso.join(", ")}
+            </p>
+          )}
+          <Button type="button" variant="outline" onClick={addTipo}>
+            <Plus />
+            Adicionar tipo
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* ===== Restrições ===== */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Quem pode se inscrever</CardTitle>
+          <CardDescription>
+            Deixe tudo desmarcado para liberar a inscrição a todos. Marque
+            apenas se o evento for restrito a séries ou turmas específicas.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div>
+            <Label className="mb-3 block">Séries permitidas</Label>
+
+            {/* Atalhos */}
+            <div className="mb-3 flex flex-wrap gap-2">
+              <ChipButton
+                active={series.length === SERIES_DISPONIVEIS.length}
+                onClick={() => setSeriesEquals(SERIES_DISPONIVEIS)}
+              >
+                Todas
+              </ChipButton>
+              {SERIES_GRUPOS.map((grupo) => (
+                <ChipButton
+                  key={grupo.label}
+                  active={isGrupoSelecionado(grupo.series)}
+                  onClick={() => {
+                    const allIn = isGrupoSelecionado(grupo.series);
+                    setSeries((prev) =>
+                      allIn
+                        ? prev.filter(
+                            (s) => !(grupo.series as readonly string[]).includes(s),
+                          )
+                        : Array.from(new Set([...prev, ...grupo.series])),
+                    );
+                  }}
+                >
+                  {grupo.label}
+                </ChipButton>
+              ))}
+              {series.length > 0 && (
+                <ChipButton onClick={limparSeries} variant="ghost">
+                  Limpar
+                </ChipButton>
+              )}
+            </div>
+
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {SERIES_DISPONIVEIS.map((serie) => (
+                <Checkbox
+                  key={serie}
+                  name="series_permitidas"
+                  value={serie}
+                  label={serie}
+                  checked={series.includes(serie)}
+                  onChange={() => toggleSerie(serie)}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <Label className="mb-3 block">Turmas permitidas</Label>
+            <div className="grid grid-cols-4 gap-2 sm:max-w-md">
+              {TURMAS_DISPONIVEIS.map((turma) => (
+                <Checkbox
+                  key={turma}
+                  name="turmas_permitidas"
+                  value={turma}
+                  label={turma}
+                  defaultChecked={initial?.turmas_permitidas?.includes(turma)}
+                />
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ===== Pagamento ===== */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Pagamento</CardTitle>
+          <CardDescription>
+            Métodos aceitos e regras de parcelamento.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label className="mb-3 block">Métodos aceitos *</Label>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Checkbox
+                name="metodos_pagamento"
+                value="pix"
+                label="PIX"
+                hint="Sem taxas adicionais"
+                defaultChecked={initial?.metodos_pagamento?.includes("pix") ?? true}
+              />
+              <Checkbox
+                name="metodos_pagamento"
+                value="cartao"
+                label="Cartão de crédito"
+                hint="Taxas do Asaas aplicadas"
+                defaultChecked={
+                  initial?.metodos_pagamento?.includes("cartao") ?? true
+                }
+              />
+            </div>
+            {erros?.metodos_pagamento && (
+              <p className="mt-2 text-sm text-destructive">
+                {erros.metodos_pagamento.join(", ")}
+              </p>
+            )}
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Máximo de parcelas">
+              <Select
+                name="max_parcelas"
+                defaultValue={(initial?.max_parcelas ?? 3).toString()}
+              >
+                {[1, 2, 3, 4, 5, 6].map((n) => (
+                  <option key={n} value={n}>
+                    {n}x
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field
+              label="Prazo final de inscrição"
+              hint="Após essa data, ninguém poderá mais se inscrever."
+              error={erros?.prazo_inscricao}
+            >
+              <Input
+                name="prazo_inscricao"
+                type="datetime-local"
+                defaultValue={prazoInicial}
+              />
+            </Field>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ===== Conteúdo extra ===== */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Conteúdo da página</CardTitle>
+          <CardDescription>
+            Tudo que ajuda os pais a entenderem o evento.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Field
+            label="Descrição completa"
+            hint="Aparece logo após o hero da página do evento."
+          >
+            <Textarea
+              name="descricao_longa"
+              rows={4}
+              placeholder="Conte tudo o que vai rolar..."
+              defaultValue={initial?.descricao_longa ?? ""}
+            />
+          </Field>
+          <Field
+            label="O que está incluído"
+            hint="Lista do que o pagamento cobre. Aparece logo abaixo da descrição na página do evento."
+          >
+            <Textarea
+              name="destinacao_valores"
+              rows={3}
+              placeholder="Ex: Lembrancinhas, ornamentação, alimentação..."
+              defaultValue={initial?.destinacao_valores ?? ""}
+            />
+          </Field>
+          <Field
+            label="Informações importantes"
+            hint="Uma linha por item — vira lista com bolinhas na página."
+          >
+            <Textarea
+              name="infos_importantes"
+              rows={4}
+              placeholder={`Cantina aberta durante o evento\nFilhos da escola são isentos\nAtenção ao prazo final`}
+              defaultValue={infosInicial}
+            />
+          </Field>
+        </CardContent>
+      </Card>
+
+      {/* ===== Publicação ===== */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Publicação</CardTitle>
+          <CardDescription>
+            Eventos em rascunho ficam invisíveis pros pais.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Switch
+            checked={publicar}
+            onChange={(e) => setPublicar(e.target.checked)}
+            label={
+              publicar
+                ? "Publicar imediatamente"
+                : "Salvar como rascunho"
+            }
+          />
+        </CardContent>
+      </Card>
+
+      {/* ===== Ações ===== */}
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <Button asChild variant="outline" type="button">
+          <Link href={cancelHref}>Cancelar</Link>
+        </Button>
+        <Button type="submit" size="lg" disabled={isPending}>
+          {isPending
+            ? "Salvando..."
+            : submitLabel
+              ? submitLabel
+              : publicar
+                ? "Publicar evento"
+                : "Salvar rascunho"}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+// ---------- Helper ----------
+
+interface FieldProps {
+  label: React.ReactNode;
+  hint?: React.ReactNode;
+  error?: string[];
+  children: React.ReactNode;
+}
+
+function Field({ label, hint, error, children }: FieldProps) {
+  return (
+    <div className="space-y-1.5">
+      <Label>{label}</Label>
+      {children}
+      {hint && !error?.length && (
+        <p className="text-xs text-muted-foreground">{hint}</p>
+      )}
+      {error && error.length > 0 && (
+        <p className="text-xs text-destructive">{error.join(", ")}</p>
+      )}
+    </div>
+  );
+}
+
+interface ChipButtonProps {
+  children: React.ReactNode;
+  active?: boolean;
+  onClick: () => void;
+  variant?: "default" | "ghost";
+}
+
+function ChipButton({
+  children,
+  active,
+  onClick,
+  variant = "default",
+}: ChipButtonProps) {
+  const base =
+    "inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold transition-colors";
+  let style = "";
+  if (variant === "ghost") {
+    style = "text-muted-foreground hover:bg-muted";
+  } else if (active) {
+    style = "bg-amadeus-blue text-white shadow-sm";
+  } else {
+    style = "border border-amadeus-blue/30 text-amadeus-blue hover:bg-amadeus-blue-50";
+  }
+  return (
+    <button type="button" onClick={onClick} className={`${base} ${style}`}>
+      {children}
+    </button>
+  );
+}
