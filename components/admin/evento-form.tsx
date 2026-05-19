@@ -516,66 +516,44 @@ export function EventoForm({
                     )}
                   </div>
 
-                  {usaLotes && (
-                    <div className="mt-3 space-y-2">
-                      {tipo.lotes.map((lote, lidx) => (
-                        <div
-                          key={lidx}
-                          className="grid gap-2 rounded-xl border border-border/60 bg-white p-3 sm:grid-cols-[1fr_110px_1fr_auto]"
-                        >
-                          <Input
-                            placeholder={`${lidx + 1}º Lote`}
-                            value={lote.nome}
-                            onChange={(e) =>
-                              updateLote(idx, lidx, { nome: e.target.value })
-                            }
-                          />
-                          <Input
-                            placeholder="R$ 0,00"
-                            inputMode="decimal"
-                            value={lote.preco}
-                            onChange={(e) =>
-                              updateLote(idx, lidx, { preco: e.target.value })
-                            }
-                          />
-                          <Input
-                            type="datetime-local"
-                            value={lote.valido_ate}
-                            onChange={(e) =>
-                              updateLote(idx, lidx, {
-                                valido_ate: e.target.value,
-                              })
-                            }
-                            title="Válido até (deixe vazio para sem prazo / último lote)"
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeLote(idx, lidx)}
-                            title="Remover lote"
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
+                  {usaLotes &&
+                    (() => {
+                      const statuses = computeLoteStatuses(tipo.lotes);
+                      return (
+                        <div className="mt-3 space-y-2">
+                          <p className="text-xs font-semibold uppercase tracking-wider text-amadeus-blue/70">
+                            {tipo.lotes.length}{" "}
+                            {tipo.lotes.length === 1 ? "lote" : "lotes"}{" "}
+                            configurado{tipo.lotes.length === 1 ? "" : "s"}
+                          </p>
+                          {tipo.lotes.map((lote, lidx) => (
+                            <LoteCard
+                              key={lidx}
+                              lote={lote}
+                              ordem={lidx + 1}
+                              status={statuses[lidx]}
+                              onChange={(patch) => updateLote(idx, lidx, patch)}
+                              onRemove={() => removeLote(idx, lidx)}
+                            />
+                          ))}
+                          <div className="flex items-center justify-between gap-2 pt-1">
+                            <p className="text-xs text-muted-foreground">
+                              💡 Horário de Brasília. Deixe &quot;Válido até&quot;
+                              vazio no <strong>último lote</strong> (sem prazo).
+                            </p>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => addLote(idx)}
+                            >
+                              <Plus />
+                              Adicionar lote
+                            </Button>
+                          </div>
                         </div>
-                      ))}
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs text-muted-foreground">
-                          💡 Horário de Brasília. Deixe &quot;Válido até&quot;
-                          vazio no <strong>último lote</strong> (sem prazo).
-                        </p>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => addLote(idx)}
-                        >
-                          <Plus />
-                          Adicionar lote
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+                      );
+                    })()}
                 </div>
               </div>
             );
@@ -869,5 +847,130 @@ function ChipButton({
     <button type="button" onClick={onClick} className={`${base} ${style}`}>
       {children}
     </button>
+  );
+}
+
+// ---------- Lote: status + card ----------
+
+type LoteStatus = "ativo" | "aguardando" | "encerrado";
+
+function computeLoteStatuses(lotes: LoteLinha[]): LoteStatus[] {
+  if (lotes.length === 0) return [];
+  const now = new Date();
+
+  const indexed = lotes.map((l, idx) => {
+    const isoStr = l.valido_ate ? brtLocalToIsoUtc(l.valido_ate) : null;
+    return { idx, dt: isoStr ? new Date(isoStr) : null };
+  });
+
+  // Ordena cronologicamente — null vai pro fim (sem prazo)
+  const sorted = [...indexed].sort((a, b) => {
+    if (a.dt === null && b.dt === null) return 0;
+    if (a.dt === null) return 1;
+    if (b.dt === null) return -1;
+    return a.dt.getTime() - b.dt.getTime();
+  });
+
+  const result = new Array<LoteStatus>(lotes.length);
+  let achouAtivo = false;
+  for (const item of sorted) {
+    if (item.dt !== null && item.dt.getTime() <= now.getTime()) {
+      result[item.idx] = "encerrado";
+    } else if (!achouAtivo) {
+      result[item.idx] = "ativo";
+      achouAtivo = true;
+    } else {
+      result[item.idx] = "aguardando";
+    }
+  }
+  return result;
+}
+
+const statusVisual: Record<
+  LoteStatus,
+  { rotulo: string; chip: string; borda: string }
+> = {
+  ativo: {
+    rotulo: "🟢 Ativo agora",
+    chip: "bg-green-100 text-green-800 ring-1 ring-green-300",
+    borda: "border-green-500",
+  },
+  aguardando: {
+    rotulo: "⏳ Aguardando vez",
+    chip: "bg-amber-100 text-amber-800 ring-1 ring-amber-300",
+    borda: "border-amber-300",
+  },
+  encerrado: {
+    rotulo: "⏸ Encerrado",
+    chip: "bg-zinc-100 text-zinc-600 ring-1 ring-zinc-300",
+    borda: "border-zinc-300",
+  },
+};
+
+function LoteCard({
+  lote,
+  ordem,
+  status,
+  onChange,
+  onRemove,
+}: {
+  lote: LoteLinha;
+  ordem: number;
+  status: LoteStatus;
+  onChange: (patch: Partial<LoteLinha>) => void;
+  onRemove: () => void;
+}) {
+  const v = statusVisual[status];
+  return (
+    <div
+      className={`rounded-2xl border-2 bg-white p-4 transition-opacity ${v.borda} ${
+        status === "encerrado" ? "opacity-70" : ""
+      }`}
+    >
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <span
+          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ${v.chip}`}
+        >
+          {v.rotulo}
+        </span>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={onRemove}
+          title="Remover lote"
+        >
+          <Trash2 className="size-4" />
+        </Button>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-[1fr_120px_1fr]">
+        <div>
+          <Label className="mb-1 block text-xs">Nome do lote</Label>
+          <Input
+            placeholder={`${ordem}º Lote`}
+            value={lote.nome}
+            onChange={(e) => onChange({ nome: e.target.value })}
+          />
+        </div>
+        <div>
+          <Label className="mb-1 block text-xs">Preço</Label>
+          <Input
+            placeholder="R$ 0,00"
+            inputMode="decimal"
+            value={lote.preco}
+            onChange={(e) => onChange({ preco: e.target.value })}
+          />
+        </div>
+        <div>
+          <Label className="mb-1 block text-xs">Válido até</Label>
+          <Input
+            type="datetime-local"
+            value={lote.valido_ate}
+            onChange={(e) => onChange({ valido_ate: e.target.value })}
+            title="Deixe vazio se for o último lote (sem prazo)"
+          />
+        </div>
+      </div>
+    </div>
   );
 }

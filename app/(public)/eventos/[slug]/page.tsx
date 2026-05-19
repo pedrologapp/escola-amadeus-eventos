@@ -22,7 +22,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import {
+  formatCurrency,
+  formatDate,
+  formatDateTimeBrt,
+  formatDayMonthBrt,
+} from "@/lib/utils";
 import { getLoteDisplay, type Lote } from "@/lib/lotes";
 import { InscricaoForm } from "./inscricao-form";
 
@@ -369,11 +374,7 @@ export default async function EventoPublicPage({ params }: PageProps) {
                   { nome: tipo.nome, preco: Number(tipo.preco), descricao: tipo.descricao, lotes },
                   agora,
                 );
-                const formatarDataMM = (d: Date) =>
-                  d.toLocaleDateString("pt-BR", {
-                    day: "2-digit",
-                    month: "2-digit",
-                  });
+                const formatarDataMM = (d: Date) => formatDayMonthBrt(d);
 
                 return (
                   <div
@@ -418,12 +419,7 @@ export default async function EventoPublicPage({ params }: PageProps) {
                             <div className="mt-1 text-xs text-muted-foreground">
                               válido até{" "}
                               <strong>
-                                {loteInfo.validoAte.toLocaleString("pt-BR", {
-                                  day: "2-digit",
-                                  month: "2-digit",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
+                                {formatDateTimeBrt(loteInfo.validoAte)}
                               </strong>
                             </div>
                           )}

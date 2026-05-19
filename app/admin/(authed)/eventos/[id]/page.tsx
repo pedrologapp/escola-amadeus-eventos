@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
+  AlertCircle,
   CalendarDays,
+  CheckCircle2,
   ChevronLeft,
   Clock,
   ExternalLink,
@@ -21,7 +23,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, formatDateTimeBrt } from "@/lib/utils";
 import { DeleteButton } from "./delete-button";
 import { DuplicateButton } from "./duplicate-button";
 
@@ -65,7 +67,7 @@ export default async function EventoDetailPage({ params }: PageProps) {
   const { data: inscricoes } = await supabase
     .from("inscricoes")
     .select(
-      "id, responsavel_nome, email, telefone, valor_total, status_pagamento, metodo_pagamento, parcelas, created_at, aluno_id, aluno:alunos(nome_completo, serie, turma)",
+      "id, responsavel_nome, email, telefone, valor_total, status_pagamento, metodo_pagamento, parcelas, created_at, aluno_id, confirmacao_enviada_em, confirmacao_erro, qrcode_enviado_em, qrcode_erro, aluno:alunos(nome_completo, serie, turma)",
     )
     .eq("evento_id", id)
     .order("created_at", { ascending: false });
@@ -116,10 +118,14 @@ export default async function EventoDetailPage({ params }: PageProps) {
         <div className="flex flex-wrap items-center gap-3">
           {evento.status === "publicado" && (
             <Button asChild variant="outline">
-              <Link href={`/eventos/${evento.slug}`} target="_blank">
+              <a
+                href={`${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/eventos/${evento.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <ExternalLink />
                 Ver no site
-              </Link>
+              </a>
             </Button>
           )}
           <DuplicateButton eventoId={evento.id} />
@@ -266,6 +272,7 @@ export default async function EventoDetailPage({ params }: PageProps) {
                       <th className="py-3 pr-4 font-semibold">Valor</th>
                       <th className="py-3 pr-4 font-semibold">Pagamento</th>
                       <th className="py-3 pr-4 font-semibold">Status</th>
+                      <th className="py-3 pr-4 font-semibold">Envios</th>
                       <th className="py-3 font-semibold">Data</th>
                     </tr>
                   </thead>
@@ -313,8 +320,20 @@ export default async function EventoDetailPage({ params }: PageProps) {
                           <td className="py-3 pr-4">
                             <Badge variant={st.variant}>{st.label}</Badge>
                           </td>
+                          <td className="py-3 pr-4">
+                            <EnvioStatus
+                              tipo="confirmação"
+                              enviadoEm={i.confirmacao_enviada_em}
+                              erro={i.confirmacao_erro}
+                            />
+                            <EnvioStatus
+                              tipo="QR code"
+                              enviadoEm={i.qrcode_enviado_em}
+                              erro={i.qrcode_erro}
+                            />
+                          </td>
                           <td className="py-3 text-xs text-muted-foreground">
-                            {new Date(i.created_at).toLocaleString("pt-BR")}
+                            {formatDateTimeBrt(i.created_at)}
                           </td>
                         </tr>
                       );
@@ -405,6 +424,48 @@ function KV({ label, value }: { label: string; value: string }) {
         {label}
       </div>
       <div className="mt-1 text-sm font-medium">{value}</div>
+    </div>
+  );
+}
+
+function EnvioStatus({
+  tipo,
+  enviadoEm,
+  erro,
+}: {
+  tipo: string;
+  enviadoEm: string | null;
+  erro: string | null;
+}) {
+  if (enviadoEm) {
+    return (
+      <div
+        className="flex items-center gap-1.5 text-xs"
+        title={`${tipo} enviada em ${formatDateTimeBrt(enviadoEm)}`}
+      >
+        <CheckCircle2 className="size-4 shrink-0 text-green-600" />
+        <span className="text-muted-foreground">{tipo}</span>
+      </div>
+    );
+  }
+  if (erro) {
+    return (
+      <div
+        className="flex items-center gap-1.5 text-xs"
+        title={`Erro: ${erro}`}
+      >
+        <AlertCircle className="size-4 shrink-0 text-red-600" />
+        <span className="text-red-700">{tipo}</span>
+      </div>
+    );
+  }
+  return (
+    <div
+      className="flex items-center gap-1.5 text-xs"
+      title={`${tipo} ainda não enviada`}
+    >
+      <Clock className="size-4 shrink-0 text-zinc-400" />
+      <span className="text-muted-foreground">{tipo}</span>
     </div>
   );
 }
