@@ -63,6 +63,18 @@ export function formatDayMonthBrt(date: string | Date) {
   }).format(d);
 }
 
+/**
+ * Formata DD/MM do dia SEGUINTE a uma data em BRT.
+ * Útil pra mostrar "a partir do próximo lote começa": se lote 1
+ * vale até 31/05 23:59, o lote 2 vigora a partir de 01/06.
+ */
+export function formatProximoDiaBrt(date: string | Date) {
+  const d = typeof date === "string" ? new Date(date) : date;
+  // +24h cobre o caso (Brasil não tem DST desde 2019)
+  const next = new Date(d.getTime() + 24 * 60 * 60 * 1000);
+  return formatDayMonthBrt(next);
+}
+
 export function slugify(input: string) {
   return input
     .normalize("NFD")

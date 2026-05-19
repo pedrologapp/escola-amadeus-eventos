@@ -25,7 +25,7 @@ import {
   formatCurrency,
   formatDate,
   formatDateTimeBrt,
-  formatDayMonthBrt,
+  formatProximoDiaBrt,
 } from "@/lib/utils";
 import { getLoteDisplay, type Lote } from "@/lib/lotes";
 import { InscricaoForm } from "./inscricao-form";
@@ -363,7 +363,7 @@ export default async function EventoPublicPage({ params }: PageProps) {
                   { nome: tipo.nome, preco: Number(tipo.preco), descricao: tipo.descricao, lotes },
                   agora,
                 );
-                const formatarDataMM = (d: Date) => formatDayMonthBrt(d);
+                const formatarDataMM = (d: Date) => formatProximoDiaBrt(d);
 
                 return (
                   <div
@@ -433,7 +433,7 @@ export default async function EventoPublicPage({ params }: PageProps) {
                         </span>
                         {loteInfo.proximos.map((p, i) => (
                           <span key={i} className="font-medium">
-                            depois de {formatarDataMM(p.quandoMuda)}:{" "}
+                            a partir de {formatarDataMM(p.quandoMuda)}:{" "}
                             <strong>{formatCurrency(p.preco)}</strong>
                             {i < loteInfo.proximos.length - 1 ? " ·" : ""}
                           </span>
