@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getPrecoAtual, type Lote } from "@/lib/lotes";
+import { logInscricao } from "@/lib/log-inscricao";
 import { slugify } from "@/lib/utils";
 
 const loteSchema = z.object({
@@ -467,4 +469,153 @@ export async function duplicateEvento(
 
   revalidatePath("/admin/eventos");
   redirect(`/admin/eventos/${novo.id}/editar`);
+}
+
+// =============================================================
+// VENDA EM DINHEIRO (presencial, registrada pelo admin)
+// =============================================================
+
+const vendaDinheiroSchema = z.object({
+  evento_id: z.string().uuid(),
+  aluno_id: z.string().uuid(),
+  responsavel_nome: z.string().min(2, "Nome muito curto"),
+  telefone: z.string().min(8, "Telefone inválido"),
+  email: z.string().email().optional().or(z.literal("")),
+  cpf: z.string().optional().or(z.literal("")),
+  quantidades: z.record(z.string(), z.number().int().min(0)),
+});
+
+export type VendaDinheiroState =
+  | { ok: true; inscricaoId: string }
+  | { ok: false; error: string };
+
+export async function registrarVendaDinheiro(
+  data: unknown,
+): Promise<VendaDinheiroState> {
+  const parsed = vendaDinheiroSchema.safeParse(data);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Dados inválidos.",
+    };
+  }
+  const d = parsed.data;
+
+  // Auth — só admin logado registra venda
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { ok: false, error: "Sua sessão expirou. Faça login novamente." };
+  }
+
+  const admin = createAdminClient();
+
+  // Busca os tipos do evento (com lotes) pra calcular preço NO SERVIDOR
+  const { data: tipos, error: tiposErr } = await admin
+    .from("tipos_ingresso")
+    .select("id, nome, preco, lotes")
+    .eq("evento_id", d.evento_id);
+
+  if (tiposErr || !tipos) {
+    return { ok: false, error: "Erro ao carregar tipos de ingresso." };
+  }
+
+  // Monta itens com preço do lote ativo (ignora o que vier do cliente)
+  const itens: {
+    tipo_id: string;
+    nome: string;
+    qtd: number;
+    preco_unitario: number;
+  }[] = [];
+  for (const tipo of tipos) {
+    const qtd = d.quantidades[tipo.id] ?? 0;
+    if (qtd <= 0) continue;
+    const preco = getPrecoAtual({
+      nome: tipo.nome,
+      preco: Number(tipo.preco),
+      descricao: null,
+      lotes: (tipo.lotes ?? []) as Lote[],
+    });
+    itens.push({
+      tipo_id: tipo.id,
+      nome: tipo.nome,
+      qtd,
+      preco_unitario: preco,
+    });
+  }
+
+  if (itens.length === 0) {
+    return { ok: false, error: "Selecione pelo menos um ingresso." };
+  }
+
+  const valorTotal = itens.reduce(
+    (sum, i) => sum + i.qtd * i.preco_unitario,
+    0,
+  );
+
+  // Insere inscrição já como PAGA, método dinheiro
+  const { data: inscricao, error: insertErr } = await admin
+    .from("inscricoes")
+    .insert({
+      evento_id: d.evento_id,
+      aluno_id: d.aluno_id,
+      responsavel_nome: d.responsavel_nome,
+      cpf: d.cpf || "",
+      email: d.email || "",
+      telefone: d.telefone,
+      itens,
+      valor_base: valorTotal,
+      valor_total: valorTotal,
+      metodo_pagamento: "dinheiro",
+      parcelas: 1,
+      status_pagamento: "pago",
+      registrado_por: user.email ?? "admin",
+    })
+    .select("id")
+    .single();
+
+  if (insertErr || !inscricao) {
+    return {
+      ok: false,
+      error: `Erro ao registrar venda: ${insertErr?.message ?? "desconhecido"}`,
+    };
+  }
+
+  await logInscricao({
+    inscricaoId: inscricao.id,
+    etapa: "venda_dinheiro_registrada",
+    sucesso: true,
+    mensagem: `Venda em dinheiro registrada por ${user.email ?? "admin"} (R$ ${valorTotal.toFixed(2)})`,
+    detalhe: { registrado_por: user.email, valor_total: valorTotal },
+    origem: "site",
+  });
+
+  // Dispara o fluxo n8n de geração de tickets + WhatsApp (best-effort)
+  const notifUrl = process.env.N8N_NOTIFICACAO_URL;
+  if (notifUrl) {
+    try {
+      await fetch(notifUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          event: "PAYMENT_RECEIVED",
+          payment: {
+            id: `cash_${inscricao.id}`,
+            status: "RECEIVED",
+            billingType: "CASH",
+            value: valorTotal,
+            externalReference: inscricao.id,
+          },
+        }),
+      });
+    } catch (err) {
+      // best-effort — venda já está registrada, WhatsApp pode reenviar depois
+      console.error("Falha ao disparar n8n pra venda em dinheiro:", err);
+    }
+  }
+
+  revalidatePath(`/admin/eventos/${d.evento_id}`);
+  return { ok: true, inscricaoId: inscricao.id };
 }

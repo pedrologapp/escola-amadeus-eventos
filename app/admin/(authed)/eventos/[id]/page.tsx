@@ -143,6 +143,12 @@ export default async function EventoDetailPage({ params }: PageProps) {
               </a>
             </Button>
           )}
+          <Button asChild variant="accent">
+            <Link href={`/admin/eventos/${evento.id}/venda`}>
+              <Wallet />
+              Venda em dinheiro
+            </Link>
+          </Button>
           <DuplicateButton eventoId={evento.id} />
           <Button asChild>
             <Link href={`/admin/eventos/${evento.id}/editar`}>
