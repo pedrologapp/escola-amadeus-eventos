@@ -434,6 +434,94 @@
       "position": [3000, 900],
       "id": "node-w2-16",
       "name": "Notif: Respond Sucesso"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://eventos.escolaamadeus.com/api/inscricoes/log",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "X-Webhook-Secret", "value": "1d3321952567de9e6c58e7fdbd6f23c01f7757495c19bc527fa21905a35fff95" }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"inscricaoId\": \"{{ $('Inscr: Sanitizar').first().json.inscricaoId }}\",\n  \"etapa\": \"cliente_asaas_criado\",\n  \"mensagem\": \"Cliente criado/encontrado no Asaas\",\n  \"detalhe\": { \"asaasCustomerId\": \"{{ $json.id }}\" }\n}",
+        "options": { "neverError": true }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [600, 400],
+      "id": "node-log-01",
+      "name": "Log: Cliente Asaas"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://eventos.escolaamadeus.com/api/inscricoes/log",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "X-Webhook-Secret", "value": "1d3321952567de9e6c58e7fdbd6f23c01f7757495c19bc527fa21905a35fff95" }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"inscricaoId\": \"{{ $('Inscr: Sanitizar').first().json.inscricaoId }}\",\n  \"etapa\": \"cobranca_criada\",\n  \"mensagem\": \"Cobrança criada no Asaas\",\n  \"detalhe\": { \"asaasPaymentId\": \"{{ $json.id }}\", \"billingType\": \"{{ $json.billingType }}\" }\n}",
+        "options": { "neverError": true }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 400],
+      "id": "node-log-02",
+      "name": "Log: Cobranca Criada"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://eventos.escolaamadeus.com/api/inscricoes/log",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "X-Webhook-Secret", "value": "1d3321952567de9e6c58e7fdbd6f23c01f7757495c19bc527fa21905a35fff95" }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"inscricaoId\": \"{{ $('Notif: Validar').first().json.inscricaoId }}\",\n  \"etapa\": \"notificacao_asaas_recebida\",\n  \"mensagem\": \"Asaas notificou pagamento confirmado\"\n}",
+        "options": { "neverError": true }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [800, 1080],
+      "id": "node-log-03",
+      "name": "Log: Notificacao Recebida"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://eventos.escolaamadeus.com/api/inscricoes/log",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "X-Webhook-Secret", "value": "1d3321952567de9e6c58e7fdbd6f23c01f7757495c19bc527fa21905a35fff95" }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"inscricaoId\": \"{{ $('Notif: Gerar Tickets').first().json.inscricao_id }}\",\n  \"etapa\": \"tickets_gerados\",\n  \"mensagem\": \"{{ $('Notif: Gerar Tickets').all().length }} ticket(s) gerado(s) e salvo(s)\"\n}",
+        "options": { "neverError": true }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1600, 1080],
+      "id": "node-log-04",
+      "name": "Log: Tickets Gerados"
     }
   ],
   "connections": {
@@ -444,7 +532,10 @@
       "main": [[{ "node": "Inscr: Asaas Customer", "type": "main", "index": 0 }]]
     },
     "Inscr: Asaas Customer": {
-      "main": [[{ "node": "Inscr: PIX ou Cartao?", "type": "main", "index": 0 }]]
+      "main": [[
+        { "node": "Inscr: PIX ou Cartao?", "type": "main", "index": 0 },
+        { "node": "Log: Cliente Asaas", "type": "main", "index": 0 }
+      ]]
     },
     "Inscr: PIX ou Cartao?": {
       "main": [
@@ -459,7 +550,10 @@
       "main": [[{ "node": "Inscr: Merge", "type": "main", "index": 1 }]]
     },
     "Inscr: Merge": {
-      "main": [[{ "node": "Inscr: Montar Resposta", "type": "main", "index": 0 }]]
+      "main": [[
+        { "node": "Inscr: Montar Resposta", "type": "main", "index": 0 },
+        { "node": "Log: Cobranca Criada", "type": "main", "index": 0 }
+      ]]
     },
     "Inscr: Montar Resposta": {
       "main": [[{ "node": "Inscr: Respond", "type": "main", "index": 0 }]]
@@ -478,7 +572,10 @@
       ]
     },
     "Notif: Buscar Inscricao": {
-      "main": [[{ "node": "Notif: Buscar Evento", "type": "main", "index": 0 }]]
+      "main": [[
+        { "node": "Notif: Buscar Evento", "type": "main", "index": 0 },
+        { "node": "Log: Notificacao Recebida", "type": "main", "index": 0 }
+      ]]
     },
     "Notif: Buscar Evento": {
       "main": [[{ "node": "Notif: Buscar Aluno", "type": "main", "index": 0 }]]
@@ -490,7 +587,10 @@
       "main": [[{ "node": "Notif: Insert Tickets", "type": "main", "index": 0 }]]
     },
     "Notif: Insert Tickets": {
-      "main": [[{ "node": "Notif: Marcar Pago", "type": "main", "index": 0 }]]
+      "main": [[
+        { "node": "Notif: Marcar Pago", "type": "main", "index": 0 },
+        { "node": "Log: Tickets Gerados", "type": "main", "index": 0 }
+      ]]
     },
     "Notif: Marcar Pago": {
       "main": [[{ "node": "Notif: WAHA Send QR", "type": "main", "index": 0 }]]
