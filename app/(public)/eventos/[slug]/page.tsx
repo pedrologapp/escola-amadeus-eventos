@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -132,16 +131,6 @@ export default async function EventoPublicPage({ params }: PageProps) {
           background: `linear-gradient(135deg, ${cor}, ${cor}cc 60%, ${cor}88)`,
         }}
       >
-        {evento.imagem_capa_url && (
-          <Image
-            src={evento.imagem_capa_url}
-            alt={evento.nome}
-            fill
-            priority
-            className="absolute inset-0 -z-10 object-cover opacity-25"
-          />
-        )}
-
         <div className="container mx-auto grid gap-12 px-4 py-20 sm:py-28 lg:grid-cols-[1.2fr_1fr] lg:items-center">
           <div className="text-white">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest backdrop-blur">
