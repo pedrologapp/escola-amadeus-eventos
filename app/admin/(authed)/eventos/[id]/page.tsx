@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  AlertCircle,
   CalendarDays,
-  CheckCircle2,
   ChevronLeft,
   Clock,
   ExternalLink,
@@ -23,10 +21,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
-import { formatCurrency, formatDate, formatDateTimeBrt } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import { DeleteButton } from "./delete-button";
 import { DuplicateButton } from "./duplicate-button";
-import { LogsDisclosure } from "./logs-disclosure";
+import { InscricoesTable } from "./inscricoes-table";
 
 const statusConfig: Record<
   string,
@@ -37,15 +35,6 @@ const statusConfig: Record<
   encerrado: { label: "Encerrado", variant: "warning" },
 };
 
-const statusInscricao: Record<
-  string,
-  { label: string; variant: "muted" | "success" | "warning" | "destructive" }
-> = {
-  pendente: { label: "Pendente", variant: "warning" },
-  pago: { label: "Pago", variant: "success" },
-  cancelado: { label: "Cancelado", variant: "destructive" },
-  estornado: { label: "Estornado", variant: "destructive" },
-};
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -284,96 +273,29 @@ export default async function EventoDetailPage({ params }: PageProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {lista.length === 0 ? (
-              <div className="grid place-items-center rounded-2xl border-2 border-dashed border-amadeus-blue/20 bg-amadeus-blue-50/30 py-12 text-sm text-muted-foreground">
-                Nenhuma inscrição ainda.
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border/70 text-left text-xs uppercase tracking-wide text-muted-foreground">
-                      <th className="py-3 pr-4 font-semibold">Aluno</th>
-                      <th className="py-3 pr-4 font-semibold">Responsável</th>
-                      <th className="py-3 pr-4 font-semibold">Valor</th>
-                      <th className="py-3 pr-4 font-semibold">Pagamento</th>
-                      <th className="py-3 pr-4 font-semibold">Status</th>
-                      <th className="py-3 pr-4 font-semibold">Envios</th>
-                      <th className="py-3 pr-4 font-semibold">Histórico</th>
-                      <th className="py-3 font-semibold">Data</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {lista.map((i) => {
-                      const st =
-                        statusInscricao[i.status_pagamento] ??
-                        statusInscricao.pendente;
-                      const aluno = i.aluno as unknown as
-                        | { nome_completo: string; serie: string; turma: string }
-                        | null;
-                      return (
-                        <tr
-                          key={i.id}
-                          className="border-b border-border/40 last:border-0"
-                        >
-                          <td className="py-3 pr-4">
-                            {aluno ? (
-                              <>
-                                <div className="font-semibold">
-                                  {aluno.nome_completo}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {aluno.serie} · {aluno.turma}
-                                </div>
-                              </>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </td>
-                          <td className="py-3 pr-4">
-                            <div>{i.responsavel_nome}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {i.telefone}
-                            </div>
-                          </td>
-                          <td className="py-3 pr-4 tabular-nums">
-                            {formatCurrency(Number(i.valor_total))}
-                          </td>
-                          <td className="py-3 pr-4">
-                            {i.metodo_pagamento === "pix"
-                              ? "PIX"
-                              : `Cartão ${i.parcelas}x`}
-                          </td>
-                          <td className="py-3 pr-4">
-                            <Badge variant={st.variant}>{st.label}</Badge>
-                          </td>
-                          <td className="py-3 pr-4">
-                            <EnvioStatus
-                              tipo="confirmação"
-                              enviadoEm={i.confirmacao_enviada_em}
-                              erro={i.confirmacao_erro}
-                            />
-                            <EnvioStatus
-                              tipo="QR code"
-                              enviadoEm={i.qrcode_enviado_em}
-                              erro={i.qrcode_erro}
-                            />
-                          </td>
-                          <td className="py-3 pr-4">
-                            <LogsDisclosure
-                              logs={logsPorInscricao.get(i.id) ?? []}
-                            />
-                          </td>
-                          <td className="py-3 text-xs text-muted-foreground">
-                            {formatDateTimeBrt(i.created_at)}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            <InscricoesTable
+              inscricoes={lista.map((i) => {
+                const aluno = i.aluno as unknown as
+                  | { nome_completo: string; serie: string; turma: string }
+                  | null;
+                return {
+                  id: i.id,
+                  responsavel_nome: i.responsavel_nome,
+                  telefone: i.telefone,
+                  valor_total: Number(i.valor_total),
+                  status_pagamento: i.status_pagamento,
+                  metodo_pagamento: i.metodo_pagamento,
+                  parcelas: i.parcelas,
+                  created_at: i.created_at,
+                  confirmacao_enviada_em: i.confirmacao_enviada_em,
+                  confirmacao_erro: i.confirmacao_erro,
+                  qrcode_enviado_em: i.qrcode_enviado_em,
+                  qrcode_erro: i.qrcode_erro,
+                  aluno,
+                  logs: logsPorInscricao.get(i.id) ?? [],
+                };
+              })}
+            />
           </CardContent>
         </Card>
       </section>
@@ -460,44 +382,3 @@ function KV({ label, value }: { label: string; value: string }) {
   );
 }
 
-function EnvioStatus({
-  tipo,
-  enviadoEm,
-  erro,
-}: {
-  tipo: string;
-  enviadoEm: string | null;
-  erro: string | null;
-}) {
-  if (enviadoEm) {
-    return (
-      <div
-        className="flex items-center gap-1.5 text-xs"
-        title={`${tipo} enviada em ${formatDateTimeBrt(enviadoEm)}`}
-      >
-        <CheckCircle2 className="size-4 shrink-0 text-green-600" />
-        <span className="text-muted-foreground">{tipo}</span>
-      </div>
-    );
-  }
-  if (erro) {
-    return (
-      <div
-        className="flex items-center gap-1.5 text-xs"
-        title={`Erro: ${erro}`}
-      >
-        <AlertCircle className="size-4 shrink-0 text-red-600" />
-        <span className="text-red-700">{tipo}</span>
-      </div>
-    );
-  }
-  return (
-    <div
-      className="flex items-center gap-1.5 text-xs"
-      title={`${tipo} ainda não enviada`}
-    >
-      <Clock className="size-4 shrink-0 text-zinc-400" />
-      <span className="text-muted-foreground">{tipo}</span>
-    </div>
-  );
-}

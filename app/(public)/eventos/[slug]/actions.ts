@@ -133,6 +133,7 @@ export async function submitInscricao(
     paymentUrl?: string;
     asaasPaymentId?: string;
     paymentId?: string;
+    asaasCustomerId?: string;
   };
 
   try {
@@ -217,6 +218,7 @@ export async function submitInscricao(
       payment_url: paymentUrl,
       asaas_payment_id:
         webhookData.asaasPaymentId ?? webhookData.paymentId ?? null,
+      asaas_customer_id: webhookData.asaasCustomerId ?? null,
     })
     .eq("id", inscricao.id);
 

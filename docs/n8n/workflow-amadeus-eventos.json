@@ -147,7 +147,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const a = $input.first().json;\nreturn [{ json: {\n  paymentUrl: a.invoiceUrl || a.bankSlipUrl || '',\n  asaasPaymentId: a.id,\n  billingType: a.billingType,\n  status: a.status,\n} }];"
+        "jsCode": "const a = $input.first().json;\nreturn [{ json: {\n  paymentUrl: a.invoiceUrl || a.bankSlipUrl || '',\n  asaasPaymentId: a.id,\n  asaasCustomerId: a.customer,\n  billingType: a.billingType,\n  status: a.status,\n} }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
