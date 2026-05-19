@@ -128,12 +128,20 @@ export default async function AdminDashboardPage() {
             Acompanhe os eventos, inscrições e a arrecadação da escola.
           </p>
         </div>
-        <Button asChild>
-          <Link href="/admin/eventos/novo">
-            <CalendarPlus />
-            Novo evento
-          </Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline">
+            <Link href="/admin/eventos/importar">
+              <Sparkles />
+              Importar de aviso
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href="/admin/eventos/novo">
+              <CalendarPlus />
+              Novo evento
+            </Link>
+          </Button>
+        </div>
       </header>
 
       <section className="mt-8 grid gap-6 md:grid-cols-3">
