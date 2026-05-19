@@ -33,51 +33,22 @@ export default async function HomePage() {
   const { data: eventos } = await supabase
     .from("eventos")
     .select(
-      "id, slug, nome, descricao_curta, data_evento, hora_evento, local, imagem_capa_url, cor_tematica, status",
+      "id, slug, nome, descricao_curta, data_evento, hora_evento, local, imagem_capa_url, cor_tematica",
     )
-    .in("status", ["publicado", "encerrado"])
-    .order("data_evento", { ascending: false });
+    .eq("status", "publicado")
+    .order("data_evento", { ascending: true });
 
-  const lista = (eventos ?? []) as (EventoListItem & { status: string })[];
-
-  // Hoje em Brasília (apenas data, ignora hora)
+  // Filtra eventos passados — home pública mostra APENAS os que ainda vão acontecer
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
 
-  const proximos: EventoListItem[] = [];
-  const concluidos: EventoListItem[] = [];
-
-  for (const ev of lista) {
+  const proximos: EventoListItem[] = (eventos ?? []).filter((ev) => {
     const dataEv = new Date(`${ev.data_evento}T00:00:00`);
-    const passou = dataEv < hoje;
-    const item: EventoListItem = {
-      id: ev.id,
-      slug: ev.slug,
-      nome: ev.nome,
-      descricao_curta: ev.descricao_curta,
-      data_evento: ev.data_evento,
-      hora_evento: ev.hora_evento,
-      local: ev.local,
-      imagem_capa_url: ev.imagem_capa_url,
-      cor_tematica: ev.cor_tematica,
-    };
-    if (passou || ev.status === "encerrado") {
-      concluidos.push(item);
-    } else {
-      proximos.push(item);
-    }
-  }
+    return dataEv >= hoje;
+  });
 
-  // Próximos: ordem crescente (mais cedo primeiro)
-  proximos.sort(
-    (a, b) =>
-      new Date(a.data_evento).getTime() - new Date(b.data_evento).getTime(),
-  );
-  // Concluídos: ordem decrescente (mais recente primeiro)
-  concluidos.sort(
-    (a, b) =>
-      new Date(b.data_evento).getTime() - new Date(a.data_evento).getTime(),
-  );
+  // Concluídos não aparecem na home pública — só no admin
+  const concluidos: EventoListItem[] = [];
 
   return (
     <>
