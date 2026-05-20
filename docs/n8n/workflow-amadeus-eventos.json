@@ -37,7 +37,7 @@
           ]
         },
         "sendBody": true,
-        "bodyContentType": "json",
+        "specifyBody": "json",
         "jsonBody": "={\n  \"name\": \"{{ $json.parentName }}\",\n  \"cpfCnpj\": \"{{ $json.cpf_clean }}\",\n  \"email\": \"{{ $json.email }}\",\n  \"mobilePhone\": \"{{ $json.phone_clean }}\",\n  \"externalReference\": \"{{ $json.inscricaoId }}\"\n}",
         "options": {}
       },
@@ -103,7 +103,7 @@
           ]
         },
         "sendBody": true,
-        "bodyContentType": "json",
+        "specifyBody": "json",
         "jsonBody": "={\n  \"customer\": \"{{ $('Inscr: Asaas Customer').item.json.id }}\",\n  \"billingType\": \"PIX\",\n  \"value\": {{ $('Inscr: Sanitizar').item.json.amount }},\n  \"dueDate\": \"{{ $('Inscr: Sanitizar').item.json.due_date }}\",\n  \"externalReference\": \"{{ $('Inscr: Sanitizar').item.json.inscricaoId }}\",\n  \"description\": \"{{ $('Inscr: Sanitizar').item.json.event }} - {{ $('Inscr: Sanitizar').item.json.studentName }}\"\n}",
         "options": {}
       },
@@ -125,7 +125,7 @@
           ]
         },
         "sendBody": true,
-        "bodyContentType": "json",
+        "specifyBody": "json",
         "jsonBody": "={\n  \"customer\": \"{{ $('Inscr: Asaas Customer').item.json.id }}\",\n  \"billingType\": \"CREDIT_CARD\",\n  \"value\": {{ $('Inscr: Sanitizar').item.json.amount }},\n  \"dueDate\": \"{{ $('Inscr: Sanitizar').item.json.due_date }}\",\n  \"installmentCount\": {{ $('Inscr: Sanitizar').item.json.installments }},\n  \"installmentValue\": {{ ($('Inscr: Sanitizar').item.json.amount / $('Inscr: Sanitizar').item.json.installments).toFixed(2) }},\n  \"externalReference\": \"{{ $('Inscr: Sanitizar').item.json.inscricaoId }}\",\n  \"description\": \"{{ $('Inscr: Sanitizar').item.json.event }} - {{ $('Inscr: Sanitizar').item.json.studentName }}\"\n}",
         "options": {}
       },
@@ -326,7 +326,7 @@
           ]
         },
         "sendBody": true,
-        "bodyContentType": "json",
+        "specifyBody": "json",
         "jsonBody": "={\n  \"inscricaoId\": \"{{ $('Notif: Gerar Tickets').first().json.inscricao_id }}\",\n  \"status\": \"pago\",\n  \"asaasPaymentId\": \"{{ $('Notif: Validar').item.json.asaasPaymentId }}\"\n}",
         "options": { "neverError": true }
       },
@@ -366,7 +366,7 @@
           ]
         },
         "sendBody": true,
-        "bodyContentType": "json",
+        "specifyBody": "json",
         "jsonBody": "={\n  \"inscricaoId\": \"{{ $('Notif: Gerar Tickets').first().json.inscricao_id }}\",\n  \"etapa\": \"qrcode\",\n  \"sucesso\": true\n}",
         "options": { "neverError": true }
       },
@@ -413,7 +413,7 @@
           ]
         },
         "sendBody": true,
-        "bodyContentType": "json",
+        "specifyBody": "json",
         "jsonBody": "={\n  \"inscricaoId\": \"{{ $('Notif: Gerar Tickets').first().json.inscricao_id }}\",\n  \"etapa\": \"confirmacao\",\n  \"sucesso\": true\n}",
         "options": { "neverError": true }
       },
@@ -447,7 +447,7 @@
           ]
         },
         "sendBody": true,
-        "bodyContentType": "json",
+        "specifyBody": "json",
         "jsonBody": "={\n  \"inscricaoId\": \"{{ $('Inscr: Sanitizar').first().json.inscricaoId }}\",\n  \"etapa\": \"cliente_asaas_criado\",\n  \"mensagem\": \"Cliente criado/encontrado no Asaas\",\n  \"detalhe\": { \"asaasCustomerId\": \"{{ $json.id }}\" }\n}",
         "options": { "neverError": true }
       },
@@ -469,7 +469,7 @@
           ]
         },
         "sendBody": true,
-        "bodyContentType": "json",
+        "specifyBody": "json",
         "jsonBody": "={\n  \"inscricaoId\": \"{{ $('Inscr: Sanitizar').first().json.inscricaoId }}\",\n  \"etapa\": \"cobranca_criada\",\n  \"mensagem\": \"Cobrança criada no Asaas\",\n  \"detalhe\": { \"asaasPaymentId\": \"{{ $json.id }}\", \"billingType\": \"{{ $json.billingType }}\" }\n}",
         "options": { "neverError": true }
       },
@@ -491,7 +491,7 @@
           ]
         },
         "sendBody": true,
-        "bodyContentType": "json",
+        "specifyBody": "json",
         "jsonBody": "={\n  \"inscricaoId\": \"{{ $('Notif: Validar').first().json.inscricaoId }}\",\n  \"etapa\": \"notificacao_asaas_recebida\",\n  \"mensagem\": \"Asaas notificou pagamento confirmado\"\n}",
         "options": { "neverError": true }
       },
@@ -513,7 +513,7 @@
           ]
         },
         "sendBody": true,
-        "bodyContentType": "json",
+        "specifyBody": "json",
         "jsonBody": "={\n  \"inscricaoId\": \"{{ $('Notif: Gerar Tickets').first().json.inscricao_id }}\",\n  \"etapa\": \"tickets_gerados\",\n  \"mensagem\": \"{{ $('Notif: Gerar Tickets').all().length }} ticket(s) gerado(s) e salvo(s)\"\n}",
         "options": { "neverError": true }
       },
