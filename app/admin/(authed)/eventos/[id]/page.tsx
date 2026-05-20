@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   Clock,
   ExternalLink,
+  FileText,
   MapPin,
   Pencil,
   Ticket,
@@ -147,6 +148,12 @@ export default async function EventoDetailPage({ params }: PageProps) {
             <Link href={`/admin/eventos/${evento.id}/venda`}>
               <Wallet />
               Venda em dinheiro
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href={`/admin/eventos/${evento.id}/relatorio`}>
+              <FileText />
+              Relatório
             </Link>
           </Button>
           <DuplicateButton eventoId={evento.id} />

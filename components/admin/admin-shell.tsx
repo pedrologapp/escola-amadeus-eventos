@@ -17,7 +17,7 @@ const navLinks = [
 export function AdminShell({ userEmail, children }: AdminShellProps) {
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-40 border-b border-border/60 bg-white/85 backdrop-blur-md">
+      <header className="sticky top-0 z-40 border-b border-border/60 bg-white/85 backdrop-blur-md print:hidden">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-8">
             <Link href="/admin/dashboard" aria-label="Início do painel">

@@ -94,6 +94,18 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Impressão — margens da página e cores fiéis */
+@media print {
+  @page {
+    margin: 1.4cm;
+  }
+  body {
+    background: #fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
 /* Soft floating shadow utility (ClassDojo-style) */
 @utility shadow-float {
   box-shadow:
