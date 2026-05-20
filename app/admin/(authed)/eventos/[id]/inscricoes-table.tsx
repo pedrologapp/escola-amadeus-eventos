@@ -12,7 +12,7 @@ export interface InscricaoRow {
   telefone: string;
   valor_total: number;
   status_pagamento: "pendente" | "pago" | "cancelado" | "estornado";
-  metodo_pagamento: "pix" | "cartao";
+  metodo_pagamento: "pix" | "cartao" | "dinheiro";
   parcelas: number;
   created_at: string;
   confirmacao_enviada_em: string | null;
@@ -118,7 +118,11 @@ export function InscricoesTable({ inscricoes }: { inscricoes: InscricaoRow[] }) 
                       {formatCurrency(Number(i.valor_total))}
                     </td>
                     <td className="py-3 pr-4">
-                      {i.metodo_pagamento === "pix" ? "PIX" : `Cartão ${i.parcelas}x`}
+                      {i.metodo_pagamento === "pix"
+                        ? "PIX"
+                        : i.metodo_pagamento === "dinheiro"
+                          ? "Dinheiro"
+                          : `Cartão ${i.parcelas}x`}
                     </td>
                     <td className="py-3 pr-4">
                       <Badge variant={st.variant}>{st.label}</Badge>
