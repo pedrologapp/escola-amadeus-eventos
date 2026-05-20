@@ -104,7 +104,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"customer\": \"{{ $('Inscr: Asaas Customer').item.json.id }}\",\n  \"billingType\": \"PIX\",\n  \"value\": {{ $('Inscr: Sanitizar').item.json.amount }},\n  \"dueDate\": \"{{ $('Inscr: Sanitizar').item.json.due_date }}\",\n  \"externalReference\": \"{{ $('Inscr: Sanitizar').item.json.inscricaoId }}\",\n  \"description\": \"{{ $('Inscr: Sanitizar').item.json.event }} - {{ $('Inscr: Sanitizar').item.json.studentName }}\"\n}",
+        "jsonBody": "={\n  \"customer\": \"{{ $('Inscr: Asaas Customer').first().json.id }}\",\n  \"billingType\": \"PIX\",\n  \"value\": {{ $('Inscr: Sanitizar').first().json.amount }},\n  \"dueDate\": \"{{ $('Inscr: Sanitizar').first().json.due_date }}\",\n  \"externalReference\": \"{{ $('Inscr: Sanitizar').first().json.inscricaoId }}\",\n  \"description\": \"{{ $('Inscr: Sanitizar').first().json.event }} - {{ $('Inscr: Sanitizar').first().json.studentName }}\"\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -126,7 +126,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"customer\": \"{{ $('Inscr: Asaas Customer').item.json.id }}\",\n  \"billingType\": \"CREDIT_CARD\",\n  \"value\": {{ $('Inscr: Sanitizar').item.json.amount }},\n  \"dueDate\": \"{{ $('Inscr: Sanitizar').item.json.due_date }}\",\n  \"installmentCount\": {{ $('Inscr: Sanitizar').item.json.installments }},\n  \"installmentValue\": {{ ($('Inscr: Sanitizar').item.json.amount / $('Inscr: Sanitizar').item.json.installments).toFixed(2) }},\n  \"externalReference\": \"{{ $('Inscr: Sanitizar').item.json.inscricaoId }}\",\n  \"description\": \"{{ $('Inscr: Sanitizar').item.json.event }} - {{ $('Inscr: Sanitizar').item.json.studentName }}\"\n}",
+        "jsonBody": "={\n  \"customer\": \"{{ $('Inscr: Asaas Customer').first().json.id }}\",\n  \"billingType\": \"CREDIT_CARD\",\n  \"value\": {{ $('Inscr: Sanitizar').first().json.amount }},\n  \"dueDate\": \"{{ $('Inscr: Sanitizar').first().json.due_date }}\",\n  \"installmentCount\": {{ $('Inscr: Sanitizar').first().json.installments }},\n  \"installmentValue\": {{ ($('Inscr: Sanitizar').first().json.amount / $('Inscr: Sanitizar').first().json.installments).toFixed(2) }},\n  \"externalReference\": \"{{ $('Inscr: Sanitizar').first().json.inscricaoId }}\",\n  \"description\": \"{{ $('Inscr: Sanitizar').first().json.event }} - {{ $('Inscr: Sanitizar').first().json.studentName }}\"\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
