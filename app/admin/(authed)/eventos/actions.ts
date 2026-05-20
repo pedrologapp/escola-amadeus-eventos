@@ -619,3 +619,16 @@ export async function registrarVendaDinheiro(
   revalidatePath(`/admin/eventos/${d.evento_id}`);
   return { ok: true, inscricaoId: inscricao.id };
 }
+
+// Trava de senha para ações sensíveis (editar/excluir/duplicar).
+// A senha é validada no servidor para não ir no bundle do cliente.
+export async function verificarSenhaAcao(senha: string): Promise<boolean> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const senhaCorreta = process.env.ADMIN_ACTION_PASSWORD || "Admim123";
+  return senha === senhaCorreta;
+}

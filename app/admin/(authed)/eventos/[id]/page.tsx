@@ -7,7 +7,6 @@ import {
   ExternalLink,
   FileText,
   MapPin,
-  Pencil,
   Ticket,
   Users,
   Wallet,
@@ -23,9 +22,8 @@ import {
 } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { DeleteButton } from "./delete-button";
-import { DuplicateButton } from "./duplicate-button";
 import { InscricoesTable } from "./inscricoes-table";
+import { SenhaGateButton } from "./senha-gate-button";
 
 const statusConfig: Record<
   string,
@@ -156,13 +154,8 @@ export default async function EventoDetailPage({ params }: PageProps) {
               Relatório
             </Link>
           </Button>
-          <DuplicateButton eventoId={evento.id} />
-          <Button asChild>
-            <Link href={`/admin/eventos/${evento.id}/editar`}>
-              <Pencil />
-              Editar
-            </Link>
-          </Button>
+          <SenhaGateButton kind="duplicar" eventoId={evento.id} />
+          <SenhaGateButton kind="editar" eventoId={evento.id} />
         </div>
       </header>
 
@@ -337,7 +330,11 @@ export default async function EventoDetailPage({ params }: PageProps) {
               ser excluídos.
             </p>
           </div>
-          <DeleteButton eventoId={evento.id} eventoNome={evento.nome} />
+          <SenhaGateButton
+            kind="excluir"
+            eventoId={evento.id}
+            eventoNome={evento.nome}
+          />
         </div>
       </section>
     </div>
