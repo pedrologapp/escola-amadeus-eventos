@@ -11,6 +11,8 @@ export interface InscricaoRow {
   responsavel_nome: string;
   telefone: string;
   valor_total: number;
+  total_senhas: number;
+  senhas_detalhe: string;
   status_pagamento: "pendente" | "pago" | "cancelado" | "estornado";
   metodo_pagamento: "pix" | "cartao" | "dinheiro";
   parcelas: number;
@@ -85,6 +87,7 @@ export function InscricoesTable({ inscricoes }: { inscricoes: InscricaoRow[] }) 
               <tr className="border-b border-border/70 text-left text-xs uppercase tracking-wide text-muted-foreground">
                 <th className="py-3 pr-4 font-semibold">Aluno</th>
                 <th className="py-3 pr-4 font-semibold">Responsável</th>
+                <th className="py-3 pr-4 font-semibold">Senhas</th>
                 <th className="py-3 pr-4 font-semibold">Valor</th>
                 <th className="py-3 pr-4 font-semibold">Pagamento</th>
                 <th className="py-3 pr-4 font-semibold">Status</th>
@@ -113,6 +116,14 @@ export function InscricoesTable({ inscricoes }: { inscricoes: InscricaoRow[] }) 
                     <td className="py-3 pr-4">
                       <div>{i.responsavel_nome}</div>
                       <div className="text-xs text-muted-foreground">{i.telefone}</div>
+                    </td>
+                    <td className="py-3 pr-4">
+                      <div className="font-semibold tabular-nums">{i.total_senhas}</div>
+                      {i.senhas_detalhe && (
+                        <div className="text-xs text-muted-foreground">
+                          {i.senhas_detalhe}
+                        </div>
+                      )}
                     </td>
                     <td className="py-3 pr-4 tabular-nums">
                       {formatCurrency(Number(i.valor_total))}

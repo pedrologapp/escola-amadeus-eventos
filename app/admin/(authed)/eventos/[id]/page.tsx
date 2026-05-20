@@ -58,7 +58,7 @@ export default async function EventoDetailPage({ params }: PageProps) {
   const { data: inscricoes } = await supabase
     .from("inscricoes")
     .select(
-      "id, responsavel_nome, email, telefone, valor_total, status_pagamento, metodo_pagamento, parcelas, created_at, aluno_id, confirmacao_enviada_em, confirmacao_erro, qrcode_enviado_em, qrcode_erro, aluno:alunos(nome_completo, serie, turma)",
+      "id, responsavel_nome, email, telefone, valor_total, itens, status_pagamento, metodo_pagamento, parcelas, created_at, aluno_id, confirmacao_enviada_em, confirmacao_erro, qrcode_enviado_em, qrcode_erro, aluno:alunos(nome_completo, serie, turma)",
     )
     .eq("evento_id", id)
     .order("created_at", { ascending: false });
@@ -291,11 +291,23 @@ export default async function EventoDetailPage({ params }: PageProps) {
                 const aluno = i.aluno as unknown as
                   | { nome_completo: string; serie: string; turma: string }
                   | null;
+                const itens =
+                  (i.itens as { nome?: string; qtd?: number }[] | null) ?? [];
+                const comQtd = itens.filter((it) => (it.qtd ?? 0) > 0);
+                const totalSenhas = comQtd.reduce(
+                  (s, it) => s + (it.qtd ?? 0),
+                  0,
+                );
+                const senhasDetalhe = comQtd
+                  .map((it) => `${it.qtd}x ${(it.nome ?? "Senha").trim()}`)
+                  .join(", ");
                 return {
                   id: i.id,
                   responsavel_nome: i.responsavel_nome,
                   telefone: i.telefone,
                   valor_total: Number(i.valor_total),
+                  total_senhas: totalSenhas,
+                  senhas_detalhe: senhasDetalhe,
                   status_pagamento: i.status_pagamento,
                   metodo_pagamento: i.metodo_pagamento,
                   parcelas: i.parcelas,
