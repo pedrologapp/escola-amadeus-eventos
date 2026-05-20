@@ -168,26 +168,50 @@ export async function submitInscricao(
       }),
     });
 
+    const corpoTexto = await resp.text();
+
     if (!resp.ok) {
+      console.error(
+        `[submitInscricao] Webhook n8n retornou ${resp.status}. URL: ${webhookUrl}. Corpo: ${corpoTexto.slice(0, 500)}`,
+      );
       await admin
         .from("inscricoes")
         .update({ status_pagamento: "cancelado" })
         .eq("id", inscricao.id);
       return {
         ok: false,
-        error: "Erro ao processar pagamento. Tente novamente.",
+        error: `Erro ao processar pagamento (HTTP ${resp.status}). Tente novamente.`,
       };
     }
 
-    webhookData = await resp.json();
+    try {
+      webhookData = JSON.parse(corpoTexto);
+    } catch {
+      console.error(
+        `[submitInscricao] Webhook respondeu 200 mas não é JSON válido. URL: ${webhookUrl}. Corpo: ${corpoTexto.slice(0, 500)}`,
+      );
+      await admin
+        .from("inscricoes")
+        .update({ status_pagamento: "cancelado" })
+        .eq("id", inscricao.id);
+      return {
+        ok: false,
+        error:
+          "O servidor de pagamento respondeu num formato inesperado. Verifique se o workflow do n8n termina com um node 'Respond to Webhook'.",
+      };
+    }
   } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(
+      `[submitInscricao] Falha de conexão com webhook n8n. URL: ${webhookUrl}. Erro: ${msg}`,
+    );
     await admin
       .from("inscricoes")
       .update({ status_pagamento: "cancelado" })
       .eq("id", inscricao.id);
     return {
       ok: false,
-      error: "Não foi possível conectar ao servidor de pagamento. Tente novamente.",
+      error: `Não foi possível conectar ao servidor de pagamento (${msg}). Tente novamente.`,
     };
   }
 
