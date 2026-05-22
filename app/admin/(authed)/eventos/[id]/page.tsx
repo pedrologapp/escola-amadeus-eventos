@@ -8,7 +8,6 @@ import {
   FileText,
   MapPin,
   Ticket,
-  Users,
   Wallet,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -91,13 +90,18 @@ export default async function EventoDetailPage({ params }: PageProps) {
     (a, b) => (a.ordem ?? 0) - (b.ordem ?? 0),
   );
 
-  const totalPagas = lista.filter((i) => i.status_pagamento === "pago").length;
   const totalPendentes = lista.filter(
     (i) => i.status_pagamento === "pendente",
   ).length;
   const receita = lista
     .filter((i) => i.status_pagamento === "pago")
     .reduce((sum, i) => sum + Number(i.valor_total ?? 0), 0);
+  const ingressosVendidos = lista
+    .filter((i) => i.status_pagamento === "pago")
+    .reduce((sum, i) => {
+      const itens = (i.itens as { qtd?: number }[] | null) ?? [];
+      return sum + itens.reduce((s, it) => s + (it.qtd ?? 0), 0);
+    }, 0);
 
   const status = statusConfig[evento.status] ?? statusConfig.rascunho;
   const cor = evento.cor_tematica ?? "#1B3B7C";
@@ -162,14 +166,14 @@ export default async function EventoDetailPage({ params }: PageProps) {
       {/* Métricas */}
       <section className="mt-8 grid gap-4 sm:grid-cols-3">
         <MetricCard
-          label="Inscrições pagas"
-          value={totalPagas}
-          icon={Users}
+          label="Ingressos vendidos"
+          value={ingressosVendidos}
+          icon={Ticket}
         />
         <MetricCard
           label="Pendentes"
           value={totalPendentes}
-          icon={Ticket}
+          icon={Clock}
         />
         <MetricCard
           label="Receita confirmada"
