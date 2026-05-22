@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   CalendarPlus,
   Sparkles,
+  Ticket,
   Users,
   Wallet,
 } from "lucide-react";
@@ -29,24 +30,33 @@ export default async function AdminDashboardPage() {
     1,
   ).toISOString();
 
-  const [publicadosRes, totalEventosRes, inscricoesRes, eventosRes] =
-    await Promise.all([
-      supabase
-        .from("eventos")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "publicado"),
-      supabase.from("eventos").select("id", { count: "exact", head: true }),
-      supabase
-        .from("inscricoes")
-        .select("valor_total")
-        .eq("status_pagamento", "pago")
-        .gte("created_at", inicioMes),
-      supabase
-        .from("eventos")
-        .select("id, nome, data_evento, status")
-        .in("status", ["publicado", "encerrado"])
-        .order("data_evento", { ascending: false }),
-    ]);
+  const [
+    publicadosRes,
+    totalEventosRes,
+    inscricoesRes,
+    ingressosRes,
+    eventosRes,
+  ] = await Promise.all([
+    supabase
+      .from("eventos")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "publicado"),
+    supabase.from("eventos").select("id", { count: "exact", head: true }),
+    supabase
+      .from("inscricoes")
+      .select("valor_total")
+      .eq("status_pagamento", "pago")
+      .gte("created_at", inicioMes),
+    supabase
+      .from("inscricoes")
+      .select("itens")
+      .eq("status_pagamento", "pago"),
+    supabase
+      .from("eventos")
+      .select("id, nome, data_evento, status")
+      .in("status", ["publicado", "encerrado"])
+      .order("data_evento", { ascending: false }),
+  ]);
 
   const eventosPublicados = publicadosRes.count ?? 0;
   const totalEventos = totalEventosRes.count ?? 0;
@@ -55,6 +65,11 @@ export default async function AdminDashboardPage() {
     (sum, i) => sum + Number(i.valor_total ?? 0),
     0,
   );
+
+  const ingressosVendidos = (ingressosRes.data ?? []).reduce((sum, i) => {
+    const itens = (i.itens as { qtd?: number }[] | null) ?? [];
+    return sum + itens.reduce((s, it) => s + (it.qtd ?? 0), 0);
+  }, 0);
 
   // Particiona eventos
   const hoje = new Date();
@@ -113,6 +128,12 @@ export default async function AdminDashboardPage() {
       descricao: "Total arrecadado em pagamentos pagos",
       icone: Wallet,
     },
+    {
+      titulo: "Ingressos vendidos",
+      valor: ingressosVendidos.toString(),
+      descricao: "Total de ingressos pagos em todos os eventos",
+      icone: Ticket,
+    },
   ];
 
   const semEventos = proximosAll.length === 0 && concluidosAll.length === 0;
@@ -144,7 +165,7 @@ export default async function AdminDashboardPage() {
         </div>
       </header>
 
-      <section className="mt-8 grid gap-6 md:grid-cols-3">
+      <section className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {metricas.map((m) => {
           const Icone = m.icone;
           return (
