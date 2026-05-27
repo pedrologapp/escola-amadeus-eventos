@@ -245,7 +245,57 @@ export function EventoForm({
     );
   }
 
-  function submit(formData: FormData) {
+  // Redimensiona/comprime a imagem no navegador antes de enviar, para não
+  // estourar o limite de body do servidor (Next/Vercel) com fotos grandes.
+  async function compressImage(file: File): Promise<File> {
+    if (!file.type.startsWith("image/")) return file;
+    const MAX = 1600;
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+      });
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const i = new window.Image();
+        i.onload = () => resolve(i);
+        i.onerror = () => reject(new Error("Falha ao carregar a imagem"));
+        i.src = dataUrl;
+      });
+      let { width, height } = img;
+      if (width > MAX || height > MAX) {
+        if (width >= height) {
+          height = Math.round((height * MAX) / width);
+          width = MAX;
+        } else {
+          width = Math.round((width * MAX) / height);
+          height = MAX;
+        }
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return file;
+      ctx.drawImage(img, 0, 0, width, height);
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, "image/jpeg", 0.82),
+      );
+      if (!blob || blob.size >= file.size) return file;
+      return new File([blob], file.name.replace(/\.\w+$/, ".jpg"), {
+        type: "image/jpeg",
+      });
+    } catch {
+      return file;
+    }
+  }
+
+  async function submit(formData: FormData) {
+    const file = formData.get("imagem_capa");
+    if (file instanceof File && file.size > 0) {
+      formData.set("imagem_capa", await compressImage(file));
+    }
     formData.set(
       "tipos_ingresso",
       JSON.stringify(

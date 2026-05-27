@@ -6,6 +6,13 @@ const supabaseHostname = supabaseUrl
   : "*.supabase.co";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Folga para o upload da capa do evento (a imagem já é comprimida no
+    // navegador antes de enviar, então o normal fica bem abaixo disso).
+    serverActions: {
+      bodySizeLimit: "4mb",
+    },
+  },
   images: {
     remotePatterns: [
       {
