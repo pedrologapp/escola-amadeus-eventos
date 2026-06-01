@@ -16,7 +16,7 @@ export default async function EditarEventoPage({ params }: PageProps) {
   const { data: evento } = await supabase
     .from("eventos")
     .select(
-      "id, nome, descricao_curta, descricao_longa, data_evento, hora_evento, local, imagem_capa_url, cor_tematica, series_permitidas, turmas_permitidas, metodos_pagamento, max_parcelas, prazo_inscricao, status, destinacao_valores, infos_importantes, tipos_ingresso(id, nome, preco, descricao, ordem, lotes)",
+      "id, nome, descricao_curta, descricao_longa, data_evento, hora_evento, local, imagem_capa_url, cor_tematica, series_permitidas, turmas_permitidas, metodos_pagamento, max_parcelas, prazo_inscricao, status, destinacao_valores, infos_importantes, mostrar_estoque_publico, tipos_ingresso(id, nome, preco, descricao, ordem, lotes, max_ingressos)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -30,6 +30,8 @@ export default async function EditarEventoPage({ params }: PageProps) {
       nome: t.nome,
       preco: Number(t.preco),
       descricao: t.descricao,
+      max_ingressos:
+        (t as { max_ingressos?: number | null }).max_ingressos ?? null,
       lotes: ((t as { lotes?: unknown }).lotes ?? []) as {
         nome: string;
         preco: number;
@@ -76,6 +78,7 @@ export default async function EditarEventoPage({ params }: PageProps) {
             status: evento.status,
             destinacao_valores: evento.destinacao_valores,
             infos_importantes: evento.infos_importantes,
+            mostrar_estoque_publico: evento.mostrar_estoque_publico ?? false,
           }}
           initialTipos={tipos}
           submitAction={updateBound}

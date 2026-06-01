@@ -35,6 +35,8 @@ interface Tipo {
   preco: number;
   descricao: string | null;
   lotes: Lote[];
+  restantes?: number | null;
+  esgotado?: boolean;
 }
 
 interface Aluno {
@@ -132,7 +134,14 @@ export function VendaForm({
     !!selecionado && nome.trim().length >= 2 && telefone.length >= 8 && totalSenhas > 0;
 
   function inc(id: string) {
-    setQtds((p) => ({ ...p, [id]: (p[id] ?? 0) + 1 }));
+    setQtds((p) => {
+      const tipo = tipos.find((t) => t.id === id);
+      const atual = p[id] ?? 0;
+      const limite =
+        typeof tipo?.restantes === "number" ? tipo.restantes : Infinity;
+      if (atual >= limite) return p;
+      return { ...p, [id]: atual + 1 };
+    });
   }
   function dec(id: string) {
     setQtds((p) => ({ ...p, [id]: Math.max(0, (p[id] ?? 0) - 1) }));
@@ -317,22 +326,47 @@ export function VendaForm({
             const q = qtds[tipo.id] ?? 0;
             const preco = getPrecoAtual(tipo);
             const lote = getLoteAtivo(tipo.lotes);
+            const esgotado = tipo.esgotado ?? false;
+            const limite =
+              typeof tipo.restantes === "number" ? tipo.restantes : Infinity;
+            const noLimite = q >= limite;
             return (
               <div
                 key={tipo.id}
                 className="flex items-center justify-between rounded-2xl border-2 p-4"
                 style={{
-                  borderColor: q > 0 ? cor : "transparent",
-                  background: q > 0 ? `${cor}10` : "var(--muted)",
+                  borderColor: esgotado
+                    ? "#9ca3af33"
+                    : q > 0
+                      ? cor
+                      : "transparent",
+                  background: esgotado
+                    ? "#9ca3af14"
+                    : q > 0
+                      ? `${cor}10`
+                      : "var(--muted)",
+                  opacity: esgotado ? 0.7 : 1,
                 }}
               >
                 <div>
-                  <div className="font-semibold" style={{ color: cor }}>
-                    {tipo.nome}
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="font-semibold"
+                      style={{ color: esgotado ? "#6b7280" : cor }}
+                    >
+                      {tipo.nome}
+                    </span>
+                    {esgotado && (
+                      <span className="rounded-full bg-gray-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                        Esgotado
+                      </span>
+                    )}
                   </div>
                   <div className="text-xs text-muted-foreground">
                     {formatCurrency(preco)}
                     {lote ? ` · ${lote.nome}` : ""}
+                    {typeof tipo.restantes === "number" && !esgotado &&
+                      ` · restam ${tipo.restantes}`}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -341,14 +375,14 @@ export function VendaForm({
                     variant="outline"
                     size="icon"
                     onClick={() => dec(tipo.id)}
-                    disabled={q === 0}
+                    disabled={q === 0 || esgotado}
                     className="size-9"
                   >
                     <Minus className="size-3.5" />
                   </Button>
                   <span
                     className="w-8 text-center text-xl font-extrabold tabular-nums"
-                    style={{ color: cor }}
+                    style={{ color: esgotado ? "#6b7280" : cor }}
                   >
                     {q}
                   </span>
@@ -357,6 +391,7 @@ export function VendaForm({
                     variant="outline"
                     size="icon"
                     onClick={() => inc(tipo.id)}
+                    disabled={esgotado || noLimite}
                     className="size-9"
                   >
                     <Plus className="size-3.5" />

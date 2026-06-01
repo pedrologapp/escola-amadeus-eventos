@@ -43,6 +43,7 @@ type TipoLinha = {
   nome: string;
   preco: string;
   descricao: string;
+  max_ingressos: string; // "" = sem limite
   lotes: LoteLinha[];
 };
 
@@ -94,6 +95,7 @@ export interface EventoFormInitial {
   status: string;
   destinacao_valores: string | null;
   infos_importantes: string[] | null;
+  mostrar_estoque_publico: boolean;
 }
 
 export interface EventoFormTipoInitialLote {
@@ -107,6 +109,7 @@ export interface EventoFormTipoInitial {
   nome: string;
   preco: number;
   descricao: string | null;
+  max_ingressos: number | null;
   lotes?: EventoFormTipoInitialLote[] | null;
 }
 
@@ -138,6 +141,10 @@ export function EventoForm({
         nome: t.nome,
         preco: t.preco.toString().replace(".", ","),
         descricao: t.descricao ?? "",
+        max_ingressos:
+          t.max_ingressos && t.max_ingressos > 0
+            ? t.max_ingressos.toString()
+            : "",
         lotes: (t.lotes ?? []).map((l) => ({
           nome: l.nome,
           preco: l.preco.toString().replace(".", ","),
@@ -145,7 +152,9 @@ export function EventoForm({
         })),
       }));
     }
-    return [{ nome: "", preco: "", descricao: "", lotes: [] }];
+    return [
+      { nome: "", preco: "", descricao: "", max_ingressos: "", lotes: [] },
+    ];
   });
 
   const [imagemPreview, setImagemPreview] = useState<string | null>(
@@ -155,6 +164,9 @@ export function EventoForm({
   const [novoArquivoSelecionado, setNovoArquivoSelecionado] = useState(false);
   const [cor, setCor] = useState(initial?.cor_tematica ?? "#1B3B7C");
   const [publicar, setPublicar] = useState(initial?.status === "publicado");
+  const [mostrarEstoque, setMostrarEstoque] = useState(
+    initial?.mostrar_estoque_publico ?? false,
+  );
   const [series, setSeries] = useState<string[]>(
     initial?.series_permitidas ?? [],
   );
@@ -204,7 +216,7 @@ export function EventoForm({
   function addTipo() {
     setTipos((prev) => [
       ...prev,
-      { nome: "", preco: "", descricao: "", lotes: [] },
+      { nome: "", preco: "", descricao: "", max_ingressos: "", lotes: [] },
     ]);
   }
   function removeTipo(idx: number) {
@@ -311,11 +323,15 @@ export function EventoForm({
             lotesParsed.length > 0
               ? lotesParsed[0].preco
               : parseFloat(t.preco.replace(",", ".")) || 0;
+          const maxNum = parseInt(t.max_ingressos.trim(), 10);
+          const maxIngressos =
+            Number.isFinite(maxNum) && maxNum > 0 ? maxNum : null;
           return {
             id: t.id,
             nome: t.nome.trim(),
             preco: precoFallback,
             descricao: t.descricao.trim() || null,
+            max_ingressos: maxIngressos,
             lotes: lotesParsed,
           };
         }),
@@ -323,6 +339,7 @@ export function EventoForm({
     );
     formData.set("status", publicar ? "publicado" : "rascunho");
     formData.set("remover_imagem", removerImagem ? "1" : "0");
+    formData.set("mostrar_estoque_publico", mostrarEstoque ? "1" : "0");
     action(formData);
   }
 
@@ -540,6 +557,28 @@ export function EventoForm({
                   }
                   className="mt-3"
                 />
+
+                {/* Limite de ingressos */}
+                <div className="mt-3 flex items-center gap-3">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Limite
+                  </label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={1}
+                    inputMode="numeric"
+                    placeholder="ilimitado"
+                    value={tipo.max_ingressos}
+                    onChange={(e) =>
+                      updateTipo(idx, { max_ingressos: e.target.value })
+                    }
+                    className="max-w-[140px]"
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    quantidade máxima vendida deste tipo (vazio = sem limite)
+                  </span>
+                </div>
 
                 {/* Lotes */}
                 <div className="mt-4 rounded-xl border border-amadeus-blue/15 bg-amadeus-blue-50/30 p-3">
@@ -814,7 +853,7 @@ export function EventoForm({
             Eventos em rascunho ficam invisíveis pros pais.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <Switch
             checked={publicar}
             onChange={(e) => setPublicar(e.target.checked)}
@@ -822,6 +861,15 @@ export function EventoForm({
               publicar
                 ? "Publicar imediatamente"
                 : "Salvar como rascunho"
+            }
+          />
+          <Switch
+            checked={mostrarEstoque}
+            onChange={(e) => setMostrarEstoque(e.target.checked)}
+            label={
+              mostrarEstoque
+                ? "Mostrar contador de ingressos restantes pro cliente"
+                : "Esconder contador (só aparece 'Esgotado' quando estourar)"
             }
           />
         </CardContent>

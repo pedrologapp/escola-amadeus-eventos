@@ -28,6 +28,7 @@ import {
   formatProximoDiaBrt,
 } from "@/lib/utils";
 import { getLoteDisplay, type Lote } from "@/lib/lotes";
+import { calcEstoquePorTipo } from "@/lib/estoque";
 import { InscricaoForm } from "./inscricao-form";
 
 interface PageProps {
@@ -85,7 +86,7 @@ export default async function EventoPublicPage({ params }: PageProps) {
   const { data: evento } = await supabase
     .from("eventos")
     .select(
-      "id, slug, nome, descricao_curta, descricao_longa, data_evento, hora_evento, local, imagem_capa_url, cor_tematica, prazo_inscricao, destinacao_valores, infos_importantes, max_parcelas, metodos_pagamento, series_permitidas, turmas_permitidas, status, tipos_ingresso(id, nome, preco, descricao, ordem, lotes)",
+      "id, slug, nome, descricao_curta, descricao_longa, data_evento, hora_evento, local, imagem_capa_url, cor_tematica, prazo_inscricao, destinacao_valores, infos_importantes, max_parcelas, metodos_pagamento, series_permitidas, turmas_permitidas, status, mostrar_estoque_publico, tipos_ingresso(id, nome, preco, descricao, ordem, lotes, max_ingressos)",
     )
     .eq("slug", slug)
     .in("status", ["publicado", "encerrado"])
@@ -96,6 +97,10 @@ export default async function EventoPublicPage({ params }: PageProps) {
   const tipos = (evento.tipos_ingresso ?? []).sort(
     (a, b) => (a.ordem ?? 0) - (b.ordem ?? 0),
   );
+
+  // Cota / estoque por tipo (só pagas contam)
+  const estoque = await calcEstoquePorTipo(supabase, evento.id);
+  const mostrarEstoque = evento.mostrar_estoque_publico ?? false;
 
   const cor = evento.cor_tematica ?? "#1B3B7C";
 
@@ -364,21 +369,24 @@ export default async function EventoPublicPage({ params }: PageProps) {
                   agora,
                 );
                 const formatarDataMM = (d: Date) => formatProximoDiaBrt(d);
+                const est = estoque.get(tipo.id);
+                const esgotado = est?.esgotado ?? false;
 
                 return (
                   <div
                     key={tipo.id}
                     className="rounded-3xl border-2 p-6 transition-all hover:-translate-y-0.5 hover:shadow-float-lg"
                     style={{
-                      borderColor: `${cor}33`,
-                      background: corFundoSuave,
+                      borderColor: esgotado ? "#9ca3af33" : `${cor}33`,
+                      background: esgotado ? "#9ca3af14" : corFundoSuave,
+                      opacity: esgotado ? 0.75 : 1,
                     }}
                   >
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex items-start gap-4">
                         <div
                           className="grid size-12 place-items-center rounded-2xl text-white shadow-float"
-                          style={{ background: cor }}
+                          style={{ background: esgotado ? "#6b7280" : cor }}
                         >
                           <Ticket className="size-5" />
                         </div>
@@ -386,19 +394,37 @@ export default async function EventoPublicPage({ params }: PageProps) {
                           <div className="flex flex-wrap items-center gap-2">
                             <span
                               className="text-lg font-extrabold"
-                              style={{ color: cor }}
+                              style={{ color: esgotado ? "#6b7280" : cor }}
                             >
                               {tipo.nome}
                             </span>
-                            {loteInfo.rotulo && (
-                              <span
-                                className="rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white"
-                                style={{ background: cor }}
-                              >
-                                {loteInfo.rotulo}
+                            {esgotado ? (
+                              <span className="rounded-full bg-gray-500 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                                Esgotado
                               </span>
+                            ) : (
+                              loteInfo.rotulo && (
+                                <span
+                                  className="rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white"
+                                  style={{ background: cor }}
+                                >
+                                  {loteInfo.rotulo}
+                                </span>
+                              )
                             )}
                           </div>
+                          {!esgotado &&
+                            mostrarEstoque &&
+                            est &&
+                            est.max !== null &&
+                            est.restantes !== null && (
+                              <div
+                                className="mt-1 text-xs font-semibold"
+                                style={{ color: cor }}
+                              >
+                                Restam {est.restantes} de {est.max}
+                              </div>
+                            )}
                           {tipo.descricao && (
                             <div className="text-sm text-muted-foreground">
                               {tipo.descricao}
@@ -489,14 +515,20 @@ export default async function EventoPublicPage({ params }: PageProps) {
                 metodos_pagamento: evento.metodos_pagamento,
                 max_parcelas: evento.max_parcelas,
               }}
-              tipos={tipos.map((t) => ({
-                id: t.id,
-                nome: t.nome,
-                preco: Number(t.preco),
-                descricao: t.descricao,
-                ordem: t.ordem,
-                lotes: (t.lotes ?? []) as Lote[],
-              }))}
+              tipos={tipos.map((t) => {
+                const est = estoque.get(t.id);
+                return {
+                  id: t.id,
+                  nome: t.nome,
+                  preco: Number(t.preco),
+                  descricao: t.descricao,
+                  ordem: t.ordem,
+                  lotes: (t.lotes ?? []) as Lote[],
+                  restantes: est?.restantes ?? null,
+                  esgotado: est?.esgotado ?? false,
+                  mostrar_estoque: mostrarEstoque,
+                };
+              })}
             />
           )}
         </div>

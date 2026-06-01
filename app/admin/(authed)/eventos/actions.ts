@@ -8,6 +8,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getPrecoAtual, type Lote } from "@/lib/lotes";
 import { logInscricao } from "@/lib/log-inscricao";
 import { slugify } from "@/lib/utils";
+import { calcEstoquePorTipo, validarCotaItens } from "@/lib/estoque";
 
 const loteSchema = z.object({
   nome: z.string().min(1, "Nome do lote obrigatório"),
@@ -19,6 +20,7 @@ const tipoIngressoSchema = z.object({
   nome: z.string().min(1, "Nome do ingresso obrigatório"),
   preco: z.number().min(0, "Preço não pode ser negativo"),
   descricao: z.string().optional().nullable(),
+  max_ingressos: z.number().int().min(1).nullable().optional(),
   lotes: z.array(loteSchema).optional().default([]),
 });
 
@@ -40,6 +42,7 @@ const createEventoSchema = z.object({
   status: z.enum(["rascunho", "publicado"]),
   destinacao_valores: z.string().optional().nullable(),
   infos_importantes: z.array(z.string()),
+  mostrar_estoque_publico: z.boolean().default(false),
   tipos_ingresso: z.array(tipoIngressoSchema).min(1, "Adicione ao menos um tipo de ingresso"),
 });
 
@@ -74,6 +77,8 @@ export async function createEvento(
     infos_importantes: parseInfosImportantes(
       formData.get("infos_importantes")?.toString(),
     ),
+    mostrar_estoque_publico:
+      formData.get("mostrar_estoque_publico")?.toString() === "1",
     tipos_ingresso: parseTiposIngresso(
       formData.get("tipos_ingresso")?.toString(),
     ),
@@ -143,6 +148,7 @@ export async function createEvento(
       status: data.status,
       destinacao_valores: data.destinacao_valores,
       infos_importantes: data.infos_importantes,
+      mostrar_estoque_publico: data.mostrar_estoque_publico,
     })
     .select("id")
     .single();
@@ -159,6 +165,7 @@ export async function createEvento(
     nome: tipo.nome,
     preco: tipo.preco,
     descricao: tipo.descricao,
+    max_ingressos: tipo.max_ingressos ?? null,
     lotes: tipo.lotes ?? [],
     ordem,
     ativo: true,
@@ -257,6 +264,8 @@ export async function updateEvento(
     infos_importantes: parseInfosImportantes(
       formData.get("infos_importantes")?.toString(),
     ),
+    mostrar_estoque_publico:
+      formData.get("mostrar_estoque_publico")?.toString() === "1",
     tipos_ingresso: parseTiposIngresso(
       formData.get("tipos_ingresso")?.toString(),
     ),
@@ -323,6 +332,7 @@ export async function updateEvento(
       status: data.status,
       destinacao_valores: data.destinacao_valores,
       infos_importantes: data.infos_importantes,
+      mostrar_estoque_publico: data.mostrar_estoque_publico,
       ...imagemUpdate,
     })
     .eq("id", eventoId);
@@ -339,6 +349,7 @@ export async function updateEvento(
     nome: tipo.nome,
     preco: tipo.preco,
     descricao: tipo.descricao,
+    max_ingressos: tipo.max_ingressos ?? null,
     lotes: tipo.lotes ?? [],
     ordem,
     ativo: true,
@@ -402,7 +413,7 @@ export async function duplicateEvento(
   const { data: source, error: fetchErr } = await supabase
     .from("eventos")
     .select(
-      "slug, nome, descricao_curta, descricao_longa, data_evento, hora_evento, local, imagem_capa_url, cor_tematica, series_permitidas, turmas_permitidas, metodos_pagamento, max_parcelas, prazo_inscricao, destinacao_valores, infos_importantes, tipos_ingresso(nome, preco, descricao, icone, cor, ordem, ativo)",
+      "slug, nome, descricao_curta, descricao_longa, data_evento, hora_evento, local, imagem_capa_url, cor_tematica, series_permitidas, turmas_permitidas, metodos_pagamento, max_parcelas, prazo_inscricao, destinacao_valores, infos_importantes, mostrar_estoque_publico, tipos_ingresso(nome, preco, descricao, icone, cor, ordem, ativo, max_ingressos, lotes)",
     )
     .eq("id", eventoId)
     .maybeSingle();
@@ -433,6 +444,7 @@ export async function duplicateEvento(
       status: "rascunho",
       destinacao_valores: source.destinacao_valores,
       infos_importantes: source.infos_importantes,
+      mostrar_estoque_publico: source.mostrar_estoque_publico ?? false,
     })
     .select("id")
     .single();
@@ -450,6 +462,8 @@ export async function duplicateEvento(
     cor: string | null;
     ordem: number;
     ativo: boolean;
+    max_ingressos: number | null;
+    lotes: unknown;
   }>;
 
   if (tipos.length > 0) {
@@ -463,6 +477,8 @@ export async function duplicateEvento(
         cor: t.cor,
         ordem: t.ordem,
         ativo: t.ativo,
+        max_ingressos: t.max_ingressos ?? null,
+        lotes: t.lotes ?? [],
       })),
     );
   }
@@ -548,6 +564,13 @@ export async function registrarVendaDinheiro(
 
   if (itens.length === 0) {
     return { ok: false, error: "Selecione pelo menos um ingresso." };
+  }
+
+  // Valida cota antes de gravar
+  const estoque = await calcEstoquePorTipo(admin, d.evento_id);
+  const erroCota = validarCotaItens(itens, estoque);
+  if (erroCota) {
+    return { ok: false, error: erroCota };
   }
 
   const valorTotal = itens.reduce(

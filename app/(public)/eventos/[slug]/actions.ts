@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { calcularTotal } from "@/lib/pricing";
 import { logInscricao } from "@/lib/log-inscricao";
 import { validarCPF, telefoneValido } from "@/lib/validators";
+import { calcEstoquePorTipo, validarCotaItens } from "@/lib/estoque";
 
 const itemSchema = z.object({
   tipo_id: z.string().uuid(),
@@ -65,6 +66,13 @@ export async function submitInscricao(
   );
 
   const admin = createAdminClient();
+
+  // Valida cota: rejeita se algum tipo estourou o limite (só pagas contam).
+  const estoque = await calcEstoquePorTipo(admin, d.evento_id);
+  const erroCota = validarCotaItens(itensComQtd, estoque);
+  if (erroCota) {
+    return { ok: false, error: erroCota };
+  }
 
   // 1. Insere inscrição (status pendente)
   const { data: inscricao, error: insertErr } = await admin

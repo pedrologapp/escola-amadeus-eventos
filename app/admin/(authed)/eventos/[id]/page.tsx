@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { calcEstoquePorTipo } from "@/lib/estoque";
 import { InscricoesTable } from "./inscricoes-table";
 import { SenhaGateButton } from "./senha-gate-button";
 
@@ -45,7 +46,7 @@ export default async function EventoDetailPage({ params }: PageProps) {
   const { data: evento } = await supabase
     .from("eventos")
     .select(
-      "id, slug, nome, descricao_curta, data_evento, hora_evento, local, imagem_capa_url, cor_tematica, series_permitidas, turmas_permitidas, metodos_pagamento, max_parcelas, prazo_inscricao, status, tipos_ingresso(id, nome, preco, descricao, ordem)",
+      "id, slug, nome, descricao_curta, data_evento, hora_evento, local, imagem_capa_url, cor_tematica, series_permitidas, turmas_permitidas, metodos_pagamento, max_parcelas, prazo_inscricao, status, mostrar_estoque_publico, tipos_ingresso(id, nome, preco, descricao, ordem, max_ingressos)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -89,6 +90,8 @@ export default async function EventoDetailPage({ params }: PageProps) {
   const tipos = (evento.tipos_ingresso ?? []).sort(
     (a, b) => (a.ordem ?? 0) - (b.ordem ?? 0),
   );
+
+  const estoque = await calcEstoquePorTipo(supabase, evento.id);
 
   const totalPendentes = lista.filter(
     (i) => i.status_pagamento === "pendente",
@@ -244,29 +247,43 @@ export default async function EventoDetailPage({ params }: PageProps) {
             <CardDescription>{tipos.length} tipo(s)</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
-            {tipos.map((t) => (
-              <div
-                key={t.id}
-                className="flex items-center justify-between rounded-2xl border border-border/70 p-3"
-              >
-                <div>
-                  <div className="font-semibold" style={{ color: cor }}>
-                    {t.nome}
-                  </div>
-                  {t.descricao && (
-                    <div className="text-xs text-muted-foreground">
-                      {t.descricao}
-                    </div>
-                  )}
-                </div>
+            {tipos.map((t) => {
+              const est = estoque.get(t.id);
+              const vendido = est?.vendido ?? 0;
+              const max = est?.max ?? null;
+              const esgotado = est?.esgotado ?? false;
+              return (
                 <div
-                  className="font-extrabold tabular-nums"
-                  style={{ color: cor }}
+                  key={t.id}
+                  className="flex items-center justify-between rounded-2xl border border-border/70 p-3"
                 >
-                  {formatCurrency(Number(t.preco))}
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold" style={{ color: cor }}>
+                        {t.nome}
+                      </span>
+                      {esgotado && (
+                        <span className="rounded-full bg-gray-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                          Esgotado
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {max !== null
+                        ? `${vendido} / ${max} vendido(s)`
+                        : `${vendido} vendido(s) · sem limite`}
+                      {t.descricao && ` · ${t.descricao}`}
+                    </div>
+                  </div>
+                  <div
+                    className="font-extrabold tabular-nums"
+                    style={{ color: cor }}
+                  >
+                    {formatCurrency(Number(t.preco))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </CardContent>
         </Card>
       </section>

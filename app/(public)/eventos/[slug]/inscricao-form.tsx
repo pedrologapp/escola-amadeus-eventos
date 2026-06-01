@@ -47,6 +47,9 @@ interface Tipo {
   descricao: string | null;
   ordem: number | null;
   lotes?: Lote[];
+  restantes?: number | null; // null = sem limite, 0 = esgotado
+  esgotado?: boolean;
+  mostrar_estoque?: boolean;
 }
 
 interface Aluno {
@@ -209,7 +212,14 @@ export function InscricaoForm({ evento, tipos }: Props) {
 
   // ---------- Handlers ----------
   function inc(tipoId: string) {
-    setQtds((prev) => ({ ...prev, [tipoId]: (prev[tipoId] ?? 0) + 1 }));
+    setQtds((prev) => {
+      const tipo = tipos.find((t) => t.id === tipoId);
+      const atual = prev[tipoId] ?? 0;
+      const limite =
+        typeof tipo?.restantes === "number" ? tipo.restantes : Infinity;
+      if (atual >= limite) return prev; // bate o teto, não incrementa
+      return { ...prev, [tipoId]: atual + 1 };
+    });
     setParcelas(1);
   }
 
@@ -567,18 +577,42 @@ export function InscricaoForm({ evento, tipos }: Props) {
         <CardContent className="space-y-3">
           {tipos.map((tipo) => {
             const q = qtds[tipo.id] ?? 0;
+            const esgotado = tipo.esgotado ?? false;
+            const restantes = tipo.restantes;
+            const limite =
+              typeof restantes === "number" ? restantes : Infinity;
+            const noLimite = q >= limite;
             return (
               <div
                 key={tipo.id}
                 className="flex items-center justify-between rounded-2xl border-2 p-4"
                 style={{
-                  borderColor: q > 0 ? cor : "transparent",
-                  background: q > 0 ? `${cor}10` : "var(--muted)",
+                  borderColor: esgotado
+                    ? "#9ca3af33"
+                    : q > 0
+                      ? cor
+                      : "transparent",
+                  background: esgotado
+                    ? "#9ca3af14"
+                    : q > 0
+                      ? `${cor}10`
+                      : "var(--muted)",
+                  opacity: esgotado ? 0.7 : 1,
                 }}
               >
                 <div>
-                  <div className="font-semibold" style={{ color: cor }}>
-                    {tipo.nome}
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="font-semibold"
+                      style={{ color: esgotado ? "#6b7280" : cor }}
+                    >
+                      {tipo.nome}
+                    </span>
+                    {esgotado && (
+                      <span className="rounded-full bg-gray-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                        Esgotado
+                      </span>
+                    )}
                   </div>
                   <div className="text-xs text-muted-foreground">
                     {(() => {
@@ -591,6 +625,16 @@ export function InscricaoForm({ evento, tipos }: Props) {
                       return parts.join(" · ");
                     })()}
                   </div>
+                  {!esgotado &&
+                    tipo.mostrar_estoque &&
+                    typeof restantes === "number" && (
+                      <div
+                        className="mt-1 text-[11px] font-semibold"
+                        style={{ color: cor }}
+                      >
+                        Restam {restantes}
+                      </div>
+                    )}
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
@@ -598,14 +642,14 @@ export function InscricaoForm({ evento, tipos }: Props) {
                     variant="outline"
                     size="icon"
                     onClick={() => dec(tipo.id)}
-                    disabled={q === 0}
+                    disabled={q === 0 || esgotado}
                     className="size-9"
                   >
                     <Minus className="size-3.5" />
                   </Button>
                   <span
                     className="w-8 text-center text-xl font-extrabold tabular-nums"
-                    style={{ color: cor }}
+                    style={{ color: esgotado ? "#6b7280" : cor }}
                   >
                     {q}
                   </span>
@@ -614,6 +658,7 @@ export function InscricaoForm({ evento, tipos }: Props) {
                     variant="outline"
                     size="icon"
                     onClick={() => inc(tipo.id)}
+                    disabled={esgotado || noLimite}
                     className="size-9"
                   >
                     <Plus className="size-3.5" />

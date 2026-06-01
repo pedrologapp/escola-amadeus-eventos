@@ -32,6 +32,7 @@ export type Evento = {
   status: EventoStatus;
   destinacao_valores: string | null;
   infos_importantes: string[] | null;
+  mostrar_estoque_publico: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -46,6 +47,7 @@ export type TipoIngresso = {
   cor: string | null;
   ordem: number;
   ativo: boolean;
+  max_ingressos: number | null;
 };
 
 export type InscricaoItem = {

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ChevronLeft, Wallet } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import type { Lote } from "@/lib/lotes";
+import { calcEstoquePorTipo } from "@/lib/estoque";
 import { VendaForm } from "./venda-form";
 
 interface PageProps {
@@ -16,23 +17,30 @@ export default async function VendaDinheiroPage({ params }: PageProps) {
   const { data: evento } = await supabase
     .from("eventos")
     .select(
-      "id, nome, cor_tematica, series_permitidas, turmas_permitidas, tipos_ingresso(id, nome, preco, descricao, ordem, lotes)",
+      "id, nome, cor_tematica, series_permitidas, turmas_permitidas, tipos_ingresso(id, nome, preco, descricao, ordem, lotes, max_ingressos)",
     )
     .eq("id", id)
     .maybeSingle();
 
   if (!evento) notFound();
 
+  const estoque = await calcEstoquePorTipo(supabase, evento.id);
+
   const cor = evento.cor_tematica ?? "#1B3B7C";
   const tipos = (evento.tipos_ingresso ?? [])
     .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
-    .map((t) => ({
-      id: t.id,
-      nome: t.nome,
-      preco: Number(t.preco),
-      descricao: t.descricao,
-      lotes: (t.lotes ?? []) as Lote[],
-    }));
+    .map((t) => {
+      const est = estoque.get(t.id);
+      return {
+        id: t.id,
+        nome: t.nome,
+        preco: Number(t.preco),
+        descricao: t.descricao,
+        lotes: (t.lotes ?? []) as Lote[],
+        restantes: est?.restantes ?? null,
+        esgotado: est?.esgotado ?? false,
+      };
+    });
 
   return (
     <div className="container mx-auto max-w-3xl px-4 py-10">

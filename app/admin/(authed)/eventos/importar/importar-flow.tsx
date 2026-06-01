@@ -233,11 +233,13 @@ function FormDepoisExtracao({ dados, createAction }: FormDepoisExtracaoProps) {
           status: "rascunho",
           destinacao_valores: dados.destinacao_valores,
           infos_importantes: dados.infos_importantes,
+          mostrar_estoque_publico: false,
         }}
         initialTipos={dados.tipos_ingresso.map((t) => ({
           nome: t.nome,
           preco: t.preco,
           descricao: t.descricao,
+          max_ingressos: null,
           lotes: t.lotes ?? [],
         }))}
         submitAction={createAction}
