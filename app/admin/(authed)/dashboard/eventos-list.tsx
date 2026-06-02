@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, Ticket } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +19,7 @@ export interface DashboardEventoItem {
   nome: string;
   data_evento: string;
   status: "rascunho" | "publicado" | "encerrado";
+  ingressos_vendidos: number;
 }
 
 interface Props {
@@ -93,31 +94,39 @@ export function DashboardEventosList({ proximos, concluidos }: Props) {
                   {formatDate(ev.data_evento)}
                 </div>
               </div>
-              <Badge
-                variant={
-                  aba === "concluidos"
-                    ? "muted"
-                    : ev.status === "publicado"
-                      ? "success"
-                      : ev.status === "encerrado"
-                        ? "warning"
-                        : "muted"
-                }
-                className="shrink-0"
-              >
-                {aba === "concluidos" ? (
-                  <>
-                    <Check className="size-3" />
-                    Concluído
-                  </>
-                ) : ev.status === "publicado" ? (
-                  "Publicado"
-                ) : ev.status === "encerrado" ? (
-                  "Encerrado"
-                ) : (
-                  "Rascunho"
-                )}
-              </Badge>
+              <div className="flex shrink-0 flex-col items-end gap-1.5">
+                <div
+                  className="inline-flex items-center gap-1.5 rounded-full bg-amadeus-blue-50 px-2.5 py-1 text-xs font-bold text-amadeus-blue"
+                  title="Ingressos vendidos"
+                >
+                  <Ticket className="size-3.5" />
+                  <span className="tabular-nums">{ev.ingressos_vendidos}</span>
+                </div>
+                <Badge
+                  variant={
+                    aba === "concluidos"
+                      ? "muted"
+                      : ev.status === "publicado"
+                        ? "success"
+                        : ev.status === "encerrado"
+                          ? "warning"
+                          : "muted"
+                  }
+                >
+                  {aba === "concluidos" ? (
+                    <>
+                      <Check className="size-3" />
+                      Concluído
+                    </>
+                  ) : ev.status === "publicado" ? (
+                    "Publicado"
+                  ) : ev.status === "encerrado" ? (
+                    "Encerrado"
+                  ) : (
+                    "Rascunho"
+                  )}
+                </Badge>
+              </div>
             </Link>
           ))
         )}
