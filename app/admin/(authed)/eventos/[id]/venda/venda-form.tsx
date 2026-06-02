@@ -24,7 +24,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
-import { getLoteAtivo, getPrecoAtual, type Lote } from "@/lib/lotes";
+import {
+  getLoteAtivo,
+  getPrecoAtual,
+  limparPrefixoLote,
+  type Lote,
+} from "@/lib/lotes";
 import { formatCurrency } from "@/lib/utils";
 import { formatarTelefone } from "@/lib/validators";
 import { registrarVendaDinheiro } from "../../actions";
@@ -354,7 +359,7 @@ export function VendaForm({
                       className="font-semibold"
                       style={{ color: esgotado ? "#6b7280" : cor }}
                     >
-                      {tipo.nome}
+                      {limparPrefixoLote(tipo.nome)}
                     </span>
                     {esgotado && (
                       <span className="rounded-full bg-gray-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">

@@ -27,7 +27,7 @@ import {
   formatDateTimeBrt,
   formatProximoDiaBrt,
 } from "@/lib/utils";
-import { getLoteDisplay, type Lote } from "@/lib/lotes";
+import { getLoteDisplay, limparPrefixoLote, type Lote } from "@/lib/lotes";
 import { calcEstoquePorTipo } from "@/lib/estoque";
 import { InscricaoForm } from "./inscricao-form";
 
@@ -396,7 +396,7 @@ export default async function EventoPublicPage({ params }: PageProps) {
                               className="text-lg font-extrabold"
                               style={{ color: esgotado ? "#6b7280" : cor }}
                             >
-                              {tipo.nome}
+                              {limparPrefixoLote(tipo.nome)}
                             </span>
                             {esgotado ? (
                               <span className="rounded-full bg-gray-500 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">

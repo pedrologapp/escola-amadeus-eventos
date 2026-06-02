@@ -29,7 +29,13 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
 import { calcularTotal, type MetodoPagamento } from "@/lib/pricing";
-import { getLoteAtivo, getPrecoAtual, type Lote } from "@/lib/lotes";
+import {
+  getLoteAtivo,
+  getPrecoAtual,
+  limparPrefixoLote,
+  montaNomeItem,
+  type Lote,
+} from "@/lib/lotes";
 import { formatCurrency } from "@/lib/utils";
 import {
   apenasDigitos,
@@ -254,7 +260,10 @@ export function InscricaoForm({ evento, tipos }: Props) {
         .filter((t) => (qtds[t.id] ?? 0) > 0)
         .map((t) => ({
           tipo_id: t.id,
-          nome: t.nome,
+          // Junta nome do tipo (sem prefixo "Nº Lote -") com o lote ativo.
+          // Assim a descrição que vai pro WhatsApp / detalhe sempre reflete
+          // o lote vigente no momento da compra.
+          nome: montaNomeItem(t.nome, getLoteAtivo(t.lotes)),
           qtd: qtds[t.id]!,
           preco_unitario: getPrecoAtual(t),
         }));
@@ -606,7 +615,7 @@ export function InscricaoForm({ evento, tipos }: Props) {
                       className="font-semibold"
                       style={{ color: esgotado ? "#6b7280" : cor }}
                     >
-                      {tipo.nome}
+                      {limparPrefixoLote(tipo.nome)}
                     </span>
                     {esgotado && (
                       <span className="rounded-full bg-gray-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">

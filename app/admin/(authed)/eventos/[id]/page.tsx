@@ -22,6 +22,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { calcEstoquePorTipo } from "@/lib/estoque";
+import { limparPrefixoLote } from "@/lib/lotes";
 import { InscricoesTable } from "./inscricoes-table";
 import { SenhaGateButton } from "./senha-gate-button";
 
@@ -260,7 +261,7 @@ export default async function EventoDetailPage({ params }: PageProps) {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold" style={{ color: cor }}>
-                        {t.nome}
+                        {limparPrefixoLote(t.nome)}
                       </span>
                       {esgotado && (
                         <span className="rounded-full bg-gray-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">

@@ -5,7 +5,12 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getPrecoAtual, type Lote } from "@/lib/lotes";
+import {
+  getLoteAtivo,
+  getPrecoAtual,
+  montaNomeItem,
+  type Lote,
+} from "@/lib/lotes";
 import { logInscricao } from "@/lib/log-inscricao";
 import { slugify } from "@/lib/utils";
 import { calcEstoquePorTipo, validarCotaItens } from "@/lib/estoque";
@@ -548,15 +553,18 @@ export async function registrarVendaDinheiro(
   for (const tipo of tipos) {
     const qtd = d.quantidades[tipo.id] ?? 0;
     if (qtd <= 0) continue;
-    const preco = getPrecoAtual({
+    const lotes = (tipo.lotes ?? []) as Lote[];
+    const tipoComLotes = {
       nome: tipo.nome,
       preco: Number(tipo.preco),
       descricao: null,
-      lotes: (tipo.lotes ?? []) as Lote[],
-    });
+      lotes,
+    };
+    const preco = getPrecoAtual(tipoComLotes);
     itens.push({
       tipo_id: tipo.id,
-      nome: tipo.nome,
+      // Nome final = tipo (sem prefixo "Nº Lote -") + lote ativo
+      nome: montaNomeItem(tipo.nome, getLoteAtivo(lotes)),
       qtd,
       preco_unitario: preco,
     });

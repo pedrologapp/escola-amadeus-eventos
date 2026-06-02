@@ -1,0 +1,16 @@
+fix(lotes): descricao do item usa o lote ativo no momento da compra
+
+O nome do tipo costuma vir com "1º Lote - X" cravado pelo admin. Quando
+o lote vira (ex: passa pro 2º), o preco atualiza mas o nome fica fixo,
+mostrando "1º Lote" em WhatsApp e telas mesmo no 2º lote.
+
+- lib/lotes.ts: helpers limparPrefixoLote e montaNomeItem
+- submitInscricao (publico) e registrarVendaDinheiro (admin) gravam
+  item.nome = "{tipo limpo} — {lote ativo}"
+- pagina publica, inscricao-form, venda-form e admin event detail
+  passam tipo.nome por limparPrefixoLote (badge do lote ja aparece
+  separado)
+
+Inscricoes ja gravadas mantem o nome antigo (snapshot).
+
+Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>

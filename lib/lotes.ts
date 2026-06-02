@@ -93,6 +93,29 @@ export interface LoteDisplay {
   proximos: { quandoMuda: Date; preco: number; nome: string }[];
 }
 
+/**
+ * Remove o prefixo "Nº Lote - " do nome do tipo (convenção comum dos
+ * admins). Ex: "1º Lote -  Senha (Responsáveis)" → "Senha (Responsáveis)".
+ * Só remove se bater o padrão exato; nomes sem o prefixo passam inalterados.
+ */
+export function limparPrefixoLote(nome: string): string {
+  return nome.replace(/^\d+\s*[ºo°]?\s*Lote\s*-\s*/i, "").trim();
+}
+
+/**
+ * Monta o nome que vai pra `inscricoes.itens[].nome` (e pra UI):
+ * tipo limpo + nome do lote ativo. Ex: "Senha (Responsáveis) — 2º Lote".
+ * Se não houver lote ativo, retorna só o nome do tipo (limpo).
+ */
+export function montaNomeItem(
+  tipoNome: string,
+  lote: Lote | null | undefined,
+): string {
+  const base = limparPrefixoLote(tipoNome);
+  if (!lote || !lote.nome) return base;
+  return `${base} — ${lote.nome}`;
+}
+
 export function getLoteDisplay(
   tipo: TipoIngressoComLotes,
   agora: Date = new Date(),
