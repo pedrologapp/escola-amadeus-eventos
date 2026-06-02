@@ -83,7 +83,6 @@ export function VendaForm({
   // Responsável
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
-  const [email, setEmail] = useState("");
 
   // Quantidades
   const [qtds, setQtds] = useState<Record<string, number>>(() =>
@@ -161,7 +160,6 @@ export function VendaForm({
         aluno_id: selecionado.id,
         responsavel_nome: nome.trim(),
         telefone,
-        email: email.trim(),
         quantidades: qtds,
       });
       if (!result.ok) {
@@ -293,27 +291,15 @@ export function VendaForm({
               placeholder="Nome completo"
             />
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="tel">WhatsApp * (recebe o QR)</Label>
-              <Input
-                id="tel"
-                value={telefone}
-                onChange={(e) => setTelefone(formatarTelefone(e.target.value))}
-                placeholder="(84) 99999-9999"
-                inputMode="numeric"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="email">E-mail (opcional)</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="opcional"
-              />
-            </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="tel">WhatsApp * (recebe o QR)</Label>
+            <Input
+              id="tel"
+              value={telefone}
+              onChange={(e) => setTelefone(formatarTelefone(e.target.value))}
+              placeholder="(84) 99999-9999"
+              inputMode="numeric"
+            />
           </div>
         </CardContent>
       </Card>
