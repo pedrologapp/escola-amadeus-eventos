@@ -22,7 +22,13 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { calcEstoquePorTipo } from "@/lib/estoque";
-import { limparPrefixoLote } from "@/lib/lotes";
+import {
+  getLoteAtivo,
+  limparPrefixoLote,
+  ordenarLotes,
+  type Lote,
+} from "@/lib/lotes";
+import { formatDateTimeBrt } from "@/lib/utils";
 import { InscricoesTable } from "./inscricoes-table";
 import { SenhaGateButton } from "./senha-gate-button";
 
@@ -47,7 +53,7 @@ export default async function EventoDetailPage({ params }: PageProps) {
   const { data: evento } = await supabase
     .from("eventos")
     .select(
-      "id, slug, nome, descricao_curta, data_evento, hora_evento, local, imagem_capa_url, cor_tematica, series_permitidas, turmas_permitidas, metodos_pagamento, max_parcelas, prazo_inscricao, status, mostrar_estoque_publico, tipos_ingresso(id, nome, preco, descricao, ordem, max_ingressos)",
+      "id, slug, nome, descricao_curta, data_evento, hora_evento, local, imagem_capa_url, cor_tematica, series_permitidas, turmas_permitidas, metodos_pagamento, max_parcelas, prazo_inscricao, status, mostrar_estoque_publico, tipos_ingresso(id, nome, preco, descricao, ordem, max_ingressos, lotes)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -247,41 +253,119 @@ export default async function EventoDetailPage({ params }: PageProps) {
             <CardTitle>Ingressos</CardTitle>
             <CardDescription>{tipos.length} tipo(s)</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-3">
             {tipos.map((t) => {
               const est = estoque.get(t.id);
               const vendido = est?.vendido ?? 0;
               const max = est?.max ?? null;
               const esgotado = est?.esgotado ?? false;
+              const lotes = ((t as { lotes?: unknown }).lotes ?? []) as Lote[];
+              const lotesOrdenados = ordenarLotes(lotes);
+              const ativo = getLoteAtivo(lotes);
+              const agora = new Date();
               return (
                 <div
                   key={t.id}
-                  className="flex items-center justify-between rounded-2xl border border-border/70 p-3"
+                  className="rounded-2xl border border-border/70 p-3"
                 >
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold" style={{ color: cor }}>
-                        {limparPrefixoLote(t.nome)}
-                      </span>
-                      {esgotado && (
-                        <span className="rounded-full bg-gray-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
-                          Esgotado
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-semibold" style={{ color: cor }}>
+                          {limparPrefixoLote(t.nome)}
                         </span>
-                      )}
+                        {esgotado && (
+                          <span className="rounded-full bg-gray-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                            Esgotado
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {max !== null
+                          ? `${vendido} / ${max} vendido(s)`
+                          : `${vendido} vendido(s) · sem limite`}
+                        {t.descricao && ` · ${t.descricao}`}
+                      </div>
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      {max !== null
-                        ? `${vendido} / ${max} vendido(s)`
-                        : `${vendido} vendido(s) · sem limite`}
-                      {t.descricao && ` · ${t.descricao}`}
+                    {lotesOrdenados.length === 0 && (
+                      <div
+                        className="shrink-0 font-extrabold tabular-nums"
+                        style={{ color: cor }}
+                      >
+                        {formatCurrency(Number(t.preco))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Lista de lotes (se houver) */}
+                  {lotesOrdenados.length > 0 && (
+                    <div className="mt-3 space-y-1.5">
+                      {lotesOrdenados.map((lote, idx) => {
+                        const isAtivo = ativo && lote === ativo;
+                        const expirado =
+                          lote.valido_ate !== null &&
+                          new Date(lote.valido_ate).getTime() < agora.getTime();
+                        const futuro = !isAtivo && !expirado;
+                        return (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between gap-3 rounded-xl border px-3 py-2 text-sm"
+                            style={{
+                              borderColor: isAtivo
+                                ? `${cor}55`
+                                : "rgba(0,0,0,0.08)",
+                              background: isAtivo
+                                ? `${cor}10`
+                                : expirado
+                                  ? "rgba(0,0,0,0.025)"
+                                  : "transparent",
+                              opacity: expirado ? 0.55 : 1,
+                            }}
+                          >
+                            <div className="flex min-w-0 items-center gap-2">
+                              <span
+                                className="font-semibold"
+                                style={{
+                                  color: isAtivo ? cor : "inherit",
+                                }}
+                              >
+                                {lote.nome || `Lote ${idx + 1}`}
+                              </span>
+                              {isAtivo && (
+                                <span
+                                  className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white"
+                                  style={{ background: cor }}
+                                >
+                                  Ativo agora
+                                </span>
+                              )}
+                              {expirado && (
+                                <span className="rounded-full bg-gray-300 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gray-700">
+                                  Encerrado
+                                </span>
+                              )}
+                              {futuro && (
+                                <span className="rounded-full border border-gray-300 bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gray-600">
+                                  A seguir
+                                </span>
+                              )}
+                              <span className="text-xs text-muted-foreground">
+                                {lote.valido_ate
+                                  ? `até ${formatDateTimeBrt(lote.valido_ate)}`
+                                  : "sem prazo"}
+                              </span>
+                            </div>
+                            <div
+                              className="shrink-0 font-extrabold tabular-nums"
+                              style={{ color: isAtivo ? cor : undefined }}
+                            >
+                              {formatCurrency(Number(lote.preco))}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  </div>
-                  <div
-                    className="font-extrabold tabular-nums"
-                    style={{ color: cor }}
-                  >
-                    {formatCurrency(Number(t.preco))}
-                  </div>
+                  )}
                 </div>
               );
             })}
