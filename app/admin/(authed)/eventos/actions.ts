@@ -651,6 +651,115 @@ export async function registrarVendaDinheiro(
   return { ok: true, inscricaoId: inscricao.id };
 }
 
+// =============================================================
+// REENVIO DE QR CODES (dispara workflow n8n dedicado)
+// =============================================================
+
+export type ReenvioQRState =
+  | { ok: true; mensagem: string }
+  | { ok: false; error: string };
+
+export async function reenviarQRCodes(
+  inscricaoId: string,
+): Promise<ReenvioQRState> {
+  // Auth — só admin logado
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { ok: false, error: "Sua sessão expirou. Faça login novamente." };
+  }
+
+  // Valida inscrição: deve existir e estar paga
+  const adminCli = createAdminClient();
+  const { data: inscricao, error: fetchErr } = await adminCli
+    .from("inscricoes")
+    .select("id, evento_id, status_pagamento")
+    .eq("id", inscricaoId)
+    .maybeSingle();
+
+  if (fetchErr || !inscricao) {
+    return { ok: false, error: "Inscrição não encontrada." };
+  }
+  if (inscricao.status_pagamento !== "pago") {
+    return {
+      ok: false,
+      error: "Só é possível reenviar QR de inscrição já paga.",
+    };
+  }
+
+  // Chama o webhook n8n de reenvio
+  const webhookUrl = process.env.N8N_REENVIO_QR_URL;
+  if (!webhookUrl) {
+    return {
+      ok: false,
+      error: "Webhook de reenvio não configurado no servidor (N8N_REENVIO_QR_URL).",
+    };
+  }
+
+  try {
+    const resp = await fetch(webhookUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Webhook-Secret": process.env.WEBHOOK_CONFIRM_SECRET ?? "",
+      },
+      body: JSON.stringify({
+        inscricaoId,
+        adminEmail: user.email ?? "admin",
+        timestamp: new Date().toISOString(),
+      }),
+    });
+
+    const corpo = await resp.text();
+    if (!resp.ok) {
+      await logInscricao({
+        inscricaoId,
+        etapa: "reenvio_qr_falhou",
+        sucesso: false,
+        mensagem: `n8n retornou ${resp.status}: ${corpo.slice(0, 200)}`,
+        origem: "site",
+      });
+      return {
+        ok: false,
+        error: `Erro no servidor (HTTP ${resp.status}). Tente novamente em alguns segundos.`,
+      };
+    }
+
+    let data: { ok?: boolean; message?: string } | null = null;
+    try {
+      data = JSON.parse(corpo);
+    } catch {
+      // Sem JSON — assumimos sucesso já que o HTTP foi ok.
+    }
+
+    if (data?.ok === false) {
+      return {
+        ok: false,
+        error: data.message ?? "O servidor recusou o reenvio.",
+      };
+    }
+
+    await logInscricao({
+      inscricaoId,
+      etapa: "reenvio_qr_disparado",
+      sucesso: true,
+      mensagem: `Reenvio de QR codes disparado por ${user.email ?? "admin"}`,
+      origem: "site",
+    });
+
+    revalidatePath(`/admin/eventos/${inscricao.evento_id}`);
+    return { ok: true, mensagem: "Reenvio disparado! Pode demorar alguns segundos pra chegar no WhatsApp." };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return {
+      ok: false,
+      error: `Falha de conexão com o servidor de notificações (${msg}).`,
+    };
+  }
+}
+
 // Trava de senha para ações sensíveis (editar/excluir/duplicar).
 // A senha é validada no servidor para não ir no bundle do cliente.
 export async function verificarSenhaAcao(senha: string): Promise<boolean> {

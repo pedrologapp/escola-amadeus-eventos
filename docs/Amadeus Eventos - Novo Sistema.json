@@ -234,8 +234,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        1184,
-        2080
+        880,
+        2288
       ],
       "id": "91e2f96c-997c-4ddd-bb1d-f20e820f1ea8",
       "name": "Notif: Respond Sucesso1"
@@ -254,7 +254,7 @@
       "type": "n8n-nodes-waha.WAHA",
       "typeVersion": 202411,
       "position": [
-        816,
+        1056,
         2080
       ],
       "id": "5b907790-797a-40ab-84dd-ba1986a5f743",
@@ -593,6 +593,9 @@
       ],
       "id": "4d83b07d-3622-4c2b-8067-dfb368e330d7",
       "name": "Notif: Insert Tickets",
+      "retryOnFail": false,
+      "executeOnce": false,
+      "alwaysOutputData": false,
       "credentials": {
         "supabaseApi": {
           "id": "lCseGlHlzCUJ9cu3",
@@ -657,7 +660,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        992,
+        1232,
         2080
       ],
       "id": "30acb735-66ba-4da2-b1ac-9e029e09f9f5",
@@ -672,14 +675,14 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        624,
+        880,
         2080
       ],
       "id": "7cc3318a-76ff-4371-a875-dd5dd1942b7d"
     },
     {
       "parameters": {
-        "jsCode": " const inscricao = $('Notif: Buscar Inscricao').first().json;\n  const aluno     = $('Notif: Buscar Aluno').first().json;\n  const evento    = $('Notif: Buscar Evento').first().json;\n\n  // Telefone -> formato WAHA: 55DDDNNNNNNNN@c.us\n  const formatPhone = (raw) => {\n    let d = (raw || '').toString().replace(/\\D/g, '');\n    if (d.startsWith('55') && d.length > 11) d = d.substring(2);\n    let ddd, num;\n    if (d.length <= 9) { ddd = '84'; num = d; }\n    else { ddd = d.substring(0, 2); num = d.substring(2); }\n    if (num.length === 9 && num.startsWith('9')) num = num.substring(1);\n    return `55${ddd}${num}@c.us`;\n  };\n  const phoneWaha = formatPhone(inscricao.telefone);\n\n  // Monta as linhas de senhas a partir dos itens da inscrição\n  const itens = inscricao.itens || [];\n  let total = 0;\n  const linhas = itens\n    .filter(it => (it.qtd || 0) > 0)\n    .map(it => {\n      const q = it.qtd || 0;\n      total += q;\n      return `• ${q > 1 ? q + 'x ' : ''}${(it.nome || 'Senha').trim()}`;\n    })\n    .join('\\n');\n\n  const nomeEvento = (evento.nome || '').trim();\n  const nomeAluno  = (aluno.nome_completo || '').trim();\n\n  const texto =\n  `🎉 *Pagamento confirmado!*\n\n  *${nomeEvento}*\n  Aluno(a): ${nomeAluno}\n\n  ✅ ${total} ${total === 1 ? 'senha confirmada' : 'senhas confirmadas'}\n\n Apresente o QR Code na entrada no evento.\n\n Qualquer dúvida, estamos à disposição! 💙\n Escola Amadeus`;\n\n  return [{ json: { texto, phone_waha: phoneWaha } }];"
+        "jsCode": " const inscricao = $('Notif: Buscar Inscricao').first().json;\n  const aluno     = $('Notif: Buscar Aluno').first().json;\n  const evento    = $('Notif: Buscar Evento').first().json;\n\n  // Telefone -> formato WAHA: 55DDDNNNNNNNN@c.us\n  const formatPhone = (raw) => {\n    let d = (raw || '').toString().replace(/\\D/g, '');\n    if (d.startsWith('55') && d.length > 11) d = d.substring(2);\n    let ddd, num;\n    if (d.length <= 9) { ddd = '84'; num = d; }\n    else { ddd = d.substring(0, 2); num = d.substring(2); }\n    if (num.length === 9 && num.startsWith('9')) num = num.substring(1);\n    return `55${ddd}${num}@c.us`;\n  };\n  const phoneWaha = formatPhone(inscricao.telefone);\n\n  // Monta as linhas de senhas a partir dos itens da inscrição\n  const itens = inscricao.itens || [];\n  let total = 0;\n  const linhas = itens\n    .filter(it => (it.qtd || 0) > 0)\n    .map(it => {\n      const q = it.qtd || 0;\n      total += q;\n      return `• ${q > 1 ? q + 'x ' : ''}${(it.nome || 'Senha').trim()}`;\n    })\n    .join('\\n');\n\n  const nomeEvento = (evento.nome || '').trim();\n  const nomeAluno  = (aluno.nome_completo || '').trim();\n\n  const texto =\n  `🎉 *Pagamento confirmado!*\n\n  *${nomeEvento}*\n  Aluno(a): ${nomeAluno}\n\n  ✅ ${total} ${total === 1 ? 'senha confirmada' : 'senhas confirmadas'}\n\n\n Qualquer dúvida, estamos à disposição! 💙\n Escola Amadeus`;\n\n  return [{ json: { texto, phone_waha: phoneWaha } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -796,7 +799,7 @@
       "parameters": {
         "content": "## CONFIRMAR PAGAMENTO\n",
         "height": 672,
-        "width": 3312
+        "width": 3824
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
@@ -806,6 +809,39 @@
       "typeVersion": 1,
       "id": "701141bd-6fb7-449d-a868-a74bc6c7cd39",
       "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "8b1f7f07-5425-4bf2-9f71-2214cff38a67",
+              "leftValue": "={{ $('Notif: Buscar Evento').item.json.nome }}",
+              "rightValue": "=OBMEP",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        640,
+        2080
+      ],
+      "id": "16702c08-ad17-473c-a0bd-62fb8dadb548",
+      "name": "If"
     }
   ],
   "pinData": {},
@@ -1090,7 +1126,25 @@
       "main": [
         [
           {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
             "node": "Gerar_Tokens",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notif: Respond Sucesso1",
             "type": "main",
             "index": 0
           }
@@ -1104,7 +1158,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "20fc8882-e133-4c89-9ce9-b44083249e6b",
+  "versionId": "f313293c-0015-4c3d-be6e-9ced35357514",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "ed6c9f56b80fbffea7e37962c8917580a380804ec8f6410c5c03cabeb9deb95c"

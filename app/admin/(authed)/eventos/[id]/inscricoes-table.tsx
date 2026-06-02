@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { AlertCircle, CheckCircle2, Clock } from "lucide-react";
+import { useState, useTransition } from "react";
+import { AlertCircle, CheckCircle2, Clock, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDateTimeBrt } from "@/lib/utils";
+import { reenviarQRCodes } from "../actions";
 import { LogsDisclosure, type LogItem } from "./logs-disclosure";
 
 export interface InscricaoRow {
@@ -141,6 +142,9 @@ export function InscricoesTable({ inscricoes }: { inscricoes: InscricaoRow[] }) 
                     <td className="py-3 pr-4">
                       <EnvioStatus tipo="confirmação" enviadoEm={i.confirmacao_enviada_em} erro={i.confirmacao_erro} />
                       <EnvioStatus tipo="QR code" enviadoEm={i.qrcode_enviado_em} erro={i.qrcode_erro} />
+                      {i.status_pagamento === "pago" && (
+                        <ReenviarQRButton inscricaoId={i.id} />
+                      )}
                     </td>
                     <td className="py-3 pr-4">
                       <LogsDisclosure logs={i.logs} />
@@ -187,6 +191,49 @@ function TabPill({
         {count}
       </span>
     </button>
+  );
+}
+
+function ReenviarQRButton({ inscricaoId }: { inscricaoId: string }) {
+  const [pending, startTransition] = useTransition();
+  const [feedback, setFeedback] = useState<
+    { ok: boolean; msg: string } | null
+  >(null);
+
+  function handleClick() {
+    setFeedback(null);
+    if (!confirm("Reenviar os QR codes para o WhatsApp do responsável?")) {
+      return;
+    }
+    startTransition(async () => {
+      const r = await reenviarQRCodes(inscricaoId);
+      setFeedback(
+        r.ok ? { ok: true, msg: r.mensagem } : { ok: false, msg: r.error },
+      );
+      // Some o feedback depois de 6s
+      setTimeout(() => setFeedback(null), 6000);
+    });
+  }
+
+  return (
+    <div className="mt-1.5 flex flex-col items-start gap-1">
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={pending}
+        className="inline-flex items-center gap-1 rounded-md border border-amadeus-blue/30 bg-white px-2 py-0.5 text-[10px] font-semibold text-amadeus-blue transition-colors hover:bg-amadeus-blue-50 disabled:opacity-50"
+      >
+        <RefreshCw className={`size-3 ${pending ? "animate-spin" : ""}`} />
+        {pending ? "Reenviando..." : "Reenviar QR"}
+      </button>
+      {feedback && (
+        <span
+          className={`text-[10px] ${feedback.ok ? "text-green-700" : "text-red-700"}`}
+        >
+          {feedback.msg}
+        </span>
+      )}
+    </div>
   );
 }
 
