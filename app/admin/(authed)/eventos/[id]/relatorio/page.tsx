@@ -75,17 +75,17 @@ export default async function RelatorioPage({ params, searchParams }: PageProps)
     };
   });
 
-  // Ordena por turma → série → nome
+  // Ordena por série (Maternal II → ... → 9º Ano) → turma (A, B, C...) → nome
   linhas.sort((a, b) => {
-    if (a.turma !== b.turma) return a.turma.localeCompare(b.turma, "pt-BR");
     if (a.serie !== b.serie) return ordemSerie(a.serie) - ordemSerie(b.serie);
+    if (a.turma !== b.turma) return a.turma.localeCompare(b.turma, "pt-BR");
     return a.nome.localeCompare(b.nome, "pt-BR");
   });
 
-  // Agrupa por turma + série
+  // Agrupa por série + turma (chave série-primeiro pra preservar a ordem)
   const grupos: Grupo[] = [];
   for (const l of linhas) {
-    const chave = `${l.turma}|${l.serie}`;
+    const chave = `${l.serie}|${l.turma}`;
     let g = grupos.find((x) => x.chave === chave);
     if (!g) {
       g = { chave, turma: l.turma, serie: l.serie, linhas: [], totalSenhas: 0 };
@@ -121,18 +121,35 @@ export default async function RelatorioPage({ params, searchParams }: PageProps)
             Nenhum pagamento confirmado ainda.
           </p>
         ) : (
-          <div className="mt-6 space-y-8">
+          <div
+            className={
+              modo === "paginas"
+                ? "mt-6 space-y-6 print:space-y-0"
+                : "mt-6 space-y-8"
+            }
+          >
             {grupos.map((g, idx) => (
               <section
                 key={g.chave}
-                className={
+                className={[
+                  modo === "paginas"
+                    ? "rounded-2xl border-2 border-amadeus-blue/20 bg-white p-6 shadow-sm print:rounded-none print:border-0 print:p-0 print:shadow-none"
+                    : "",
                   modo === "paginas" && idx < grupos.length - 1
                     ? "print:break-after-page"
-                    : undefined
-                }
+                    : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
               >
+                {modo === "paginas" && (
+                  <div className="-mt-2 mb-3 flex items-center justify-between text-[10px] font-semibold uppercase tracking-widest text-amadeus-blue/60 print:hidden">
+                    <span>Página {idx + 1} de {grupos.length}</span>
+                    <span>Uma turma por página</span>
+                  </div>
+                )}
                 <h2 className="mb-2 text-base font-extrabold text-amadeus-blue">
-                  Turma {g.turma} · {g.serie}
+                  {g.serie} · Turma {g.turma}
                   <span className="ml-2 text-sm font-medium text-muted-foreground">
                     ({g.linhas.length} aluno(s) · {g.totalSenhas} senha(s))
                   </span>
