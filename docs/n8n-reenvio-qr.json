@@ -210,7 +210,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const tel = $('Formatar Telefone').first().json;\nconst checkSem = $('Check Sem 9')?.first?.()?.json;\nconst checkCom = $('Check Com 9')?.first?.()?.json;\n\nlet chatId = null;\nlet formato = null;\n\nif (checkSem?.numberExists) {\n  chatId = tel.chatIdSemNove;\n  formato = 'sem9';\n} else if (checkCom?.numberExists) {\n  chatId = tel.chatIdComNove;\n  formato = 'com9';\n}\n\nif (!chatId) {\n  throw new Error(`Número ${tel.raw} não tem WhatsApp registrado.`);\n}\n\nreturn [{ json: { chatId, formato, phoneRaw: tel.raw } }];"
+        "jsCode": "const tel = $('Formatar Telefone').first().json;\nconst checkSem = $('Check Sem 9').first().json;\n\nlet checkCom = null;\ntry {\n  checkCom = $('Check Com 9').first().json;\n} catch {\n  // No 'Check Com 9' nao executou (caminho TRUE do IF). Esperado.\n}\n\nlet chatId = null;\nlet formato = null;\n\nif (checkSem?.numberExists) {\n  chatId = tel.chatIdSemNove;\n  formato = 'sem9';\n} else if (checkCom?.numberExists) {\n  chatId = tel.chatIdComNove;\n  formato = 'com9';\n}\n\nif (!chatId) {\n  throw new Error(`Numero ${tel.raw} nao tem WhatsApp registrado.`);\n}\n\nreturn [{ json: { chatId, formato, phoneRaw: tel.raw } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
