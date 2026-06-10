@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarDays, LayoutDashboard, LogOut } from "lucide-react";
+import { CalendarDays, LayoutDashboard, LogOut, Receipt } from "lucide-react";
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/app/admin/actions";
@@ -12,6 +12,7 @@ interface AdminShellProps {
 const navLinks = [
   { href: "/admin/dashboard", label: "Visão geral", icon: LayoutDashboard },
   { href: "/admin/eventos", label: "Eventos", icon: CalendarDays },
+  { href: "/admin/cobrancas", label: "Cobranças", icon: Receipt },
 ];
 
 export function AdminShell({ userEmail, children }: AdminShellProps) {

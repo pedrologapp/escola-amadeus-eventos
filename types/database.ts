@@ -63,6 +63,22 @@ export type InscricaoStatus =
   | "cancelado"
   | "estornado";
 
+export type CobrancaAvulsa = {
+  id: string;
+  aluno_id: string | null;
+  descricao: string;
+  valor: number;
+  responsavel_nome: string;
+  cpf: string;
+  telefone: string;
+  status_pagamento: InscricaoStatus;
+  payment_url: string | null;
+  asaas_payment_id: string | null;
+  asaas_customer_id: string | null;
+  registrado_por: string | null;
+  created_at: string;
+};
+
 export type Inscricao = {
   id: string;
   evento_id: string;
