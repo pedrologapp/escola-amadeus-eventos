@@ -52,10 +52,30 @@ const statusBadge: Record<InscricaoStatus, { label: string; className: string }>
     },
   };
 
+type Aba = "todas" | "pagas" | "pendentes" | "canceladas";
+
 export function CobrancasTable({ cobrancas }: { cobrancas: CobrancaRow[] }) {
+  const [aba, setAba] = useState<Aba>("todas");
   const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
 
-  const excluiveis = cobrancas
+  const pagas = cobrancas.filter((c) => c.status_pagamento === "pago");
+  const pendentes = cobrancas.filter(
+    (c) => c.status_pagamento === "pendente",
+  );
+  const canceladas = cobrancas.filter((c) =>
+    ["cancelado", "estornado"].includes(c.status_pagamento),
+  );
+
+  const lista =
+    aba === "pagas"
+      ? pagas
+      : aba === "pendentes"
+        ? pendentes
+        : aba === "canceladas"
+          ? canceladas
+          : cobrancas;
+
+  const excluiveis = lista
     .filter((c) => c.status_pagamento === "cancelado")
     .map((c) => c.id);
   const idsSelecionados = excluiveis.filter((id) => selecionadas.has(id));
@@ -82,8 +102,41 @@ export function CobrancasTable({ cobrancas }: { cobrancas: CobrancaRow[] }) {
 
   return (
     <div>
+      <div className="px-4 pt-4">
+        <div className="inline-flex flex-wrap gap-1 rounded-2xl border border-border bg-white p-1 shadow-sm">
+          <TabPill
+            active={aba === "todas"}
+            onClick={() => setAba("todas")}
+            count={cobrancas.length}
+          >
+            Todas
+          </TabPill>
+          <TabPill
+            active={aba === "pagas"}
+            onClick={() => setAba("pagas")}
+            count={pagas.length}
+          >
+            Pagas
+          </TabPill>
+          <TabPill
+            active={aba === "pendentes"}
+            onClick={() => setAba("pendentes")}
+            count={pendentes.length}
+          >
+            Pendentes
+          </TabPill>
+          <TabPill
+            active={aba === "canceladas"}
+            onClick={() => setAba("canceladas")}
+            count={canceladas.length}
+          >
+            Canceladas
+          </TabPill>
+        </div>
+      </div>
+
       {idsSelecionados.length > 0 && (
-        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+        <div className="mx-4 mt-4 flex flex-wrap items-center gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
           <span className="text-sm font-semibold text-red-800">
             {idsSelecionados.length} cancelada
             {idsSelecionados.length === 1 ? "" : "s"} selecionada
@@ -96,7 +149,20 @@ export function CobrancasTable({ cobrancas }: { cobrancas: CobrancaRow[] }) {
         </div>
       )}
 
-      <div className="overflow-x-auto">
+      {lista.length === 0 ? (
+        <div className="px-4 py-10 text-center text-sm text-muted-foreground">
+          Nenhuma cobrança{" "}
+          {aba === "pagas"
+            ? "paga"
+            : aba === "pendentes"
+              ? "pendente"
+              : aba === "canceladas"
+                ? "cancelada"
+                : ""}{" "}
+          por aqui.
+        </div>
+      ) : (
+      <div className="mt-4 overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/50 text-left text-xs uppercase tracking-wider text-muted-foreground">
@@ -121,7 +187,7 @@ export function CobrancasTable({ cobrancas }: { cobrancas: CobrancaRow[] }) {
             </tr>
           </thead>
           <tbody>
-            {cobrancas.map((c) => {
+            {lista.map((c) => {
               const badge =
                 statusBadge[c.status_pagamento as InscricaoStatus] ??
                 statusBadge.pendente;
@@ -231,7 +297,43 @@ export function CobrancasTable({ cobrancas }: { cobrancas: CobrancaRow[] }) {
           </tbody>
         </table>
       </div>
+      )}
     </div>
+  );
+}
+
+function TabPill({
+  active,
+  onClick,
+  count,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  count: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex items-center rounded-xl px-4 py-1.5 text-sm font-semibold transition-colors ${
+        active
+          ? "bg-amadeus-blue text-white shadow-float"
+          : "text-amadeus-blue hover:bg-amadeus-blue-50"
+      }`}
+    >
+      {children}
+      <span
+        className={`ml-2 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+          active
+            ? "bg-white/25 text-white"
+            : "bg-amadeus-blue-50 text-amadeus-blue"
+        }`}
+      >
+        {count}
+      </span>
+    </button>
   );
 }
 
