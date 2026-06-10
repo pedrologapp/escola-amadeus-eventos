@@ -254,7 +254,7 @@
       },
       "name": "Enviar_QRCode",
       "type": "@devlikeapro/n8n-nodes-waha.WAHA",
-      "typeVersion": 202411,
+      "typeVersion": 202502,
       "position": [
         2080,
         2080
@@ -278,7 +278,7 @@
       },
       "name": "Enviar_Confirmacao",
       "type": "@devlikeapro/n8n-nodes-waha.WAHA",
-      "typeVersion": 202411,
+      "typeVersion": 202502,
       "position": [
         1248,
         2080
@@ -855,7 +855,7 @@
       },
       "name": "Notif: Check Sem 9",
       "type": "@devlikeapro/n8n-nodes-waha.WAHA",
-      "typeVersion": 202411,
+      "typeVersion": 202502,
       "position": [
         -352,
         2080
@@ -912,7 +912,7 @@
       },
       "name": "Notif: Check Com 9",
       "type": "@devlikeapro/n8n-nodes-waha.WAHA",
-      "typeVersion": 202411,
+      "typeVersion": 202502,
       "position": [
         -176,
         2304

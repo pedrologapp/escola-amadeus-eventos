@@ -132,8 +132,8 @@
         "requestOptions": {}
       },
       "name": "Avulsa: Check Sem 9",
-      "type": "n8n-nodes-waha.WAHA",
-      "typeVersion": 202411,
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
       "position": [-576, 496],
       "id": "av-criar-chksem9-0001",
       "credentials": {
@@ -183,8 +183,8 @@
         "requestOptions": {}
       },
       "name": "Avulsa: Check Com 9",
-      "type": "n8n-nodes-waha.WAHA",
-      "typeVersion": 202411,
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
       "position": [-384, 688],
       "id": "av-criar-chkcom9-0001",
       "credentials": {
@@ -232,8 +232,8 @@
         "requestOptions": {}
       },
       "name": "Avulsa: Enviar Link",
-      "type": "n8n-nodes-waha.WAHA",
-      "typeVersion": 202411,
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
       "position": [384, 496],
       "id": "av-criar-envlink-0001",
       "credentials": {
@@ -395,8 +395,8 @@
         "requestOptions": {}
       },
       "name": "AvulsaNotif: Check Sem 9",
-      "type": "n8n-nodes-waha.WAHA",
-      "typeVersion": 202411,
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
       "position": [-576, 1296],
       "id": "av-notif-chksem9-0001",
       "credentials": {
@@ -446,8 +446,8 @@
         "requestOptions": {}
       },
       "name": "AvulsaNotif: Check Com 9",
-      "type": "n8n-nodes-waha.WAHA",
-      "typeVersion": 202411,
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
       "position": [-384, 1488],
       "id": "av-notif-chkcom9-0001",
       "credentials": {
@@ -495,8 +495,8 @@
         "requestOptions": {}
       },
       "name": "AvulsaNotif: Enviar Confirmacao",
-      "type": "n8n-nodes-waha.WAHA",
-      "typeVersion": 202411,
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
       "position": [384, 1296],
       "id": "av-notif-envconf-0001",
       "credentials": {
