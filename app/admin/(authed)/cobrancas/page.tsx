@@ -11,6 +11,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency, formatDateTimeBrt } from "@/lib/utils";
 import type { InscricaoStatus } from "@/types/database";
+import { ExcluirCobrancaButton } from "./excluir-cobranca-button";
 
 const statusBadge: Record<InscricaoStatus, { label: string; className: string }> =
   {
@@ -188,19 +189,27 @@ export default async function CobrancasPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        {c.payment_url ? (
-                          <a
-                            href={c.payment_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 font-semibold text-amadeus-blue hover:underline"
-                          >
-                            Abrir
-                            <ExternalLink className="size-3.5" />
-                          </a>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
+                        <div className="flex flex-col items-start gap-1.5">
+                          {c.payment_url ? (
+                            <a
+                              href={c.payment_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 font-semibold text-amadeus-blue hover:underline"
+                            >
+                              Abrir
+                              <ExternalLink className="size-3.5" />
+                            </a>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                          {c.status_pagamento === "cancelado" && (
+                            <ExcluirCobrancaButton
+                              cobrancaId={c.id}
+                              descricao={c.descricao}
+                            />
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

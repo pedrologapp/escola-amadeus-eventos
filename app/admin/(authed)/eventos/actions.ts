@@ -760,6 +760,55 @@ export async function reenviarQRCodes(
   }
 }
 
+// =============================================================
+// EXCLUSÃO DE INSCRIÇÃO CANCELADA
+// =============================================================
+
+export type ExcluirInscricaoState =
+  | { ok: true }
+  | { ok: false; error: string };
+
+export async function excluirInscricaoCancelada(
+  inscricaoId: string,
+): Promise<ExcluirInscricaoState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { ok: false, error: "Sua sessão expirou. Faça login novamente." };
+  }
+
+  const { data: inscricao, error: fetchErr } = await supabase
+    .from("inscricoes")
+    .select("id, evento_id, status_pagamento")
+    .eq("id", inscricaoId)
+    .maybeSingle();
+
+  if (fetchErr || !inscricao) {
+    return { ok: false, error: "Inscrição não encontrada." };
+  }
+  if (inscricao.status_pagamento !== "cancelado") {
+    return {
+      ok: false,
+      error: "Só é possível excluir inscrição cancelada.",
+    };
+  }
+
+  // tickets e inscricao_logs caem junto (FK on delete cascade)
+  const { error: delErr } = await supabase
+    .from("inscricoes")
+    .delete()
+    .eq("id", inscricaoId);
+
+  if (delErr) {
+    return { ok: false, error: `Erro ao excluir: ${delErr.message}` };
+  }
+
+  revalidatePath(`/admin/eventos/${inscricao.evento_id}`);
+  return { ok: true };
+}
+
 // Trava de senha para ações sensíveis (editar/excluir/duplicar).
 // A senha é validada no servidor para não ir no bundle do cliente.
 export async function verificarSenhaAcao(senha: string): Promise<boolean> {

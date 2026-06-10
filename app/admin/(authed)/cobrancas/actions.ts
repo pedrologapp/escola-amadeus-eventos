@@ -228,3 +228,48 @@ export async function criarCobrancaAvulsa(
   revalidatePath("/admin/cobrancas");
   return { ok: true, cobrancaId: cobranca.id, paymentUrl };
 }
+
+// =============================================================
+// EXCLUSÃO DE COBRANÇA CANCELADA
+// =============================================================
+
+export type ExcluirCobrancaState =
+  | { ok: true }
+  | { ok: false; error: string };
+
+export async function excluirCobrancaCancelada(
+  cobrancaId: string,
+): Promise<ExcluirCobrancaState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { ok: false, error: "Sua sessão expirou. Faça login novamente." };
+  }
+
+  const { data: cobrancaExistente, error: fetchErr } = await supabase
+    .from("cobrancas_avulsas")
+    .select("id, status_pagamento")
+    .eq("id", cobrancaId)
+    .maybeSingle();
+
+  if (fetchErr || !cobrancaExistente) {
+    return { ok: false, error: "Cobrança não encontrada." };
+  }
+  if (cobrancaExistente.status_pagamento !== "cancelado") {
+    return { ok: false, error: "Só é possível excluir cobrança cancelada." };
+  }
+
+  const { error: delErr } = await supabase
+    .from("cobrancas_avulsas")
+    .delete()
+    .eq("id", cobrancaId);
+
+  if (delErr) {
+    return { ok: false, error: `Erro ao excluir: ${delErr.message}` };
+  }
+
+  revalidatePath("/admin/cobrancas");
+  return { ok: true };
+}
