@@ -82,6 +82,10 @@ export type CobrancaAvulsa = {
   asaas_payment_id: string | null;
   asaas_customer_id: string | null;
   registrado_por: string | null;
+  link_enviado_em: string | null;
+  link_erro: string | null;
+  confirmacao_enviada_em: string | null;
+  confirmacao_erro: string | null;
   created_at: string;
 };
 

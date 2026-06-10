@@ -37,7 +37,7 @@ export default async function CobrancasPage() {
   const { data: cobrancas, error } = await supabase
     .from("cobrancas_avulsas")
     .select(
-      "id, descricao, valor, valor_total, metodo_cobranca, parcelas, repassar_juros, responsavel_nome, telefone, status_pagamento, payment_url, created_at, alunos(nome_completo, serie, turma)",
+      "id, descricao, valor, valor_total, metodo_cobranca, parcelas, repassar_juros, responsavel_nome, telefone, status_pagamento, payment_url, created_at, link_enviado_em, link_erro, confirmacao_enviada_em, confirmacao_erro, alunos(nome_completo, serie, turma)",
     )
     .order("created_at", { ascending: false })
     .limit(200);
@@ -165,6 +165,27 @@ export default async function CobrancasPage() {
                         >
                           {badge.label}
                         </span>
+                        <div className="mt-1 space-y-0.5 text-xs">
+                          {c.link_enviado_em ? (
+                            <div className="text-green-700">✓ Link enviado</div>
+                          ) : c.link_erro ? (
+                            <div className="text-red-600" title={c.link_erro}>
+                              ⚠ Link falhou
+                            </div>
+                          ) : null}
+                          {c.confirmacao_enviada_em ? (
+                            <div className="text-green-700">
+                              ✓ Confirmação enviada
+                            </div>
+                          ) : c.confirmacao_erro ? (
+                            <div
+                              className="text-red-600"
+                              title={c.confirmacao_erro}
+                            >
+                              ⚠ Confirmação falhou
+                            </div>
+                          ) : null}
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         {c.payment_url ? (
