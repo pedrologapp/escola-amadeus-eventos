@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ExternalLink, Receipt } from "lucide-react";
+import { Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,29 +9,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
-import { formatCurrency, formatDateTimeBrt } from "@/lib/utils";
-import type { InscricaoStatus } from "@/types/database";
-import { ExcluirCobrancaButton } from "./excluir-cobranca-button";
-
-const statusBadge: Record<InscricaoStatus, { label: string; className: string }> =
-  {
-    pendente: {
-      label: "Pendente",
-      className: "bg-amber-100 text-amber-800 border-amber-300",
-    },
-    pago: {
-      label: "Pago",
-      className: "bg-green-100 text-green-800 border-green-300",
-    },
-    cancelado: {
-      label: "Cancelado",
-      className: "bg-gray-100 text-gray-600 border-gray-300",
-    },
-    estornado: {
-      label: "Estornado",
-      className: "bg-red-100 text-red-800 border-red-300",
-    },
-  };
+import { formatCurrency } from "@/lib/utils";
+import { CobrancasTable, type CobrancaRow } from "./cobrancas-table";
 
 export default async function CobrancasPage() {
   const supabase = await createClient();
@@ -59,7 +38,26 @@ export default async function CobrancasPage() {
     );
   }
 
-  const lista = cobrancas ?? [];
+  const lista: CobrancaRow[] = (cobrancas ?? []).map((c) => ({
+    id: c.id,
+    descricao: c.descricao,
+    valor: Number(c.valor),
+    valor_total: c.valor_total === null ? null : Number(c.valor_total),
+    metodo_cobranca: c.metodo_cobranca ?? null,
+    parcelas: c.parcelas ?? null,
+    repassar_juros: c.repassar_juros ?? null,
+    responsavel_nome: c.responsavel_nome,
+    telefone: c.telefone,
+    status_pagamento: c.status_pagamento,
+    payment_url: c.payment_url,
+    created_at: c.created_at,
+    link_enviado_em: c.link_enviado_em ?? null,
+    link_erro: c.link_erro ?? null,
+    confirmacao_enviada_em: c.confirmacao_enviada_em ?? null,
+    confirmacao_erro: c.confirmacao_erro ?? null,
+    aluno: (c.alunos as unknown as CobrancaRow["aluno"]) ?? null,
+  }));
+
   const totalPago = lista
     .filter((c) => c.status_pagamento === "pago")
     .reduce((sum, c) => sum + Number(c.valor_total ?? c.valor), 0);
@@ -74,7 +72,7 @@ export default async function CobrancasPage() {
           <p className="mt-1 text-muted-foreground">
             {lista.length === 0
               ? "Nenhuma cobrança criada ainda."
-              : `${lista.length} cobrança${lista.length === 1 ? "" : "s"} · ${formatCurrency(totalPago)} recebido${totalPago > 0 ? "" : ""}`}
+              : `${lista.length} cobrança${lista.length === 1 ? "" : "s"} · ${formatCurrency(totalPago)} recebido`}
           </p>
         </div>
         <Button asChild>
@@ -96,127 +94,8 @@ export default async function CobrancasPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card className="mt-8 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/50 text-left text-xs uppercase tracking-wider text-muted-foreground">
-                  <th className="px-4 py-3">Data</th>
-                  <th className="px-4 py-3">Aluno</th>
-                  <th className="px-4 py-3">Descrição</th>
-                  <th className="px-4 py-3">Responsável</th>
-                  <th className="px-4 py-3 text-right">Valor</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Link</th>
-                </tr>
-              </thead>
-              <tbody>
-                {lista.map((c) => {
-                  const aluno = c.alunos as unknown as {
-                    nome_completo: string;
-                    serie: string;
-                    turma: string;
-                  } | null;
-                  const badge =
-                    statusBadge[c.status_pagamento as InscricaoStatus] ??
-                    statusBadge.pendente;
-                  return (
-                    <tr
-                      key={c.id}
-                      className="border-b border-border/60 last:border-0 hover:bg-muted/30"
-                    >
-                      <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
-                        {formatDateTimeBrt(c.created_at)}
-                      </td>
-                      <td className="px-4 py-3">
-                        {aluno ? (
-                          <>
-                            <div className="font-semibold">
-                              {aluno.nome_completo}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {aluno.serie} · Turma {aluno.turma}
-                            </div>
-                          </>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </td>
-                      <td className="max-w-[220px] px-4 py-3">{c.descricao}</td>
-                      <td className="px-4 py-3">
-                        <div>{c.responsavel_nome}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {c.telefone}
-                        </div>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right font-semibold tabular-nums">
-                        {formatCurrency(Number(c.valor_total ?? c.valor))}
-                        <div className="text-xs font-normal text-muted-foreground">
-                          {c.metodo_cobranca === "pix" && "PIX"}
-                          {c.metodo_cobranca === "cartao" &&
-                            `Cartão ${c.parcelas}x ${c.repassar_juros ? "com" : "sem"} juros`}
-                          {(c.metodo_cobranca === "aberto" ||
-                            !c.metodo_cobranca) &&
-                            "Link aberto"}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-block rounded-full border px-2.5 py-0.5 text-xs font-bold ${badge.className}`}
-                        >
-                          {badge.label}
-                        </span>
-                        <div className="mt-1 space-y-0.5 text-xs">
-                          {c.link_enviado_em ? (
-                            <div className="text-green-700">✓ Link enviado</div>
-                          ) : c.link_erro ? (
-                            <div className="text-red-600" title={c.link_erro}>
-                              ⚠ Link falhou
-                            </div>
-                          ) : null}
-                          {c.confirmacao_enviada_em ? (
-                            <div className="text-green-700">
-                              ✓ Confirmação enviada
-                            </div>
-                          ) : c.confirmacao_erro ? (
-                            <div
-                              className="text-red-600"
-                              title={c.confirmacao_erro}
-                            >
-                              ⚠ Confirmação falhou
-                            </div>
-                          ) : null}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-col items-start gap-1.5">
-                          {c.payment_url ? (
-                            <a
-                              href={c.payment_url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center gap-1 font-semibold text-amadeus-blue hover:underline"
-                            >
-                              Abrir
-                              <ExternalLink className="size-3.5" />
-                            </a>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                          {c.status_pagamento === "cancelado" && (
-                            <ExcluirCobrancaButton
-                              cobrancaId={c.id}
-                              descricao={c.descricao}
-                            />
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+        <Card className="mt-8 overflow-hidden p-0">
+          <CobrancasTable cobrancas={lista} />
         </Card>
       )}
     </div>

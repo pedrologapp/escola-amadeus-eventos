@@ -273,3 +273,54 @@ export async function excluirCobrancaCancelada(
   revalidatePath("/admin/cobrancas");
   return { ok: true };
 }
+
+export type ExcluirCobrancasEmMassaState =
+  | { ok: true; excluidas: number }
+  | { ok: false; error: string };
+
+export async function excluirCobrancasCanceladas(
+  cobrancaIds: string[],
+): Promise<ExcluirCobrancasEmMassaState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { ok: false, error: "Sua sessão expirou. Faça login novamente." };
+  }
+  if (cobrancaIds.length === 0) {
+    return { ok: false, error: "Nenhuma cobrança selecionada." };
+  }
+
+  // Filtra no servidor: só as que realmente estão canceladas
+  const { data: alvos, error: fetchErr } = await supabase
+    .from("cobrancas_avulsas")
+    .select("id")
+    .in("id", cobrancaIds)
+    .eq("status_pagamento", "cancelado");
+
+  if (fetchErr) {
+    return { ok: false, error: fetchErr.message };
+  }
+  if (!alvos || alvos.length === 0) {
+    return {
+      ok: false,
+      error: "Nenhuma cobrança cancelada entre as selecionadas.",
+    };
+  }
+
+  const { error: delErr } = await supabase
+    .from("cobrancas_avulsas")
+    .delete()
+    .in(
+      "id",
+      alvos.map((a) => a.id),
+    );
+
+  if (delErr) {
+    return { ok: false, error: `Erro ao excluir: ${delErr.message}` };
+  }
+
+  revalidatePath("/admin/cobrancas");
+  return { ok: true, excluidas: alvos.length };
+}

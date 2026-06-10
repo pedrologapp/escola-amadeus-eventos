@@ -809,6 +809,59 @@ export async function excluirInscricaoCancelada(
   return { ok: true };
 }
 
+export type ExcluirEmMassaState =
+  | { ok: true; excluidas: number }
+  | { ok: false; error: string };
+
+export async function excluirInscricoesCanceladas(
+  inscricaoIds: string[],
+): Promise<ExcluirEmMassaState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { ok: false, error: "Sua sessão expirou. Faça login novamente." };
+  }
+  if (inscricaoIds.length === 0) {
+    return { ok: false, error: "Nenhuma inscrição selecionada." };
+  }
+
+  // Filtra no servidor: só as que realmente estão canceladas
+  const { data: alvos, error: fetchErr } = await supabase
+    .from("inscricoes")
+    .select("id, evento_id")
+    .in("id", inscricaoIds)
+    .eq("status_pagamento", "cancelado");
+
+  if (fetchErr) {
+    return { ok: false, error: fetchErr.message };
+  }
+  if (!alvos || alvos.length === 0) {
+    return {
+      ok: false,
+      error: "Nenhuma inscrição cancelada entre as selecionadas.",
+    };
+  }
+
+  const { error: delErr } = await supabase
+    .from("inscricoes")
+    .delete()
+    .in(
+      "id",
+      alvos.map((a) => a.id),
+    );
+
+  if (delErr) {
+    return { ok: false, error: `Erro ao excluir: ${delErr.message}` };
+  }
+
+  for (const eventoId of new Set(alvos.map((a) => a.evento_id))) {
+    revalidatePath(`/admin/eventos/${eventoId}`);
+  }
+  return { ok: true, excluidas: alvos.length };
+}
+
 // Trava de senha para ações sensíveis (editar/excluir/duplicar).
 // A senha é validada no servidor para não ir no bundle do cliente.
 export async function verificarSenhaAcao(senha: string): Promise<boolean> {

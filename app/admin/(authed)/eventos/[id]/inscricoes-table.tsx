@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { formatCurrency, formatDateTimeBrt } from "@/lib/utils";
 import {
   excluirInscricaoCancelada,
+  excluirInscricoesCanceladas,
   reenviarQRCodes,
   verificarSenhaAcao,
 } from "../actions";
@@ -56,6 +57,16 @@ const statusInscricao: Record<
 
 export function InscricoesTable({ inscricoes }: { inscricoes: InscricaoRow[] }) {
   const [aba, setAba] = useState<Aba>("todas");
+  const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
+
+  function toggleSelecionada(id: string) {
+    setSelecionadas((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   const pagas = inscricoes.filter((i) => i.status_pagamento === "pago");
   const pendentes = inscricoes.filter(
@@ -74,6 +85,26 @@ export function InscricoesTable({ inscricoes }: { inscricoes: InscricaoRow[] }) 
           ? canceladas
           : inscricoes;
 
+  // Só inscrições canceladas (não estornadas) podem ser excluídas
+  const excluiveisNaLista = lista
+    .filter((i) => i.status_pagamento === "cancelado")
+    .map((i) => i.id);
+  const idsSelecionados = excluiveisNaLista.filter((id) =>
+    selecionadas.has(id),
+  );
+  const todasMarcadas =
+    excluiveisNaLista.length > 0 &&
+    idsSelecionados.length === excluiveisNaLista.length;
+
+  function toggleTodas() {
+    setSelecionadas((prev) => {
+      const next = new Set(prev);
+      if (todasMarcadas) excluiveisNaLista.forEach((id) => next.delete(id));
+      else excluiveisNaLista.forEach((id) => next.add(id));
+      return next;
+    });
+  }
+
   return (
     <div>
       <div className="mb-5 inline-flex flex-wrap gap-1 rounded-2xl border border-border bg-white p-1 shadow-sm">
@@ -91,6 +122,20 @@ export function InscricoesTable({ inscricoes }: { inscricoes: InscricaoRow[] }) 
         </TabPill>
       </div>
 
+      {idsSelecionados.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+          <span className="text-sm font-semibold text-red-800">
+            {idsSelecionados.length} cancelada
+            {idsSelecionados.length === 1 ? "" : "s"} selecionada
+            {idsSelecionados.length === 1 ? "" : "s"}
+          </span>
+          <ExcluirEmMassaButton
+            ids={idsSelecionados}
+            onDone={() => setSelecionadas(new Set())}
+          />
+        </div>
+      )}
+
       {lista.length === 0 ? (
         <div className="grid place-items-center rounded-2xl border-2 border-dashed border-amadeus-blue/20 bg-amadeus-blue-50/30 py-12 text-sm text-muted-foreground">
           {aba === "todas"
@@ -102,6 +147,17 @@ export function InscricoesTable({ inscricoes }: { inscricoes: InscricaoRow[] }) 
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/70 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                <th className="w-8 py-3 pr-2">
+                  {excluiveisNaLista.length > 0 && (
+                    <input
+                      type="checkbox"
+                      checked={todasMarcadas}
+                      onChange={toggleTodas}
+                      title="Selecionar todas as canceladas"
+                      className="size-4 cursor-pointer accent-red-600"
+                    />
+                  )}
+                </th>
                 <th className="py-3 pr-4 font-semibold">Aluno</th>
                 <th className="py-3 pr-4 font-semibold">Responsável</th>
                 <th className="py-3 pr-4 font-semibold">Senhas</th>
@@ -118,6 +174,16 @@ export function InscricoesTable({ inscricoes }: { inscricoes: InscricaoRow[] }) 
                 const st = statusInscricao[i.status_pagamento] ?? statusInscricao.pendente;
                 return (
                   <tr key={i.id} className="border-b border-border/40 last:border-0">
+                    <td className="py-3 pr-2">
+                      {i.status_pagamento === "cancelado" && (
+                        <input
+                          type="checkbox"
+                          checked={selecionadas.has(i.id)}
+                          onChange={() => toggleSelecionada(i.id)}
+                          className="size-4 cursor-pointer accent-red-600"
+                        />
+                      )}
+                    </td>
                     <td className="py-3 pr-4">
                       {i.aluno ? (
                         <>
@@ -323,6 +389,125 @@ function ReenviarQRButton({ inscricaoId }: { inscricaoId: string }) {
                 disabled={pending || senha.length === 0}
               >
                 {pending ? "Reenviando..." : "Reenviar"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+function ExcluirEmMassaButton({
+  ids,
+  onDone,
+}: {
+  ids: string[];
+  onDone: () => void;
+}) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [open, setOpen] = useState(false);
+  const [senha, setSenha] = useState("");
+  const [erroModal, setErroModal] = useState<string | null>(null);
+
+  function abrirModal() {
+    setSenha("");
+    setErroModal(null);
+    setOpen(true);
+  }
+
+  function confirmar() {
+    setErroModal(null);
+    startTransition(async () => {
+      const senhaOk = await verificarSenhaAcao(senha);
+      if (!senhaOk) {
+        setErroModal("Senha incorreta.");
+        return;
+      }
+      const r = await excluirInscricoesCanceladas(ids);
+      if (!r.ok) {
+        setErroModal(r.error);
+        return;
+      }
+      setOpen(false);
+      onDone();
+      router.refresh();
+    });
+  }
+
+  return (
+    <>
+      <Button
+        type="button"
+        variant="destructive"
+        size="sm"
+        onClick={abrirModal}
+        disabled={pending}
+      >
+        <Trash2 className="size-4" />
+        {pending ? "Excluindo..." : `Excluir selecionadas (${ids.length})`}
+      </Button>
+
+      {open && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-float-lg">
+            <div className="flex items-center justify-between">
+              <h3 className="flex items-center gap-2 text-lg font-extrabold text-amadeus-blue">
+                <Lock className="size-5" />
+                Confirmar senha
+              </h3>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="text-muted-foreground transition-colors hover:text-foreground"
+                aria-label="Fechar"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Digite a senha para excluir {ids.length} inscriç
+              {ids.length === 1 ? "ão cancelada" : "ões canceladas"}. Esta ação
+              não pode ser desfeita.
+            </p>
+            <div className="mt-4 space-y-1.5">
+              <Label htmlFor="senha-excluir-massa">Senha</Label>
+              <Input
+                id="senha-excluir-massa"
+                type="password"
+                value={senha}
+                autoFocus
+                onChange={(e) => setSenha(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") confirmar();
+                }}
+                placeholder="••••••"
+              />
+              {erroModal && (
+                <p className="text-xs text-destructive">{erroModal}</p>
+              )}
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setOpen(false)}
+                disabled={pending}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={confirmar}
+                disabled={pending || senha.length === 0}
+              >
+                {pending ? "Excluindo..." : "Excluir"}
               </Button>
             </div>
           </div>
