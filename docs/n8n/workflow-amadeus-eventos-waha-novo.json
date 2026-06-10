@@ -951,7 +951,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const semNove = $('Notif: Formatar Telefone').first().json;\n  const checkSem = $('Notif: Check Sem 9').first().json;\n\n  let checkCom = null;\n  try {\n    checkCom = $('Notif: Check Com 9').first().json;\n  } catch {\n    // Nó \"Check Com 9\" não executou (caminho TRUE do IF — sem 9 funcionou).\n    // É esperado, segue sem ele.\n  }\n\n  let chatId = null;\n  let formato = null;\n\n  if (checkSem?.numberExists) {\n    chatId = semNove.chatIdSemNove;\n    formato = 'sem9';\n  } else if (checkCom?.numberExists) {\n    chatId = semNove.chatIdComNove;\n    formato = 'com9';\n  }\n\n  if (!chatId) {\n    throw new Error(`Número ${semNove.raw} não tem WhatsApp registrado.`);\n  }\n\n  return [{ json: { chatId, formato, phoneRaw: semNove.raw } }];"
+        "jsCode": "const semNove = $('Notif: Formatar Telefone').first().json;\nconst checkSem = $('Notif: Check Sem 9').first().json;\n\nlet checkCom = null;\ntry {\n  checkCom = $('Notif: Check Com 9').first().json;\n} catch {\n  // Não executou (sem 9 deu true) — esperado.\n}\n\nlet chatId = null;\nlet formato = null;\n\nif (checkSem?.numberExists) {\n  chatId = checkSem.chatId || semNove.chatIdSemNove;\n  formato = 'sem9';\n} else if (checkCom?.numberExists) {\n  chatId = checkCom.chatId || semNove.chatIdComNove;\n  formato = 'com9';\n} else {\n  // O check do WAHA retorna false intermitente sob carga.\n  // Em vez de travar o fluxo, usa o formato sem 9 (padrão BR) e segue.\n  chatId = semNove.chatIdSemNove;\n  formato = 'fallback-sem9';\n}\n\nreturn [{ json: { chatId, formato, phoneRaw: semNove.raw } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,

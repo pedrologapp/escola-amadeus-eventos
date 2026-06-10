@@ -10,7 +10,10 @@
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [-1776, 400],
+      "position": [
+        -1776,
+        400
+      ],
       "id": "av-criar-webhook-0001",
       "name": "Avulsa: Webhook",
       "webhookId": "amadeus-cobrancaavulsa"
@@ -21,7 +24,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-1568, 400],
+      "position": [
+        -1568,
+        400
+      ],
       "id": "av-criar-sanitizar-001",
       "name": "Avulsa: Sanitizar"
     },
@@ -49,7 +55,10 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [-1376, 400],
+      "position": [
+        -1376,
+        400
+      ],
       "id": "av-criar-customer-0001",
       "name": "Avulsa: Asaas Customer"
     },
@@ -59,7 +68,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-1264, 400],
+      "position": [
+        -1264,
+        400
+      ],
       "id": "av-criar-montarcob-1",
       "name": "Avulsa: Montar Cobranca"
     },
@@ -87,7 +99,10 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [-1168, 400],
+      "position": [
+        -1168,
+        400
+      ],
       "id": "av-criar-cobranca-001",
       "name": "Avulsa: Asaas Cobranca"
     },
@@ -97,7 +112,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-976, 400],
+      "position": [
+        -976,
+        400
+      ],
       "id": "av-criar-resposta-001",
       "name": "Avulsa: Montar Resposta"
     },
@@ -109,7 +127,10 @@
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [-768, 304],
+      "position": [
+        -768,
+        304
+      ],
       "id": "av-criar-respond-0001",
       "name": "Avulsa: Respond"
     },
@@ -119,7 +140,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-768, 496],
+      "position": [
+        -768,
+        496
+      ],
       "id": "av-criar-fmttel-00001",
       "name": "Avulsa: Formatar Telefone"
     },
@@ -134,7 +158,10 @@
       "name": "Avulsa: Check Sem 9",
       "type": "@devlikeapro/n8n-nodes-waha.WAHA",
       "typeVersion": 202502,
-      "position": [-576, 496],
+      "position": [
+        -576,
+        496
+      ],
       "id": "av-criar-chksem9-0001",
       "credentials": {
         "wahaApi": {
@@ -170,7 +197,10 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [-384, 496],
+      "position": [
+        -384,
+        496
+      ],
       "id": "av-criar-ifexiste-001",
       "name": "Avulsa: If Existe"
     },
@@ -185,7 +215,10 @@
       "name": "Avulsa: Check Com 9",
       "type": "@devlikeapro/n8n-nodes-waha.WAHA",
       "typeVersion": 202502,
-      "position": [-384, 688],
+      "position": [
+        -384,
+        688
+      ],
       "id": "av-criar-chkcom9-0001",
       "credentials": {
         "wahaApi": {
@@ -198,17 +231,23 @@
       "parameters": {},
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
-      "position": [-192, 496],
+      "position": [
+        -192,
+        496
+      ],
       "id": "av-criar-merge-00001",
       "name": "Avulsa: Merge"
     },
     {
       "parameters": {
-        "jsCode": "const semNove = $('Avulsa: Formatar Telefone').first().json;\nconst checkSem = $('Avulsa: Check Sem 9').first().json;\n\nlet checkCom = null;\ntry {\n  checkCom = $('Avulsa: Check Com 9').first().json;\n} catch {\n  // Não executou (sem 9 funcionou) — esperado.\n}\n\nlet chatId = null;\nif (checkSem?.numberExists) chatId = semNove.chatIdSemNove;\nelse if (checkCom?.numberExists) chatId = semNove.chatIdComNove;\n\nif (!chatId) {\n  throw new Error(`Número ${semNove.raw} não tem WhatsApp registrado.`);\n}\n\nreturn [{ json: { chatId } }];"
+        "jsCode": "const semNove = $('Avulsa: Formatar Telefone').first().json;\nconst checkSem = $('Avulsa: Check Sem 9').first().json;\n\nlet checkCom = null;\ntry {\n  checkCom = $('Avulsa: Check Com 9').first().json;\n} catch {\n  // Não executou (sem 9 deu true) — esperado.\n}\n\nlet chatId = null;\nlet formato = null;\n\nif (checkSem?.numberExists) {\n  chatId = checkSem.chatId || semNove.chatIdSemNove;\n  formato = 'sem9';\n} else if (checkCom?.numberExists) {\n  chatId = checkCom.chatId || semNove.chatIdComNove;\n  formato = 'com9';\n} else {\n  // O check do WAHA retorna false intermitente sob carga.\n  // Em vez de travar o fluxo, usa o formato sem 9 (padrão BR) e segue.\n  chatId = semNove.chatIdSemNove;\n  formato = 'fallback-sem9';\n}\n\nreturn [{ json: { chatId, formato, phoneRaw: semNove.raw } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [0, 496],
+      "position": [
+        0,
+        496
+      ],
       "id": "av-criar-resolver-001",
       "name": "Avulsa: Resolver chatId"
     },
@@ -218,7 +257,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [192, 496],
+      "position": [
+        192,
+        496
+      ],
       "id": "av-criar-msglink-0001",
       "name": "Avulsa: Montar Msg Link"
     },
@@ -234,7 +276,10 @@
       "name": "Avulsa: Enviar Link",
       "type": "@devlikeapro/n8n-nodes-waha.WAHA",
       "typeVersion": 202502,
-      "position": [384, 496],
+      "position": [
+        384,
+        496
+      ],
       "id": "av-criar-envlink-0001",
       "credentials": {
         "wahaApi": {
@@ -250,7 +295,10 @@
         "width": 2432
       },
       "type": "n8n-nodes-base.stickyNote",
-      "position": [-1904, 240],
+      "position": [
+        -1904,
+        240
+      ],
       "typeVersion": 1,
       "id": "av-sticky-criar-0001",
       "name": "Sticky Avulsa Criar"
@@ -264,7 +312,10 @@
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [-1776, 1200],
+      "position": [
+        -1776,
+        1200
+      ],
       "id": "av-notif-webhook-0001",
       "name": "AvulsaNotif: Webhook",
       "webhookId": "amadeus-cobrancaavulsapagamentos"
@@ -275,7 +326,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-1568, 1200],
+      "position": [
+        -1568,
+        1200
+      ],
       "id": "av-notif-validar-0001",
       "name": "AvulsaNotif: Validar"
     },
@@ -306,7 +360,10 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [-1376, 1200],
+      "position": [
+        -1376,
+        1200
+      ],
       "id": "av-notif-continuar-01",
       "name": "AvulsaNotif: Skip?"
     },
@@ -318,7 +375,10 @@
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [-1168, 1104],
+      "position": [
+        -1168,
+        1104
+      ],
       "id": "av-notif-respskip-001",
       "name": "AvulsaNotif: Respond Skip"
     },
@@ -337,7 +397,10 @@
       },
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [-1168, 1296],
+      "position": [
+        -1168,
+        1296
+      ],
       "id": "av-notif-buscar-00001",
       "name": "AvulsaNotif: Buscar Cobranca",
       "credentials": {
@@ -371,7 +434,10 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [-976, 1296],
+      "position": [
+        -976,
+        1296
+      ],
       "id": "av-notif-marcarpago-1",
       "name": "AvulsaNotif: Marcar Pago",
       "executeOnce": true
@@ -382,7 +448,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-768, 1296],
+      "position": [
+        -768,
+        1296
+      ],
       "id": "av-notif-fmttel-00001",
       "name": "AvulsaNotif: Formatar Telefone"
     },
@@ -397,7 +466,10 @@
       "name": "AvulsaNotif: Check Sem 9",
       "type": "@devlikeapro/n8n-nodes-waha.WAHA",
       "typeVersion": 202502,
-      "position": [-576, 1296],
+      "position": [
+        -576,
+        1296
+      ],
       "id": "av-notif-chksem9-0001",
       "credentials": {
         "wahaApi": {
@@ -433,7 +505,10 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [-384, 1296],
+      "position": [
+        -384,
+        1296
+      ],
       "id": "av-notif-ifexiste-001",
       "name": "AvulsaNotif: If Existe"
     },
@@ -448,7 +523,10 @@
       "name": "AvulsaNotif: Check Com 9",
       "type": "@devlikeapro/n8n-nodes-waha.WAHA",
       "typeVersion": 202502,
-      "position": [-384, 1488],
+      "position": [
+        -384,
+        1488
+      ],
       "id": "av-notif-chkcom9-0001",
       "credentials": {
         "wahaApi": {
@@ -461,17 +539,23 @@
       "parameters": {},
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
-      "position": [-192, 1296],
+      "position": [
+        -192,
+        1296
+      ],
       "id": "av-notif-merge-00001",
       "name": "AvulsaNotif: Merge"
     },
     {
       "parameters": {
-        "jsCode": "const semNove = $('AvulsaNotif: Formatar Telefone').first().json;\nconst checkSem = $('AvulsaNotif: Check Sem 9').first().json;\n\nlet checkCom = null;\ntry {\n  checkCom = $('AvulsaNotif: Check Com 9').first().json;\n} catch {\n  // Não executou (sem 9 funcionou) — esperado.\n}\n\nlet chatId = null;\nif (checkSem?.numberExists) chatId = semNove.chatIdSemNove;\nelse if (checkCom?.numberExists) chatId = semNove.chatIdComNove;\n\nif (!chatId) {\n  throw new Error(`Número ${semNove.raw} não tem WhatsApp registrado.`);\n}\n\nreturn [{ json: { chatId } }];"
+        "jsCode": "const semNove = $('AvulsaNotif: Formatar Telefone').first().json;\nconst checkSem = $('AvulsaNotif: Check Sem 9').first().json;\n\nlet checkCom = null;\ntry {\n  checkCom = $('AvulsaNotif: Check Com 9').first().json;\n} catch {\n  // Não executou (sem 9 deu true) — esperado.\n}\n\nlet chatId = null;\nlet formato = null;\n\nif (checkSem?.numberExists) {\n  chatId = checkSem.chatId || semNove.chatIdSemNove;\n  formato = 'sem9';\n} else if (checkCom?.numberExists) {\n  chatId = checkCom.chatId || semNove.chatIdComNove;\n  formato = 'com9';\n} else {\n  // O check do WAHA retorna false intermitente sob carga.\n  // Em vez de travar o fluxo, usa o formato sem 9 (padrão BR) e segue.\n  chatId = semNove.chatIdSemNove;\n  formato = 'fallback-sem9';\n}\n\nreturn [{ json: { chatId, formato, phoneRaw: semNove.raw } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [0, 1296],
+      "position": [
+        0,
+        1296
+      ],
       "id": "av-notif-resolver-001",
       "name": "AvulsaNotif: Resolver chatId"
     },
@@ -481,7 +565,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [192, 1296],
+      "position": [
+        192,
+        1296
+      ],
       "id": "av-notif-msgconf-0001",
       "name": "AvulsaNotif: Montar Texto"
     },
@@ -497,7 +584,10 @@
       "name": "AvulsaNotif: Enviar Confirmacao",
       "type": "@devlikeapro/n8n-nodes-waha.WAHA",
       "typeVersion": 202502,
-      "position": [384, 1296],
+      "position": [
+        384,
+        1296
+      ],
       "id": "av-notif-envconf-0001",
       "credentials": {
         "wahaApi": {
@@ -514,7 +604,10 @@
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [576, 1296],
+      "position": [
+        576,
+        1296
+      ],
       "id": "av-notif-respond-0001",
       "name": "AvulsaNotif: Respond"
     },
@@ -525,7 +618,10 @@
         "width": 2752
       },
       "type": "n8n-nodes-base.stickyNote",
-      "position": [-1904, 1040],
+      "position": [
+        -1904,
+        1040
+      ],
       "typeVersion": 1,
       "id": "av-sticky-notif-0001",
       "name": "Sticky Avulsa Notif"
@@ -535,192 +631,312 @@
     "Avulsa: Webhook": {
       "main": [
         [
-          { "node": "Avulsa: Sanitizar", "type": "main", "index": 0 }
+          {
+            "node": "Avulsa: Sanitizar",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Avulsa: Sanitizar": {
       "main": [
         [
-          { "node": "Avulsa: Asaas Customer", "type": "main", "index": 0 }
+          {
+            "node": "Avulsa: Asaas Customer",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Avulsa: Asaas Customer": {
       "main": [
         [
-          { "node": "Avulsa: Montar Cobranca", "type": "main", "index": 0 }
+          {
+            "node": "Avulsa: Montar Cobranca",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Avulsa: Montar Cobranca": {
       "main": [
         [
-          { "node": "Avulsa: Asaas Cobranca", "type": "main", "index": 0 }
+          {
+            "node": "Avulsa: Asaas Cobranca",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Avulsa: Asaas Cobranca": {
       "main": [
         [
-          { "node": "Avulsa: Montar Resposta", "type": "main", "index": 0 }
+          {
+            "node": "Avulsa: Montar Resposta",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Avulsa: Montar Resposta": {
       "main": [
         [
-          { "node": "Avulsa: Respond", "type": "main", "index": 0 },
-          { "node": "Avulsa: Formatar Telefone", "type": "main", "index": 0 }
+          {
+            "node": "Avulsa: Respond",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Avulsa: Formatar Telefone",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Avulsa: Formatar Telefone": {
       "main": [
         [
-          { "node": "Avulsa: Check Sem 9", "type": "main", "index": 0 }
+          {
+            "node": "Avulsa: Check Sem 9",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Avulsa: Check Sem 9": {
       "main": [
         [
-          { "node": "Avulsa: If Existe", "type": "main", "index": 0 }
+          {
+            "node": "Avulsa: If Existe",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Avulsa: If Existe": {
       "main": [
         [
-          { "node": "Avulsa: Merge", "type": "main", "index": 0 }
+          {
+            "node": "Avulsa: Merge",
+            "type": "main",
+            "index": 0
+          }
         ],
         [
-          { "node": "Avulsa: Check Com 9", "type": "main", "index": 0 }
+          {
+            "node": "Avulsa: Check Com 9",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Avulsa: Check Com 9": {
       "main": [
         [
-          { "node": "Avulsa: Merge", "type": "main", "index": 1 }
+          {
+            "node": "Avulsa: Merge",
+            "type": "main",
+            "index": 1
+          }
         ]
       ]
     },
     "Avulsa: Merge": {
       "main": [
         [
-          { "node": "Avulsa: Resolver chatId", "type": "main", "index": 0 }
+          {
+            "node": "Avulsa: Resolver chatId",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Avulsa: Resolver chatId": {
       "main": [
         [
-          { "node": "Avulsa: Montar Msg Link", "type": "main", "index": 0 }
+          {
+            "node": "Avulsa: Montar Msg Link",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Avulsa: Montar Msg Link": {
       "main": [
         [
-          { "node": "Avulsa: Enviar Link", "type": "main", "index": 0 }
+          {
+            "node": "Avulsa: Enviar Link",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "AvulsaNotif: Webhook": {
       "main": [
         [
-          { "node": "AvulsaNotif: Validar", "type": "main", "index": 0 }
+          {
+            "node": "AvulsaNotif: Validar",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "AvulsaNotif: Validar": {
       "main": [
         [
-          { "node": "AvulsaNotif: Skip?", "type": "main", "index": 0 }
+          {
+            "node": "AvulsaNotif: Skip?",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "AvulsaNotif: Skip?": {
       "main": [
         [
-          { "node": "AvulsaNotif: Respond Skip", "type": "main", "index": 0 }
+          {
+            "node": "AvulsaNotif: Respond Skip",
+            "type": "main",
+            "index": 0
+          }
         ],
         [
-          { "node": "AvulsaNotif: Buscar Cobranca", "type": "main", "index": 0 }
+          {
+            "node": "AvulsaNotif: Buscar Cobranca",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "AvulsaNotif: Buscar Cobranca": {
       "main": [
         [
-          { "node": "AvulsaNotif: Marcar Pago", "type": "main", "index": 0 }
+          {
+            "node": "AvulsaNotif: Marcar Pago",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "AvulsaNotif: Marcar Pago": {
       "main": [
         [
-          { "node": "AvulsaNotif: Formatar Telefone", "type": "main", "index": 0 }
+          {
+            "node": "AvulsaNotif: Formatar Telefone",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "AvulsaNotif: Formatar Telefone": {
       "main": [
         [
-          { "node": "AvulsaNotif: Check Sem 9", "type": "main", "index": 0 }
+          {
+            "node": "AvulsaNotif: Check Sem 9",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "AvulsaNotif: Check Sem 9": {
       "main": [
         [
-          { "node": "AvulsaNotif: If Existe", "type": "main", "index": 0 }
+          {
+            "node": "AvulsaNotif: If Existe",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "AvulsaNotif: If Existe": {
       "main": [
         [
-          { "node": "AvulsaNotif: Merge", "type": "main", "index": 0 }
+          {
+            "node": "AvulsaNotif: Merge",
+            "type": "main",
+            "index": 0
+          }
         ],
         [
-          { "node": "AvulsaNotif: Check Com 9", "type": "main", "index": 0 }
+          {
+            "node": "AvulsaNotif: Check Com 9",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "AvulsaNotif: Check Com 9": {
       "main": [
         [
-          { "node": "AvulsaNotif: Merge", "type": "main", "index": 1 }
+          {
+            "node": "AvulsaNotif: Merge",
+            "type": "main",
+            "index": 1
+          }
         ]
       ]
     },
     "AvulsaNotif: Merge": {
       "main": [
         [
-          { "node": "AvulsaNotif: Resolver chatId", "type": "main", "index": 0 }
+          {
+            "node": "AvulsaNotif: Resolver chatId",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "AvulsaNotif: Resolver chatId": {
       "main": [
         [
-          { "node": "AvulsaNotif: Montar Texto", "type": "main", "index": 0 }
+          {
+            "node": "AvulsaNotif: Montar Texto",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "AvulsaNotif: Montar Texto": {
       "main": [
         [
-          { "node": "AvulsaNotif: Enviar Confirmacao", "type": "main", "index": 0 }
+          {
+            "node": "AvulsaNotif: Enviar Confirmacao",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "AvulsaNotif: Enviar Confirmacao": {
       "main": [
         [
-          { "node": "AvulsaNotif: Respond", "type": "main", "index": 0 }
+          {
+            "node": "AvulsaNotif: Respond",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     }
