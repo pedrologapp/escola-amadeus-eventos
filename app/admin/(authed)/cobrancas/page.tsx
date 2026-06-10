@@ -37,7 +37,7 @@ export default async function CobrancasPage() {
   const { data: cobrancas, error } = await supabase
     .from("cobrancas_avulsas")
     .select(
-      "id, descricao, valor, responsavel_nome, telefone, status_pagamento, payment_url, created_at, alunos(nome_completo, serie, turma)",
+      "id, descricao, valor, valor_total, metodo_cobranca, parcelas, repassar_juros, responsavel_nome, telefone, status_pagamento, payment_url, created_at, alunos(nome_completo, serie, turma)",
     )
     .order("created_at", { ascending: false })
     .limit(200);
@@ -61,7 +61,7 @@ export default async function CobrancasPage() {
   const lista = cobrancas ?? [];
   const totalPago = lista
     .filter((c) => c.status_pagamento === "pago")
-    .reduce((sum, c) => sum + Number(c.valor), 0);
+    .reduce((sum, c) => sum + Number(c.valor_total ?? c.valor), 0);
 
   return (
     <div className="container mx-auto px-4 py-10">
@@ -149,7 +149,15 @@ export default async function CobrancasPage() {
                         </div>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-right font-semibold tabular-nums">
-                        {formatCurrency(Number(c.valor))}
+                        {formatCurrency(Number(c.valor_total ?? c.valor))}
+                        <div className="text-xs font-normal text-muted-foreground">
+                          {c.metodo_cobranca === "pix" && "PIX"}
+                          {c.metodo_cobranca === "cartao" &&
+                            `Cartão ${c.parcelas}x ${c.repassar_juros ? "com" : "sem"} juros`}
+                          {(c.metodo_cobranca === "aberto" ||
+                            !c.metodo_cobranca) &&
+                            "Link aberto"}
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <span

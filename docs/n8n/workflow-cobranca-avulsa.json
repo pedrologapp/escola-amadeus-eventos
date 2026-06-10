@@ -55,6 +55,16 @@
     },
     {
       "parameters": {
+        "jsCode": "// Monta o body da cobrança conforme o método escolhido no admin:\n// 'undefined' = link aberto | 'pix' = só PIX | 'credit' = cartão parcelado.\n// valorTotal já vem com juros repassados (calculado no site).\nconst d = $('Avulsa: Sanitizar').first().json;\nconst customerId = $input.first().json.id;\n\nconst total = Number(d.valorTotal || d.amount);\n\nconst body = {\n  customer: customerId,\n  value: total,\n  dueDate: d.due_date,\n  externalReference: d.externalReference,\n  description: `${d.descricao} - ${d.studentName}`,\n};\n\nif (d.paymentMethod === 'pix') {\n  body.billingType = 'PIX';\n} else if (d.paymentMethod === 'credit') {\n  body.billingType = 'CREDIT_CARD';\n  const n = Number(d.installments || 1);\n  if (n > 1) {\n    body.installmentCount = n;\n    body.installmentValue = Number((total / n).toFixed(2));\n  }\n} else {\n  body.billingType = 'UNDEFINED';\n}\n\nreturn [{ json: { asaas_body: body } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-1264, 400],
+      "id": "av-criar-montarcob-1",
+      "name": "Avulsa: Montar Cobranca"
+    },
+    {
+      "parameters": {
         "method": "POST",
         "url": "https://www.asaas.com/api/v3/payments",
         "sendHeaders": true,
@@ -72,7 +82,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"customer\": \"{{ $json.id }}\",\n  \"billingType\": \"UNDEFINED\",\n  \"value\": {{ $('Avulsa: Sanitizar').first().json.amount }},\n  \"dueDate\": \"{{ $('Avulsa: Sanitizar').first().json.due_date }}\",\n  \"externalReference\": \"{{ $('Avulsa: Sanitizar').first().json.externalReference }}\",\n  \"description\": \"{{ $('Avulsa: Sanitizar').first().json.descricao }} - {{ $('Avulsa: Sanitizar').first().json.studentName }}\"\n}",
+        "jsonBody": "={{ JSON.stringify($json.asaas_body) }}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -204,7 +214,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const d = $('Avulsa: Sanitizar').first().json;\nconst resp = $('Avulsa: Montar Resposta').first().json;\nconst chatId = $('Avulsa: Resolver chatId').first().json.chatId;\n\nconst valor = Number(d.amount).toLocaleString('pt-BR', {\n  style: 'currency', currency: 'BRL',\n});\n\nconst texto = `🧾 *Escola Amadeus*\n\nOlá, ${d.parentName}!\nSegue a cobrança referente a:\n\n*${d.descricao}*\nAluno(a): ${d.studentName} (${d.studentGrade} · Turma ${d.studentClass})\nValor: *${valor}*\n\n💳 Pague por PIX ou cartão no link:\n${resp.paymentUrl}\n\nQualquer dúvida, fale com a secretaria. 💙`;\n\nreturn [{ json: { chatId, texto } }];"
+        "jsCode": "const d = $('Avulsa: Sanitizar').first().json;\nconst resp = $('Avulsa: Montar Resposta').first().json;\nconst chatId = $('Avulsa: Resolver chatId').first().json.chatId;\n\nconst brl = (v) => Number(v).toLocaleString('pt-BR', {\n  style: 'currency', currency: 'BRL',\n});\n\nconst total = Number(d.valorTotal || d.amount);\nconst n = Number(d.installments || 1);\n\nlet linhaPagamento;\nif (d.paymentMethod === 'pix') {\n  linhaPagamento = `💠 Pagamento via PIX: *${brl(total)}*`;\n} else if (d.paymentMethod === 'credit') {\n  linhaPagamento = n > 1\n    ? `💳 Cartão em *${n}x de ${brl(total / n)}* (total ${brl(total)})`\n    : `💳 Cartão à vista: *${brl(total)}*`;\n} else {\n  linhaPagamento = `💳 Pague por PIX ou cartão: *${brl(total)}*`;\n}\n\nconst texto = `🧾 *Escola Amadeus*\n\nOlá, ${d.parentName}!\nSegue a cobrança referente a:\n\n*${d.descricao}*\nAluno(a): ${d.studentName} (${d.studentGrade} · Turma ${d.studentClass})\n\n${linhaPagamento}\n\nLink de pagamento:\n${resp.paymentUrl}\n\nQualquer dúvida, fale com a secretaria. 💙`;\n\nreturn [{ json: { chatId, texto } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -467,7 +477,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const cobranca = $('AvulsaNotif: Buscar Cobranca').first().json;\nconst chatId = $('AvulsaNotif: Resolver chatId').first().json.chatId;\n\nconst valor = Number(cobranca.valor).toLocaleString('pt-BR', {\n  style: 'currency', currency: 'BRL',\n});\n\nconst texto = `✅ *Pagamento confirmado!*\n\n*${cobranca.descricao}*\nValor: ${valor}\n\nObrigado, ${cobranca.responsavel_nome}! 💙\n\n— Escola Amadeus`;\n\nreturn [{ json: { chatId, texto } }];"
+        "jsCode": "const cobranca = $('AvulsaNotif: Buscar Cobranca').first().json;\nconst chatId = $('AvulsaNotif: Resolver chatId').first().json.chatId;\n\nconst valor = Number(cobranca.valor_total || cobranca.valor).toLocaleString('pt-BR', {\n  style: 'currency', currency: 'BRL',\n});\n\nconst texto = `✅ *Pagamento confirmado!*\n\n*${cobranca.descricao}*\nValor: ${valor}\n\nObrigado, ${cobranca.responsavel_nome}! 💙\n\n— Escola Amadeus`;\n\nreturn [{ json: { chatId, texto } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -537,6 +547,13 @@
       ]
     },
     "Avulsa: Asaas Customer": {
+      "main": [
+        [
+          { "node": "Avulsa: Montar Cobranca", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Avulsa: Montar Cobranca": {
       "main": [
         [
           { "node": "Avulsa: Asaas Cobranca", "type": "main", "index": 0 }

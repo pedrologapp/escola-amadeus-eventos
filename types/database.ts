@@ -63,11 +63,17 @@ export type InscricaoStatus =
   | "cancelado"
   | "estornado";
 
+export type CobrancaMetodo = "aberto" | "pix" | "cartao";
+
 export type CobrancaAvulsa = {
   id: string;
   aluno_id: string | null;
   descricao: string;
   valor: number;
+  metodo_cobranca: CobrancaMetodo;
+  parcelas: number;
+  repassar_juros: boolean;
+  valor_total: number | null;
   responsavel_nome: string;
   cpf: string;
   telefone: string;

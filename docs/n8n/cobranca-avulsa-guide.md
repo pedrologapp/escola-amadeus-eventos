@@ -42,6 +42,9 @@ Por isso usamos o prefixo **`avulsa_`** no `externalReference`:
   "externalReference": "avulsa_uuid-da-cobranca",
   "descricao": "Livro de matemática — 3º ano",
   "amount": 45.0,
+  "valorTotal": 49.32,
+  "paymentMethod": "credit",
+  "installments": 3,
   "studentName": "Maria Silva",
   "studentGrade": "3º Ano",
   "studentClass": "A",
@@ -112,10 +115,19 @@ return [{ json: {
 }
 ```
 
-#### 4. HTTP: Asaas - Criar Cobrança
+#### 4. Code: Montar Cobrança + HTTP: Asaas - Criar Cobrança
 
-`billingType: UNDEFINED` gera uma fatura onde o responsável **escolhe** PIX ou
-cartão na hora de pagar — não precisa de Switch como no fluxo de eventos.
+Um node Code monta o body conforme o `paymentMethod` vindo do site:
+
+- `undefined` (link aberto) → `billingType: UNDEFINED` — fatura onde o
+  responsável escolhe PIX ou cartão à vista; cobra `valorTotal` (= valor base).
+- `pix` → `billingType: PIX`, cobra `valorTotal` (= valor base).
+- `credit` → `billingType: CREDIT_CARD` com `installmentCount`/`installmentValue`
+  (até 12x). `valorTotal` já vem com os juros repassados quando o admin escolheu
+  "Com juros" no simulador; com "Sem juros" é o valor base (escola absorve).
+
+O HTTP node envia `={{ JSON.stringify($json.asaas_body) }}`. Veja o código
+exato no JSON importável.
 
 | Parâmetro | Valor |
 |---|---|
@@ -333,7 +345,7 @@ motivo "pagamento de outro sistema" — exatamente o comportamento desejado.
 
 ## ✅ Checklist
 
-- [ ] Rodar `0009_cobrancas_avulsas.sql` no Supabase
+- [ ] Rodar `0009_cobrancas_avulsas.sql` e `0010_cobranca_avulsa_parcelamento.sql` no Supabase
 - [ ] Importar `workflow-cobranca-avulsa.json` no n8n e **ativar**
 - [ ] Cadastrar o 2º webhook no Asaas → `/webhook/cobrancaavulsapagamentos`
 - [ ] Definir `N8N_COBRANCA_AVULSA_URL` no Vercel → `/webhook/cobrancaavulsa`

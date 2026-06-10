@@ -4,12 +4,16 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { calcularTotal } from "@/lib/pricing";
 import { validarCPF, telefoneValido } from "@/lib/validators";
 
 const cobrancaSchema = z.object({
   aluno_id: z.string().uuid(),
   descricao: z.string().min(3, "Descreva o que está sendo cobrado."),
   valor: z.number().min(1, "Valor mínimo de R$ 1,00."),
+  metodo_cobranca: z.enum(["aberto", "pix", "cartao"]),
+  parcelas: z.number().int().min(1).max(12),
+  repassar_juros: z.boolean(),
   responsavel_nome: z.string().min(2, "Nome muito curto"),
   cpf: z.string().refine((v) => validarCPF(v), "CPF inválido"),
   telefone: z.string().refine((v) => telefoneValido(v), "Telefone inválido"),
@@ -52,6 +56,16 @@ export async function criarCobrancaAvulsa(
     return { ok: false, error: "Aluno não encontrado." };
   }
 
+  // Total calculado NO SERVIDOR (ignora o que o cliente exibiu):
+  // cartão com repasse = base + taxas (mesma regra dos eventos);
+  // PIX, link aberto ou cartão sem repasse = valor base.
+  const parcelas = d.metodo_cobranca === "cartao" ? d.parcelas : 1;
+  const valorTotal =
+    d.metodo_cobranca === "cartao" && d.repassar_juros
+      ? Math.round(calcularTotal(d.valor, "cartao", parcelas).valorTotal * 100) /
+        100
+      : d.valor;
+
   // 1. Insere cobrança pendente
   const { data: cobranca, error: insertErr } = await admin
     .from("cobrancas_avulsas")
@@ -59,6 +73,10 @@ export async function criarCobrancaAvulsa(
       aluno_id: d.aluno_id,
       descricao: d.descricao.trim(),
       valor: d.valor,
+      metodo_cobranca: d.metodo_cobranca,
+      parcelas,
+      repassar_juros: d.repassar_juros,
+      valor_total: valorTotal,
       responsavel_nome: d.responsavel_nome.trim(),
       cpf: d.cpf,
       telefone: d.telefone,
@@ -107,6 +125,16 @@ export async function criarCobrancaAvulsa(
         externalReference: `avulsa_${cobranca.id}`,
         descricao: d.descricao.trim(),
         amount: d.valor,
+        // O que o Asaas deve cobrar de fato (com juros, se repassados)
+        valorTotal,
+        // 'undefined' = link aberto (responsável escolhe PIX/cartão à vista)
+        paymentMethod:
+          d.metodo_cobranca === "pix"
+            ? "pix"
+            : d.metodo_cobranca === "cartao"
+              ? "credit"
+              : "undefined",
+        installments: parcelas,
         // Aluno
         studentName: aluno.nome_completo,
         studentGrade: aluno.serie,

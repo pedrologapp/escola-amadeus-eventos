@@ -6,6 +6,7 @@ import {
   AlertCircle,
   CheckCircle,
   Copy,
+  CreditCard,
   ExternalLink,
   Receipt,
   Search,
@@ -23,6 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
+import { calcularTotal } from "@/lib/pricing";
 import { formatCurrency } from "@/lib/utils";
 import { formatarCPF, formatarTelefone } from "@/lib/validators";
 import { criarCobrancaAvulsa } from "../actions";
@@ -33,6 +35,22 @@ interface Aluno {
   serie: string;
   turma: string;
 }
+
+type MetodoCobranca = "aberto" | "pix" | "cartao";
+
+const METODOS: { id: MetodoCobranca; nome: string; descricao: string }[] = [
+  {
+    id: "aberto",
+    nome: "Link aberto",
+    descricao: "Responsável escolhe PIX ou cartão à vista no link",
+  },
+  { id: "pix", nome: "PIX", descricao: "Sem taxas" },
+  {
+    id: "cartao",
+    nome: "Cartão parcelado",
+    descricao: "Divida em até 12x, com ou sem juros",
+  },
+];
 
 const COR = "#1B3B7C";
 
@@ -53,6 +71,11 @@ export function CobrancaForm() {
   // Cobrança
   const [descricao, setDescricao] = useState("");
   const [valorTexto, setValorTexto] = useState("");
+
+  // Pagamento / simulação
+  const [metodo, setMetodo] = useState<MetodoCobranca>("aberto");
+  const [parcelas, setParcelas] = useState(1);
+  const [repassarJuros, setRepassarJuros] = useState(true);
 
   // Responsável
   const [nome, setNome] = useState("");
@@ -98,6 +121,20 @@ export function CobrancaForm() {
     return Number.isFinite(n) ? n : 0;
   }, [valorTexto]);
 
+  // Resumo do que será cobrado, conforme método/parcelas/juros
+  const resumo = useMemo(() => {
+    if (valor < 1) return null;
+    if (metodo !== "cartao") {
+      return { total: valor, parcela: valor, recebe: valor };
+    }
+    const taxas = calcularTotal(valor, "cartao", parcelas).valorTotal - valor;
+    if (repassarJuros) {
+      const total = Math.round((valor + taxas) * 100) / 100;
+      return { total, parcela: total / parcelas, recebe: valor };
+    }
+    return { total: valor, parcela: valor / parcelas, recebe: valor - taxas };
+  }, [valor, metodo, parcelas, repassarJuros]);
+
   const valido =
     !!selecionado &&
     descricao.trim().length >= 3 &&
@@ -114,6 +151,9 @@ export function CobrancaForm() {
         aluno_id: selecionado.id,
         descricao: descricao.trim(),
         valor,
+        metodo_cobranca: metodo,
+        parcelas: metodo === "cartao" ? parcelas : 1,
+        repassar_juros: metodo === "cartao" ? repassarJuros : true,
         responsavel_nome: nome.trim(),
         cpf,
         telefone,
@@ -286,12 +326,180 @@ export function CobrancaForm() {
               placeholder="Ex.: 45,00"
               inputMode="decimal"
             />
-            {valor >= 1 && (
-              <p className="text-xs text-muted-foreground">
-                Será cobrado {formatCurrency(valor)}
-              </p>
-            )}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Pagamento + visor de simulação */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2" style={{ color: COR }}>
+            <CreditCard className="size-5" />
+            Pagamento e simulação
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Forma de cobrança */}
+          <div className="grid gap-2 sm:grid-cols-3">
+            {METODOS.map((m) => {
+              const ativo = metodo === m.id;
+              return (
+                <button
+                  type="button"
+                  key={m.id}
+                  onClick={() => setMetodo(m.id)}
+                  className="rounded-2xl border-2 p-3 text-left transition-colors"
+                  style={{
+                    borderColor: ativo ? COR : "transparent",
+                    background: ativo ? `${COR}10` : "var(--muted)",
+                  }}
+                >
+                  <div
+                    className="text-sm font-semibold"
+                    style={{ color: ativo ? COR : undefined }}
+                  >
+                    {m.nome}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {m.descricao}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {metodo === "cartao" && (
+            <>
+              {/* Com ou sem juros */}
+              <div className="grid gap-2 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => setRepassarJuros(true)}
+                  className="rounded-2xl border-2 p-3 text-left transition-colors"
+                  style={{
+                    borderColor: repassarJuros ? COR : "transparent",
+                    background: repassarJuros ? `${COR}10` : "var(--muted)",
+                  }}
+                >
+                  <div
+                    className="text-sm font-semibold"
+                    style={{ color: repassarJuros ? COR : undefined }}
+                  >
+                    Com juros
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Responsável paga as taxas do cartão
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRepassarJuros(false)}
+                  className="rounded-2xl border-2 p-3 text-left transition-colors"
+                  style={{
+                    borderColor: !repassarJuros ? COR : "transparent",
+                    background: !repassarJuros ? `${COR}10` : "var(--muted)",
+                  }}
+                >
+                  <div
+                    className="text-sm font-semibold"
+                    style={{ color: !repassarJuros ? COR : undefined }}
+                  >
+                    Sem juros
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Escola absorve as taxas do cartão
+                  </div>
+                </button>
+              </div>
+
+              {/* Visor de simulação 1x..12x */}
+              {valor >= 1 ? (
+                <div className="overflow-hidden rounded-2xl border border-border">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border bg-muted/50 text-left text-xs uppercase tracking-wider text-muted-foreground">
+                        <th className="px-3 py-2">Parcelas</th>
+                        <th className="px-3 py-2 text-right">Valor da parcela</th>
+                        <th className="px-3 py-2 text-right">Total cobrado</th>
+                        <th className="px-3 py-2 text-right">Escola recebe</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => {
+                        const taxas =
+                          calcularTotal(valor, "cartao", n).valorTotal - valor;
+                        const total = repassarJuros ? valor + taxas : valor;
+                        const recebe = repassarJuros ? valor : valor - taxas;
+                        const ativo = parcelas === n;
+                        return (
+                          <tr
+                            key={n}
+                            onClick={() => setParcelas(n)}
+                            className="cursor-pointer border-b border-border/60 last:border-0"
+                            style={{
+                              background: ativo ? `${COR}14` : undefined,
+                            }}
+                          >
+                            <td
+                              className="px-3 py-2 font-semibold"
+                              style={{ color: ativo ? COR : undefined }}
+                            >
+                              {ativo ? "● " : ""}
+                              {n}x
+                            </td>
+                            <td className="px-3 py-2 text-right tabular-nums">
+                              {formatCurrency(total / n)}
+                            </td>
+                            <td className="px-3 py-2 text-right font-semibold tabular-nums">
+                              {formatCurrency(total)}
+                            </td>
+                            <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
+                              {formatCurrency(recebe)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Informe o valor acima pra ver a simulação de parcelas.
+                </p>
+              )}
+            </>
+          )}
+
+          {/* Resumo do que será cobrado */}
+          {resumo && (
+            <div
+              className="flex flex-col gap-1 rounded-2xl p-4"
+              style={{ background: `${COR}1A` }}
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-semibold" style={{ color: COR }}>
+                  {metodo === "cartao" && parcelas > 1
+                    ? `Total no cartão (${parcelas}x de ${formatCurrency(resumo.parcela)})`
+                    : "Total a cobrar"}
+                </span>
+                <span
+                  className="text-2xl font-extrabold tabular-nums"
+                  style={{ color: COR }}
+                >
+                  {formatCurrency(resumo.total)}
+                </span>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {metodo === "aberto" &&
+                  "Sem juros — se o responsável pagar no cartão, a escola absorve a taxa."}
+                {metodo === "pix" && "PIX sem taxas — a escola recebe o valor cheio."}
+                {metodo === "cartao" &&
+                  (repassarJuros
+                    ? `Taxas repassadas ao responsável — a escola recebe ≈ ${formatCurrency(resumo.recebe)}.`
+                    : `Escola absorve as taxas — recebe ≈ ${formatCurrency(resumo.recebe)} líquido.`)}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
