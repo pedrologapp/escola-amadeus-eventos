@@ -53,13 +53,60 @@ export default async function RelatorioPage({ params, searchParams }: PageProps)
 
   if (!evento) notFound();
 
-  const { data: inscricoes } = await supabase
+  // Tenta com alunos_incluidos (migration 0013); se a coluna ainda não
+  // existe, cai pro select antigo sem irmãos.
+  type InscricaoRel = {
+    id: string;
+    itens: unknown;
+    aluno_id?: string;
+    alunos_incluidos?: string[] | null;
+    aluno: unknown;
+  };
+
+  const r1 = await supabase
     .from("inscricoes")
-    .select("id, itens, aluno:alunos(nome_completo, serie, turma)")
+    .select(
+      "id, itens, aluno_id, alunos_incluidos, aluno:alunos(nome_completo, serie, turma)",
+    )
     .eq("evento_id", id)
     .eq("status_pagamento", "pago");
+  let inscricoes = r1.data as unknown as InscricaoRel[] | null;
 
-  const linhas: Linha[] = (inscricoes ?? []).map((i) => {
+  if (!inscricoes) {
+    const r2 = await supabase
+      .from("inscricoes")
+      .select("id, itens, aluno_id, aluno:alunos(nome_completo, serie, turma)")
+      .eq("evento_id", id)
+      .eq("status_pagamento", "pago");
+    inscricoes = r2.data as unknown as InscricaoRel[] | null;
+  }
+
+  // Dados dos irmãos incluídos (pagamento familiar)
+  const idsIrmaos = new Set<string>();
+  for (const i of inscricoes ?? []) {
+    const incluidos =
+      ((i as { alunos_incluidos?: string[] | null }).alunos_incluidos ??
+        []) as string[];
+    for (const a of incluidos) {
+      if (a !== (i as { aluno_id?: string }).aluno_id) idsIrmaos.add(a);
+    }
+  }
+  const irmaosMap = new Map<
+    string,
+    { nome_completo: string; serie: string; turma: string }
+  >();
+  if (idsIrmaos.size > 0) {
+    const { data: irmaosData } = await supabase
+      .from("alunos")
+      .select("id, nome_completo, serie, turma")
+      .in("id", [...idsIrmaos]);
+    for (const a of irmaosData ?? []) irmaosMap.set(a.id, a);
+  }
+
+  const linhas: Linha[] = [];
+  const alunosComLinha = new Set<string>();
+
+  for (const i of inscricoes ?? []) {
     const aluno = i.aluno as unknown as
       | { nome_completo: string; serie: string; turma: string }
       | null;
@@ -69,14 +116,42 @@ export default async function RelatorioPage({ params, searchParams }: PageProps)
       .map((it) => `${it.qtd}x ${(it.nome ?? "Senha").trim()}`)
       .join(", ");
     const totalSenhas = comQtd.reduce((s, it) => s + (it.qtd ?? 0), 0);
-    return {
+    linhas.push({
       nome: aluno?.nome_completo ?? "—",
       serie: aluno?.serie ?? "Sem série",
       turma: aluno?.turma ?? "Sem turma",
       senhas: senhas || "—",
       totalSenhas,
-    };
-  });
+    });
+    const alunoId = (i as { aluno_id?: string }).aluno_id;
+    if (alunoId) alunosComLinha.add(alunoId);
+  }
+
+  // Irmãos entram cada um na própria turma, sem duplicar a contagem
+  // de senhas (que fica com o aluno principal da inscrição).
+  for (const i of inscricoes ?? []) {
+    const alunoId = (i as { aluno_id?: string }).aluno_id;
+    const incluidos =
+      ((i as { alunos_incluidos?: string[] | null }).alunos_incluidos ??
+        []) as string[];
+    const principal = (
+      i.aluno as unknown as { nome_completo: string } | null
+    )?.nome_completo;
+    for (const a of incluidos) {
+      if (a === alunoId) continue;
+      if (alunosComLinha.has(a)) continue; // já tem inscrição própria
+      const irmao = irmaosMap.get(a);
+      if (!irmao) continue;
+      alunosComLinha.add(a);
+      linhas.push({
+        nome: irmao.nome_completo,
+        serie: irmao.serie ?? "Sem série",
+        turma: irmao.turma ?? "Sem turma",
+        senhas: `família — junto com ${principal ?? "irmão"}`,
+        totalSenhas: 0,
+      });
+    }
+  }
 
   // Ordena por série (Maternal II → ... → 9º Ano) → turma (A, B, C...) → nome
   linhas.sort((a, b) => {

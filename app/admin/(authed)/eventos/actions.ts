@@ -48,6 +48,7 @@ const createEventoSchema = z.object({
   destinacao_valores: z.string().optional().nullable(),
   infos_importantes: z.array(z.string()),
   mostrar_estoque_publico: z.boolean().default(false),
+  pagamento_familiar: z.boolean().default(false),
   tipos_ingresso: z.array(tipoIngressoSchema).min(1, "Adicione ao menos um tipo de ingresso"),
 });
 
@@ -84,6 +85,8 @@ export async function createEvento(
     ),
     mostrar_estoque_publico:
       formData.get("mostrar_estoque_publico")?.toString() === "1",
+    pagamento_familiar:
+      formData.get("pagamento_familiar")?.toString() === "1",
     tipos_ingresso: parseTiposIngresso(
       formData.get("tipos_ingresso")?.toString(),
     ),
@@ -154,6 +157,7 @@ export async function createEvento(
       destinacao_valores: data.destinacao_valores,
       infos_importantes: data.infos_importantes,
       mostrar_estoque_publico: data.mostrar_estoque_publico,
+      pagamento_familiar: data.pagamento_familiar,
     })
     .select("id")
     .single();
@@ -271,6 +275,8 @@ export async function updateEvento(
     ),
     mostrar_estoque_publico:
       formData.get("mostrar_estoque_publico")?.toString() === "1",
+    pagamento_familiar:
+      formData.get("pagamento_familiar")?.toString() === "1",
     tipos_ingresso: parseTiposIngresso(
       formData.get("tipos_ingresso")?.toString(),
     ),
@@ -338,6 +344,7 @@ export async function updateEvento(
       destinacao_valores: data.destinacao_valores,
       infos_importantes: data.infos_importantes,
       mostrar_estoque_publico: data.mostrar_estoque_publico,
+      pagamento_familiar: data.pagamento_familiar,
       ...imagemUpdate,
     })
     .eq("id", eventoId);
@@ -418,7 +425,7 @@ export async function duplicateEvento(
   const { data: source, error: fetchErr } = await supabase
     .from("eventos")
     .select(
-      "slug, nome, descricao_curta, descricao_longa, data_evento, hora_evento, local, imagem_capa_url, cor_tematica, series_permitidas, turmas_permitidas, metodos_pagamento, max_parcelas, prazo_inscricao, destinacao_valores, infos_importantes, mostrar_estoque_publico, tipos_ingresso(nome, preco, descricao, icone, cor, ordem, ativo, max_ingressos, lotes)",
+      "slug, nome, descricao_curta, descricao_longa, data_evento, hora_evento, local, imagem_capa_url, cor_tematica, series_permitidas, turmas_permitidas, metodos_pagamento, max_parcelas, prazo_inscricao, destinacao_valores, infos_importantes, mostrar_estoque_publico, pagamento_familiar, tipos_ingresso(nome, preco, descricao, icone, cor, ordem, ativo, max_ingressos, lotes)",
     )
     .eq("id", eventoId)
     .maybeSingle();
@@ -450,6 +457,7 @@ export async function duplicateEvento(
       destinacao_valores: source.destinacao_valores,
       infos_importantes: source.infos_importantes,
       mostrar_estoque_publico: source.mostrar_estoque_publico ?? false,
+      pagamento_familiar: source.pagamento_familiar ?? false,
     })
     .select("id")
     .single();
@@ -586,10 +594,37 @@ export async function registrarVendaDinheiro(
     0,
   );
 
+  // Pagamento familiar: inclui irmãos (mesmo familia_id). Queries
+  // separadas — se a migration 0013 não rodou, segue sem irmãos.
+  let alunosIncluidos: string[] | null = null;
+  const { data: evFam } = await admin
+    .from("eventos")
+    .select("pagamento_familiar")
+    .eq("id", d.evento_id)
+    .maybeSingle();
+  if (evFam?.pagamento_familiar) {
+    const { data: alunoFam } = await admin
+      .from("alunos")
+      .select("familia_id")
+      .eq("id", d.aluno_id)
+      .maybeSingle();
+    if (alunoFam?.familia_id) {
+      const { data: irmaos } = await admin
+        .from("alunos")
+        .select("id")
+        .eq("familia_id", alunoFam.familia_id)
+        .neq("id", d.aluno_id);
+      if (irmaos && irmaos.length > 0) {
+        alunosIncluidos = [d.aluno_id, ...irmaos.map((i) => i.id)];
+      }
+    }
+  }
+
   // Insere inscrição já como PAGA, método dinheiro
   const { data: inscricao, error: insertErr } = await admin
     .from("inscricoes")
     .insert({
+      ...(alunosIncluidos ? { alunos_incluidos: alunosIncluidos } : {}),
       evento_id: d.evento_id,
       aluno_id: d.aluno_id,
       responsavel_nome: d.responsavel_nome,

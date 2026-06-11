@@ -8,6 +8,7 @@ export type Aluno = {
   nome_completo: string;
   serie: string;
   turma: string;
+  familia_id: string | null;
 };
 
 export type EventoStatus = "rascunho" | "publicado" | "encerrado";
@@ -33,6 +34,7 @@ export type Evento = {
   destinacao_valores: string | null;
   infos_importantes: string[] | null;
   mostrar_estoque_publico: boolean;
+  pagamento_familiar: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -104,5 +106,6 @@ export type Inscricao = {
   parcelas: number;
   status_pagamento: InscricaoStatus;
   asaas_payment_id: string | null;
+  alunos_incluidos: string[] | null;
   created_at: string;
 };

@@ -96,6 +96,7 @@ export interface EventoFormInitial {
   destinacao_valores: string | null;
   infos_importantes: string[] | null;
   mostrar_estoque_publico: boolean;
+  pagamento_familiar?: boolean;
 }
 
 export interface EventoFormTipoInitialLote {
@@ -166,6 +167,9 @@ export function EventoForm({
   const [publicar, setPublicar] = useState(initial?.status === "publicado");
   const [mostrarEstoque, setMostrarEstoque] = useState(
     initial?.mostrar_estoque_publico ?? false,
+  );
+  const [pagamentoFamiliar, setPagamentoFamiliar] = useState(
+    initial?.pagamento_familiar ?? false,
   );
   const [series, setSeries] = useState<string[]>(
     initial?.series_permitidas ?? [],
@@ -340,6 +344,7 @@ export function EventoForm({
     formData.set("status", publicar ? "publicado" : "rascunho");
     formData.set("remover_imagem", removerImagem ? "1" : "0");
     formData.set("mostrar_estoque_publico", mostrarEstoque ? "1" : "0");
+    formData.set("pagamento_familiar", pagamentoFamiliar ? "1" : "0");
     action(formData);
   }
 
@@ -872,6 +877,22 @@ export function EventoForm({
                 : "Esconder contador (só aparece 'Esgotado' quando estourar)"
             }
           />
+          <Switch
+            checked={pagamentoFamiliar}
+            onChange={(e) => setPagamentoFamiliar(e.target.checked)}
+            label={
+              pagamentoFamiliar
+                ? "Pagamento familiar: a inscrição de um filho vale para todos os irmãos"
+                : "Pagamento por aluno (cada filho precisa da própria inscrição)"
+            }
+          />
+          {pagamentoFamiliar && (
+            <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
+              👨‍👩‍👧‍👦 Os irmãos são identificados pelo campo{" "}
+              <code>familia_id</code> na tabela de alunos — alunos com o mesmo
+              valor entram automaticamente na inscrição do irmão.
+            </p>
+          )}
         </CardContent>
       </Card>
 

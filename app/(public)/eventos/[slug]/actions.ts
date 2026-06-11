@@ -117,6 +117,37 @@ export async function submitInscricao(
   const aluno = alunoRes.data;
   const eventoNome = eventoRes.data?.nome ?? "";
 
+  // Pagamento familiar: inclui os irmãos (mesmo familia_id) na inscrição.
+  // Queries separadas de propósito: se a migration 0013 ainda não rodou,
+  // elas só retornam erro e o fluxo segue normal sem irmãos.
+  const { data: evFam } = await admin
+    .from("eventos")
+    .select("pagamento_familiar")
+    .eq("id", d.evento_id)
+    .maybeSingle();
+  if (evFam?.pagamento_familiar) {
+    const { data: alunoFam } = await admin
+      .from("alunos")
+      .select("familia_id")
+      .eq("id", d.aluno_id)
+      .maybeSingle();
+    if (alunoFam?.familia_id) {
+      const { data: irmaos } = await admin
+        .from("alunos")
+        .select("id")
+        .eq("familia_id", alunoFam.familia_id)
+        .neq("id", d.aluno_id);
+      if (irmaos && irmaos.length > 0) {
+        await admin
+          .from("inscricoes")
+          .update({
+            alunos_incluidos: [d.aluno_id, ...irmaos.map((i) => i.id)],
+          })
+          .eq("id", inscricao.id);
+      }
+    }
+  }
+
   // 3. Compatibilidade com o fluxo n8n atual (Dia das Mães):
   //    extrai "senhasMae" e "senhasExtras" se houver tipos com esses nomes.
   const senhasMae =

@@ -75,6 +75,7 @@ interface EventoInfo {
   turmas_permitidas: string[] | null;
   metodos_pagamento: ("pix" | "cartao")[];
   max_parcelas: number;
+  pagamento_familiar: boolean;
 }
 
 interface Props {
@@ -98,6 +99,42 @@ export function InscricaoForm({ evento, tipos }: Props) {
   const [selectedStudent, setSelectedStudent] = useState<Aluno | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  // Pagamento familiar: irmãos incluídos automaticamente
+  const [irmaos, setIrmaos] = useState<Aluno[]>([]);
+
+  useEffect(() => {
+    if (!evento.pagamento_familiar || !selectedStudent) {
+      setIrmaos([]);
+      return;
+    }
+    const ctrl = new AbortController();
+    (async () => {
+      try {
+        const supabase = createClient();
+        const { data: eu } = await supabase
+          .from("alunos")
+          .select("familia_id")
+          .eq("id", selectedStudent.id)
+          .abortSignal(ctrl.signal)
+          .maybeSingle();
+        if (!eu?.familia_id) {
+          setIrmaos([]);
+          return;
+        }
+        const { data } = await supabase
+          .from("alunos")
+          .select("id, nome_completo, serie, turma")
+          .eq("familia_id", eu.familia_id)
+          .neq("id", selectedStudent.id)
+          .order("nome_completo")
+          .abortSignal(ctrl.signal);
+        setIrmaos(data ?? []);
+      } catch {
+        /* abort */
+      }
+    })();
+    return () => ctrl.abort();
+  }, [selectedStudent, evento.pagamento_familiar]);
 
   // ---------- Responsável ----------
   const [parentName, setParentName] = useState("");
@@ -439,6 +476,24 @@ export function InscricaoForm({ evento, tipos }: Props) {
               >
                 <X />
               </Button>
+            </div>
+          )}
+
+          {selectedStudent && evento.pagamento_familiar && irmaos.length > 0 && (
+            <div className="rounded-2xl border border-amadeus-blue/30 bg-amadeus-blue-50/60 px-4 py-3">
+              <div className="text-sm font-semibold text-amadeus-blue">
+                👨‍👩‍👧‍👦 Este pagamento também vale para o(s) irmão(s):
+              </div>
+              <ul className="mt-1.5 space-y-0.5 text-xs text-amadeus-blue/90">
+                {irmaos.map((ir) => (
+                  <li key={ir.id}>
+                    • {ir.nome_completo} ({ir.serie} · Turma {ir.turma})
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                Incluídos automaticamente — não precisa fazer outra inscrição.
+              </p>
             </div>
           )}
         </CardContent>
