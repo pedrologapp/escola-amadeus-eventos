@@ -283,7 +283,7 @@
         "headerParameters": {
           "parameters": [
             { "name": "Content-Type", "value": "application/json" },
-            { "name": "X-Webhook-Secret", "value": "YOUR_WEBHOOK_SECRET" }
+            { "name": "X-Webhook-Secret", "value": "1d3321952567de9e6c58e7fdbd6f23c01f7757495c19bc527fa21905a35fff95" }
           ]
         },
         "sendBody": true,
