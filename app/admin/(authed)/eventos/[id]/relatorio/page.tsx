@@ -110,8 +110,13 @@ export default async function RelatorioPage({ params, searchParams }: PageProps)
       />
 
       <div className="mt-8 print:mt-0">
-        {/* Cabeçalho do relatório */}
-        <header className="border-b-2 border-amadeus-blue pb-4">
+        {/* Cabeçalho geral: na impressão por turma ele some — cada
+            folha tem o próprio cabeçalho com os números DA turma. */}
+        <header
+          className={`border-b-2 border-amadeus-blue pb-4 ${
+            modo === "paginas" ? "print:hidden" : ""
+          }`}
+        >
           <h1 className="text-2xl font-extrabold text-amadeus-blue">
             {evento.nome}
           </h1>
@@ -154,6 +159,17 @@ export default async function RelatorioPage({ params, searchParams }: PageProps)
                   <div className="-mt-2 mb-3 flex items-center justify-between text-[10px] font-semibold uppercase tracking-widest text-amadeus-blue/60 print:hidden">
                     <span>Página {idx + 1} de {grupos.length}</span>
                     <span>Uma turma por página</span>
+                  </div>
+                )}
+                {modo === "paginas" && (
+                  <div className="mb-3 hidden border-b-2 border-amadeus-blue pb-2 print:block">
+                    <div className="text-lg font-extrabold text-amadeus-blue">
+                      {evento.nome}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Relatório de pagantes · {formatDate(evento.data_evento)} ·
+                      Página {idx + 1} de {grupos.length}
+                    </div>
                   </div>
                 )}
                 <h2 className="mb-2 text-base font-extrabold text-amadeus-blue">
