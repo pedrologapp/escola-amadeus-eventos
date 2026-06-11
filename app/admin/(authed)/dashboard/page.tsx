@@ -131,26 +131,24 @@ export default async function AdminDashboardPage() {
             Acompanhe os eventos, inscrições e a arrecadação da escola.
           </p>
         </div>
-        <div className="flex flex-col gap-3 sm:items-end">
-          <div className="flex flex-wrap gap-2">
-            <Button asChild variant="outline">
-              <Link href="/admin/eventos/importar">
-                <Sparkles />
-                Importar de aviso
-              </Link>
-            </Button>
-            <Button asChild>
-              <Link href="/admin/eventos/novo">
-                <CalendarPlus />
-                Novo evento
-              </Link>
-            </Button>
-          </div>
-          <MetricasCompactas metricas={metricas} />
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline">
+            <Link href="/admin/eventos/importar">
+              <Sparkles />
+              Importar de aviso
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href="/admin/eventos/novo">
+              <CalendarPlus />
+              Novo evento
+            </Link>
+          </Button>
         </div>
       </header>
 
-      <section className="mt-10">
+      <section className="mt-8 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_19rem]">
+        <div className="order-last lg:order-none">
         {semEventos ? (
           <Card>
             <CardContent className="pb-10">
@@ -182,6 +180,8 @@ export default async function AdminDashboardPage() {
             concluidos={concluidos}
           />
         )}
+        </div>
+        <MetricasCompactas metricas={metricas} />
       </section>
     </div>
   );

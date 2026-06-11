@@ -54,12 +54,43 @@ export function OlhinhoGlobal() {
   );
 }
 
-/** Exibe o valor, ou a máscara quando o olhinho global está fechado. */
+/** Botão compacto só com o ícone do olho (pra usar perto dos valores). */
+export function OlhinhoIcone() {
+  const { mostrar, alternar } = useValoresSensiveis();
+  return (
+    <button
+      type="button"
+      onClick={alternar}
+      title={mostrar ? "Ocultar valores" : "Mostrar valores"}
+      className="grid size-7 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-amadeus-blue-50 hover:text-amadeus-blue"
+    >
+      {mostrar ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+    </button>
+  );
+}
+
+/**
+ * Exibe o valor, ou a máscara quando o olhinho global está fechado.
+ * Clicar na máscara também revela tudo.
+ */
 export function ValorSensivel({ valor }: { valor: string }) {
-  const { mostrar } = useValoresSensiveis();
+  const { mostrar, alternar } = useValoresSensiveis();
   if (mostrar) return <>{valor}</>;
   return (
-    <span className="select-none">
+    <span
+      role="button"
+      tabIndex={0}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        alternar();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") alternar();
+      }}
+      title="Clique para mostrar os valores"
+      className="cursor-pointer select-none underline decoration-dotted underline-offset-4"
+    >
       {valor.trim().startsWith("R$") ? "R$ ••••" : "••••"}
     </span>
   );
