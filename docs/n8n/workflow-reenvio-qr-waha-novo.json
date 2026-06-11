@@ -61,7 +61,7 @@
       "id": "44444444-4444-4444-4444-444444444444",
       "name": "Buscar Inscricao",
       "credentials": {
-        "supabaseApi": { "id": "REPLACE_ME", "name": "SEA - HUB" }
+        "supabaseApi": { "id": "lCseGlHlzCUJ9cu3", "name": "SEA - HUB" }
       }
     },
     {
@@ -88,7 +88,7 @@
       "id": "55555555-5555-5555-5555-555555555555",
       "name": "Buscar Evento",
       "credentials": {
-        "supabaseApi": { "id": "REPLACE_ME", "name": "SEA - HUB" }
+        "supabaseApi": { "id": "lCseGlHlzCUJ9cu3", "name": "SEA - HUB" }
       }
     },
     {
@@ -115,7 +115,7 @@
       "id": "66666666-6666-6666-6666-666666666666",
       "name": "Buscar Aluno",
       "credentials": {
-        "supabaseApi": { "id": "REPLACE_ME", "name": "SEA - HUB" }
+        "supabaseApi": { "id": "lCseGlHlzCUJ9cu3", "name": "SEA - HUB" }
       }
     },
     {
@@ -141,7 +141,7 @@
       "id": "77777777-7777-7777-7777-777777777777",
       "name": "Buscar Tickets",
       "credentials": {
-        "supabaseApi": { "id": "REPLACE_ME", "name": "SEA - HUB" }
+        "supabaseApi": { "id": "lCseGlHlzCUJ9cu3", "name": "SEA - HUB" }
       }
     },
     {
@@ -167,7 +167,7 @@
       "id": "99999999-9999-9999-9999-999999999999",
       "name": "Check Sem 9",
       "credentials": {
-        "wahaApi": { "id": "REPLACE_ME", "name": "WAHA account" }
+        "wahaApi": { "id": "Wa5n1cK3Gl4WH4bW", "name": "WAHA account" }
       }
     },
     {
@@ -205,7 +205,7 @@
       "id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
       "name": "Check Com 9",
       "credentials": {
-        "wahaApi": { "id": "REPLACE_ME", "name": "WAHA account" }
+        "wahaApi": { "id": "Wa5n1cK3Gl4WH4bW", "name": "WAHA account" }
       }
     },
     {
@@ -243,7 +243,7 @@
       "id": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
       "name": "Enviar Texto Reenvio",
       "credentials": {
-        "wahaApi": { "id": "REPLACE_ME", "name": "WAHA account" }
+        "wahaApi": { "id": "Wa5n1cK3Gl4WH4bW", "name": "WAHA account" }
       }
     },
     {
@@ -272,7 +272,7 @@
       "id": "10101010-1010-1010-1010-101010101010",
       "name": "Enviar QR Reenvio",
       "credentials": {
-        "wahaApi": { "id": "REPLACE_ME", "name": "WAHA account" }
+        "wahaApi": { "id": "Wa5n1cK3Gl4WH4bW", "name": "WAHA account" }
       }
     },
     {
