@@ -8,7 +8,10 @@
         "width": 480
       },
       "type": "n8n-nodes-base.stickyNote",
-      "position": [-2400, -200],
+      "position": [
+        -2400,
+        -200
+      ],
       "typeVersion": 1,
       "id": "11111111-1111-1111-1111-111111111111",
       "name": "Sticky Instrucoes"
@@ -22,7 +25,10 @@
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [-2400, 200],
+      "position": [
+        -2400,
+        200
+      ],
       "id": "22222222-2222-2222-2222-222222222222",
       "name": "Webhook",
       "webhookId": "amadeus-reenvio-qr"
@@ -33,7 +39,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-2200, 200],
+      "position": [
+        -2200,
+        200
+      ],
       "id": "33333333-3333-3333-3333-333333333333",
       "name": "Validar"
     },
@@ -57,11 +66,17 @@
       },
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [-2000, 200],
+      "position": [
+        -2000,
+        200
+      ],
       "id": "44444444-4444-4444-4444-444444444444",
       "name": "Buscar Inscricao",
       "credentials": {
-        "supabaseApi": { "id": "lCseGlHlzCUJ9cu3", "name": "SEA - HUB" }
+        "supabaseApi": {
+          "id": "lCseGlHlzCUJ9cu3",
+          "name": "SEA - HUB"
+        }
       }
     },
     {
@@ -84,11 +99,17 @@
       },
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [-1800, 100],
+      "position": [
+        -1800,
+        100
+      ],
       "id": "55555555-5555-5555-5555-555555555555",
       "name": "Buscar Evento",
       "credentials": {
-        "supabaseApi": { "id": "lCseGlHlzCUJ9cu3", "name": "SEA - HUB" }
+        "supabaseApi": {
+          "id": "lCseGlHlzCUJ9cu3",
+          "name": "SEA - HUB"
+        }
       }
     },
     {
@@ -111,11 +132,17 @@
       },
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [-1800, 300],
+      "position": [
+        -1800,
+        300
+      ],
       "id": "66666666-6666-6666-6666-666666666666",
       "name": "Buscar Aluno",
       "credentials": {
-        "supabaseApi": { "id": "lCseGlHlzCUJ9cu3", "name": "SEA - HUB" }
+        "supabaseApi": {
+          "id": "lCseGlHlzCUJ9cu3",
+          "name": "SEA - HUB"
+        }
       }
     },
     {
@@ -137,11 +164,17 @@
       },
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [-1800, 500],
+      "position": [
+        -1800,
+        500
+      ],
       "id": "77777777-7777-7777-7777-777777777777",
       "name": "Buscar Tickets",
       "credentials": {
-        "supabaseApi": { "id": "lCseGlHlzCUJ9cu3", "name": "SEA - HUB" }
+        "supabaseApi": {
+          "id": "lCseGlHlzCUJ9cu3",
+          "name": "SEA - HUB"
+        }
       }
     },
     {
@@ -150,7 +183,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-1500, 300],
+      "position": [
+        -1500,
+        300
+      ],
       "id": "88888888-8888-8888-8888-888888888888",
       "name": "Formatar Telefone"
     },
@@ -163,23 +199,38 @@
       },
       "type": "@devlikeapro/n8n-nodes-waha.WAHA",
       "typeVersion": 202502,
-      "position": [-1300, 300],
+      "position": [
+        -1300,
+        300
+      ],
       "id": "99999999-9999-9999-9999-999999999999",
       "name": "Check Sem 9",
       "credentials": {
-        "wahaApi": { "id": "Wa5n1cK3Gl4WH4bW", "name": "WAHA account" }
+        "wahaApi": {
+          "id": "Wa5n1cK3Gl4WH4bW",
+          "name": "WAHA account"
+        }
       }
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
           "conditions": [
             {
               "id": "exists-cond",
               "leftValue": "={{ $json.numberExists }}",
               "rightValue": true,
-              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
             }
           ],
           "combinator": "and"
@@ -188,7 +239,10 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [-1100, 300],
+      "position": [
+        -1100,
+        300
+      ],
       "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
       "name": "Existe sem 9?"
     },
@@ -201,11 +255,17 @@
       },
       "type": "@devlikeapro/n8n-nodes-waha.WAHA",
       "typeVersion": 202502,
-      "position": [-900, 400],
+      "position": [
+        -900,
+        400
+      ],
       "id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
       "name": "Check Com 9",
       "credentials": {
-        "wahaApi": { "id": "Wa5n1cK3Gl4WH4bW", "name": "WAHA account" }
+        "wahaApi": {
+          "id": "Wa5n1cK3Gl4WH4bW",
+          "name": "WAHA account"
+        }
       }
     },
     {
@@ -214,7 +274,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-700, 300],
+      "position": [
+        -700,
+        300
+      ],
       "id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
       "name": "Resolver chatId"
     },
@@ -224,7 +287,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-500, 300],
+      "position": [
+        -500,
+        300
+      ],
       "id": "dddddddd-dddd-dddd-dddd-dddddddddddd",
       "name": "Montar Texto Reenvio"
     },
@@ -239,20 +305,29 @@
       },
       "type": "@devlikeapro/n8n-nodes-waha.WAHA",
       "typeVersion": 202502,
-      "position": [-300, 300],
+      "position": [
+        -300,
+        300
+      ],
       "id": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
       "name": "Enviar Texto Reenvio",
       "credentials": {
-        "wahaApi": { "id": "Wa5n1cK3Gl4WH4bW", "name": "WAHA account" }
+        "wahaApi": {
+          "id": "Wa5n1cK3Gl4WH4bW",
+          "name": "WAHA account"
+        }
       }
     },
     {
       "parameters": {
-        "jsCode": "const tickets = $('Buscar Tickets').all().map(i => i.json);\nconst evento = $('Buscar Evento').first().json;\nconst aluno  = $('Buscar Aluno').first().json;\nconst phoneWaha = $('Resolver chatId').first().json.chatId;\n\nconst total = tickets.length;\nreturn tickets\n  .sort((a, b) => (a.ordem || 0) - (b.ordem || 0))\n  .map((t, i) => ({ json: {\n    phone_waha:   phoneWaha,\n    qr_url:       t.qr_url,\n    token:        t.token,\n    nome_tipo:    t.nome_tipo,\n    ordem:        t.ordem,\n    senha_label:  `Senha ${t.ordem || i + 1} de ${total}`,\n    evento_nome:  (evento.nome || '').trim(),\n    aluno_nome:   aluno?.nome_completo || '',\n    aluno_serie:  aluno?.serie || '',\n    evento_data:  evento.data_evento || '',\n    evento_local: evento.local || '',\n  }}));"
+        "jsCode": "const inscricao = $('Buscar Inscricao').first().json;\nconst evento = $('Buscar Evento').first().json;\nconst aluno  = $('Buscar Aluno').first().json;\nconst phoneWaha = $('Resolver chatId').first().json.chatId;\n\nlet tickets = [];\ntry {\n  tickets = $('Buscar Tickets').all().map(i => i.json);\n} catch {\n  // Buscar Tickets sem resultado — esperado em inscrição nova.\n}\n\nif (tickets.length === 0) {\n  // Inscrição sem tickets: gera QRs novos na hora (mesma lógica do fluxo principal)\n  const eventoShort = (evento.slug || 'EVT').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);\n  const gerarToken = () => {\n    const ts = Date.now().toString(36).toUpperCase();\n    const rnd = Math.random().toString(36).substring(2, 8).toUpperCase();\n    return 'AMZ-' + eventoShort + '-' + ts + '-' + rnd;\n  };\n\n  const itens = (inscricao.itens || []).filter(it => (it.qtd || 0) > 0);\n  let ordem = 0;\n  for (const item of itens) {\n    for (let i = 0; i < (item.qtd || 0); i++) {\n      ordem++;\n      const token = gerarToken();\n      const dadosQR = (aluno?.nome_completo || '') + ' | ' + (item.nome || 'Senha') + ' | ' + token;\n      tickets.push({\n        nome_tipo: item.nome || 'Senha',\n        ordem,\n        token,\n        qr_url: 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&format=png&data=' + encodeURIComponent(dadosQR),\n      });\n    }\n  }\n  if (tickets.length === 0) {\n    throw new Error('Inscrição sem itens e sem tickets — nada pra enviar.');\n  }\n}\n\nconst total = tickets.length;\nreturn tickets\n  .sort((a, b) => (a.ordem || 0) - (b.ordem || 0))\n  .map((t, i) => ({ json: {\n    phone_waha:   phoneWaha,\n    qr_url:       t.qr_url,\n    token:        t.token,\n    nome_tipo:    t.nome_tipo,\n    ordem:        t.ordem || i + 1,\n    senha_label:  'Senha ' + (t.ordem || i + 1) + ' de ' + total,\n    evento_nome:  (evento.nome || '').trim(),\n    aluno_nome:   aluno?.nome_completo || '',\n    aluno_serie:  aluno?.serie || '',\n    evento_data:  evento.data_evento || '',\n    evento_local: evento.local || '',\n  }}));"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-100, 300],
+      "position": [
+        -100,
+        300
+      ],
       "id": "ffffffff-ffff-ffff-ffff-ffffffffffff",
       "name": "Gerar Items QR"
     },
@@ -268,11 +343,17 @@
       },
       "type": "@devlikeapro/n8n-nodes-waha.WAHA",
       "typeVersion": 202502,
-      "position": [100, 300],
+      "position": [
+        100,
+        300
+      ],
       "id": "10101010-1010-1010-1010-101010101010",
       "name": "Enviar QR Reenvio",
       "credentials": {
-        "wahaApi": { "id": "Wa5n1cK3Gl4WH4bW", "name": "WAHA account" }
+        "wahaApi": {
+          "id": "Wa5n1cK3Gl4WH4bW",
+          "name": "WAHA account"
+        }
       }
     },
     {
@@ -282,8 +363,14 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" },
-            { "name": "X-Webhook-Secret", "value": "1d3321952567de9e6c58e7fdbd6f23c01f7757495c19bc527fa21905a35fff95" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Webhook-Secret",
+              "value": "1d3321952567de9e6c58e7fdbd6f23c01f7757495c19bc527fa21905a35fff95"
+            }
           ]
         },
         "sendBody": true,
@@ -293,7 +380,10 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [300, 300],
+      "position": [
+        300,
+        300
+      ],
       "id": "20202020-2020-2020-2020-202020202020",
       "name": "Marcar QR Reenviado",
       "executeOnce": true
@@ -306,7 +396,10 @@
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [500, 300],
+      "position": [
+        500,
+        300
+      ],
       "id": "30303030-3030-3030-3030-303030303030",
       "name": "Respond Sucesso"
     }
@@ -314,87 +407,195 @@
   "connections": {
     "Webhook": {
       "main": [
-        [{ "node": "Validar", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Validar",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Validar": {
       "main": [
-        [{ "node": "Buscar Inscricao", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Buscar Inscricao",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Buscar Inscricao": {
       "main": [
         [
-          { "node": "Buscar Evento", "type": "main", "index": 0 },
-          { "node": "Buscar Aluno", "type": "main", "index": 0 },
-          { "node": "Buscar Tickets", "type": "main", "index": 0 }
+          {
+            "node": "Buscar Evento",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Buscar Aluno",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Buscar Tickets",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Buscar Evento": {
       "main": [
-        [{ "node": "Formatar Telefone", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Formatar Telefone",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Buscar Aluno": {
       "main": [
-        [{ "node": "Formatar Telefone", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Formatar Telefone",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Buscar Tickets": {
       "main": [
-        [{ "node": "Formatar Telefone", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Formatar Telefone",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Formatar Telefone": {
       "main": [
-        [{ "node": "Check Sem 9", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Check Sem 9",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Check Sem 9": {
       "main": [
-        [{ "node": "Existe sem 9?", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Existe sem 9?",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Existe sem 9?": {
       "main": [
-        [{ "node": "Resolver chatId", "type": "main", "index": 0 }],
-        [{ "node": "Check Com 9", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Resolver chatId",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check Com 9",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Check Com 9": {
       "main": [
-        [{ "node": "Resolver chatId", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Resolver chatId",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Resolver chatId": {
       "main": [
-        [{ "node": "Montar Texto Reenvio", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Montar Texto Reenvio",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Montar Texto Reenvio": {
       "main": [
-        [{ "node": "Enviar Texto Reenvio", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Enviar Texto Reenvio",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Enviar Texto Reenvio": {
       "main": [
-        [{ "node": "Gerar Items QR", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Gerar Items QR",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Gerar Items QR": {
       "main": [
-        [{ "node": "Enviar QR Reenvio", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Enviar QR Reenvio",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Enviar QR Reenvio": {
       "main": [
-        [{ "node": "Marcar QR Reenviado", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Marcar QR Reenviado",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Marcar QR Reenviado": {
       "main": [
-        [{ "node": "Respond Sucesso", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Respond Sucesso",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },
