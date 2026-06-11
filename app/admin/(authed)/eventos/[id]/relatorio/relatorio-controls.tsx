@@ -1,16 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeft, List, Printer, StretchHorizontal } from "lucide-react";
+import {
+  ChevronLeft,
+  EyeOff,
+  List,
+  Printer,
+  StretchHorizontal,
+  Ticket,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Props {
   eventoId: string;
   modo: "lista" | "paginas";
+  mostrarSenhas: boolean;
 }
 
-export function RelatorioControls({ eventoId, modo }: Props) {
+export function RelatorioControls({ eventoId, modo, mostrarSenhas }: Props) {
   const base = `/admin/eventos/${eventoId}/relatorio`;
+  const url = (m: "lista" | "paginas", senhas: boolean) =>
+    `${base}?modo=${m}&senhas=${senhas ? "sim" : "nao"}`;
+
   return (
     <div className="flex flex-col gap-4 print:hidden sm:flex-row sm:items-center sm:justify-between">
       <Link
@@ -24,7 +35,7 @@ export function RelatorioControls({ eventoId, modo }: Props) {
       <div className="flex flex-wrap items-center gap-3">
         <div className="inline-flex overflow-hidden rounded-xl border border-border">
           <Link
-            href={`${base}?modo=lista`}
+            href={url("lista", mostrarSenhas)}
             className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold transition-colors ${
               modo === "lista"
                 ? "bg-amadeus-blue text-white"
@@ -35,7 +46,7 @@ export function RelatorioControls({ eventoId, modo }: Props) {
             Lista direta
           </Link>
           <Link
-            href={`${base}?modo=paginas`}
+            href={url("paginas", mostrarSenhas)}
             className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold transition-colors ${
               modo === "paginas"
                 ? "bg-amadeus-blue text-white"
@@ -44,6 +55,31 @@ export function RelatorioControls({ eventoId, modo }: Props) {
           >
             <StretchHorizontal className="size-4" />
             Uma página por turma
+          </Link>
+        </div>
+
+        <div className="inline-flex overflow-hidden rounded-xl border border-border">
+          <Link
+            href={url(modo, true)}
+            className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold transition-colors ${
+              mostrarSenhas
+                ? "bg-amadeus-blue text-white"
+                : "text-muted-foreground hover:bg-amadeus-blue-50"
+            }`}
+          >
+            <Ticket className="size-4" />
+            Com senhas
+          </Link>
+          <Link
+            href={url(modo, false)}
+            className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold transition-colors ${
+              !mostrarSenhas
+                ? "bg-amadeus-blue text-white"
+                : "text-muted-foreground hover:bg-amadeus-blue-50"
+            }`}
+          >
+            <EyeOff className="size-4" />
+            Sem senhas (professores)
           </Link>
         </div>
 

@@ -40,12 +40,7 @@ interface Aluno {
 type MetodoCobranca = "aberto" | "pix" | "cartao";
 
 const METODOS: { id: MetodoCobranca; nome: string; descricao: string }[] = [
-  {
-    id: "aberto",
-    nome: "Link aberto",
-    descricao: "Responsável escolhe PIX ou cartão à vista no link",
-  },
-  { id: "pix", nome: "PIX", descricao: "Sem taxas" },
+  { id: "pix", nome: "PIX", descricao: "Sem taxas — escola recebe o valor cheio" },
   {
     id: "cartao",
     nome: "Cartão parcelado",
@@ -74,7 +69,7 @@ export function CobrancaForm() {
   const [valorTexto, setValorTexto] = useState("");
 
   // Pagamento / simulação
-  const [metodo, setMetodo] = useState<MetodoCobranca>("aberto");
+  const [metodo, setMetodo] = useState<MetodoCobranca>("pix");
   const [parcelas, setParcelas] = useState(1);
   const [repassarJuros, setRepassarJuros] = useState(true);
 
@@ -342,7 +337,7 @@ export function CobrancaForm() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Forma de cobrança */}
-          <div className="grid gap-2 sm:grid-cols-3">
+          <div className="grid gap-2 sm:grid-cols-2">
             {METODOS.map((m) => {
               const ativo = metodo === m.id;
               return (
@@ -492,8 +487,6 @@ export function CobrancaForm() {
                 </span>
               </div>
               <div className="text-xs text-muted-foreground">
-                {metodo === "aberto" &&
-                  "Sem juros — se o responsável pagar no cartão, a escola absorve a taxa."}
                 {metodo === "pix" && "PIX sem taxas — a escola recebe o valor cheio."}
                 {metodo === "cartao" &&
                   (repassarJuros

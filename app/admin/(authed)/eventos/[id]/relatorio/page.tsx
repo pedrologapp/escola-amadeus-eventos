@@ -6,7 +6,7 @@ import { RelatorioControls } from "./relatorio-controls";
 
 interface PageProps {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ modo?: string }>;
+  searchParams: Promise<{ modo?: string; senhas?: string }>;
 }
 
 interface Item {
@@ -37,8 +37,11 @@ function ordemSerie(serie: string): number {
 
 export default async function RelatorioPage({ params, searchParams }: PageProps) {
   const { id } = await params;
-  const { modo: modoRaw } = await searchParams;
+  const { modo: modoRaw, senhas: senhasRaw } = await searchParams;
   const modo: "lista" | "paginas" = modoRaw === "paginas" ? "paginas" : "lista";
+  // "Versão professores": esconde a coluna de senhas e os totais,
+  // pra lista circular sem expor quanto cada família comprou.
+  const mostrarSenhas = senhasRaw !== "nao";
 
   const supabase = await createClient();
 
@@ -100,7 +103,11 @@ export default async function RelatorioPage({ params, searchParams }: PageProps)
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-10 print:max-w-none print:px-0 print:py-0">
-      <RelatorioControls eventoId={evento.id} modo={modo} />
+      <RelatorioControls
+        eventoId={evento.id}
+        modo={modo}
+        mostrarSenhas={mostrarSenhas}
+      />
 
       <div className="mt-8 print:mt-0">
         {/* Cabeçalho do relatório */}
@@ -112,7 +119,8 @@ export default async function RelatorioPage({ params, searchParams }: PageProps)
             Relatório de pagantes · {formatDate(evento.data_evento)}
           </p>
           <p className="mt-2 text-sm font-semibold">
-            {totalAlunos} aluno(s) · {totalSenhas} senha(s) no total
+            {totalAlunos} aluno(s)
+            {mostrarSenhas ? ` · ${totalSenhas} senha(s) no total` : ""}
           </p>
         </header>
 
@@ -151,7 +159,8 @@ export default async function RelatorioPage({ params, searchParams }: PageProps)
                 <h2 className="mb-2 text-base font-extrabold text-amadeus-blue">
                   {g.serie} · Turma {g.turma}
                   <span className="ml-2 text-sm font-medium text-muted-foreground">
-                    ({g.linhas.length} aluno(s) · {g.totalSenhas} senha(s))
+                    ({g.linhas.length} aluno(s)
+                    {mostrarSenhas ? ` · ${g.totalSenhas} senha(s)` : ""})
                   </span>
                 </h2>
                 <table className="w-full border-collapse text-sm">
@@ -161,7 +170,9 @@ export default async function RelatorioPage({ params, searchParams }: PageProps)
                       <th className="py-2 pr-3 font-semibold">Aluno</th>
                       <th className="py-2 pr-3 font-semibold">Série</th>
                       <th className="py-2 pr-3 font-semibold">Turma</th>
-                      <th className="py-2 font-semibold">Senhas</th>
+                      {mostrarSenhas && (
+                        <th className="py-2 font-semibold">Senhas</th>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
@@ -176,7 +187,7 @@ export default async function RelatorioPage({ params, searchParams }: PageProps)
                         <td className="py-2 pr-3 font-medium">{l.nome}</td>
                         <td className="py-2 pr-3">{l.serie}</td>
                         <td className="py-2 pr-3">{l.turma}</td>
-                        <td className="py-2">{l.senhas}</td>
+                        {mostrarSenhas && <td className="py-2">{l.senhas}</td>}
                       </tr>
                     ))}
                   </tbody>
