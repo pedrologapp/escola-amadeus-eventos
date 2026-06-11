@@ -1,23 +1,14 @@
 import Link from "next/link";
-import {
-  CalendarPlus,
-  Sparkles,
-  Ticket,
-  Wallet,
-} from "lucide-react";
+import { CalendarPlus, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/lib/utils";
 import {
   DashboardEventosList,
   type DashboardEventoItem,
 } from "./eventos-list";
+import { MetricasCards, type MetricaItem } from "./metricas-cards";
 
 const LIMITE_POR_ABA = 5;
 
@@ -107,7 +98,7 @@ export default async function AdminDashboardPage() {
     0,
   );
 
-  const metricas = [
+  const metricas: MetricaItem[] = [
     {
       titulo: "Eventos publicados",
       valor: eventosPublicados.toString(),
@@ -115,13 +106,14 @@ export default async function AdminDashboardPage() {
         totalEventos === 0
           ? "Nenhum evento cadastrado ainda"
           : `${totalEventos} cadastrado${totalEventos === 1 ? "" : "s"} no total`,
-      icone: CalendarPlus,
+      icone: "calendario",
     },
     {
       titulo: "Ingressos vendidos",
       valor: ingressosVendidos.toString(),
       descricao: "Total de ingressos pagos em todos os eventos",
-      icone: Ticket,
+      icone: "ingresso",
+      sensivel: true,
     },
     {
       titulo: "Receita dos eventos ativos",
@@ -130,7 +122,8 @@ export default async function AdminDashboardPage() {
         proximosAll.length === 0
           ? "Sem eventos ativos no momento"
           : `Soma das inscrições pagas em ${proximosAll.length} evento${proximosAll.length === 1 ? "" : "s"} ativo${proximosAll.length === 1 ? "" : "s"}`,
-      icone: Wallet,
+      icone: "carteira",
+      sensivel: true,
     },
   ];
 
@@ -163,31 +156,7 @@ export default async function AdminDashboardPage() {
         </div>
       </header>
 
-      <section className="mt-8 grid gap-6 md:grid-cols-3">
-        {metricas.map((m) => {
-          const Icone = m.icone;
-          return (
-            <Card key={m.titulo}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">{m.titulo}</CardTitle>
-                  <div className="grid size-10 place-items-center rounded-2xl bg-amadeus-blue-50 text-amadeus-blue">
-                    <Icone className="size-5" />
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-extrabold text-amadeus-blue">
-                  {m.valor}
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {m.descricao}
-                </p>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </section>
+      <MetricasCards metricas={metricas} />
 
       <section className="mt-10">
         {semEventos ? (
