@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/lib/utils";
+import { ValorSensivel } from "@/components/admin/valores-sensiveis";
 import { CobrancasTable, type CobrancaRow } from "./cobrancas-table";
 
 export default async function CobrancasPage() {
@@ -70,9 +71,14 @@ export default async function CobrancasPage() {
             Cobranças avulsas
           </h1>
           <p className="mt-1 text-muted-foreground">
-            {lista.length === 0
-              ? "Nenhuma cobrança criada ainda."
-              : `${lista.length} cobrança${lista.length === 1 ? "" : "s"} · ${formatCurrency(totalPago)} recebido`}
+            {lista.length === 0 ? (
+              "Nenhuma cobrança criada ainda."
+            ) : (
+              <>
+                {lista.length} cobrança{lista.length === 1 ? "" : "s"} ·{" "}
+                <ValorSensivel valor={formatCurrency(totalPago)} /> recebido
+              </>
+            )}
           </p>
         </div>
         <Button asChild>

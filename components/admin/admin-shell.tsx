@@ -3,6 +3,10 @@ import { CalendarDays, LayoutDashboard, LogOut, Receipt } from "lucide-react";
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/app/admin/actions";
+import {
+  OlhinhoGlobal,
+  ValoresSensiveisProvider,
+} from "@/components/admin/valores-sensiveis";
 
 interface AdminShellProps {
   userEmail: string;
@@ -17,6 +21,7 @@ const navLinks = [
 
 export function AdminShell({ userEmail, children }: AdminShellProps) {
   return (
+    <ValoresSensiveisProvider>
     <div className="min-h-screen">
       <header className="sticky top-0 z-40 border-b border-border/60 bg-white/85 backdrop-blur-md print:hidden">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -42,6 +47,7 @@ export function AdminShell({ userEmail, children }: AdminShellProps) {
           </div>
 
           <div className="flex items-center gap-3">
+            <OlhinhoGlobal />
             <span
               className="hidden text-sm text-muted-foreground sm:inline"
               title={userEmail}
@@ -76,5 +82,6 @@ export function AdminShell({ userEmail, children }: AdminShellProps) {
 
       <main>{children}</main>
     </div>
+    </ValoresSensiveisProvider>
   );
 }

@@ -8,7 +8,7 @@ import {
   DashboardEventosList,
   type DashboardEventoItem,
 } from "./eventos-list";
-import { MetricasCards, type MetricaItem } from "./metricas-cards";
+import { MetricasCompactas, type MetricaItem } from "./metricas-compactas";
 
 const LIMITE_POR_ABA = 5;
 
@@ -101,27 +101,18 @@ export default async function AdminDashboardPage() {
   const metricas: MetricaItem[] = [
     {
       titulo: "Eventos publicados",
-      valor: eventosPublicados.toString(),
-      descricao:
-        totalEventos === 0
-          ? "Nenhum evento cadastrado ainda"
-          : `${totalEventos} cadastrado${totalEventos === 1 ? "" : "s"} no total`,
+      valor: `${eventosPublicados} de ${totalEventos}`,
       icone: "calendario",
     },
     {
       titulo: "Ingressos vendidos",
       valor: ingressosVendidos.toString(),
-      descricao: "Total de ingressos pagos em todos os eventos",
       icone: "ingresso",
       sensivel: true,
     },
     {
-      titulo: "Receita dos eventos ativos",
+      titulo: "Receita (eventos ativos)",
       valor: formatCurrency(receitaEventosAtivos),
-      descricao:
-        proximosAll.length === 0
-          ? "Sem eventos ativos no momento"
-          : `Soma das inscrições pagas em ${proximosAll.length} evento${proximosAll.length === 1 ? "" : "s"} ativo${proximosAll.length === 1 ? "" : "s"}`,
       icone: "carteira",
       sensivel: true,
     },
@@ -140,23 +131,24 @@ export default async function AdminDashboardPage() {
             Acompanhe os eventos, inscrições e a arrecadação da escola.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline">
-            <Link href="/admin/eventos/importar">
-              <Sparkles />
-              Importar de aviso
-            </Link>
-          </Button>
-          <Button asChild>
-            <Link href="/admin/eventos/novo">
-              <CalendarPlus />
-              Novo evento
-            </Link>
-          </Button>
+        <div className="flex flex-col gap-3 sm:items-end">
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline">
+              <Link href="/admin/eventos/importar">
+                <Sparkles />
+                Importar de aviso
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link href="/admin/eventos/novo">
+                <CalendarPlus />
+                Novo evento
+              </Link>
+            </Button>
+          </div>
+          <MetricasCompactas metricas={metricas} />
         </div>
       </header>
-
-      <MetricasCards metricas={metricas} />
 
       <section className="mt-10">
         {semEventos ? (

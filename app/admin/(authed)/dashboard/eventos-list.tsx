@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { formatDate } from "@/lib/utils";
+import { ValorSensivel } from "@/components/admin/valores-sensiveis";
 
 export interface DashboardEventoItem {
   id: string;
@@ -100,7 +101,9 @@ export function DashboardEventosList({ proximos, concluidos }: Props) {
                   title="Ingressos vendidos"
                 >
                   <Ticket className="size-3.5" />
-                  <span className="tabular-nums">{ev.ingressos_vendidos}</span>
+                  <span className="tabular-nums">
+                    <ValorSensivel valor={String(ev.ingressos_vendidos)} />
+                  </span>
                 </div>
                 <Badge
                   variant={
