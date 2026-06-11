@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
+import { buscarAlunos } from "@/lib/buscar-alunos";
 import { calcularTotal, type MetodoPagamento } from "@/lib/pricing";
 import {
   getLoteAtivo,
@@ -131,25 +132,13 @@ export function InscricaoForm({ evento, tipos }: Props) {
     const timer = setTimeout(async () => {
       try {
         const supabase = createClient();
-        let q = supabase
-          .from("alunos")
-          .select("id, nome_completo, serie, turma")
-          .ilike("nome_completo", `%${studentSearch}%`);
-
-        if (evento.series_permitidas?.length) {
-          q = q.in("serie", evento.series_permitidas);
-        }
-        if (evento.turmas_permitidas?.length) {
-          q = q.in("turma", evento.turmas_permitidas);
-        }
-
-        const { data } = await q
-          .order("nome_completo", { ascending: true })
-          .limit(10)
-          .abortSignal(ctrl.signal);
-
-        setStudentsList(data ?? []);
-        setShowDropdown((data ?? []).length > 0);
+        const data = await buscarAlunos(supabase, studentSearch, {
+          series: evento.series_permitidas,
+          turmas: evento.turmas_permitidas,
+          signal: ctrl.signal,
+        });
+        setStudentsList(data);
+        setShowDropdown(data.length > 0);
       } catch {
         // silent — usually abort
       } finally {

@@ -24,6 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
+import { buscarAlunos } from "@/lib/buscar-alunos";
 import {
   getLoteAtivo,
   getPrecoAtual,
@@ -101,18 +102,13 @@ export function VendaForm({
     const timer = setTimeout(async () => {
       try {
         const supabase = createClient();
-        let q = supabase
-          .from("alunos")
-          .select("id, nome_completo, serie, turma")
-          .ilike("nome_completo", `%${busca}%`);
-        if (seriesPermitidas?.length) q = q.in("serie", seriesPermitidas);
-        if (turmasPermitidas?.length) q = q.in("turma", turmasPermitidas);
-        const { data } = await q
-          .order("nome_completo")
-          .limit(10)
-          .abortSignal(ctrl.signal);
-        setLista(data ?? []);
-        setShowDrop((data ?? []).length > 0);
+        const data = await buscarAlunos(supabase, busca, {
+          series: seriesPermitidas,
+          turmas: turmasPermitidas,
+          signal: ctrl.signal,
+        });
+        setLista(data);
+        setShowDrop(data.length > 0);
       } catch {
         /* abort */
       } finally {

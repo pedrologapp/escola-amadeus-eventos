@@ -24,6 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
+import { buscarAlunos } from "@/lib/buscar-alunos";
 import { calcularTotal } from "@/lib/pricing";
 import { formatCurrency } from "@/lib/utils";
 import { formatarCPF, formatarTelefone } from "@/lib/validators";
@@ -94,15 +95,11 @@ export function CobrancaForm() {
     const timer = setTimeout(async () => {
       try {
         const supabase = createClient();
-        const { data } = await supabase
-          .from("alunos")
-          .select("id, nome_completo, serie, turma")
-          .ilike("nome_completo", `%${busca}%`)
-          .order("nome_completo")
-          .limit(10)
-          .abortSignal(ctrl.signal);
-        setLista(data ?? []);
-        setShowDrop((data ?? []).length > 0);
+        const data = await buscarAlunos(supabase, busca, {
+          signal: ctrl.signal,
+        });
+        setLista(data);
+        setShowDrop(data.length > 0);
       } catch {
         /* abort */
       } finally {
