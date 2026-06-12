@@ -8,6 +8,7 @@ import {
   Clock,
   Lock,
   RefreshCw,
+  Search,
   Trash2,
   X,
 } from "lucide-react";
@@ -55,8 +56,16 @@ const statusInscricao: Record<
   estornado: { label: "Estornado", variant: "destructive" },
 };
 
+function normalizar(texto: string) {
+  return texto
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase();
+}
+
 export function InscricoesTable({ inscricoes }: { inscricoes: InscricaoRow[] }) {
   const [aba, setAba] = useState<Aba>("todas");
+  const [busca, setBusca] = useState("");
   const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
 
   function toggleSelecionada(id: string) {
@@ -76,7 +85,7 @@ export function InscricoesTable({ inscricoes }: { inscricoes: InscricaoRow[] }) 
     ["cancelado", "estornado"].includes(i.status_pagamento),
   );
 
-  const lista =
+  const listaAba =
     aba === "pagas"
       ? pagas
       : aba === "pendentes"
@@ -84,6 +93,15 @@ export function InscricoesTable({ inscricoes }: { inscricoes: InscricaoRow[] }) 
         : aba === "canceladas"
           ? canceladas
           : inscricoes;
+
+  const buscaNorm = normalizar(busca.trim());
+  const lista = buscaNorm
+    ? listaAba.filter(
+        (i) =>
+          normalizar(i.aluno?.nome_completo ?? "").includes(buscaNorm) ||
+          normalizar(i.responsavel_nome).includes(buscaNorm),
+      )
+    : listaAba;
 
   // Só inscrições canceladas (não estornadas) podem ser excluídas
   const excluiveisNaLista = lista
@@ -107,19 +125,32 @@ export function InscricoesTable({ inscricoes }: { inscricoes: InscricaoRow[] }) 
 
   return (
     <div>
-      <div className="mb-5 inline-flex flex-wrap gap-1 rounded-2xl border border-border bg-white p-1 shadow-sm">
-        <TabPill active={aba === "todas"} onClick={() => setAba("todas")} count={inscricoes.length}>
-          Todas
-        </TabPill>
-        <TabPill active={aba === "pagas"} onClick={() => setAba("pagas")} count={pagas.length}>
-          Pagas
-        </TabPill>
-        <TabPill active={aba === "pendentes"} onClick={() => setAba("pendentes")} count={pendentes.length}>
-          Pendentes
-        </TabPill>
-        <TabPill active={aba === "canceladas"} onClick={() => setAba("canceladas")} count={canceladas.length}>
-          Canceladas
-        </TabPill>
+      <div className="mb-5 flex flex-wrap items-center gap-3">
+        <div className="inline-flex flex-wrap gap-1 rounded-2xl border border-border bg-white p-1 shadow-sm">
+          <TabPill active={aba === "todas"} onClick={() => setAba("todas")} count={inscricoes.length}>
+            Todas
+          </TabPill>
+          <TabPill active={aba === "pagas"} onClick={() => setAba("pagas")} count={pagas.length}>
+            Pagas
+          </TabPill>
+          <TabPill active={aba === "pendentes"} onClick={() => setAba("pendentes")} count={pendentes.length}>
+            Pendentes
+          </TabPill>
+          <TabPill active={aba === "canceladas"} onClick={() => setAba("canceladas")} count={canceladas.length}>
+            Canceladas
+          </TabPill>
+        </div>
+        <div className="relative w-full max-w-xs">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Buscar por nome..."
+            className="pl-9"
+            aria-label="Buscar inscrições por nome do aluno ou responsável"
+          />
+        </div>
       </div>
 
       {idsSelecionados.length > 0 && (
@@ -138,9 +169,11 @@ export function InscricoesTable({ inscricoes }: { inscricoes: InscricaoRow[] }) 
 
       {lista.length === 0 ? (
         <div className="grid place-items-center rounded-2xl border-2 border-dashed border-amadeus-blue/20 bg-amadeus-blue-50/30 py-12 text-sm text-muted-foreground">
-          {aba === "todas"
-            ? "Nenhuma inscrição ainda."
-            : `Nenhuma inscrição ${aba === "pagas" ? "paga" : aba === "pendentes" ? "pendente" : "cancelada"}.`}
+          {buscaNorm
+            ? `Nenhuma inscrição encontrada para "${busca.trim()}".`
+            : aba === "todas"
+              ? "Nenhuma inscrição ainda."
+              : `Nenhuma inscrição ${aba === "pagas" ? "paga" : aba === "pendentes" ? "pendente" : "cancelada"}.`}
         </div>
       ) : (
         <div className="overflow-x-auto">
