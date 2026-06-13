@@ -330,8 +330,18 @@ function ResultadoCard({
               </div>
             )}
             {r.status === "nao_encontrado" && (
-              <div className="mt-1 break-all text-sm">
-                Código lido: {r.codigo}
+              <div className="mt-1 text-sm">
+                {r.nomeQr ? (
+                  <>
+                    <p>
+                      Este QR não bate com o código no sistema. Confirme pela
+                      aba <strong>Participantes</strong>, buscando por:
+                    </p>
+                    <p className="mt-1 text-lg font-bold">{r.nomeQr}</p>
+                  </>
+                ) : (
+                  <span className="break-all">Código lido: {r.codigo}</span>
+                )}
               </div>
             )}
             {r.status === "erro" && (

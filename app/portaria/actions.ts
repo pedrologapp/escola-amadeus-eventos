@@ -89,8 +89,20 @@ export type ResultadoLeitura =
     }
   | { status: "cancelado"; nome: string }
   | { status: "outro_evento"; eventoNome: string }
-  | { status: "nao_encontrado"; codigo: string }
+  | { status: "nao_encontrado"; codigo: string; nomeQr?: string }
   | { status: "erro"; mensagem: string };
+
+/**
+ * Alguns QRs trazem "nome | tipo | token". Quando o token não bate com o
+ * banco, ainda dá pra mostrar o nome lido para conferência manual na lista.
+ */
+function nomeDoQr(raw: string): string | undefined {
+  const partes = (raw || "")
+    .split("|")
+    .map((p) => p.trim())
+    .filter(Boolean);
+  return partes.length >= 2 ? partes[0] : undefined;
+}
 
 export async function validarTicket(
   eventoId: string,
@@ -113,7 +125,9 @@ export async function validarTicket(
   if (error) {
     return { status: "erro", mensagem: "Erro ao consultar. Tente de novo." };
   }
-  if (!ticket) return { status: "nao_encontrado", codigo: token };
+  if (!ticket) {
+    return { status: "nao_encontrado", codigo: token, nomeQr: nomeDoQr(codigoRaw) };
+  }
 
   const nome = await resolverNome(admin, ticket.aluno_nome, ticket.inscricao_id);
 
