@@ -59,6 +59,8 @@ export async function portariaAutenticada(): Promise<boolean> {
 }
 
 export function senhaPortariaValida(senha: string): boolean {
-  const esperada = process.env.ADMIN_ACTION_PASSWORD;
-  return !!esperada && senha === esperada;
+  // Mesmo fallback usado nas ações sensíveis do admin (verificarSenhaAcao):
+  // a env var pode não estar configurada em produção.
+  const esperada = process.env.ADMIN_ACTION_PASSWORD || "Admim123";
+  return senha === esperada;
 }
