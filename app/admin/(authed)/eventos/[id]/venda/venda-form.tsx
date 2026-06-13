@@ -75,6 +75,7 @@ export function VendaForm({
   const [sucesso, setSucesso] = useState(false);
 
   // Aluno
+  const [avulsa, setAvulsa] = useState(false);
   const [busca, setBusca] = useState("");
   const [lista, setLista] = useState<Aluno[]>([]);
   const [selecionado, setSelecionado] = useState<Aluno | null>(null);
@@ -92,7 +93,7 @@ export function VendaForm({
 
   // Busca de alunos com debounce
   useEffect(() => {
-    if (busca.length < 2 || selecionado) {
+    if (avulsa || busca.length < 2 || selecionado) {
       setLista([]);
       setShowDrop(false);
       return;
@@ -119,7 +120,15 @@ export function VendaForm({
       clearTimeout(timer);
       ctrl.abort();
     };
-  }, [busca, selecionado, seriesPermitidas, turmasPermitidas]);
+  }, [avulsa, busca, selecionado, seriesPermitidas, turmasPermitidas]);
+
+  function toggleAvulsa(on: boolean) {
+    setAvulsa(on);
+    setSelecionado(null);
+    setBusca("");
+    setLista([]);
+    setShowDrop(false);
+  }
 
   const totalSenhas = useMemo(
     () => Object.values(qtds).reduce((a, b) => a + b, 0),
@@ -131,7 +140,10 @@ export function VendaForm({
   );
 
   const valido =
-    !!selecionado && nome.trim().length >= 2 && telefone.length >= 8 && totalSenhas > 0;
+    (avulsa || !!selecionado) &&
+    nome.trim().length >= 2 &&
+    telefone.length >= 8 &&
+    totalSenhas > 0;
 
   function inc(id: string) {
     setQtds((p) => {
@@ -148,12 +160,12 @@ export function VendaForm({
   }
 
   function submit() {
-    if (!valido || !selecionado) return;
+    if (!valido) return;
     setErro(null);
     startTransition(async () => {
       const result = await registrarVendaDinheiro({
         evento_id: eventoId,
-        aluno_id: selecionado.id,
+        aluno_id: avulsa ? null : (selecionado?.id ?? null),
         responsavel_nome: nome.trim(),
         telefone,
         quantidades: qtds,
@@ -196,11 +208,33 @@ export function VendaForm({
         <CardHeader>
           <CardTitle className="flex items-center gap-2" style={{ color: cor }}>
             <Search className="size-5" />
-            Buscar aluno
+            {avulsa ? "Venda avulsa" : "Buscar aluno"}
           </CardTitle>
           <CardDescription>{eventoNome}</CardDescription>
         </CardHeader>
         <CardContent>
+          <label className="mb-4 flex cursor-pointer items-start gap-3 rounded-2xl border border-border bg-muted/40 px-4 py-3">
+            <input
+              type="checkbox"
+              checked={avulsa}
+              onChange={(e) => toggleAvulsa(e.target.checked)}
+              className="mt-0.5 size-4 cursor-pointer"
+              style={{ accentColor: cor }}
+            />
+            <span className="text-sm">
+              <span className="font-semibold">Venda avulsa (sem vínculo com aluno)</span>
+              <span className="mt-0.5 block text-xs text-muted-foreground">
+                Use para vender a quem não é aluno cadastrado. O nome informado em
+                “Dados do responsável” será usado no ingresso.
+              </span>
+            </span>
+          </label>
+          {avulsa ? (
+            <div className="rounded-2xl border border-dashed border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+              Sem busca de aluno — preencha o nome e o WhatsApp abaixo.
+            </div>
+          ) : (
+          <>
           <div className="relative">
             <Label htmlFor="busca">Nome do aluno *</Label>
             <Input
@@ -266,6 +300,8 @@ export function VendaForm({
               </Button>
             </div>
           )}
+          </>
+          )}
         </CardContent>
       </Card>
 
@@ -279,7 +315,9 @@ export function VendaForm({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="nome">Nome do responsável *</Label>
+            <Label htmlFor="nome">
+              {avulsa ? "Nome do comprador * (vai no ingresso)" : "Nome do responsável *"}
+            </Label>
             <Input
               id="nome"
               value={nome}

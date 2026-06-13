@@ -506,7 +506,8 @@ export async function duplicateEvento(
 
 const vendaDinheiroSchema = z.object({
   evento_id: z.string().uuid(),
-  aluno_id: z.string().uuid(),
+  // Venda avulsa (sem vínculo com aluno) → aluno_id nulo
+  aluno_id: z.string().uuid().nullable().optional(),
   responsavel_nome: z.string().min(2, "Nome muito curto"),
   telefone: z.string().min(8, "Telefone inválido"),
   email: z.string().email().optional().or(z.literal("")),
@@ -602,7 +603,7 @@ export async function registrarVendaDinheiro(
     .select("pagamento_familiar")
     .eq("id", d.evento_id)
     .maybeSingle();
-  if (evFam?.pagamento_familiar) {
+  if (evFam?.pagamento_familiar && d.aluno_id) {
     const { data: alunoFam } = await admin
       .from("alunos")
       .select("familia_id")
@@ -626,7 +627,7 @@ export async function registrarVendaDinheiro(
     .insert({
       ...(alunosIncluidos ? { alunos_incluidos: alunosIncluidos } : {}),
       evento_id: d.evento_id,
-      aluno_id: d.aluno_id,
+      aluno_id: d.aluno_id ?? null,
       responsavel_nome: d.responsavel_nome,
       cpf: d.cpf || "",
       email: d.email || "",
