@@ -328,18 +328,22 @@ async function montarParticipantes(
 
   if (!tickets || tickets.length === 0) return [];
 
-  // Mapa de nome do responsável (fallback quando o ticket não tem aluno_nome)
+  // Nome do responsável + status de pagamento de cada inscrição.
   const { data: inscricoes } = await admin
     .from("inscricoes")
-    .select("id, responsavel_nome")
+    .select("id, responsavel_nome, status_pagamento")
     .eq("evento_id", eventoId);
   const respMap = new Map<string, string>();
+  const pagas = new Set<string>();
   for (const i of inscricoes ?? []) {
     respMap.set(i.id, i.responsavel_nome ?? "");
+    if (i.status_pagamento === "pago") pagas.add(i.id);
   }
 
   const grupos = new Map<string, Participante>();
   for (const t of tickets) {
+    // Só conta inscrições confirmadas (pagas) — ignora pendentes/canceladas.
+    if (!pagas.has(t.inscricao_id)) continue;
     let g = grupos.get(t.inscricao_id);
     if (!g) {
       const responsavel = respMap.get(t.inscricao_id)?.trim() ?? "";
