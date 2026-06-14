@@ -230,7 +230,6 @@ function LeitorTab({
       {resultado?.status === "por_nome" ? (
         <PainelPorNome
           eventoId={eventoId}
-          nomeQr={resultado.nomeQr}
           candidatos={resultado.candidatos}
           onFechar={() => setResultado(null)}
           onConfirmado={onValidado}
@@ -247,13 +246,11 @@ function LeitorTab({
 
 function PainelPorNome({
   eventoId,
-  nomeQr,
   candidatos,
   onFechar,
   onConfirmado,
 }: {
   eventoId: string;
-  nomeQr: string;
   candidatos: Participante[];
   onFechar: () => void;
   onConfirmado: () => void;
@@ -280,13 +277,17 @@ function PainelPorNome({
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 p-4">
-      <div className="mx-auto max-w-2xl rounded-3xl border-2 border-amber-400 bg-amber-50 p-5 shadow-float-lg">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
+      <div className="w-full max-w-md rounded-3xl border-2 border-green-500 bg-green-50 p-6 shadow-float-lg">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2 text-amber-900">
-            <UserSearch className="size-6 shrink-0" />
-            <span className="font-extrabold">
-              {sucesso ? "ENTRADA CONFIRMADA" : "CONFIRMAR PELO NOME"}
+          <div className="flex items-center gap-2 text-green-900">
+            {sucesso ? (
+              <CheckCircle2 className="size-7 shrink-0 text-green-600" />
+            ) : (
+              <UserSearch className="size-7 shrink-0 text-green-600" />
+            )}
+            <span className="text-lg font-extrabold">
+              {sucesso ? "ENTRADA CONFIRMADA" : "CONFIRMAR ENTRADA"}
             </span>
           </div>
           <button
@@ -301,10 +302,7 @@ function PainelPorNome({
 
         {sucesso ? (
           <div className="mt-3 text-green-900">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="size-7 shrink-0 text-green-600" />
-              <span className="text-lg font-bold">{sucesso.nome}</span>
-            </div>
+            <div className="text-xl font-bold">{sucesso.nome}</div>
             <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1 text-sm font-bold">
               Entrada {sucesso.usadas} de {sucesso.total}
             </div>
@@ -314,9 +312,8 @@ function PainelPorNome({
           </div>
         ) : (
           <>
-            <p className="mt-2 text-sm text-amber-900">
-              O código não está no sistema. O QR diz <strong>{nomeQr}</strong>.
-              Confirme a pessoa certa:
+            <p className="mt-2 text-sm text-green-900">
+              Confira o nome e confirme a entrada:
             </p>
             <ul className="mt-3 space-y-2">
               {candidatos.map((p) => {
@@ -324,7 +321,7 @@ function PainelPorNome({
                 return (
                   <li
                     key={p.inscricaoId}
-                    className="flex items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-white p-3"
+                    className="flex items-center justify-between gap-3 rounded-2xl border border-green-200 bg-white p-3"
                   >
                     <div className="min-w-0">
                       <div className="truncate font-semibold">{p.nome}</div>
@@ -421,9 +418,9 @@ function ResultadoCard({
   })();
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 p-4">
+    <div className="pointer-events-none fixed inset-0 z-50 grid place-items-center p-4">
       <div
-        className={`mx-auto max-w-2xl rounded-3xl border-2 p-5 shadow-float-lg ${visual.cor}`}
+        className={`pointer-events-auto w-full max-w-md rounded-3xl border-2 p-6 shadow-float-lg ${visual.cor}`}
       >
         <div className="flex items-start gap-4">
           <div className="shrink-0">{visual.icone}</div>
@@ -457,15 +454,16 @@ function ResultadoCard({
             {r.status === "nao_encontrado" && (
               <div className="mt-1 text-sm">
                 {r.nomeQr ? (
-                  <>
-                    <p>
-                      Este QR não bate com o código no sistema. Confirme pela
-                      aba <strong>Participantes</strong>, buscando por:
-                    </p>
-                    <p className="mt-1 text-lg font-bold">{r.nomeQr}</p>
-                  </>
+                  <p>
+                    Não reconheci <strong>{r.nomeQr}</strong> na lista deste
+                    evento. Confirme manualmente na aba{" "}
+                    <strong>Participantes</strong>.
+                  </p>
                 ) : (
-                  <span className="break-all">Código lido: {r.codigo}</span>
+                  <p>
+                    Não reconheci este QR. Confirme manualmente na aba{" "}
+                    <strong>Participantes</strong>.
+                  </p>
                 )}
               </div>
             )}
