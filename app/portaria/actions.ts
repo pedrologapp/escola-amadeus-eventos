@@ -316,47 +316,62 @@ export async function listarParticipantes(
   return montarParticipantes(createAdminClient(), eventoId);
 }
 
+type ItemInscricao = { nome?: string; qtd?: number };
+
 async function montarParticipantes(
   admin: Admin,
   eventoId: string,
 ): Promise<Participante[]> {
+  // Base = inscrições PAGAS. O total de senhas vem da quantidade realmente
+  // comprada (itens.qtd), igual ao relatório — não da contagem de linhas em
+  // tickets, que pode ter duplicatas (n8n gerou tickets mais de uma vez).
+  const { data: inscricoes } = await admin
+    .from("inscricoes")
+    .select("id, responsavel_nome, itens")
+    .eq("evento_id", eventoId)
+    .eq("status_pagamento", "pago");
+
+  if (!inscricoes || inscricoes.length === 0) return [];
+
+  // Tickets só para saber quantas senhas já foram usadas (por ordem distinta,
+  // pra duplicatas não contarem a mesma entrada duas vezes) e o nome snapshot.
   const { data: tickets } = await admin
     .from("tickets")
-    .select("inscricao_id, aluno_nome, status")
+    .select("inscricao_id, status, ordem, aluno_nome")
     .eq("evento_id", eventoId)
     .neq("status", "cancelado");
 
-  if (!tickets || tickets.length === 0) return [];
-
-  // Nome do responsável + status de pagamento de cada inscrição.
-  const { data: inscricoes } = await admin
-    .from("inscricoes")
-    .select("id, responsavel_nome, status_pagamento")
-    .eq("evento_id", eventoId);
-  const respMap = new Map<string, string>();
-  const pagas = new Set<string>();
-  for (const i of inscricoes ?? []) {
-    respMap.set(i.id, i.responsavel_nome ?? "");
-    if (i.status_pagamento === "pago") pagas.add(i.id);
-  }
-
-  const grupos = new Map<string, Participante>();
-  for (const t of tickets) {
-    // Só conta inscrições confirmadas (pagas) — ignora pendentes/canceladas.
-    if (!pagas.has(t.inscricao_id)) continue;
-    let g = grupos.get(t.inscricao_id);
-    if (!g) {
-      const responsavel = respMap.get(t.inscricao_id)?.trim() ?? "";
-      const nome =
-        (t.aluno_nome && t.aluno_nome.trim()) || responsavel || "Participante";
-      g = { inscricaoId: t.inscricao_id, nome, responsavel, usadas: 0, total: 0 };
-      grupos.set(t.inscricao_id, g);
+  const usadasPorInsc = new Map<string, Set<number>>();
+  const alunoNomePorInsc = new Map<string, string>();
+  for (const t of tickets ?? []) {
+    if (t.status === "usado") {
+      let s = usadasPorInsc.get(t.inscricao_id);
+      if (!s) {
+        s = new Set<number>();
+        usadasPorInsc.set(t.inscricao_id, s);
+      }
+      s.add(t.ordem);
     }
-    g.total += 1;
-    if (t.status === "usado") g.usadas += 1;
+    if (t.aluno_nome && t.aluno_nome.trim() && !alunoNomePorInsc.has(t.inscricao_id)) {
+      alunoNomePorInsc.set(t.inscricao_id, t.aluno_nome.trim());
+    }
   }
 
-  return Array.from(grupos.values()).sort((a, b) =>
-    a.nome.localeCompare(b.nome, "pt-BR"),
-  );
+  const out: Participante[] = [];
+  for (const i of inscricoes) {
+    const itens = (i.itens as ItemInscricao[] | null) ?? [];
+    const total = itens.reduce(
+      (s, it) => s + (it.qtd && it.qtd > 0 ? it.qtd : 0),
+      0,
+    );
+    if (total === 0) continue;
+
+    const responsavel = (i.responsavel_nome ?? "").trim();
+    const nome = alunoNomePorInsc.get(i.id) || responsavel || "Participante";
+    const usadas = Math.min(usadasPorInsc.get(i.id)?.size ?? 0, total);
+
+    out.push({ inscricaoId: i.id, nome, responsavel, usadas, total });
+  }
+
+  return out.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
 }
