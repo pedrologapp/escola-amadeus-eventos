@@ -230,6 +230,7 @@ function LeitorTab({
       {resultado?.status === "por_nome" ? (
         <PainelPorNome
           eventoId={eventoId}
+          tokenLido={resultado.tokenLido}
           candidatos={resultado.candidatos}
           onFechar={() => setResultado(null)}
           onConfirmado={onValidado}
@@ -246,11 +247,13 @@ function LeitorTab({
 
 function PainelPorNome({
   eventoId,
+  tokenLido,
   candidatos,
   onFechar,
   onConfirmado,
 }: {
   eventoId: string;
+  tokenLido: string;
   candidatos: Participante[];
   onFechar: () => void;
   onConfirmado: () => void;
@@ -266,7 +269,7 @@ function PainelPorNome({
   function confirmar(p: Participante) {
     setErro(null);
     startTransition(async () => {
-      const r = await confirmarManual(eventoId, p.inscricaoId);
+      const r = await confirmarManual(eventoId, p.inscricaoId, tokenLido);
       onConfirmado();
       if (!r.ok) {
         setErro(r.error ?? "Não foi possível confirmar.");

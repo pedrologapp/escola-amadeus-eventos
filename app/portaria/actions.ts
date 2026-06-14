@@ -89,7 +89,12 @@ export type ResultadoLeitura =
     }
   | { status: "cancelado"; nome: string }
   | { status: "outro_evento"; eventoNome: string }
-  | { status: "por_nome"; nomeQr: string; candidatos: Participante[] }
+  | {
+      status: "por_nome";
+      nomeQr: string;
+      tokenLido: string;
+      candidatos: Participante[];
+    }
   | { status: "nao_encontrado"; codigo: string; nomeQr?: string }
   | { status: "erro"; mensagem: string };
 
@@ -148,7 +153,7 @@ export async function validarTicket(
         })
         .slice(0, 8);
       if (candidatos.length > 0) {
-        return { status: "por_nome", nomeQr, candidatos };
+        return { status: "por_nome", nomeQr, tokenLido: token, candidatos };
       }
       return { status: "nao_encontrado", codigo: token, nomeQr };
     }
@@ -235,6 +240,7 @@ export type ConfirmacaoManual = {
 export async function confirmarManual(
   eventoId: string,
   inscricaoId: string,
+  tokenLido?: string,
 ): Promise<ConfirmacaoManual> {
   if (!(await portariaAutenticada())) {
     return { ok: false, error: "Sessão expirada. Entre novamente." };
@@ -258,9 +264,27 @@ export async function confirmarManual(
     return { ok: false, error: "Todas as senhas já foram validadas.", ...prog };
   }
 
+  const patch: { status: string; usado_em: string; token?: string } = {
+    status: "usado",
+    usado_em: new Date().toISOString(),
+  };
+
+  // Se veio um código no QR (confirmação por nome), grava esse código no
+  // ticket — assim reler o mesmo QR passa a ser reconhecido como "já usado".
+  // Só grava se o código ainda não existir na base (token é único).
+  const tok = (tokenLido || "").trim();
+  if (tok) {
+    const { data: existente } = await admin
+      .from("tickets")
+      .select("id")
+      .eq("token", tok)
+      .maybeSingle();
+    if (!existente) patch.token = tok;
+  }
+
   const { data: upd } = await admin
     .from("tickets")
-    .update({ status: "usado", usado_em: new Date().toISOString() })
+    .update(patch)
     .eq("id", ticket.id)
     .eq("status", "ativo")
     .select("id")
