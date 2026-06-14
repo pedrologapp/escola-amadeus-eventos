@@ -48,6 +48,9 @@ export function PortariaApp({
   const [participantes, setParticipantes] = useState(participantesIniciais);
   const [, startTransition] = useTransition();
 
+  const totalEntradas = participantes.reduce((s, p) => s + p.usadas, 0);
+  const totalSenhas = participantes.reduce((s, p) => s + p.total, 0);
+
   async function refreshLista() {
     const lista = await listarParticipantes(evento.id);
     setParticipantes(lista);
@@ -70,11 +73,19 @@ export function PortariaApp({
         >
           <ArrowLeft className="size-5" />
         </Link>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="text-xs font-semibold uppercase tracking-wide text-amadeus-blue">
             Portaria
           </div>
           <h1 className="truncate text-lg font-extrabold">{evento.nome}</h1>
+        </div>
+        <div className="shrink-0 rounded-2xl border border-green-200 bg-green-50 px-3 py-1.5 text-center">
+          <div className="text-xl font-extrabold leading-none text-green-700 tabular-nums">
+            {totalEntradas}
+          </div>
+          <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-green-700/80">
+            de {totalSenhas} entradas
+          </div>
         </div>
       </header>
 
@@ -504,9 +515,15 @@ function ListaTab({
   const [busca, setBusca] = useState("");
   const [confirmando, setConfirmando] = useState<Participante | null>(null);
 
-  const buscaNorm = normalizar(busca.trim());
-  const lista = buscaNorm
-    ? participantes.filter((p) => normalizar(p.nome).includes(buscaNorm))
+  // Cada palavra digitada precisa aparecer em algum lugar do nome do aluno
+  // OU do responsável. Assim "ali melo" acha "Alice Melo", e dá pra buscar
+  // pelo responsável também.
+  const termos = normalizar(busca).split(/\s+/).filter(Boolean);
+  const lista = termos.length
+    ? participantes.filter((p) => {
+        const alvo = normalizar(`${p.nome} ${p.responsavel}`);
+        return termos.every((termo) => alvo.includes(termo));
+      })
     : participantes;
 
   return (
@@ -539,6 +556,12 @@ function ListaTab({
               >
                 <div className="min-w-0">
                   <div className="truncate font-semibold">{p.nome}</div>
+                  {p.responsavel &&
+                    normalizar(p.responsavel) !== normalizar(p.nome) && (
+                      <div className="truncate text-xs text-muted-foreground">
+                        Resp.: {p.responsavel}
+                      </div>
+                    )}
                   <div
                     className={`text-sm font-bold tabular-nums ${
                       completo ? "text-green-700" : "text-amadeus-blue"

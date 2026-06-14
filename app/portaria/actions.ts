@@ -304,6 +304,7 @@ export async function confirmarManual(
 export type Participante = {
   inscricaoId: string;
   nome: string;
+  responsavel: string;
   usadas: number;
   total: number;
 };
@@ -341,11 +342,10 @@ async function montarParticipantes(
   for (const t of tickets) {
     let g = grupos.get(t.inscricao_id);
     if (!g) {
+      const responsavel = respMap.get(t.inscricao_id)?.trim() ?? "";
       const nome =
-        (t.aluno_nome && t.aluno_nome.trim()) ||
-        respMap.get(t.inscricao_id)?.trim() ||
-        "Participante";
-      g = { inscricaoId: t.inscricao_id, nome, usadas: 0, total: 0 };
+        (t.aluno_nome && t.aluno_nome.trim()) || responsavel || "Participante";
+      g = { inscricaoId: t.inscricao_id, nome, responsavel, usadas: 0, total: 0 };
       grupos.set(t.inscricao_id, g);
     }
     g.total += 1;
