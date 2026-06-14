@@ -11,6 +11,7 @@ import {
   Keyboard,
   ScanLine,
   Search,
+  UserSearch,
   Users,
   X,
   XCircle,
@@ -226,12 +227,136 @@ function LeitorTab({
         </div>
       </div>
 
-      {resultado && (
+      {resultado?.status === "por_nome" ? (
+        <PainelPorNome
+          eventoId={eventoId}
+          nomeQr={resultado.nomeQr}
+          candidatos={resultado.candidatos}
+          onFechar={() => setResultado(null)}
+          onConfirmado={onValidado}
+        />
+      ) : resultado ? (
         <ResultadoCard
           resultado={resultado}
           onFechar={() => setResultado(null)}
         />
-      )}
+      ) : null}
+    </div>
+  );
+}
+
+function PainelPorNome({
+  eventoId,
+  nomeQr,
+  candidatos,
+  onFechar,
+  onConfirmado,
+}: {
+  eventoId: string;
+  nomeQr: string;
+  candidatos: Participante[];
+  onFechar: () => void;
+  onConfirmado: () => void;
+}) {
+  const [pending, startTransition] = useTransition();
+  const [sucesso, setSucesso] = useState<{
+    nome: string;
+    usadas: number;
+    total: number;
+  } | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+
+  function confirmar(p: Participante) {
+    setErro(null);
+    startTransition(async () => {
+      const r = await confirmarManual(eventoId, p.inscricaoId);
+      onConfirmado();
+      if (!r.ok) {
+        setErro(r.error ?? "Não foi possível confirmar.");
+        return;
+      }
+      setSucesso({ nome: p.nome, usadas: r.usadas ?? 0, total: r.total ?? 0 });
+    });
+  }
+
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-50 p-4">
+      <div className="mx-auto max-w-2xl rounded-3xl border-2 border-amber-400 bg-amber-50 p-5 shadow-float-lg">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2 text-amber-900">
+            <UserSearch className="size-6 shrink-0" />
+            <span className="font-extrabold">
+              {sucesso ? "ENTRADA CONFIRMADA" : "CONFIRMAR PELO NOME"}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={onFechar}
+            aria-label="Fechar"
+            className="rounded-full p-1 transition-colors hover:bg-black/10"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+
+        {sucesso ? (
+          <div className="mt-3 text-green-900">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="size-7 shrink-0 text-green-600" />
+              <span className="text-lg font-bold">{sucesso.nome}</span>
+            </div>
+            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1 text-sm font-bold">
+              Entrada {sucesso.usadas} de {sucesso.total}
+            </div>
+            <Button type="button" onClick={onFechar} className="mt-4 w-full">
+              Ler próximo
+            </Button>
+          </div>
+        ) : (
+          <>
+            <p className="mt-2 text-sm text-amber-900">
+              O código não está no sistema. O QR diz <strong>{nomeQr}</strong>.
+              Confirme a pessoa certa:
+            </p>
+            <ul className="mt-3 space-y-2">
+              {candidatos.map((p) => {
+                const completo = p.usadas >= p.total;
+                return (
+                  <li
+                    key={p.inscricaoId}
+                    className="flex items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-white p-3"
+                  >
+                    <div className="min-w-0">
+                      <div className="truncate font-semibold">{p.nome}</div>
+                      <div
+                        className={`text-sm font-bold tabular-nums ${
+                          completo ? "text-green-700" : "text-amadeus-blue"
+                        }`}
+                      >
+                        {p.usadas}/{p.total} {completo && "✓"}
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={pending || completo}
+                      onClick={() => confirmar(p)}
+                    >
+                      <Check className="size-4" />
+                      Confirmar
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
+            {erro && (
+              <p className="mt-3 text-sm font-semibold text-destructive">
+                {erro}
+              </p>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

@@ -89,12 +89,13 @@ export type ResultadoLeitura =
     }
   | { status: "cancelado"; nome: string }
   | { status: "outro_evento"; eventoNome: string }
+  | { status: "por_nome"; nomeQr: string; candidatos: Participante[] }
   | { status: "nao_encontrado"; codigo: string; nomeQr?: string }
   | { status: "erro"; mensagem: string };
 
 /**
  * Alguns QRs trazem "nome | tipo | token". Quando o token não bate com o
- * banco, ainda dá pra mostrar o nome lido para conferência manual na lista.
+ * banco, ainda dá pra usar o nome lido para achar a pessoa na base.
  */
 function nomeDoQr(raw: string): string | undefined {
   const partes = (raw || "")
@@ -102,6 +103,14 @@ function nomeDoQr(raw: string): string | undefined {
     .map((p) => p.trim())
     .filter(Boolean);
   return partes.length >= 2 ? partes[0] : undefined;
+}
+
+function normalizar(texto: string): string {
+  return texto
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .trim();
 }
 
 export async function validarTicket(
@@ -126,7 +135,24 @@ export async function validarTicket(
     return { status: "erro", mensagem: "Erro ao consultar. Tente de novo." };
   }
   if (!ticket) {
-    return { status: "nao_encontrado", codigo: token, nomeQr: nomeDoQr(codigoRaw) };
+    // Token não está na base. Se o QR trouxer o nome, tenta achar a pessoa
+    // pelo nome (resgate de QRs antigos cujo código não bate com o banco).
+    const nomeQr = nomeDoQr(codigoRaw);
+    if (nomeQr) {
+      const todos = await montarParticipantes(admin, eventoId);
+      const alvo = normalizar(nomeQr);
+      const candidatos = todos
+        .filter((p) => {
+          const n = normalizar(p.nome);
+          return n === alvo || n.includes(alvo) || alvo.includes(n);
+        })
+        .slice(0, 8);
+      if (candidatos.length > 0) {
+        return { status: "por_nome", nomeQr, candidatos };
+      }
+      return { status: "nao_encontrado", codigo: token, nomeQr };
+    }
+    return { status: "nao_encontrado", codigo: token };
   }
 
   const nome = await resolverNome(admin, ticket.aluno_nome, ticket.inscricao_id);
@@ -262,9 +288,13 @@ export async function listarParticipantes(
   eventoId: string,
 ): Promise<Participante[]> {
   if (!(await portariaAutenticada())) return [];
+  return montarParticipantes(createAdminClient(), eventoId);
+}
 
-  const admin = createAdminClient();
-
+async function montarParticipantes(
+  admin: Admin,
+  eventoId: string,
+): Promise<Participante[]> {
   const { data: tickets } = await admin
     .from("tickets")
     .select("inscricao_id, aluno_nome, status")
