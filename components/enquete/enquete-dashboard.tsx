@@ -13,6 +13,7 @@ import {
   type PerguntaClima,
   type ValorEscala,
 } from "@/lib/enquete-config";
+import { formatDateTimeBrt } from "@/lib/utils";
 
 export interface RespostaRow {
   id: string;
@@ -34,6 +35,7 @@ export interface RespostaRow {
     duracao_seg?: number;
     tempos?: Record<string, number>;
     mediana_bloco_seg?: number | null;
+    ip?: string;
   };
   created_at: string;
 }
@@ -397,6 +399,54 @@ export function EnqueteDashboard({
           );
         })}
       </div>
+
+      {/* Respostas individuais (com IP) */}
+      <SectionHeader>🌐 Respostas individuais (IP)</SectionHeader>
+      <details className="mb-10 rounded-2xl border border-border bg-white p-4 shadow-sm">
+        <summary className="cursor-pointer text-sm font-semibold text-amadeus-blue">
+          Ver {lista.length} resposta{lista.length === 1 ? "" : "s"} com data,
+          série/turma e IP
+        </summary>
+        <div className="mt-3 max-h-96 overflow-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border/70 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                <th className="py-2 pr-3 font-semibold">Data/hora</th>
+                <th className="py-2 pr-3 font-semibold">Série/Turma</th>
+                <th className="py-2 pr-3 font-semibold">IP</th>
+                <th className="py-2 font-semibold">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {lista.map((r) => (
+                <tr key={r.id} className="border-b border-border/40 last:border-0">
+                  <td className="py-2 pr-3 text-muted-foreground">
+                    {formatDateTimeBrt(r.created_at)}
+                  </td>
+                  <td className="py-2 pr-3">
+                    {r.serie ?? "?"}
+                    {r.turma ? ` / ${r.turma}` : ""}
+                  </td>
+                  <td className="py-2 pr-3 font-mono text-xs">
+                    {r.meta?.ip || "—"}
+                  </td>
+                  <td className="py-2">
+                    {r.meta?.suspeito ? (
+                      <span className="text-amber-600">duvidosa</span>
+                    ) : (
+                      <span className="text-green-700">ok</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-3 text-xs text-muted-foreground">
+          O IP indica de qual conexão a resposta veio (mesmo IP = mesma
+          casa/rede). Use só como referência.
+        </p>
+      </details>
     </div>
   );
 }

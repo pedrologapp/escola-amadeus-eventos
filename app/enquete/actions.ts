@@ -1,6 +1,6 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   ENQUETE_SLUG,
@@ -78,6 +78,13 @@ export async function enviarEnquete(payload: EnvioEnquete): Promise<EnvioState> 
 
   const suspeito = straightLine || !coerenciaOk || rapidoDemais;
 
+  // IP de quem respondeu (Vercel preenche x-forwarded-for). Só registro.
+  const h = await headers();
+  const ip =
+    (h.get("x-forwarded-for") || "").split(",")[0].trim() ||
+    h.get("x-real-ip") ||
+    "";
+
   // ---------- Monta o registro ----------
   // Comentários por categoria (limita tamanho de cada um)
   const comentarios: Record<string, string> = {};
@@ -108,6 +115,7 @@ export async function enviarEnquete(payload: EnvioEnquete): Promise<EnvioState> 
     straight_line: straightLine,
     coerencia_ok: coerenciaOk,
     suspeito,
+    ip,
   };
 
   const admin = createAdminClient();
