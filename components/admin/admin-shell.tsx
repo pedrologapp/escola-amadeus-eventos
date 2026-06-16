@@ -5,6 +5,7 @@ import {
   LogOut,
   MessageSquareHeart,
   Receipt,
+  Shirt,
 } from "lucide-react";
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ const navLinks = [
   { href: "/admin/eventos", label: "Eventos", icon: CalendarDays },
   { href: "/admin/cobrancas", label: "Cobranças", icon: Receipt },
   { href: "/admin/enquete", label: "Enquete", icon: MessageSquareHeart },
+  { href: "/admin/fardamento", label: "Fardamento", icon: Shirt },
 ];
 
 export function AdminShell({ userEmail, children }: AdminShellProps) {
