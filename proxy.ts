@@ -17,6 +17,14 @@ export async function proxy(request: NextRequest) {
   const isAdminSubdomain = host.startsWith("admin.");
   const isAdminPath = pathname.startsWith("/admin");
 
+  // Subdomínio da pesquisa (pesquisa.escolaamadeus.com) → enquete pública.
+  // Sem auth: a enquete é aberta. Mapeia a raiz e subcaminhos para /enquete.
+  if (host.startsWith("pesquisa.")) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname === "/" ? "/enquete" : `/enquete${pathname}`;
+    return NextResponse.rewrite(url);
+  }
+
   // Em produção, /admin/* só via subdomínio
   if (!isAdminSubdomain && isAdminPath && !isDev) {
     return new NextResponse("Página não encontrada", { status: 404 });
