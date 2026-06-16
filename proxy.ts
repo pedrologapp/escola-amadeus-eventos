@@ -25,6 +25,13 @@ export async function proxy(request: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
+  // Subdomínio do fardamento (fardamento.escolaamadeus.com) → /fardamento.
+  if (host.startsWith("fardamento.")) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname === "/" ? "/fardamento" : `/fardamento${pathname}`;
+    return NextResponse.rewrite(url);
+  }
+
   // Em produção, /admin/* só via subdomínio
   if (!isAdminSubdomain && isAdminPath && !isDev) {
     return new NextResponse("Página não encontrada", { status: 404 });
