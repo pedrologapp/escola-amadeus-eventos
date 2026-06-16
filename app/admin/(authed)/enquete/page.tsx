@@ -1,6 +1,9 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ENQUETE_SLUG } from "@/lib/enquete-config";
-import { EnqueteDashboard, type RespostaRow } from "./enquete-dashboard";
+import {
+  EnqueteDashboard,
+  type RespostaRow,
+} from "@/components/enquete/enquete-dashboard";
 
 export default async function AdminEnquetePage() {
   const admin = createAdminClient();

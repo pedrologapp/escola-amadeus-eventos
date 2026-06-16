@@ -29,7 +29,12 @@ export interface RespostaRow {
     abertas?: { mais_gosta?: string; mudaria?: string };
     ajuda?: { quer?: boolean; contato?: string };
   };
-  meta: { suspeito?: boolean; duracao_seg?: number };
+  meta: {
+    suspeito?: boolean;
+    duracao_seg?: number;
+    tempos?: Record<string, number>;
+    mediana_bloco_seg?: number | null;
+  };
   created_at: string;
 }
 
@@ -115,6 +120,14 @@ export function EnqueteDashboard({
 
   const pedidosAjuda = respostas.filter((r) => r.respostas?.ajuda?.quer);
 
+  // Tempo médio por bloco (mediana de cada resposta, média entre as respostas).
+  const medianas = lista
+    .map((r) => r.meta?.mediana_bloco_seg)
+    .filter((n): n is number => typeof n === "number");
+  const tempoMedioBloco = medianas.length
+    ? Math.round(medianas.reduce((a, b) => a + b, 0) / medianas.length)
+    : null;
+
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
@@ -161,11 +174,8 @@ export function EnqueteDashboard({
       </div>
 
       {/* Resumo */}
-      <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <ResumoCard
-          titulo="Respostas analisadas"
-          valor={`${lista.length}`}
-        />
+      <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <ResumoCard titulo="Respostas analisadas" valor={`${lista.length}`} />
         <ResumoCard
           titulo="Gostam de estudar aqui"
           valor={`${favGeral.fav}%`}
@@ -175,6 +185,11 @@ export function EnqueteDashboard({
           titulo="Recomendariam a escola"
           valor={`${favRec.fav}%`}
           sub={`${favRec.n} responderam`}
+        />
+        <ResumoCard
+          titulo="Tempo médio por bloco"
+          valor={tempoMedioBloco !== null ? `${tempoMedioBloco}s` : "—"}
+          sub="por professor/seção"
         />
       </div>
 

@@ -41,12 +41,25 @@ const PASSOS = [
 ];
 const TOTAL = PASSOS.length;
 
+// Mapa pergunta de clima -> seção, e tamanho de cada seção (pra saber quando
+// um "bloco" foi concluído e resetar o cronômetro daquele bloco).
+const SECAO_DE_Q: Record<string, string> = {};
+const TAM_SECAO: Record<string, number> = {};
+for (const s of SECOES_CLIMA) {
+  TAM_SECAO[s.id] = s.perguntas.length;
+  for (const p of s.perguntas) SECAO_DE_Q[p.id] = s.id;
+}
+TAM_SECAO["fechar"] = ANCORAS.length;
+for (const a of ANCORAS) SECAO_DE_Q[a.id] = "fechar";
+
 export function EnqueteForm({ jaRespondeu }: { jaRespondeu: boolean }) {
   const [isPending, startTransition] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
   const [enviado, setEnviado] = useState(false);
   const [passo, setPasso] = useState(0);
   const inicioRef = useRef<number>(0);
+  const resetRef = useRef<number>(0); // início do bloco atual (cronômetro por bloco)
+  const temposRef = useRef<Record<string, number>>({}); // segundos por bloco
 
   const [serie, setSerie] = useState("");
   const [turma, setTurma] = useState("");
@@ -61,14 +74,39 @@ export function EnqueteForm({ jaRespondeu }: { jaRespondeu: boolean }) {
   const [ajudaContato, setAjudaContato] = useState("");
 
   useEffect(() => {
-    inicioRef.current = Date.now();
+    const agora = Date.now();
+    inicioRef.current = agora;
+    resetRef.current = agora;
   }, []);
+
+  // Fecha um bloco: grava o tempo gasto desde o último reset e reinicia o
+  // cronômetro. Assim cada professor/seção tem seu próprio tempo.
+  function fecharBloco(id: string) {
+    if (temposRef.current[id] != null) return;
+    // Chamado só em handlers de resposta (não no render). Date.now() é seguro aqui.
+    // eslint-disable-next-line react-hooks/purity
+    const agora = Date.now();
+    temposRef.current[id] = Math.round((agora - resetRef.current) / 1000);
+    resetRef.current = agora;
+  }
 
   function setClimaVal(id: string, v: ValorEscala) {
     setClima((p) => ({ ...p, [id]: v }));
+    const sec = SECAO_DE_Q[id];
+    if (sec) {
+      let cont = 0;
+      for (const [qid, secId] of Object.entries(SECAO_DE_Q)) {
+        if (secId !== sec) continue;
+        const val = qid === id ? v : clima[qid];
+        if (val) cont++;
+      }
+      if (cont === TAM_SECAO[sec]) fecharBloco(`sec:${sec}`);
+    }
   }
   function setDiscVal(id: string, campo: "clareza" | "respeito", v: ValorEscala) {
+    const bloco = { ...(disc[id] ?? {}), [campo]: v };
     setDisc((p) => ({ ...p, [id]: { ...p[id], [campo]: v } }));
+    if (bloco.clareza && bloco.respeito) fecharBloco(`prof:${id}`);
   }
   function setComentario(id: string, v: string) {
     setComentarios((p) => ({ ...p, [id]: v }));
@@ -79,6 +117,25 @@ export function EnqueteForm({ jaRespondeu }: { jaRespondeu: boolean }) {
     );
   }
 
+  // Quantas perguntas obrigatórias faltam no passo atual.
+  // (comentários, perguntas abertas e a "porta de ajuda" são opcionais)
+  function faltamNoPasso(): number {
+    const id = PASSOS[passo].id;
+    if (id === "voce") return (serie ? 0 : 1) + (turma ? 0 : 1);
+    if (id === "professores") {
+      let f = 0;
+      for (const d of DISCIPLINAS) {
+        if (!disc[d.id]?.clareza) f++;
+        if (!disc[d.id]?.respeito) f++;
+      }
+      return f; // a pergunta de dificuldade não é obrigatória
+    }
+    if (id === "fechar") return ANCORAS.filter((a) => !clima[a.id]).length;
+    if (id === "ajuda") return 0;
+    const sec = SECOES_CLIMA.find((s) => s.id === id);
+    return sec ? sec.perguntas.filter((p) => !clima[p.id]).length : 0;
+  }
+
   function irPara(novo: number) {
     setErro(null);
     setPasso(novo);
@@ -86,8 +143,11 @@ export function EnqueteForm({ jaRespondeu }: { jaRespondeu: boolean }) {
   }
 
   function proximo() {
-    if (PASSOS[passo].id === "voce" && !serie) {
-      setErro("Escolha sua série/ano pra continuar. 🙂");
+    const faltam = faltamNoPasso();
+    if (faltam > 0) {
+      setErro(
+        `Responda todas as perguntas deste passo pra continuar. Faltam ${faltam}. 🙂`,
+      );
       return;
     }
     irPara(Math.min(passo + 1, TOTAL - 1));
@@ -95,8 +155,8 @@ export function EnqueteForm({ jaRespondeu }: { jaRespondeu: boolean }) {
 
   function enviar() {
     setErro(null);
-    if (!serie) {
-      setErro("Faltou escolher sua série/ano (no primeiro passo).");
+    if (!serie || !turma) {
+      setErro("Faltou escolher sua série/ano e turma (no primeiro passo).");
       irPara(0);
       return;
     }
@@ -114,6 +174,7 @@ export function EnqueteForm({ jaRespondeu }: { jaRespondeu: boolean }) {
         abertas,
         ajuda: { quer: ajudaQuer === true, contato: ajudaContato },
         duracaoSeg,
+        tempos: temposRef.current,
       });
       if (!r.ok) {
         setErro(r.error);
@@ -146,6 +207,7 @@ export function EnqueteForm({ jaRespondeu }: { jaRespondeu: boolean }) {
 
   const atual = PASSOS[passo];
   const ehUltimo = passo === TOTAL - 1;
+  const faltamAtual = faltamNoPasso();
 
   return (
     <div className="min-h-screen pb-28">
@@ -410,6 +472,12 @@ export function EnqueteForm({ jaRespondeu }: { jaRespondeu: boolean }) {
 
       {/* Navegação fixa */}
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/50 bg-white/90 px-4 py-3 backdrop-blur">
+        {faltamAtual > 0 && atual.id !== "ajuda" && (
+          <p className="mx-auto mb-2 max-w-xl text-center text-xs font-semibold text-amber-600">
+            Faltam {faltamAtual} resposta{faltamAtual === 1 ? "" : "s"} neste
+            passo.
+          </p>
+        )}
         <div className="mx-auto flex max-w-xl items-center gap-3">
           {passo > 0 && (
             <Button
@@ -433,7 +501,12 @@ export function EnqueteForm({ jaRespondeu }: { jaRespondeu: boolean }) {
               {isPending ? "Enviando..." : "Enviar respostas"}
             </Button>
           ) : (
-            <Button type="button" onClick={proximo} className="flex-1">
+            <Button
+              type="button"
+              onClick={proximo}
+              disabled={faltamAtual > 0}
+              className="flex-1"
+            >
               Próximo
               <ArrowRight className="size-4" />
             </Button>

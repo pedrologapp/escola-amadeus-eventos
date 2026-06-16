@@ -22,6 +22,7 @@ type EnvioEnquete = {
   abertas?: { mais_gosta?: string; mudaria?: string };
   ajuda?: { quer?: boolean; contato?: string };
   duracaoSeg?: number;
+  tempos?: Record<string, number>;
 };
 
 export type EnvioState = { ok: true } | { ok: false; error: string };
@@ -58,7 +59,22 @@ export async function enviarEnquete(payload: EnvioEnquete): Promise<EnvioState> 
   }
 
   const duracaoSeg = Math.max(0, Math.round(Number(payload?.duracaoSeg) || 0));
-  const rapidoDemais = duracaoSeg > 0 && duracaoSeg < 60;
+
+  // Tempo por bloco (cada professor/seção). Suspeito quando a mediana dos
+  // blocos é muito baixa — sinal de que respondeu no automático.
+  const temposEntrada =
+    payload?.tempos && typeof payload.tempos === "object" ? payload.tempos : {};
+  const tempos: Record<string, number> = {};
+  for (const [k, v] of Object.entries(temposEntrada)) {
+    const n = Number(v);
+    if (Number.isFinite(n) && n >= 0) tempos[k] = Math.round(n);
+  }
+  const tempoVals = Object.values(tempos).sort((a, b) => a - b);
+  const medianaBloco = tempoVals.length
+    ? tempoVals[Math.floor(tempoVals.length / 2)]
+    : null;
+  const rapidoDemais =
+    tempoVals.length >= 5 && medianaBloco !== null && medianaBloco < 2;
 
   const suspeito = straightLine || !coerenciaOk || rapidoDemais;
 
@@ -87,6 +103,8 @@ export async function enviarEnquete(payload: EnvioEnquete): Promise<EnvioState> 
 
   const meta = {
     duracao_seg: duracaoSeg,
+    tempos,
+    mediana_bloco_seg: medianaBloco,
     straight_line: straightLine,
     coerencia_ok: coerenciaOk,
     suspeito,
