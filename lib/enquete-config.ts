@@ -53,7 +53,7 @@ export const DISCIPLINAS = [
   { id: "robotica", nome: "Robótica / Nave à Vela", professor: "Prof. Jonathan" },
   { id: "artes", nome: "Artes", professor: "Profa. Ceni" },
   { id: "edfisica", nome: "Educação Física", professor: "Profa. Jany" },
-  { id: "coreografia", nome: "Coreografia", professor: "Prof. Ailton" },
+  { id: "coreografia", nome: "Eventos", professor: "Prof. Ailton" },
   { id: "arboria", nome: "Arboria", professor: "Prof. Pedro" },
 ] as const;
 
