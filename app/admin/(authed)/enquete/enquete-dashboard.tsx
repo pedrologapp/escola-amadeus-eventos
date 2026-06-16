@@ -5,6 +5,7 @@ import { Heart, MessageSquare, QrCode } from "lucide-react";
 import {
   ABERTAS,
   ANCORAS,
+  COMENTARIOS,
   DISCIPLINAS,
   ESCALA,
   SECOES_CLIMA,
@@ -24,6 +25,7 @@ export interface RespostaRow {
     >;
     dificuldade?: string[];
     clima?: Record<string, string>;
+    comentarios?: Record<string, string>;
     abertas?: { mais_gosta?: string; mudaria?: string };
     ajuda?: { quer?: boolean; contato?: string };
   };
@@ -309,6 +311,40 @@ export function EnqueteDashboard({
             valores={valoresClima(p.id)}
           />
         ))}
+      </div>
+
+      {/* Comentários por categoria */}
+      <SectionHeader>🗒️ Comentários por categoria</SectionHeader>
+      <div className="mb-10 space-y-4">
+        {COMENTARIOS.map((cat) => {
+          const textos = lista
+            .map((r) => r.respostas?.comentarios?.[cat.id]?.trim())
+            .filter((s): s is string => !!s && s.length > 0);
+          if (textos.length === 0) return null;
+          return (
+            <div
+              key={cat.id}
+              className="rounded-2xl border border-border bg-white p-4 shadow-sm"
+            >
+              <div className="mb-2 font-semibold text-amadeus-blue">
+                {cat.titulo}{" "}
+                <span className="text-xs font-normal text-muted-foreground">
+                  ({textos.length})
+                </span>
+              </div>
+              <ul className="max-h-72 space-y-1.5 overflow-y-auto">
+                {textos.map((s, i) => (
+                  <li
+                    key={i}
+                    className="rounded-lg bg-muted/40 px-3 py-2 text-sm"
+                  >
+                    {s}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
       </div>
 
       {/* Abertas */}

@@ -18,6 +18,7 @@ type EnvioEnquete = {
   disc?: Record<string, { clareza?: string; respeito?: string; sugestao?: string }>;
   dificuldade?: string[];
   clima?: Record<string, string>;
+  comentarios?: Record<string, string>;
   abertas?: { mais_gosta?: string; mudaria?: string };
   ajuda?: { quer?: boolean; contato?: string };
   duracaoSeg?: number;
@@ -62,10 +63,18 @@ export async function enviarEnquete(payload: EnvioEnquete): Promise<EnvioState> 
   const suspeito = straightLine || !coerenciaOk || rapidoDemais;
 
   // ---------- Monta o registro ----------
+  // Comentários por categoria (limita tamanho de cada um)
+  const comentarios: Record<string, string> = {};
+  for (const [k, v] of Object.entries(payload?.comentarios ?? {})) {
+    const txt = (v ?? "").toString().trim();
+    if (txt) comentarios[k] = txt.slice(0, 1000);
+  }
+
   const respostas = {
     disc: payload?.disc ?? {},
     dificuldade: Array.isArray(payload?.dificuldade) ? payload.dificuldade : [],
     clima,
+    comentarios,
     abertas: {
       mais_gosta: (payload?.abertas?.mais_gosta ?? "").toString().slice(0, 1000),
       mudaria: (payload?.abertas?.mudaria ?? "").toString().slice(0, 1000),

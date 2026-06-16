@@ -6,6 +6,10 @@
 
 export const ENQUETE_SLUG = "clima-2026";
 
+/** Séries e turmas disponíveis na enquete. */
+export const SERIES = ["6º ano", "7º ano", "8º ano", "9º ano"] as const;
+export const TURMAS = ["A", "B"] as const;
+
 /** Escala única (4 níveis) usada em todas as perguntas fechadas. */
 export const ESCALA = [
   { valor: "sempre", label: "Sempre", emoji: "😄" },
@@ -41,11 +45,16 @@ export const DISCIPLINAS = [
   { id: "portugues", nome: "Português", professor: "Profa. Julianneide" },
   { id: "matematica", nome: "Matemática", professor: "Profa. Jéssica" },
   { id: "historia", nome: "História", professor: "Prof. Francinildo" },
-  { id: "robotica", nome: "Robótica / Nave à Vela", professor: "Prof. Jonathan" },
+  { id: "geografia", nome: "Geografia", professor: "Profa. Ângela" },
   { id: "ciencias", nome: "Ciências", professor: "Prof. José Eduardo" },
+  { id: "ingles", nome: "Inglês", professor: "Prof. Helder" },
+  { id: "socioemocional", nome: "Socioemocional", professor: "Profa. Polyana" },
+  { id: "edfinanceira", nome: "Ed. Financeira", professor: "Profa. Zwinglia" },
+  { id: "robotica", nome: "Robótica / Nave à Vela", professor: "Prof. Jonathan" },
   { id: "artes", nome: "Artes", professor: "Profa. Ceni" },
   { id: "edfisica", nome: "Educação Física", professor: "Profa. Jany" },
   { id: "coreografia", nome: "Coreografia", professor: "Prof. Ailton" },
+  { id: "arboria", nome: "Arboria", professor: "Prof. Pedro" },
 ] as const;
 
 /** Itens fechados feitos para cada disciplina. */
@@ -140,6 +149,15 @@ export const ABERTAS = [
 export const TODAS_CLIMA: PerguntaClima[] = [
   ...SECOES_CLIMA.flatMap((s) => s.perguntas),
   ...ANCORAS,
+];
+
+/**
+ * Categorias que têm campo de comentário próprio (um espaço por etapa).
+ * "professores" cobre a etapa das aulas; o restante são as seções de clima.
+ */
+export const COMENTARIOS: { id: string; titulo: string }[] = [
+  { id: "professores", titulo: "Aulas e professores" },
+  ...SECOES_CLIMA.map((s) => ({ id: s.id, titulo: s.titulo })),
 ];
 
 /** Mensagem de apoio exibida no fim. */
