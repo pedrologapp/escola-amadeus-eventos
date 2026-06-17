@@ -160,6 +160,10 @@ export function EnqueteForm({ jaRespondeu }: { jaRespondeu: boolean }) {
       irPara(0);
       return;
     }
+    if (ajudaQuer === true && ajudaContato.trim().length < 2) {
+      setErro("Você marcou que quer conversar — por favor, escreva seu nome.");
+      return;
+    }
     const duracaoSeg = inicioRef.current
       ? Math.round((Date.now() - inicioRef.current) / 1000)
       : 0;
@@ -444,8 +448,7 @@ export function EnqueteForm({ jaRespondeu }: { jaRespondeu: boolean }) {
               {ajudaQuer === true && (
                 <div className="space-y-1.5">
                   <Label className="text-xs">
-                    Se quiser, escreva seu nome e turma para a coordenação te
-                    procurar:
+                    Escreva seu nome e turma * (pra coordenação te procurar)
                   </Label>
                   <Input
                     value={ajudaContato}

@@ -68,6 +68,10 @@ function pct(part: number, total: number) {
   return total > 0 ? Math.round((part / total) * 100) : 0;
 }
 
+function etiqueta(serie: string | null, turma: string | null) {
+  return `${serie ?? "Série ?"}${turma ? ` · Turma ${turma}` : ""}`;
+}
+
 export function EnqueteDashboard({
   respostas,
   shareUrl,
@@ -334,10 +338,14 @@ export function EnqueteDashboard({
       <SectionHeader>🗒️ Comentários por categoria</SectionHeader>
       <div className="mb-10 space-y-4">
         {COMENTARIOS.map((cat) => {
-          const textos = lista
-            .map((r) => r.respostas?.comentarios?.[cat.id]?.trim())
-            .filter((s): s is string => !!s && s.length > 0);
-          if (textos.length === 0) return null;
+          const itens = lista
+            .map((r) => ({
+              texto: r.respostas?.comentarios?.[cat.id]?.trim() ?? "",
+              serie: r.serie,
+              turma: r.turma,
+            }))
+            .filter((x) => x.texto.length > 0);
+          if (itens.length === 0) return null;
           return (
             <div
               key={cat.id}
@@ -346,16 +354,19 @@ export function EnqueteDashboard({
               <div className="mb-2 font-semibold text-amadeus-blue">
                 {cat.titulo}{" "}
                 <span className="text-xs font-normal text-muted-foreground">
-                  ({textos.length})
+                  ({itens.length})
                 </span>
               </div>
               <ul className="max-h-72 space-y-1.5 overflow-y-auto">
-                {textos.map((s, i) => (
+                {itens.map((it, i) => (
                   <li
                     key={i}
                     className="rounded-lg bg-muted/40 px-3 py-2 text-sm"
                   >
-                    {s}
+                    <span className="mb-0.5 block text-xs font-semibold text-amadeus-blue">
+                      {etiqueta(it.serie, it.turma)}
+                    </span>
+                    {it.texto}
                   </li>
                 ))}
               </ul>
@@ -368,11 +379,16 @@ export function EnqueteDashboard({
       <SectionHeader>💬 Respostas abertas</SectionHeader>
       <div className="mb-10 grid gap-4 md:grid-cols-2">
         {ABERTAS.map((a) => {
-          const textos = lista
-            .map((r) =>
-              r.respostas?.abertas?.[a.id as "mais_gosta" | "mudaria"]?.trim(),
-            )
-            .filter((s): s is string => !!s && s.length > 0);
+          const itens = lista
+            .map((r) => ({
+              texto:
+                r.respostas?.abertas?.[
+                  a.id as "mais_gosta" | "mudaria"
+                ]?.trim() ?? "",
+              serie: r.serie,
+              turma: r.turma,
+            }))
+            .filter((x) => x.texto.length > 0);
           return (
             <div
               key={a.id}
@@ -383,15 +399,18 @@ export function EnqueteDashboard({
                 {a.texto}
               </div>
               <p className="mb-2 text-xs text-muted-foreground">
-                {textos.length} resposta{textos.length === 1 ? "" : "s"}
+                {itens.length} resposta{itens.length === 1 ? "" : "s"}
               </p>
               <ul className="max-h-80 space-y-1.5 overflow-y-auto">
-                {textos.map((s, i) => (
+                {itens.map((it, i) => (
                   <li
                     key={i}
                     className="rounded-lg bg-muted/40 px-3 py-2 text-sm"
                   >
-                    {s}
+                    <span className="mb-0.5 block text-xs font-semibold text-amadeus-blue">
+                      {etiqueta(it.serie, it.turma)}
+                    </span>
+                    {it.texto}
                   </li>
                 ))}
               </ul>
