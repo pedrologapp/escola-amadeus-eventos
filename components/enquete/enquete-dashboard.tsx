@@ -3,13 +3,11 @@
 import { useMemo, useState } from "react";
 import { Heart, MessageSquare, QrCode } from "lucide-react";
 import {
-  ABERTAS,
-  ANCORAS,
-  COMENTARIOS,
-  DISCIPLINAS,
+  comentariosDe,
   ESCALA,
-  SECOES_CLIMA,
   ehFavoravel,
+  itensDoProfessor,
+  type EnqueteDef,
   type PerguntaClima,
   type ValorEscala,
 } from "@/lib/enquete-config";
@@ -20,14 +18,11 @@ export interface RespostaRow {
   serie: string | null;
   turma: string | null;
   respostas: {
-    disc?: Record<
-      string,
-      { clareza?: string; respeito?: string; sugestao?: string }
-    >;
+    disc?: Record<string, Record<string, string>>;
     dificuldade?: string[];
     clima?: Record<string, string>;
     comentarios?: Record<string, string>;
-    abertas?: { mais_gosta?: string; mudaria?: string };
+    abertas?: Record<string, string>;
     ajuda?: { quer?: boolean; contato?: string };
   };
   meta: {
@@ -73,14 +68,18 @@ function etiqueta(serie: string | null, turma: string | null) {
 }
 
 export function EnqueteDashboard({
+  def,
   respostas,
   shareUrl,
 }: {
+  def: EnqueteDef;
   respostas: RespostaRow[];
   shareUrl: string;
 }) {
   const [filtroSerie, setFiltroSerie] = useState("");
   const [ocultarSuspeitas, setOcultarSuspeitas] = useState(true);
+
+  const comentarios = comentariosDe(def);
 
   const series = useMemo(
     () =>
@@ -105,24 +104,21 @@ export function EnqueteDashboard({
   function valoresClima(id: string) {
     return lista.map((r) => r.respostas?.clima?.[id] ?? "").filter(Boolean);
   }
-  function valoresDisc(discId: string, campo: "clareza" | "respeito") {
+  function valoresDisc(profId: string, itemId: string) {
     return lista
-      .map((r) => r.respostas?.disc?.[discId]?.[campo] ?? "")
+      .map((r) => r.respostas?.disc?.[profId]?.[itemId] ?? "")
       .filter(Boolean);
   }
 
-  const favGeral = (() => {
-    const v = valoresClima("gosto_geral");
-    const { n } = distribuir(v);
-    const fav = v.filter((x) => ehFavoravel(x as ValorEscala)).length;
-    return { fav: pct(fav, n), n };
-  })();
-  const favRec = (() => {
-    const v = valoresClima("recomendaria");
-    const { n } = distribuir(v);
-    const fav = v.filter((x) => ehFavoravel(x as ValorEscala)).length;
-    return { fav: pct(fav, n), n };
-  })();
+  // Cards de resumo: um por âncora que tenha resumoLabel.
+  const cardsAncora = def.ancoras
+    .filter((a) => a.resumoLabel)
+    .map((a) => {
+      const v = valoresClima(a.id);
+      const { n } = distribuir(v);
+      const fav = v.filter((x) => ehFavoravel(x as ValorEscala)).length;
+      return { label: a.resumoLabel as string, fav: pct(fav, n), n };
+    });
 
   const pedidosAjuda = respostas.filter((r) => r.respostas?.ajuda?.quer);
 
@@ -139,7 +135,7 @@ export function EnqueteDashboard({
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold text-amadeus-blue">
-            Enquete de Clima Escolar
+            {def.tituloPainel}
           </h1>
           <p className="text-sm text-muted-foreground">
             {respostas.length} resposta{respostas.length === 1 ? "" : "s"} no
@@ -182,16 +178,14 @@ export function EnqueteDashboard({
       {/* Resumo */}
       <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <ResumoCard titulo="Respostas analisadas" valor={`${lista.length}`} />
-        <ResumoCard
-          titulo="Gostam de estudar aqui"
-          valor={`${favGeral.fav}%`}
-          sub={`${favGeral.n} responderam`}
-        />
-        <ResumoCard
-          titulo="Recomendariam a escola"
-          valor={`${favRec.fav}%`}
-          sub={`${favRec.n} responderam`}
-        />
+        {cardsAncora.map((c) => (
+          <ResumoCard
+            key={c.label}
+            titulo={c.label}
+            valor={`${c.fav}%`}
+            sub={`${c.n} responderam`}
+          />
+        ))}
         <ResumoCard
           titulo="Tempo médio por bloco"
           valor={tempoMedioBloco !== null ? `${tempoMedioBloco}s` : "—"}
@@ -199,16 +193,17 @@ export function EnqueteDashboard({
         />
       </div>
 
-      {/* Pedidos de ajuda */}
+      {/* Pedidos de contato/ajuda */}
       {pedidosAjuda.length > 0 && (
         <div className="mb-8 rounded-2xl border-2 border-red-300 bg-red-50 p-4">
           <div className="flex items-center gap-2 font-bold text-red-800">
             <Heart className="size-5" />
-            {pedidosAjuda.length} aluno(s) pediram para conversar
+            {pedidosAjuda.length} {def.labelRespondente}
+            {pedidosAjuda.length === 1 ? "" : "s"} {def.ajuda.painelTitulo}
           </div>
           <p className="mt-1 text-sm text-red-700">
-            Designe alguém da coordenação/orientação para acolher cada um destes
-            o quanto antes. Estes alunos escolheram se identificar.
+            Designe alguém da coordenação/orientação para retornar cada um
+            destes o quanto antes. Estes se identificaram por vontade própria.
           </p>
           <ul className="mt-3 space-y-2">
             {pedidosAjuda.map((r) => (
@@ -217,7 +212,7 @@ export function EnqueteDashboard({
                 className="rounded-xl bg-white px-3 py-2 text-sm shadow-sm"
               >
                 <span className="font-semibold">
-                  {r.respostas?.ajuda?.contato?.trim() || "(não deixou nome)"}
+                  {r.respostas?.ajuda?.contato?.trim() || "(não deixou contato)"}
                 </span>
                 <span className="text-muted-foreground">
                   {" "}
@@ -230,83 +225,61 @@ export function EnqueteDashboard({
         </div>
       )}
 
-      {/* Disciplinas */}
-      <SectionHeader>📚 Aulas e professores</SectionHeader>
+      {/* Professores */}
+      <SectionHeader>📚 {def.tituloProfessores}</SectionHeader>
       <div className="mb-8 space-y-4">
-        {DISCIPLINAS.map((d) => {
-          const sugestoes = lista
-            .map((r) => r.respostas?.disc?.[d.id]?.sugestao?.trim())
-            .filter((s): s is string => !!s && s.length > 0);
-          return (
-            <div
-              key={d.id}
-              className="rounded-2xl border border-border bg-white p-4 shadow-sm"
-            >
-              <div className="mb-3 flex items-baseline justify-between gap-2">
-                <h3 className="font-bold text-amadeus-blue">{d.nome}</h3>
-                <span className="text-xs text-muted-foreground">
-                  {d.professor}
-                </span>
-              </div>
-              <BarraPergunta
-                texto="Explica de um jeito que dá pra entender"
-                valores={valoresDisc(d.id, "clareza")}
-              />
-              <BarraPergunta
-                texto="Trata os alunos com respeito"
-                valores={valoresDisc(d.id, "respeito")}
-              />
-              {sugestoes.length > 0 && (
-                <details className="mt-2">
-                  <summary className="cursor-pointer text-sm font-semibold text-amadeus-blue">
-                    {sugestoes.length} sugestão
-                    {sugestoes.length === 1 ? "" : "ões"}
-                  </summary>
-                  <ul className="mt-2 space-y-1.5">
-                    {sugestoes.map((s, i) => (
-                      <li
-                        key={i}
-                        className="rounded-lg bg-muted/40 px-3 py-2 text-sm"
-                      >
-                        {s}
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-              )}
+        {def.professores.map((d) => (
+          <div
+            key={d.id}
+            className="rounded-2xl border border-border bg-white p-4 shadow-sm"
+          >
+            <div className="mb-3 flex items-baseline justify-between gap-2">
+              <h3 className="font-bold text-amadeus-blue">{d.nome}</h3>
+              <span className="text-xs text-muted-foreground">{d.subtitulo}</span>
             </div>
-          );
-        })}
+            {itensDoProfessor(def, d).map((it) => (
+              <BarraPergunta
+                key={it.id}
+                texto={it.tituloPainel}
+                valores={valoresDisc(d.id, it.id)}
+              />
+            ))}
+          </div>
+        ))}
       </div>
 
-      {/* Dificuldade */}
-      <SectionHeader>📉 Matérias com mais dificuldade</SectionHeader>
-      <div className="mb-8 rounded-2xl border border-border bg-white p-4 shadow-sm">
-        {DISCIPLINAS.map((d) => {
-          const c = lista.filter((r) =>
-            r.respostas?.dificuldade?.includes(d.id),
-          ).length;
-          return (
-            <div key={d.id} className="mb-2 last:mb-0">
-              <div className="flex items-center justify-between text-sm">
-                <span>{d.nome}</span>
-                <span className="font-semibold tabular-nums">
-                  {c} ({pct(c, lista.length)}%)
-                </span>
-              </div>
-              <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full bg-amber-400"
-                  style={{ width: `${pct(c, lista.length)}%` }}
-                />
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      {/* Dificuldade (só quando a pesquisa tem essa pergunta) */}
+      {def.perguntaDificuldade && (
+        <>
+          <SectionHeader>📉 Matérias com mais dificuldade</SectionHeader>
+          <div className="mb-8 rounded-2xl border border-border bg-white p-4 shadow-sm">
+            {def.professores.map((d) => {
+              const c = lista.filter((r) =>
+                r.respostas?.dificuldade?.includes(d.id),
+              ).length;
+              return (
+                <div key={d.id} className="mb-2 last:mb-0">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>{d.nome}</span>
+                    <span className="font-semibold tabular-nums">
+                      {c} ({pct(c, lista.length)}%)
+                    </span>
+                  </div>
+                  <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full bg-amber-400"
+                      style={{ width: `${pct(c, lista.length)}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
 
-      {/* Clima */}
-      {SECOES_CLIMA.map((sec) => (
+      {/* Clima / seções */}
+      {def.secoes.map((sec) => (
         <div key={sec.id} className="mb-8">
           <SectionHeader>{sec.titulo}</SectionHeader>
           <div className="rounded-2xl border border-border bg-white p-4 shadow-sm">
@@ -325,7 +298,7 @@ export function EnqueteDashboard({
       {/* Âncoras */}
       <SectionHeader>Satisfação geral</SectionHeader>
       <div className="mb-8 rounded-2xl border border-border bg-white p-4 shadow-sm">
-        {ANCORAS.map((p: PerguntaClima) => (
+        {def.ancoras.map((p: PerguntaClima) => (
           <BarraPergunta
             key={p.id}
             texto={p.texto}
@@ -337,7 +310,7 @@ export function EnqueteDashboard({
       {/* Comentários por categoria */}
       <SectionHeader>🗒️ Comentários por categoria</SectionHeader>
       <div className="mb-10 space-y-4">
-        {COMENTARIOS.map((cat) => {
+        {comentarios.map((cat) => {
           const itens = lista
             .map((r) => ({
               texto: r.respostas?.comentarios?.[cat.id]?.trim() ?? "",
@@ -378,13 +351,10 @@ export function EnqueteDashboard({
       {/* Abertas */}
       <SectionHeader>💬 Respostas abertas</SectionHeader>
       <div className="mb-10 grid gap-4 md:grid-cols-2">
-        {ABERTAS.map((a) => {
+        {def.abertas.map((a) => {
           const itens = lista
             .map((r) => ({
-              texto:
-                r.respostas?.abertas?.[
-                  a.id as "mais_gosta" | "mudaria"
-                ]?.trim() ?? "",
+              texto: r.respostas?.abertas?.[a.id]?.trim() ?? "",
               serie: r.serie,
               turma: r.turma,
             }))

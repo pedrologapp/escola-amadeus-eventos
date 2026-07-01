@@ -1,20 +1,20 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ENQUETE_ALUNOS } from "@/lib/enquete-config";
+import { ENQUETE_PAIS } from "@/lib/enquete-config";
 import { relatorioAutenticado } from "@/lib/relatorio-auth";
 import {
   EnqueteDashboard,
   type RespostaRow,
 } from "@/components/enquete/enquete-dashboard";
 import { Logo } from "@/components/shared/logo";
-import { RelatorioLogin } from "./relatorio-login";
-import { SairButton } from "./sair-button";
+import { RelatorioLogin } from "../../relatorio/relatorio-login";
+import { SairButton } from "../../relatorio/sair-button";
 
-export default async function RelatorioPage() {
+export default async function RelatorioFundamental1Page() {
   if (!(await relatorioAutenticado())) {
     return <RelatorioLogin />;
   }
 
-  const def = ENQUETE_ALUNOS;
+  const def = ENQUETE_PAIS;
   const admin = createAdminClient();
   const { data } = await admin
     .from("enquete_respostas")

@@ -1,5 +1,5 @@
 import { CheckCircle2 } from "lucide-react";
-import { AVISO_APOIO } from "@/lib/enquete-config";
+import { ENQUETE_ALUNOS } from "@/lib/enquete-config";
 
 export default function ObrigadoPage() {
   return (
@@ -11,11 +11,10 @@ export default function ObrigadoPage() {
         Respostas enviadas!
       </h1>
       <p className="mt-3 text-sm text-muted-foreground">
-        Muito obrigado por compartilhar a sua opinião. Cada resposta ajuda a
-        deixar o Centro Educacional Amadeus melhor pra você. 💙
+        {ENQUETE_ALUNOS.obrigadoTexto}
       </p>
       <p className="mt-6 rounded-2xl bg-white px-4 py-3 text-xs text-muted-foreground shadow-sm">
-        {AVISO_APOIO}
+        {ENQUETE_ALUNOS.avisoApoio}
       </p>
     </div>
   );

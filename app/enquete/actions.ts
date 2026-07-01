@@ -3,23 +3,24 @@
 import { cookies, headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
-  ENQUETE_SLUG,
   ESCALA,
+  getEnquete,
   scoreDe,
-  TODAS_CLIMA,
+  todasClima,
   type ValorEscala,
 } from "@/lib/enquete-config";
 
 const VALORES = new Set<string>(ESCALA.map((e) => e.valor));
 
 type EnvioEnquete = {
+  slug?: string;
   serie?: string;
   turma?: string;
-  disc?: Record<string, { clareza?: string; respeito?: string; sugestao?: string }>;
+  disc?: Record<string, Record<string, string>>;
   dificuldade?: string[];
   clima?: Record<string, string>;
   comentarios?: Record<string, string>;
-  abertas?: { mais_gosta?: string; mudaria?: string };
+  abertas?: Record<string, string>;
   ajuda?: { quer?: boolean; contato?: string };
   duracaoSeg?: number;
   tempos?: Record<string, number>;
@@ -28,11 +29,15 @@ type EnvioEnquete = {
 export type EnvioState = { ok: true } | { ok: false; error: string };
 
 export async function enviarEnquete(payload: EnvioEnquete): Promise<EnvioState> {
+  const def = getEnquete((payload?.slug ?? "").toString());
+  if (!def) return { ok: false, error: "Pesquisa inválida." };
+
   const serie = (payload?.serie ?? "").toString().trim();
-  if (!serie) return { ok: false, error: "Selecione sua série/ano." };
+  if (!serie) return { ok: false, error: "Selecione o ano/série." };
 
   const clima = (payload?.clima ?? {}) as Record<string, string>;
-  const respondidasClima = TODAS_CLIMA.filter((p) =>
+  const perguntasClima = todasClima(def);
+  const respondidasClima = perguntasClima.filter((p) =>
     VALORES.has(clima[p.id]),
   ).length;
   if (respondidasClima === 0) {
@@ -40,22 +45,28 @@ export async function enviarEnquete(payload: EnvioEnquete): Promise<EnvioState> 
   }
 
   // ---------- Camada de qualidade (invisível) ----------
-  const climaVals = TODAS_CLIMA.map((p) => clima[p.id]).filter((v) =>
-    VALORES.has(v),
-  ) as ValorEscala[];
+  const climaVals = perguntasClima
+    .map((p) => clima[p.id])
+    .filter((v) => VALORES.has(v)) as ValorEscala[];
 
   const straightLine =
     climaVals.length >= 5 && climaVals.every((v) => v === climaVals[0]);
 
-  // Par de coerência: "acolhido" (positivo) x "sozinho" (invertido).
+  // Par de coerência (se a pesquisa definir um): duas perguntas que deveriam
+  // ter respostas opostas. Contradição grande = incoerente.
   let coerenciaOk = true;
-  const aco = clima["acolhido"];
-  const soz = clima["sozinho"];
-  if (VALORES.has(aco) && VALORES.has(soz)) {
-    const dif = Math.abs(
-      scoreDe(aco as ValorEscala, false) - scoreDe(soz as ValorEscala, true),
-    );
-    coerenciaOk = dif <= 50; // contradição grande = incoerente
+  const par = perguntasClima.find((p) => p.coerenciaCom);
+  if (par?.coerenciaCom) {
+    const a = clima[par.id];
+    const b = clima[par.coerenciaCom];
+    if (VALORES.has(a) && VALORES.has(b)) {
+      const outra = perguntasClima.find((p) => p.id === par.coerenciaCom);
+      const dif = Math.abs(
+        scoreDe(a as ValorEscala, par.invertida) -
+          scoreDe(b as ValorEscala, outra?.invertida),
+      );
+      coerenciaOk = dif <= 50;
+    }
   }
 
   const duracaoSeg = Math.max(0, Math.round(Number(payload?.duracaoSeg) || 0));
@@ -93,15 +104,18 @@ export async function enviarEnquete(payload: EnvioEnquete): Promise<EnvioState> 
     if (txt) comentarios[k] = txt.slice(0, 1000);
   }
 
+  // Abertas (limita tamanho de cada uma)
+  const abertas: Record<string, string> = {};
+  for (const [k, v] of Object.entries(payload?.abertas ?? {})) {
+    abertas[k] = (v ?? "").toString().slice(0, 1000);
+  }
+
   const respostas = {
     disc: payload?.disc ?? {},
     dificuldade: Array.isArray(payload?.dificuldade) ? payload.dificuldade : [],
     clima,
     comentarios,
-    abertas: {
-      mais_gosta: (payload?.abertas?.mais_gosta ?? "").toString().slice(0, 1000),
-      mudaria: (payload?.abertas?.mudaria ?? "").toString().slice(0, 1000),
-    },
+    abertas,
     ajuda: {
       quer: !!payload?.ajuda?.quer,
       contato: (payload?.ajuda?.contato ?? "").toString().slice(0, 300),
@@ -120,7 +134,7 @@ export async function enviarEnquete(payload: EnvioEnquete): Promise<EnvioState> 
 
   const admin = createAdminClient();
   const { error } = await admin.from("enquete_respostas").insert({
-    slug: ENQUETE_SLUG,
+    slug: def.slug,
     serie,
     turma: (payload?.turma ?? "").toString().trim() || null,
     respostas,
@@ -133,7 +147,7 @@ export async function enviarEnquete(payload: EnvioEnquete): Promise<EnvioState> 
 
   // Marca o aparelho (trava suave — não impede de verdade, só evita reenvio bobo)
   const store = await cookies();
-  store.set(`enquete_${ENQUETE_SLUG}`, "1", {
+  store.set(`enquete_${def.slug}`, "1", {
     httpOnly: false,
     sameSite: "lax",
     path: "/",

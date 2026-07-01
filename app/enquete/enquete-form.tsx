@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   AlertCircle,
   ArrowLeft,
@@ -16,43 +16,21 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  ABERTAS,
-  ANCORAS,
-  AVISO_APOIO,
-  DISCIPLINAS,
   ESCALA,
-  ITENS_DISCIPLINA,
-  SECOES_CLIMA,
-  SERIES,
-  TURMAS,
+  itensDoProfessor,
+  turmasDe,
+  type EnqueteDef,
   type ValorEscala,
 } from "@/lib/enquete-config";
 import { enviarEnquete } from "./actions";
 
-const PASSOS = [
-  { id: "voce", emoji: "👋", titulo: "Vamos começar!", frase: "Primeiro, conta pra gente sua turma." },
-  { id: "professores", emoji: "📚", titulo: "Suas aulas e professores", frase: "Como estão sendo as aulas? Avalie com respeito. 💬" },
-  { id: "sentir", emoji: "💙", titulo: "Como você se sente aqui", frase: "Agora é sobre você. Pode ser sincero(a)!" },
-  { id: "convivencia", emoji: "🤝", titulo: "Convivência e respeito", frase: "Sobre o clima entre todo mundo." },
-  { id: "regras", emoji: "📣", titulo: "Regras, voz e motivação", frase: "Sua opinião conta de verdade." },
-  { id: "estrutura", emoji: "🏫", titulo: "A escola por dentro", frase: "Espaço, limpeza, cantina e por aí vai." },
-  { id: "fechar", emoji: "⭐", titulo: "Quase lá!", frase: "Só mais um pouquinho." },
-  { id: "ajuda", emoji: "🤗", titulo: "Pra terminar", frase: "Se quiser, a gente te escuta." },
-];
-const TOTAL = PASSOS.length;
-
-// Mapa pergunta de clima -> seção, e tamanho de cada seção (pra saber quando
-// um "bloco" foi concluído e resetar o cronômetro daquele bloco).
-const SECAO_DE_Q: Record<string, string> = {};
-const TAM_SECAO: Record<string, number> = {};
-for (const s of SECOES_CLIMA) {
-  TAM_SECAO[s.id] = s.perguntas.length;
-  for (const p of s.perguntas) SECAO_DE_Q[p.id] = s.id;
-}
-TAM_SECAO["fechar"] = ANCORAS.length;
-for (const a of ANCORAS) SECAO_DE_Q[a.id] = "fechar";
-
-export function EnqueteForm({ jaRespondeu }: { jaRespondeu: boolean }) {
+export function EnqueteForm({
+  def,
+  jaRespondeu,
+}: {
+  def: EnqueteDef;
+  jaRespondeu: boolean;
+}) {
   const [isPending, startTransition] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
   const [enviado, setEnviado] = useState(false);
@@ -61,17 +39,35 @@ export function EnqueteForm({ jaRespondeu }: { jaRespondeu: boolean }) {
   const resetRef = useRef<number>(0); // início do bloco atual (cronômetro por bloco)
   const temposRef = useRef<Record<string, number>>({}); // segundos por bloco
 
+  const PASSOS = def.passos;
+  const TOTAL = PASSOS.length;
+
+  // Mapa pergunta de clima -> seção, e tamanho de cada seção (pra saber quando
+  // um "bloco" foi concluído e resetar o cronômetro daquele bloco).
+  const { SECAO_DE_Q, TAM_SECAO } = useMemo(() => {
+    const secaoDeQ: Record<string, string> = {};
+    const tamSecao: Record<string, number> = {};
+    for (const s of def.secoes) {
+      tamSecao[s.id] = s.perguntas.length;
+      for (const p of s.perguntas) secaoDeQ[p.id] = s.id;
+    }
+    tamSecao["fechar"] = def.ancoras.length;
+    for (const a of def.ancoras) secaoDeQ[a.id] = "fechar";
+    return { SECAO_DE_Q: secaoDeQ, TAM_SECAO: tamSecao };
+  }, [def]);
+
   const [serie, setSerie] = useState("");
   const [turma, setTurma] = useState("");
-  const [disc, setDisc] = useState<
-    Record<string, { clareza?: ValorEscala; respeito?: ValorEscala; sugestao?: string }>
-  >({});
+  // disc: { [professorId]: { [itemId]: ValorEscala } }
+  const [disc, setDisc] = useState<Record<string, Record<string, ValorEscala>>>({});
   const [clima, setClima] = useState<Record<string, ValorEscala>>({});
   const [dificuldade, setDificuldade] = useState<string[]>([]);
   const [comentarios, setComentarios] = useState<Record<string, string>>({});
-  const [abertas, setAbertas] = useState({ mais_gosta: "", mudaria: "" });
+  const [abertas, setAbertas] = useState<Record<string, string>>({});
   const [ajudaQuer, setAjudaQuer] = useState<boolean | null>(null);
   const [ajudaContato, setAjudaContato] = useState("");
+
+  const turmasDisponiveis = turmasDe(def, serie);
 
   useEffect(() => {
     const agora = Date.now();
@@ -103,10 +99,11 @@ export function EnqueteForm({ jaRespondeu }: { jaRespondeu: boolean }) {
       if (cont === TAM_SECAO[sec]) fecharBloco(`sec:${sec}`);
     }
   }
-  function setDiscVal(id: string, campo: "clareza" | "respeito", v: ValorEscala) {
-    const bloco = { ...(disc[id] ?? {}), [campo]: v };
-    setDisc((p) => ({ ...p, [id]: { ...p[id], [campo]: v } }));
-    if (bloco.clareza && bloco.respeito) fecharBloco(`prof:${id}`);
+  function setDiscVal(prof: (typeof def.professores)[number], itemId: string, v: ValorEscala) {
+    const bloco = { ...(disc[prof.id] ?? {}), [itemId]: v };
+    setDisc((p) => ({ ...p, [prof.id]: { ...p[prof.id], [itemId]: v } }));
+    if (itensDoProfessor(def, prof).every((it) => bloco[it.id]))
+      fecharBloco(`prof:${prof.id}`);
   }
   function setComentario(id: string, v: string) {
     setComentarios((p) => ({ ...p, [id]: v }));
@@ -118,21 +115,24 @@ export function EnqueteForm({ jaRespondeu }: { jaRespondeu: boolean }) {
   }
 
   // Quantas perguntas obrigatórias faltam no passo atual.
-  // (comentários, perguntas abertas e a "porta de ajuda" são opcionais)
+  // (professores, quando opcionais, comentários, abertas e a "porta de ajuda"
+  // não contam)
   function faltamNoPasso(): number {
     const id = PASSOS[passo].id;
     if (id === "voce") return (serie ? 0 : 1) + (turma ? 0 : 1);
     if (id === "professores") {
+      if (!def.professoresObrigatorio) return 0;
       let f = 0;
-      for (const d of DISCIPLINAS) {
-        if (!disc[d.id]?.clareza) f++;
-        if (!disc[d.id]?.respeito) f++;
+      for (const d of def.professores) {
+        for (const it of itensDoProfessor(def, d)) {
+          if (!disc[d.id]?.[it.id]) f++;
+        }
       }
       return f; // a pergunta de dificuldade não é obrigatória
     }
-    if (id === "fechar") return ANCORAS.filter((a) => !clima[a.id]).length;
+    if (id === "fechar") return def.ancoras.filter((a) => !clima[a.id]).length;
     if (id === "ajuda") return 0;
-    const sec = SECOES_CLIMA.find((s) => s.id === id);
+    const sec = def.secoes.find((s) => s.id === id);
     return sec ? sec.perguntas.filter((p) => !clima[p.id]).length : 0;
   }
 
@@ -156,12 +156,12 @@ export function EnqueteForm({ jaRespondeu }: { jaRespondeu: boolean }) {
   function enviar() {
     setErro(null);
     if (!serie || !turma) {
-      setErro("Faltou escolher sua série/ano e turma (no primeiro passo).");
+      setErro("Faltou escolher o ano e a turma (no primeiro passo).");
       irPara(0);
       return;
     }
     if (ajudaQuer === true && ajudaContato.trim().length < 2) {
-      setErro("Você marcou que quer conversar — por favor, escreva seu nome.");
+      setErro("Você marcou que quer contato — por favor, preencha o campo.");
       return;
     }
     const duracaoSeg = inicioRef.current
@@ -169,6 +169,7 @@ export function EnqueteForm({ jaRespondeu }: { jaRespondeu: boolean }) {
       : 0;
     startTransition(async () => {
       const r = await enviarEnquete({
+        slug: def.slug,
         serie,
         turma,
         disc,
@@ -196,14 +197,11 @@ export function EnqueteForm({ jaRespondeu }: { jaRespondeu: boolean }) {
           <CheckCircle2 className="size-10" />
         </div>
         <h1 className="mt-5 text-2xl font-extrabold text-amadeus-blue">
-          Prontinho! 🎉
+          {def.obrigadoTitulo}
         </h1>
-        <p className="mt-3 text-sm text-muted-foreground">
-          Muito obrigado por compartilhar a sua opinião. Cada resposta ajuda a
-          deixar o Centro Educacional Amadeus melhor pra você. 💙
-        </p>
+        <p className="mt-3 text-sm text-muted-foreground">{def.obrigadoTexto}</p>
         <p className="mt-6 rounded-2xl bg-white px-4 py-3 text-xs text-muted-foreground shadow-sm">
-          {AVISO_APOIO}
+          {def.avisoApoio}
         </p>
       </div>
     );
@@ -254,19 +252,21 @@ export function EnqueteForm({ jaRespondeu }: { jaRespondeu: boolean }) {
         {atual.id === "voce" && (
           <Card>
             <CardContent className="space-y-4 pt-5">
-              <p className="text-sm text-muted-foreground">
-                Esta pesquisa é <strong>anônima</strong> — a gente não sabe quem
-                respondeu. Responda com sinceridade: não tem certo nem errado. 💙
-              </p>
+              <p className="text-sm text-muted-foreground">{def.introTexto}</p>
               <div className="space-y-1.5">
-                <Label htmlFor="serie">Sua série / ano *</Label>
+                <Label htmlFor="serie">{def.labelSerie} *</Label>
                 <Select
                   id="serie"
                   value={serie}
-                  onChange={(e) => setSerie(e.target.value)}
+                  onChange={(e) => {
+                    const nova = e.target.value;
+                    setSerie(nova);
+                    // se a turma escolhida não existe no novo ano, limpa.
+                    if (turma && !turmasDe(def, nova).includes(turma)) setTurma("");
+                  }}
                 >
                   <option value="">Selecione...</option>
-                  {SERIES.map((s) => (
+                  {def.series.map((s) => (
                     <option key={s} value={s}>
                       {s}
                     </option>
@@ -274,14 +274,17 @@ export function EnqueteForm({ jaRespondeu }: { jaRespondeu: boolean }) {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="turma">Turma</Label>
+                <Label htmlFor="turma">{def.labelTurma} *</Label>
                 <Select
                   id="turma"
                   value={turma}
                   onChange={(e) => setTurma(e.target.value)}
+                  disabled={!serie}
                 >
-                  <option value="">Selecione...</option>
-                  {TURMAS.map((t) => (
+                  <option value="">
+                    {serie ? "Selecione..." : "Escolha o ano primeiro"}
+                  </option>
+                  {turmasDisponiveis.map((t) => (
                     <option key={t} value={t}>
                       {t}
                     </option>
@@ -294,94 +297,100 @@ export function EnqueteForm({ jaRespondeu }: { jaRespondeu: boolean }) {
 
         {atual.id === "professores" && (
           <div className="space-y-4">
-            {DISCIPLINAS.map((d) => (
+            {!def.professoresObrigatorio && (
+              <div className="rounded-2xl border border-amadeus-blue/20 bg-amadeus-blue-50/60 px-4 py-3 text-sm text-amadeus-blue">
+                Avalie <strong>apenas quem você conhece/acompanha</strong>. Pode
+                pular quem não faz parte do dia a dia do seu filho(a). 🙂
+              </div>
+            )}
+            {def.professores.map((d) => (
               <Card key={d.id}>
                 <CardContent className="space-y-4 pt-5">
                   <div>
                     <h3 className="font-bold text-amadeus-blue">{d.nome}</h3>
-                    <p className="text-xs text-muted-foreground">
-                      {d.professor}
-                    </p>
+                    <p className="text-xs text-muted-foreground">{d.subtitulo}</p>
                   </div>
-                  {ITENS_DISCIPLINA.map((it) => (
+                  {itensDoProfessor(def, d).map((it) => (
                     <Pergunta
                       key={it.id}
                       texto={it.texto}
-                      value={disc[d.id]?.[it.id as "clareza" | "respeito"]}
-                      onChange={(v) =>
-                        setDiscVal(d.id, it.id as "clareza" | "respeito", v)
-                      }
+                      value={disc[d.id]?.[it.id]}
+                      onChange={(v) => setDiscVal(d, it.id, v)}
                     />
                   ))}
                 </CardContent>
               </Card>
             ))}
 
-            <Card>
-              <CardContent className="pt-5">
-                <p className="mb-3 text-sm font-medium">
-                  Em quais matérias você sente mais dificuldade?{" "}
-                  <span className="text-muted-foreground">
-                    (marque quantas quiser)
-                  </span>
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {DISCIPLINAS.map((d) => {
-                    const on = dificuldade.includes(d.id);
-                    return (
-                      <button
-                        key={d.id}
-                        type="button"
-                        onClick={() => toggleDificuldade(d.id)}
-                        className={`rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors ${
-                          on
-                            ? "border-amadeus-blue bg-amadeus-blue text-white"
-                            : "border-border bg-white hover:bg-muted/50"
-                        }`}
-                      >
-                        {d.nome}
-                      </button>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+            {def.perguntaDificuldade && (
+              <Card>
+                <CardContent className="pt-5">
+                  <p className="mb-3 text-sm font-medium">
+                    {def.perguntaDificuldade}{" "}
+                    <span className="text-muted-foreground">
+                      (marque quantas quiser)
+                    </span>
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {def.professores.map((d) => {
+                      const on = dificuldade.includes(d.id);
+                      return (
+                        <button
+                          key={d.id}
+                          type="button"
+                          onClick={() => toggleDificuldade(d.id)}
+                          className={`rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors ${
+                            on
+                              ? "border-amadeus-blue bg-amadeus-blue text-white"
+                              : "border-border bg-white hover:bg-muted/50"
+                          }`}
+                        >
+                          {d.nome}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <Comentario
-              titulo="Quer comentar algo sobre as aulas ou os professores?"
+              titulo="Quer comentar algo sobre os professores ou a equipe?"
               value={comentarios["professores"] ?? ""}
               onChange={(v) => setComentario("professores", v)}
             />
           </div>
         )}
 
-        {SECOES_CLIMA.filter((s) => s.id === atual.id).map((sec) => (
-          <div key={sec.id} className="space-y-4">
-            <Card>
-              <CardContent className="space-y-4 pt-5">
-                {sec.perguntas.map((p) => (
-                  <Pergunta
-                    key={p.id}
-                    texto={p.texto}
-                    value={clima[p.id]}
-                    onChange={(v) => setClimaVal(p.id, v)}
-                  />
-                ))}
-              </CardContent>
-            </Card>
-            <Comentario
-              titulo="Quer comentar algo sobre isso?"
-              value={comentarios[sec.id] ?? ""}
-              onChange={(v) => setComentario(sec.id, v)}
-            />
-          </div>
-        ))}
+        {def.secoes
+          .filter((s) => s.id === atual.id)
+          .map((sec) => (
+            <div key={sec.id} className="space-y-4">
+              <Card>
+                <CardContent className="space-y-4 pt-5">
+                  {sec.perguntas.map((p) => (
+                    <Pergunta
+                      key={p.id}
+                      texto={p.texto}
+                      value={clima[p.id]}
+                      onChange={(v) => setClimaVal(p.id, v)}
+                    />
+                  ))}
+                </CardContent>
+              </Card>
+              <Comentario
+                titulo="Quer comentar algo sobre isso?"
+                value={comentarios[sec.id] ?? ""}
+                onChange={(v) => setComentario(sec.id, v)}
+              />
+            </div>
+          ))}
 
         {atual.id === "fechar" && (
           <div className="space-y-4">
             <Card>
               <CardContent className="space-y-4 pt-5">
-                {ANCORAS.map((p) => (
+                {def.ancoras.map((p) => (
                   <Pergunta
                     key={p.id}
                     texto={p.texto}
@@ -393,12 +402,12 @@ export function EnqueteForm({ jaRespondeu }: { jaRespondeu: boolean }) {
             </Card>
             <Card>
               <CardContent className="space-y-4 pt-5">
-                {ABERTAS.map((a) => (
+                {def.abertas.map((a) => (
                   <div key={a.id} className="space-y-1.5">
                     <Label className="text-sm">{a.texto}</Label>
                     <Textarea
-                      rows={2}
-                      value={abertas[a.id as "mais_gosta" | "mudaria"]}
+                      rows={a.id === "aberto" ? 4 : 2}
+                      value={abertas[a.id] ?? ""}
                       onChange={(e) =>
                         setAbertas((p) => ({ ...p, [a.id]: e.target.value }))
                       }
@@ -416,10 +425,10 @@ export function EnqueteForm({ jaRespondeu }: { jaRespondeu: boolean }) {
             <CardContent className="space-y-3 pt-5">
               <p className="flex items-center gap-2 text-sm font-semibold text-amadeus-blue">
                 <Heart className="size-4" />
-                Quer que alguém da escola converse com você sobre alguma coisa?
+                {def.ajuda.titulo}
               </p>
               <p className="text-xs text-muted-foreground">
-                Você não precisa responder isto. É só se você quiser.
+                {def.ajuda.subtitulo}
               </p>
               <div className="flex gap-2">
                 <button
@@ -431,7 +440,7 @@ export function EnqueteForm({ jaRespondeu }: { jaRespondeu: boolean }) {
                       : "border-border bg-white"
                   }`}
                 >
-                  Não, está tudo bem
+                  {def.ajuda.naoLabel}
                 </button>
                 <button
                   type="button"
@@ -442,24 +451,22 @@ export function EnqueteForm({ jaRespondeu }: { jaRespondeu: boolean }) {
                       : "border-border bg-white"
                   }`}
                 >
-                  Sim, quero
+                  {def.ajuda.simLabel}
                 </button>
               </div>
               {ajudaQuer === true && (
                 <div className="space-y-1.5">
-                  <Label className="text-xs">
-                    Escreva seu nome e turma * (pra coordenação te procurar)
-                  </Label>
+                  <Label className="text-xs">{def.ajuda.contatoLabel}</Label>
                   <Input
                     value={ajudaContato}
                     onChange={(e) => setAjudaContato(e.target.value)}
-                    placeholder="Seu nome e turma"
+                    placeholder={def.ajuda.contatoPlaceholder}
                     maxLength={200}
                   />
                 </div>
               )}
               <p className="rounded-xl bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-                {AVISO_APOIO}
+                {def.avisoApoio}
               </p>
             </CardContent>
           </Card>
