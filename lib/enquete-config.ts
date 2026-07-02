@@ -579,7 +579,7 @@ export const ENQUETE_PAIS: EnqueteDef = {
   ],
 
   shareUrlEnv: "NEXT_PUBLIC_ENQUETE_PAIS_URL",
-  shareUrlDefault: "https://pesquisa.escolaamadeus.com/fundamental1",
+  shareUrlDefault: "https://pesquisa.escolaamadeus.com/escolar",
 };
 
 // ---------------- Registro ----------------
