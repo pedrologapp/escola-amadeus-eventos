@@ -477,7 +477,14 @@ export const ENQUETE_PAIS: EnqueteDef = {
       id: "recepcao",
       titulo: "Recepção",
       perguntas: [
-        { id: "recepcao_atend", texto: "A recepção/secretaria atende as famílias com cordialidade e agilidade." },
+        { id: "recepcao_atend", texto: "A recepção atende as famílias com cordialidade e agilidade." },
+      ],
+    },
+    {
+      id: "secretaria",
+      titulo: "Secretaria",
+      perguntas: [
+        { id: "secretaria_atend", texto: "A secretaria resolve o que a família precisa (documentos, informações, pagamentos) com eficiência." },
       ],
     },
     {
@@ -580,7 +587,8 @@ export const ENQUETE_PAIS: EnqueteDef = {
     { id: "professores", emoji: "📚", titulo: "Professores e equipe", frase: "Avalie quem você acompanha. Pode pular quem não conhece. 💬" },
     { id: "filho", emoji: "💙", titulo: "Meu filho na escola", frase: "Sobre o bem-estar e o acolhimento." },
     { id: "seguranca", emoji: "🛡️", titulo: "Segurança", frase: "Sobre o cuidado e a segurança na escola." },
-    { id: "recepcao", emoji: "💁", titulo: "Recepção", frase: "Sobre o atendimento na chegada e na secretaria." },
+    { id: "recepcao", emoji: "💁", titulo: "Recepção", frase: "Sobre o atendimento na chegada." },
+    { id: "secretaria", emoji: "🗂️", titulo: "Secretaria", frase: "Documentos, informações e pagamentos." },
     { id: "limpeza", emoji: "🧼", titulo: "Limpeza", frase: "Sobre a limpeza e o cuidado com os espaços." },
     { id: "coordenacao", emoji: "🧭", titulo: "Coordenação", frase: "Sobre o acompanhamento pedagógico." },
     { id: "direcao", emoji: "🏫", titulo: "Direção", frase: "Sobre a condução da escola." },
