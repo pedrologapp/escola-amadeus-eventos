@@ -365,23 +365,26 @@ const ITENS_ATENDIMENTO: readonly ItemProfessor[] = [
   },
 ];
 
+// Segmentos (para vincular extras só ao Infantil ou só ao Fundamental).
+const SERIES_INFANTIL = ["Maternal 2", "Maternal 3", "Grupo 4", "Grupo 5"] as const;
+const SERIES_FUND1 = ["1º ano", "2º ano", "3º ano", "4º ano", "5º ano"] as const;
+
+/** `turmasVinculadas` cobrindo todas as turmas das séries dadas. */
+function emTodasAsTurmas(
+  series: readonly string[],
+): Record<string, readonly string[]> {
+  return Object.fromEntries(series.map((s) => [s, []]));
+}
+const SO_INFANTIL = emTodasAsTurmas(SERIES_INFANTIL);
+const SO_FUND1 = emTodasAsTurmas(SERIES_FUND1);
+
 export const ENQUETE_PAIS: EnqueteDef = {
   slug: "clima-pais-2026",
   publico: "responsavel",
   tituloPainel: "Pesquisa de Satisfação — Famílias (Infantil e Fund. 1)",
   labelRespondente: "família",
 
-  series: [
-    "Maternal 2",
-    "Maternal 3",
-    "Grupo 4",
-    "Grupo 5",
-    "1º ano",
-    "2º ano",
-    "3º ano",
-    "4º ano",
-    "5º ano",
-  ],
+  series: [...SERIES_INFANTIL, ...SERIES_FUND1],
   turmas: ["A", "B"],
   turmasPorSerie: { "5º ano": ["A", "B", "C"] },
 
@@ -405,20 +408,24 @@ export const ENQUETE_PAIS: EnqueteDef = {
     { id: "reg_isabelle", nome: "Isabelle", subtitulo: "Professora regente · 4º ano", turmasVinculadas: { "4º ano": [] } },
     { id: "reg_cassia", nome: "Cássia", subtitulo: "Professora regente · 5º ano A e B", turmasVinculadas: { "5º ano": ["A", "B"] } },
     { id: "reg_alexsandra", nome: "Alexsandra", subtitulo: "Professora regente · 5º ano C", turmasVinculadas: { "5º ano": ["C"] } },
-    // --- Programas e extras (todas as séries) ---
-    { id: "zwinglia", nome: "Zwinglia", subtitulo: "Ed. Financeira" },
-    { id: "helder", nome: "Helder", subtitulo: "Bilíngue" },
+    // --- Extras do Infantil ---
+    { id: "roberto", nome: "José Roberto", subtitulo: "Artes", turmasVinculadas: SO_INFANTIL },
+    { id: "polyana_inf", nome: "Polyana", subtitulo: "Socioemocional", turmasVinculadas: SO_INFANTIL },
+    // --- Programas e extras do Fundamental 1 ---
+    { id: "zwinglia", nome: "Zwinglia", subtitulo: "Ed. Financeira", turmasVinculadas: SO_FUND1 },
+    { id: "helder", nome: "Helder", subtitulo: "Bilíngue", turmasVinculadas: SO_FUND1 },
+    { id: "thaise", nome: "Thaíse", subtitulo: "Inglês", turmasVinculadas: SO_FUND1 },
+    { id: "jany", nome: "Jany", subtitulo: "Educação Física", turmasVinculadas: SO_FUND1 },
+    { id: "jonathan", nome: "Jonathan", subtitulo: "Robótica", turmasVinculadas: SO_FUND1 },
+    { id: "polyana", nome: "Polyana", subtitulo: "Psicóloga", turmasVinculadas: SO_FUND1 },
+    // --- Extras dos dois segmentos ---
     { id: "thalita", nome: "Thalyta", subtitulo: "Bilíngue" },
-    { id: "thaise", nome: "Thaíse", subtitulo: "Inglês" },
-    { id: "jany", nome: "Jany", subtitulo: "Educação Física" },
-    { id: "roberto", nome: "José Roberto", subtitulo: "Artes" },
-    { id: "jonathan", nome: "Jonathan", subtitulo: "Robótica" },
     { id: "ailton", nome: "Ailton", subtitulo: "Coreografia" },
-    { id: "polyana", nome: "Polyana", subtitulo: "Socioemocional / Psicóloga" },
-    // --- Auxiliares e atendimento (todas as séries) ---
-    { id: "aux_vanessa", nome: "Vanessa", subtitulo: "Auxiliar de sala", itens: ITENS_AUXILIAR },
-    { id: "aux_clara", nome: "Clara", subtitulo: "Auxiliar de sala", itens: ITENS_AUXILIAR },
-    { id: "aux_delys", nome: "Delys", subtitulo: "Auxiliar de sala", itens: ITENS_AUXILIAR },
+    // --- Auxiliares de sala (Fundamental 1) ---
+    { id: "aux_vanessa", nome: "Vanessa", subtitulo: "Auxiliar de sala", itens: ITENS_AUXILIAR, turmasVinculadas: SO_FUND1 },
+    { id: "aux_clara", nome: "Clara", subtitulo: "Auxiliar de sala", itens: ITENS_AUXILIAR, turmasVinculadas: SO_FUND1 },
+    { id: "aux_delys", nome: "Delys", subtitulo: "Auxiliar de sala", itens: ITENS_AUXILIAR, turmasVinculadas: SO_FUND1 },
+    // --- Secretaria / Portaria (todas as séries) ---
     { id: "sec_bruna", nome: "Bruna", subtitulo: "Secretaria / Portaria", itens: ITENS_ATENDIMENTO },
     { id: "sec_ligivania", nome: "Ligivânia", subtitulo: "Secretaria / Portaria", itens: ITENS_ATENDIMENTO },
   ],
