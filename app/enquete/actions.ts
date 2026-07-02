@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import {
   ESCALA,
   getEnquete,
+  NAO_SEI,
   scoreDe,
   todasClima,
   type ValorEscala,
@@ -16,6 +17,7 @@ type EnvioEnquete = {
   slug?: string;
   serie?: string;
   turma?: string;
+  perfil?: Record<string, string>;
   disc?: Record<string, Record<string, string>>;
   dificuldade?: string[];
   clima?: Record<string, string>;
@@ -37,11 +39,18 @@ export async function enviarEnquete(payload: EnvioEnquete): Promise<EnvioState> 
 
   const clima = (payload?.clima ?? {}) as Record<string, string>;
   const perguntasClima = todasClima(def);
-  const respondidasClima = perguntasClima.filter((p) =>
-    VALORES.has(clima[p.id]),
+  const respondidasClima = perguntasClima.filter(
+    (p) => VALORES.has(clima[p.id]) || clima[p.id] === NAO_SEI,
   ).length;
   if (respondidasClima === 0) {
     return { ok: false, error: "Responda ao menos as perguntas sobre a escola." };
+  }
+
+  // Perfil (só ids/opções definidos na pesquisa).
+  const perfil: Record<string, string> = {};
+  for (const p of def.perguntasPerfil ?? []) {
+    const v = (payload?.perfil?.[p.id] ?? "").toString();
+    if (p.opcoes.includes(v)) perfil[p.id] = v;
   }
 
   // ---------- Camada de qualidade (invisível) ----------
@@ -111,6 +120,7 @@ export async function enviarEnquete(payload: EnvioEnquete): Promise<EnvioState> 
   }
 
   const respostas = {
+    perfil,
     disc: payload?.disc ?? {},
     dificuldade: Array.isArray(payload?.dificuldade) ? payload.dificuldade : [],
     clima,

@@ -19,6 +19,13 @@ export const ESCALA = [
 
 export type ValorEscala = (typeof ESCALA)[number]["valor"];
 
+/**
+ * Valor especial "Não sei avaliar" (quando a def tem `permitirNaoSei`).
+ * Conta como "respondeu" no formulário, mas fica FORA de média/% favorável.
+ */
+export const NAO_SEI = "ns";
+export type RespostaEscala = ValorEscala | typeof NAO_SEI;
+
 /** Score 0–100 por nível (para média e % favorável). */
 export const SCORE: Record<ValorEscala, number> = {
   sempre: 100,
@@ -94,6 +101,13 @@ export interface PassoDef {
   frase: string;
 }
 
+/** Pergunta de perfil (select no primeiro passo; ex.: tempo de casa). */
+export interface PerguntaPerfil {
+  id: string;
+  label: string;
+  opcoes: readonly string[];
+}
+
 export interface EnqueteDef {
   slug: string;
   /** Quem responde — afeta rótulos ("aluno" x "família"). */
@@ -107,6 +121,10 @@ export interface EnqueteDef {
   turmas: readonly string[];
   /** Turmas específicas por série (sobrescreve `turmas` quando presente). */
   turmasPorSerie?: Record<string, readonly string[]>;
+  /** Perguntas de perfil no primeiro passo (obrigatórias; ex.: tempo de casa). */
+  perguntasPerfil?: readonly PerguntaPerfil[];
+  /** Mostra o botão "Não sei avaliar" em todas as perguntas fechadas. */
+  permitirNaoSei?: boolean;
 
   /** Cabeçalho da etapa/seção de professores no painel. */
   tituloProfessores: string;
@@ -383,6 +401,14 @@ export const ENQUETE_PAIS: EnqueteDef = {
   series: [...SERIES_INFANTIL, ...SERIES_FUND1, ...SERIES_FUND2],
   turmas: ["A", "B"],
   turmasPorSerie: { "5º ano": ["A", "B", "C"] },
+  perguntasPerfil: [
+    {
+      id: "tempo_escola",
+      label: "Há quanto tempo sua família está na escola?",
+      opcoes: ["Este é o nosso primeiro ano", "2 a 3 anos", "4 anos ou mais"],
+    },
+  ],
+  permitirNaoSei: true,
 
   tituloProfessores: "Professores e equipe",
   // Regentes/auxiliares de turma aparecem só para a série/turma escolhida
@@ -462,6 +488,7 @@ export const ENQUETE_PAIS: EnqueteDef = {
       titulo: "Meu filho na escola",
       perguntas: [
         { id: "gosta", texto: "Meu filho(a) gosta de ir para a escola." },
+        { id: "aprendendo", texto: "Vejo meu filho(a) aprendendo e evoluindo ao longo do ano." },
         { id: "acolhido", texto: "A escola acolhe bem meu filho(a) e a nossa família." },
       ],
     },
@@ -498,14 +525,16 @@ export const ENQUETE_PAIS: EnqueteDef = {
       id: "coordenacao",
       titulo: "Coordenação",
       perguntas: [
-        { id: "coord_acomp", texto: "A coordenação acompanha bem os alunos e está disponível quando a família precisa." },
+        { id: "coord_acomp", texto: "A coordenação acompanha bem o desenvolvimento do meu filho(a)." },
+        { id: "coord_atende", texto: "Quando a família procura a coordenação, é atendida com atenção." },
       ],
     },
     {
       id: "direcao",
       titulo: "Direção",
       perguntas: [
-        { id: "direcao_conf", texto: "A direção é presente e transmite confiança na condução da escola." },
+        { id: "direcao_presente", texto: "A direção é presente no dia a dia da escola." },
+        { id: "direcao_conf", texto: "A direção transmite confiança na condução da escola." },
       ],
     },
     {
@@ -528,6 +557,7 @@ export const ENQUETE_PAIS: EnqueteDef = {
       perguntas: [
         { id: "comunic_clareza", texto: "A escola (direção, coordenação e secretaria) comunica avisos e informações com clareza e no tempo certo." },
         { id: "comunic_agenda", texto: "O Agenda Edu (aplicativo da escola) me mantém bem informado(a) sobre o dia a dia do meu filho(a)." },
+        { id: "comunic_ocorrencia", texto: "Quando acontece algo com meu filho(a) na escola (machucado, conflito), sou avisado(a) no mesmo dia." },
         { id: "comunic_retorno", texto: "Quando preciso falar com a escola, consigo atendimento e retorno com facilidade." },
       ],
     },
@@ -547,9 +577,19 @@ export const ENQUETE_PAIS: EnqueteDef = {
       resumoLabel: "Satisfeitos com a escola",
     },
     {
+      id: "valor",
+      texto: "O que a escola oferece justifica o investimento que faço na mensalidade.",
+    },
+    {
+      id: "permanencia",
+      texto: "Pretendo manter meu filho(a) matriculado(a) na escola no próximo ano letivo.",
+      resumoLabel: "Pretendem continuar",
+    },
+    {
       id: "recomendaria",
       texto: "Eu recomendaria a Escola Amadeus para outras famílias.",
       resumoLabel: "Recomendariam a escola",
+      coerenciaCom: "satisfacao_geral",
     },
   ],
   abertas: [

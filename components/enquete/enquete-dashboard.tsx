@@ -7,6 +7,7 @@ import {
   ESCALA,
   ehFavoravel,
   itensDoProfessor,
+  NAO_SEI,
   scoreDe,
   type EnqueteDef,
   type PerguntaClima,
@@ -19,6 +20,7 @@ export interface RespostaRow {
   serie: string | null;
   turma: string | null;
   respostas: {
+    perfil?: Record<string, string>;
     disc?: Record<string, Record<string, string>>;
     dificuldade?: string[];
     clima?: Record<string, string>;
@@ -43,6 +45,12 @@ const CORES: Record<ValorEscala, string> = {
   nunca: "#ef4444",
 };
 
+// Só exibimos média/distribuição com pelo menos este nº de respostas —
+// protege o anonimato de turmas pequenas e evita médias instáveis.
+const N_MINIMO = 5;
+// Nº mínimo de pontos (respostas × perguntas) pra entrar no ranking de temas.
+const N_MINIMO_RANKING = 10;
+
 function distribuir(valores: string[]) {
   const counts: Record<ValorEscala, number> = {
     sempre: 0,
@@ -51,13 +59,16 @@ function distribuir(valores: string[]) {
     nunca: 0,
   };
   let n = 0;
+  let naoSei = 0;
   for (const v of valores) {
     if (v === "sempre" || v === "quase" || v === "poucas" || v === "nunca") {
       counts[v]++;
       n++;
+    } else if (v === NAO_SEI) {
+      naoSei++;
     }
   }
-  return { counts, n };
+  return { counts, n, naoSei };
 }
 
 function pct(part: number, total: number) {
@@ -131,13 +142,15 @@ export function EnqueteDashboard({
   const pedidosAjuda = respostas.filter((r) => r.respostas?.ajuda?.quer);
 
   // Ranking por tema: "Professores" (agregado dos cards) + uma linha por seção.
+  // "Não sei avaliar" fica fora da média; temas com poucos pontos não exibem média.
+  const VALIDOS = new Set<string>(ESCALA.map((e) => e.valor));
   const rankingTemas = (() => {
     const temas: { id: string; titulo: string; pontos: number[] }[] = [];
     const pontosProf: number[] = [];
     for (const d of def.professores) {
       for (const it of itensDoProfessor(def, d)) {
         for (const v of valoresDisc(d.id, it.id)) {
-          pontosProf.push(scoreDe(v as ValorEscala));
+          if (VALIDOS.has(v)) pontosProf.push(scoreDe(v as ValorEscala));
         }
       }
     }
@@ -146,13 +159,20 @@ export function EnqueteDashboard({
       const pontos: number[] = [];
       for (const p of sec.perguntas) {
         for (const v of valoresClima(p.id)) {
-          pontos.push(scoreDe(v as ValorEscala, p.invertida));
+          if (VALIDOS.has(v)) pontos.push(scoreDe(v as ValorEscala, p.invertida));
         }
       }
       temas.push({ id: sec.id, titulo: sec.titulo, pontos });
     }
     return temas
-      .map((t) => ({ ...t, media: media4(t.pontos), n: t.pontos.length }))
+      .map((t) => {
+        const suficiente = t.pontos.length >= N_MINIMO_RANKING;
+        return {
+          ...t,
+          media: suficiente ? media4(t.pontos) : null,
+          n: t.pontos.length,
+        };
+      })
       .sort((a, b) => (b.media ?? 0) - (a.media ?? 0));
   })();
 
@@ -237,7 +257,9 @@ export function EnqueteDashboard({
               <span className="font-semibold tabular-nums">
                 {t.media !== null ? t.media.toFixed(2).replace(".", ",") : "—"}{" "}
                 <span className="text-xs font-normal text-muted-foreground">
-                  ({t.n} resposta{t.n === 1 ? "" : "s"})
+                  {t.media !== null
+                    ? `(n=${t.n})`
+                    : `(${t.n} de ${N_MINIMO_RANKING} respostas mínimas)`}
                 </span>
               </span>
             </div>
@@ -252,6 +274,49 @@ export function EnqueteDashboard({
           </div>
         ))}
       </div>
+
+      {/* Perfil dos respondentes */}
+      {(def.perguntasPerfil ?? []).length > 0 && (
+        <>
+          <SectionHeader>👪 Perfil dos respondentes</SectionHeader>
+          <div className="mb-8 grid gap-4 md:grid-cols-2">
+            {(def.perguntasPerfil ?? []).map((p) => {
+              const porOpcao = p.opcoes.map((op) => ({
+                op,
+                c: lista.filter((r) => r.respostas?.perfil?.[p.id] === op)
+                  .length,
+              }));
+              const total = porOpcao.reduce((a, b) => a + b.c, 0);
+              return (
+                <div
+                  key={p.id}
+                  className="rounded-2xl border border-border bg-white p-4 shadow-sm"
+                >
+                  <div className="mb-2 text-sm font-semibold text-amadeus-blue">
+                    {p.label}
+                  </div>
+                  {porOpcao.map(({ op, c }) => (
+                    <div key={op} className="mb-2 last:mb-0">
+                      <div className="flex items-center justify-between text-sm">
+                        <span>{op}</span>
+                        <span className="font-semibold tabular-nums">
+                          {c} ({pct(c, total)}%)
+                        </span>
+                      </div>
+                      <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full bg-amadeus-blue/70"
+                          style={{ width: `${pct(c, total)}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
 
       {/* Pedidos de contato/ajuda */}
       {pedidosAjuda.length > 0 && (
@@ -535,10 +600,11 @@ function BarraPergunta({
   valores: string[];
   invertida?: boolean;
 }) {
-  const { counts, n } = distribuir(valores);
+  const { counts, n, naoSei } = distribuir(valores);
   const fav = valores.filter((v) =>
     ehFavoravel(v as ValorEscala, invertida),
   ).length;
+  const suficiente = n >= N_MINIMO;
 
   return (
     <div className="border-b border-border/50 py-2.5 last:border-0">
@@ -551,25 +617,37 @@ function BarraPergunta({
             </span>
           )}
         </span>
-        <span className="shrink-0 text-sm font-bold text-amadeus-blue">
-          {pct(fav, n)}% <span className="font-normal">favorável</span>
-        </span>
+        {suficiente && (
+          <span className="shrink-0 text-sm font-bold text-amadeus-blue">
+            {pct(fav, n)}% <span className="font-normal">favorável</span>
+          </span>
+        )}
       </div>
-      <div className="flex h-3 overflow-hidden rounded-full bg-muted">
-        {ESCALA.map((op) => {
-          const w = pct(counts[op.valor], n);
-          if (w === 0) return null;
-          return (
-            <div
-              key={op.valor}
-              style={{ width: `${w}%`, background: CORES[op.valor] }}
-              title={`${op.label}: ${counts[op.valor]} (${w}%)`}
-            />
-          );
-        })}
-      </div>
+      {suficiente ? (
+        <div className="flex h-3 overflow-hidden rounded-full bg-muted">
+          {ESCALA.map((op) => {
+            const w = pct(counts[op.valor], n);
+            if (w === 0) return null;
+            return (
+              <div
+                key={op.valor}
+                style={{ width: `${w}%`, background: CORES[op.valor] }}
+                title={`${op.label}: ${counts[op.valor]} (${w}%)`}
+              />
+            );
+          })}
+        </div>
+      ) : (
+        <div className="rounded-lg bg-muted/50 px-2 py-1 text-[11px] text-muted-foreground">
+          {n === 0
+            ? "Sem respostas ainda."
+            : `${n} de ${N_MINIMO} respostas mínimas — resultado oculto pra proteger o anonimato.`}
+        </div>
+      )}
       <div className="mt-1 text-[11px] text-muted-foreground">
-        {n} resposta{n === 1 ? "" : "s"}
+        n={n}
+        {naoSei > 0 &&
+          ` · ${naoSei} não soube${naoSei === 1 ? "" : "ram"} avaliar`}
       </div>
     </div>
   );

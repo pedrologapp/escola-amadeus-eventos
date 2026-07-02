@@ -18,10 +18,11 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   ESCALA,
   itensDoProfessor,
+  NAO_SEI,
   professoresDe,
   turmasDe,
   type EnqueteDef,
-  type ValorEscala,
+  type RespostaEscala,
 } from "@/lib/enquete-config";
 import { enviarEnquete } from "./actions";
 
@@ -59,9 +60,10 @@ export function EnqueteForm({
 
   const [serie, setSerie] = useState("");
   const [turma, setTurma] = useState("");
-  // disc: { [professorId]: { [itemId]: ValorEscala } }
-  const [disc, setDisc] = useState<Record<string, Record<string, ValorEscala>>>({});
-  const [clima, setClima] = useState<Record<string, ValorEscala>>({});
+  const [perfil, setPerfil] = useState<Record<string, string>>({});
+  // disc: { [professorId]: { [itemId]: RespostaEscala } }
+  const [disc, setDisc] = useState<Record<string, Record<string, RespostaEscala>>>({});
+  const [clima, setClima] = useState<Record<string, RespostaEscala>>({});
   const [dificuldade, setDificuldade] = useState<string[]>([]);
   const [comentarios, setComentarios] = useState<Record<string, string>>({});
   const [abertas, setAbertas] = useState<Record<string, string>>({});
@@ -94,7 +96,7 @@ export function EnqueteForm({
     resetRef.current = agora;
   }
 
-  function setClimaVal(id: string, v: ValorEscala) {
+  function setClimaVal(id: string, v: RespostaEscala) {
     setClima((p) => ({ ...p, [id]: v }));
     const sec = SECAO_DE_Q[id];
     if (sec) {
@@ -107,7 +109,7 @@ export function EnqueteForm({
       if (cont === TAM_SECAO[sec]) fecharBloco(`sec:${sec}`);
     }
   }
-  function setDiscVal(prof: (typeof def.professores)[number], itemId: string, v: ValorEscala) {
+  function setDiscVal(prof: (typeof def.professores)[number], itemId: string, v: RespostaEscala) {
     const bloco = { ...(disc[prof.id] ?? {}), [itemId]: v };
     setDisc((p) => ({ ...p, [prof.id]: { ...p[prof.id], [itemId]: v } }));
     if (itensDoProfessor(def, prof).every((it) => bloco[it.id]))
@@ -127,7 +129,12 @@ export function EnqueteForm({
   // não contam)
   function faltamNoPasso(): number {
     const id = PASSOS[passo].id;
-    if (id === "voce") return (serie ? 0 : 1) + (turma ? 0 : 1);
+    if (id === "voce") {
+      const perfilFaltando = (def.perguntasPerfil ?? []).filter(
+        (p) => !perfil[p.id],
+      ).length;
+      return (serie ? 0 : 1) + (turma ? 0 : 1) + perfilFaltando;
+    }
     if (id === "professores") {
       if (!def.professoresObrigatorio) return 0;
       let f = 0;
@@ -187,6 +194,7 @@ export function EnqueteForm({
         slug: def.slug,
         serie,
         turma,
+        perfil,
         disc: discEnvio,
         dificuldade: dificuldadeEnvio,
         clima,
@@ -306,6 +314,25 @@ export function EnqueteForm({
                   ))}
                 </Select>
               </div>
+              {(def.perguntasPerfil ?? []).map((p) => (
+                <div key={p.id} className="space-y-1.5">
+                  <Label htmlFor={`perfil-${p.id}`}>{p.label} *</Label>
+                  <Select
+                    id={`perfil-${p.id}`}
+                    value={perfil[p.id] ?? ""}
+                    onChange={(e) =>
+                      setPerfil((prev) => ({ ...prev, [p.id]: e.target.value }))
+                    }
+                  >
+                    <option value="">Selecione...</option>
+                    {p.opcoes.map((op) => (
+                      <option key={op} value={op}>
+                        {op}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+              ))}
             </CardContent>
           </Card>
         )}
@@ -331,6 +358,7 @@ export function EnqueteForm({
                       texto={it.texto}
                       value={disc[d.id]?.[it.id]}
                       onChange={(v) => setDiscVal(d, it.id, v)}
+                      permitirNaoSei={def.permitirNaoSei}
                     />
                   ))}
                 </CardContent>
@@ -389,6 +417,7 @@ export function EnqueteForm({
                       texto={p.texto}
                       value={clima[p.id]}
                       onChange={(v) => setClimaVal(p.id, v)}
+                      permitirNaoSei={def.permitirNaoSei}
                     />
                   ))}
                 </CardContent>
@@ -411,6 +440,7 @@ export function EnqueteForm({
                     texto={p.texto}
                     value={clima[p.id]}
                     onChange={(v) => setClimaVal(p.id, v)}
+                    permitirNaoSei={def.permitirNaoSei}
                   />
                 ))}
               </CardContent>
@@ -574,11 +604,14 @@ function Pergunta({
   texto,
   value,
   onChange,
+  permitirNaoSei,
 }: {
   texto: string;
-  value: ValorEscala | undefined;
-  onChange: (v: ValorEscala) => void;
+  value: RespostaEscala | undefined;
+  onChange: (v: RespostaEscala) => void;
+  permitirNaoSei?: boolean;
 }) {
+  const naoSeiAtivo = value === NAO_SEI;
   return (
     <div className="space-y-2">
       <p className="text-sm font-medium">{texto}</p>
@@ -605,6 +638,20 @@ function Pergunta({
           );
         })}
       </div>
+      {permitirNaoSei && (
+        <button
+          type="button"
+          onClick={() => onChange(NAO_SEI)}
+          aria-pressed={naoSeiAtivo}
+          className={`w-full rounded-xl border-2 px-3 py-1.5 text-xs font-semibold transition-colors ${
+            naoSeiAtivo
+              ? "border-amadeus-blue bg-amadeus-blue-50 text-amadeus-blue"
+              : "border-dashed border-border bg-white text-muted-foreground hover:bg-muted/40"
+          }`}
+        >
+          Não sei avaliar
+        </button>
+      )}
     </div>
   );
 }
