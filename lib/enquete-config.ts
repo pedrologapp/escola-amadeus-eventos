@@ -357,14 +357,6 @@ const ITENS_AUXILIAR: readonly ItemProfessor[] = [
     tituloPainel: "Ajuda no dia a dia",
   },
 ];
-const ITENS_ATENDIMENTO: readonly ItemProfessor[] = [
-  {
-    id: "atendimento",
-    texto: "Atende as famílias e os alunos com cordialidade e eficiência.",
-    tituloPainel: "Atendimento e cordialidade",
-  },
-];
-
 // Segmentos (para vincular extras só ao Infantil ou só ao Fundamental).
 const SERIES_INFANTIL = ["Maternal 2", "Maternal 3", "Grupo 4", "Grupo 5"] as const;
 const SERIES_FUND1 = ["1º ano", "2º ano", "3º ano", "4º ano", "5º ano"] as const;
@@ -422,12 +414,10 @@ export const ENQUETE_PAIS: EnqueteDef = {
     { id: "thalita", nome: "Thalyta", subtitulo: "Bilíngue" },
     { id: "ailton", nome: "Ailton", subtitulo: "Coreografia" },
     // --- Auxiliares de sala (Fundamental 1) ---
+    // Secretaria/recepção não é avaliada individualmente: já existe o tema "Recepção".
     { id: "aux_vanessa", nome: "Vanessa", subtitulo: "Auxiliar de sala", itens: ITENS_AUXILIAR, turmasVinculadas: SO_FUND1 },
     { id: "aux_clara", nome: "Clara", subtitulo: "Auxiliar de sala", itens: ITENS_AUXILIAR, turmasVinculadas: SO_FUND1 },
     { id: "aux_delys", nome: "Delys", subtitulo: "Auxiliar de sala", itens: ITENS_AUXILIAR, turmasVinculadas: SO_FUND1 },
-    // --- Secretaria / Portaria (todas as séries) ---
-    { id: "sec_bruna", nome: "Bruna", subtitulo: "Secretaria / Portaria", itens: ITENS_ATENDIMENTO },
-    { id: "sec_ligivania", nome: "Ligivânia", subtitulo: "Secretaria / Portaria", itens: ITENS_ATENDIMENTO },
   ],
   itensProfessor: [
     {
