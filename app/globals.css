@@ -104,6 +104,11 @@ body {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+  /* Listas com rolagem na tela saem inteiras no papel */
+  .lista-imprimivel {
+    max-height: none !important;
+    overflow: visible !important;
+  }
 }
 
 /* Soft floating shadow utility (ClassDojo-style) */
