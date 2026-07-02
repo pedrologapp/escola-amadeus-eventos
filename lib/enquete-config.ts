@@ -357,9 +357,10 @@ const ITENS_AUXILIAR: readonly ItemProfessor[] = [
     tituloPainel: "Ajuda no dia a dia",
   },
 ];
-// Segmentos (para vincular extras só ao Infantil ou só ao Fundamental).
+// Segmentos (para vincular professores/extras ao segmento certo).
 const SERIES_INFANTIL = ["Maternal 2", "Maternal 3", "Grupo 4", "Grupo 5"] as const;
 const SERIES_FUND1 = ["1º ano", "2º ano", "3º ano", "4º ano", "5º ano"] as const;
+const SERIES_FUND2 = ["6º ano", "7º ano", "8º ano", "9º ano"] as const;
 
 /** `turmasVinculadas` cobrindo todas as turmas das séries dadas. */
 function emTodasAsTurmas(
@@ -369,14 +370,17 @@ function emTodasAsTurmas(
 }
 const SO_INFANTIL = emTodasAsTurmas(SERIES_INFANTIL);
 const SO_FUND1 = emTodasAsTurmas(SERIES_FUND1);
+const SO_FUND2 = emTodasAsTurmas(SERIES_FUND2);
+const FUND1_E_2 = { ...SO_FUND1, ...SO_FUND2 };
+const INFANTIL_E_FUND1 = { ...SO_INFANTIL, ...SO_FUND1 };
 
 export const ENQUETE_PAIS: EnqueteDef = {
   slug: "clima-pais-2026",
   publico: "responsavel",
-  tituloPainel: "Pesquisa de Satisfação — Famílias (Infantil e Fund. 1)",
+  tituloPainel: "Pesquisa de Satisfação — Famílias",
   labelRespondente: "família",
 
-  series: [...SERIES_INFANTIL, ...SERIES_FUND1],
+  series: [...SERIES_INFANTIL, ...SERIES_FUND1, ...SERIES_FUND2],
   turmas: ["A", "B"],
   turmasPorSerie: { "5º ano": ["A", "B", "C"] },
 
@@ -400,18 +404,30 @@ export const ENQUETE_PAIS: EnqueteDef = {
     { id: "reg_isabelle", nome: "Isabelle", subtitulo: "Professora regente · 4º ano", turmasVinculadas: { "4º ano": [] } },
     { id: "reg_cassia", nome: "Cássia", subtitulo: "Professora regente · 5º ano A e B", turmasVinculadas: { "5º ano": ["A", "B"] } },
     { id: "reg_alexsandra", nome: "Alexsandra", subtitulo: "Professora regente · 5º ano C", turmasVinculadas: { "5º ano": ["C"] } },
+    // --- Fundamental 2: professores por disciplina (mesmos da enquete de alunos) ---
+    { id: "f2_julianneide", nome: "Julianneide", subtitulo: "Português", turmasVinculadas: SO_FUND2 },
+    { id: "f2_jessica", nome: "Jéssica", subtitulo: "Matemática", turmasVinculadas: SO_FUND2 },
+    { id: "f2_francinildo", nome: "Francinildo", subtitulo: "História", turmasVinculadas: SO_FUND2 },
+    { id: "f2_angela", nome: "Ângela", subtitulo: "Geografia", turmasVinculadas: SO_FUND2 },
+    { id: "f2_joseeduardo", nome: "José Eduardo", subtitulo: "Ciências", turmasVinculadas: SO_FUND2 },
+    { id: "f2_ceni", nome: "Ceni", subtitulo: "Artes", turmasVinculadas: SO_FUND2 },
+    { id: "f2_pedro", nome: "Pedro", subtitulo: "Arboria", turmasVinculadas: SO_FUND2 },
+    { id: "helder_f2", nome: "Helder", subtitulo: "Inglês", turmasVinculadas: SO_FUND2 },
+    { id: "polyana_f2", nome: "Polyana", subtitulo: "Socioemocional", turmasVinculadas: SO_FUND2 },
     // --- Extras do Infantil ---
     { id: "roberto", nome: "José Roberto", subtitulo: "Artes", turmasVinculadas: SO_INFANTIL },
     { id: "polyana_inf", nome: "Polyana", subtitulo: "Socioemocional", turmasVinculadas: SO_INFANTIL },
     // --- Programas e extras do Fundamental 1 ---
-    { id: "zwinglia", nome: "Zwinglia", subtitulo: "Ed. Financeira", turmasVinculadas: SO_FUND1 },
     { id: "helder", nome: "Helder", subtitulo: "Bilíngue", turmasVinculadas: SO_FUND1 },
     { id: "thaise", nome: "Thaíse", subtitulo: "Inglês", turmasVinculadas: SO_FUND1 },
-    { id: "jany", nome: "Jany", subtitulo: "Educação Física", turmasVinculadas: SO_FUND1 },
-    { id: "jonathan", nome: "Jonathan", subtitulo: "Robótica", turmasVinculadas: SO_FUND1 },
     { id: "polyana", nome: "Polyana", subtitulo: "Psicóloga", turmasVinculadas: SO_FUND1 },
-    // --- Extras dos dois segmentos ---
-    { id: "thalita", nome: "Thalyta", subtitulo: "Bilíngue" },
+    // --- Extras do Fundamental 1 e 2 ---
+    { id: "zwinglia", nome: "Zwinglia", subtitulo: "Ed. Financeira", turmasVinculadas: FUND1_E_2 },
+    { id: "jany", nome: "Jany", subtitulo: "Educação Física", turmasVinculadas: FUND1_E_2 },
+    { id: "jonathan", nome: "Jonathan", subtitulo: "Robótica", turmasVinculadas: FUND1_E_2 },
+    // --- Extras do Infantil e Fundamental 1 ---
+    { id: "thalita", nome: "Thalyta", subtitulo: "Bilíngue", turmasVinculadas: INFANTIL_E_FUND1 },
+    // --- Todos os segmentos ---
     { id: "ailton", nome: "Ailton", subtitulo: "Coreografia" },
     // --- Auxiliares de sala (Fundamental 1) ---
     // Secretaria/recepção não é avaliada individualmente: já existe o tema "Recepção".
@@ -504,6 +520,7 @@ export const ENQUETE_PAIS: EnqueteDef = {
       titulo: "Comunicação da escola",
       perguntas: [
         { id: "comunic_clareza", texto: "A escola (direção, coordenação e secretaria) comunica avisos e informações com clareza e no tempo certo." },
+        { id: "comunic_agenda", texto: "O Agenda Edu (aplicativo da escola) me mantém bem informado(a) sobre o dia a dia do meu filho(a)." },
         { id: "comunic_retorno", texto: "Quando preciso falar com a escola, consigo atendimento e retorno com facilidade." },
       ],
     },
