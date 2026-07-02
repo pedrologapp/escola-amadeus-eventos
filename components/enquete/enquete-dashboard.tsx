@@ -547,7 +547,7 @@ export function EnqueteDashboard({
                   ({itens.length})
                 </span>
               </div>
-              <ul className="max-h-72 space-y-1.5 overflow-y-auto">
+              <ul className="max-h-72 space-y-1.5 overflow-y-auto print:max-h-none print:overflow-visible">
                 {itens.map((it, i) => (
                   <li
                     key={i}
@@ -588,7 +588,7 @@ export function EnqueteDashboard({
               <p className="mb-2 text-xs text-muted-foreground">
                 {itens.length} resposta{itens.length === 1 ? "" : "s"}
               </p>
-              <ul className="max-h-80 space-y-1.5 overflow-y-auto">
+              <ul className="max-h-80 space-y-1.5 overflow-y-auto print:max-h-none print:overflow-visible">
                 {itens.map((it, i) => (
                   <li
                     key={i}
