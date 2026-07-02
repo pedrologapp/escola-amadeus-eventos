@@ -7,6 +7,7 @@ import {
   ESCALA,
   ehFavoravel,
   itensDoProfessor,
+  scoreDe,
   type EnqueteDef,
   type PerguntaClima,
   type ValorEscala,
@@ -61,6 +62,13 @@ function distribuir(valores: string[]) {
 
 function pct(part: number, total: number) {
   return total > 0 ? Math.round((part / total) * 100) : 0;
+}
+
+/** Média na escala 1–4 a partir de scores 0–100 (sempre=4 ... nunca=1). */
+function media4(pontos: number[]): number | null {
+  if (pontos.length === 0) return null;
+  const m = pontos.reduce((a, b) => a + b, 0) / pontos.length;
+  return 1 + (m / 100) * 3;
 }
 
 function etiqueta(serie: string | null, turma: string | null) {
@@ -121,6 +129,32 @@ export function EnqueteDashboard({
     });
 
   const pedidosAjuda = respostas.filter((r) => r.respostas?.ajuda?.quer);
+
+  // Ranking por tema: "Professores" (agregado dos cards) + uma linha por seção.
+  const rankingTemas = (() => {
+    const temas: { id: string; titulo: string; pontos: number[] }[] = [];
+    const pontosProf: number[] = [];
+    for (const d of def.professores) {
+      for (const it of itensDoProfessor(def, d)) {
+        for (const v of valoresDisc(d.id, it.id)) {
+          pontosProf.push(scoreDe(v as ValorEscala));
+        }
+      }
+    }
+    temas.push({ id: "professores", titulo: "Professores", pontos: pontosProf });
+    for (const sec of def.secoes) {
+      const pontos: number[] = [];
+      for (const p of sec.perguntas) {
+        for (const v of valoresClima(p.id)) {
+          pontos.push(scoreDe(v as ValorEscala, p.invertida));
+        }
+      }
+      temas.push({ id: sec.id, titulo: sec.titulo, pontos });
+    }
+    return temas
+      .map((t) => ({ ...t, media: media4(t.pontos), n: t.pontos.length }))
+      .sort((a, b) => (b.media ?? 0) - (a.media ?? 0));
+  })();
 
   // Tempo médio por bloco (mediana de cada resposta, média entre as respostas).
   const medianas = lista
@@ -191,6 +225,32 @@ export function EnqueteDashboard({
           valor={tempoMedioBloco !== null ? `${tempoMedioBloco}s` : "—"}
           sub="por professor/seção"
         />
+      </div>
+
+      {/* Médias por tema (escala 1–4) */}
+      <SectionHeader>🏆 Médias por tema (1 a 4)</SectionHeader>
+      <div className="mb-8 rounded-2xl border border-border bg-white p-4 shadow-sm">
+        {rankingTemas.map((t) => (
+          <div key={t.id} className="mb-3 last:mb-0">
+            <div className="flex items-center justify-between gap-2 text-sm">
+              <span>{t.titulo}</span>
+              <span className="font-semibold tabular-nums">
+                {t.media !== null ? t.media.toFixed(2).replace(".", ",") : "—"}{" "}
+                <span className="text-xs font-normal text-muted-foreground">
+                  ({t.n} resposta{t.n === 1 ? "" : "s"})
+                </span>
+              </span>
+            </div>
+            <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-amadeus-blue"
+                style={{
+                  width: `${t.media !== null ? ((t.media - 1) / 3) * 100 : 0}%`,
+                }}
+              />
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Pedidos de contato/ajuda */}

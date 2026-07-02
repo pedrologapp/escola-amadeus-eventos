@@ -58,6 +58,12 @@ export interface Professor {
   subtitulo: string;
   /** Critérios próprios (sobrescreve `itensProfessor` da def). */
   itens?: readonly ItemProfessor[];
+  /**
+   * Se presente, o card só aparece para estas séries/turmas
+   * (série → turmas; `[]` = todas as turmas da série).
+   * Ausente = aparece para qualquer série/turma (extras, secretaria...).
+   */
+  turmasVinculadas?: Record<string, readonly string[]>;
 }
 
 export interface PerguntaClima {
@@ -169,6 +175,20 @@ export function itensDoProfessor(
   prof: Professor,
 ): readonly ItemProfessor[] {
   return prof.itens ?? def.itensProfessor;
+}
+
+/** Pessoas avaliadas para uma série/turma (vinculados à turma + quem aparece sempre). */
+export function professoresDe(
+  def: EnqueteDef,
+  serie: string,
+  turma: string,
+): readonly Professor[] {
+  return def.professores.filter((p) => {
+    if (!p.turmasVinculadas) return true;
+    const turmas = p.turmasVinculadas[serie];
+    if (!turmas) return false;
+    return turmas.length === 0 || turmas.includes(turma);
+  });
 }
 
 // =============================================================
@@ -348,31 +368,54 @@ const ITENS_ATENDIMENTO: readonly ItemProfessor[] = [
 export const ENQUETE_PAIS: EnqueteDef = {
   slug: "clima-pais-2026",
   publico: "responsavel",
-  tituloPainel: "Pesquisa de Satisfação — Fundamental 1 (Famílias)",
+  tituloPainel: "Pesquisa de Satisfação — Famílias (Infantil e Fund. 1)",
   labelRespondente: "família",
 
-  series: ["1º ano", "2º ano", "3º ano", "4º ano", "5º ano"],
+  series: [
+    "Maternal 2",
+    "Maternal 3",
+    "Grupo 4",
+    "Grupo 5",
+    "1º ano",
+    "2º ano",
+    "3º ano",
+    "4º ano",
+    "5º ano",
+  ],
   turmas: ["A", "B"],
   turmasPorSerie: { "5º ano": ["A", "B", "C"] },
 
   tituloProfessores: "Professores e equipe",
-  // "Todos da lista": regentes + programas/extras + auxiliares + recepção.
+  // Regentes/auxiliares de turma aparecem só para a série/turma escolhida
+  // (`turmasVinculadas`); extras, auxiliares do Fund. 1 e secretaria aparecem sempre.
   professores: [
-    { id: "reg_andrea", nome: "Andrea", subtitulo: "Professora regente" },
-    { id: "reg_josesclea", nome: "Josesclea", subtitulo: "Professora regente" },
-    { id: "reg_suziane", nome: "Suziane", subtitulo: "Professora regente" },
-    { id: "reg_isabelle", nome: "Isabelle", subtitulo: "Professora regente" },
-    { id: "reg_cassia", nome: "Cássia", subtitulo: "Professora regente" },
-    { id: "reg_alexsandra", nome: "Alexsandra", subtitulo: "Professora regente" },
+    // --- Educação Infantil: regente + auxiliar por turma ---
+    { id: "reg_luana", nome: "Luana", subtitulo: "Professora regente · Maternal 2", turmasVinculadas: { "Maternal 2": [] } },
+    { id: "aux_iasmin", nome: "Iasmin", subtitulo: "Auxiliar de sala · Maternal 2", itens: ITENS_AUXILIAR, turmasVinculadas: { "Maternal 2": [] } },
+    { id: "reg_andreia", nome: "Andreia Leite", subtitulo: "Professora regente · Maternal 3", turmasVinculadas: { "Maternal 3": [] } },
+    { id: "aux_thayna", nome: "Thayná", subtitulo: "Auxiliar de sala · Maternal 3", itens: ITENS_AUXILIAR, turmasVinculadas: { "Maternal 3": [] } },
+    { id: "reg_jaqueline", nome: "Jaqueline", subtitulo: "Professora regente · Grupo 4", turmasVinculadas: { "Grupo 4": [] } },
+    { id: "aux_fabiola", nome: "Fabíola", subtitulo: "Auxiliar de sala · Grupo 4", itens: ITENS_AUXILIAR, turmasVinculadas: { "Grupo 4": [] } },
+    { id: "reg_auriente", nome: "Auriente", subtitulo: "Professora regente · Grupo 5", turmasVinculadas: { "Grupo 5": [] } },
+    { id: "aux_juliana", nome: "Juliana", subtitulo: "Auxiliar de sala · Grupo 5", itens: ITENS_AUXILIAR, turmasVinculadas: { "Grupo 5": [] } },
+    // --- Fundamental 1: regente por série (5º ano difere por turma) ---
+    { id: "reg_andrea", nome: "Andrea", subtitulo: "Professora regente · 1º ano", turmasVinculadas: { "1º ano": [] } },
+    { id: "reg_josesclea", nome: "Josesclea", subtitulo: "Professora regente · 2º ano", turmasVinculadas: { "2º ano": [] } },
+    { id: "reg_suziane", nome: "Suziane", subtitulo: "Professora regente · 3º ano", turmasVinculadas: { "3º ano": [] } },
+    { id: "reg_isabelle", nome: "Isabelle", subtitulo: "Professora regente · 4º ano", turmasVinculadas: { "4º ano": [] } },
+    { id: "reg_cassia", nome: "Cássia", subtitulo: "Professora regente · 5º ano A e B", turmasVinculadas: { "5º ano": ["A", "B"] } },
+    { id: "reg_alexsandra", nome: "Alexsandra", subtitulo: "Professora regente · 5º ano C", turmasVinculadas: { "5º ano": ["C"] } },
+    // --- Programas e extras (todas as séries) ---
     { id: "zwinglia", nome: "Zwinglia", subtitulo: "Ed. Financeira" },
     { id: "helder", nome: "Helder", subtitulo: "Bilíngue" },
-    { id: "thalita", nome: "Thalita", subtitulo: "Bilíngue" },
+    { id: "thalita", nome: "Thalyta", subtitulo: "Bilíngue" },
     { id: "thaise", nome: "Thaíse", subtitulo: "Inglês" },
     { id: "jany", nome: "Jany", subtitulo: "Educação Física" },
-    { id: "roberto", nome: "Roberto", subtitulo: "Artes" },
+    { id: "roberto", nome: "José Roberto", subtitulo: "Artes" },
     { id: "jonathan", nome: "Jonathan", subtitulo: "Robótica" },
     { id: "ailton", nome: "Ailton", subtitulo: "Coreografia" },
-    { id: "polyana", nome: "Polyana", subtitulo: "Psicóloga" },
+    { id: "polyana", nome: "Polyana", subtitulo: "Socioemocional / Psicóloga" },
+    // --- Auxiliares e atendimento (todas as séries) ---
     { id: "aux_vanessa", nome: "Vanessa", subtitulo: "Auxiliar de sala", itens: ITENS_AUXILIAR },
     { id: "aux_clara", nome: "Clara", subtitulo: "Auxiliar de sala", itens: ITENS_AUXILIAR },
     { id: "aux_delys", nome: "Delys", subtitulo: "Auxiliar de sala", itens: ITENS_AUXILIAR },
@@ -399,22 +442,72 @@ export const ENQUETE_PAIS: EnqueteDef = {
   professoresObrigatorio: false, // avalie só quem você acompanha
   perguntaDificuldade: null,
 
+  // Cada seção = um tema do ranking (e uma etapa do formulário).
   secoes: [
     {
       id: "filho",
       titulo: "Meu filho na escola",
       perguntas: [
-        { id: "seguro", texto: "Meu filho(a) se sente seguro(a) e bem cuidado(a) na escola." },
         { id: "gosta", texto: "Meu filho(a) gosta de ir para a escola." },
         { id: "acolhido", texto: "A escola acolhe bem meu filho(a) e a nossa família." },
       ],
     },
     {
-      id: "estrutura",
-      titulo: "Estrutura e ambiente",
+      id: "seguranca",
+      titulo: "Segurança",
+      perguntas: [
+        { id: "seguro", texto: "Meu filho(a) se sente seguro(a) e bem cuidado(a) na escola." },
+        { id: "entrada_saida", texto: "A entrada e a saída dos alunos são organizadas e seguras." },
+      ],
+    },
+    {
+      id: "recepcao",
+      titulo: "Recepção",
+      perguntas: [
+        { id: "recepcao_atend", texto: "A recepção/secretaria atende as famílias com cordialidade e agilidade." },
+      ],
+    },
+    {
+      id: "limpeza",
+      titulo: "Limpeza",
       perguntas: [
         { id: "limpeza", texto: "As salas, o pátio e os banheiros estão limpos e bem cuidados." },
-        { id: "atendimento", texto: "O atendimento da secretaria, portaria e coordenação é eficiente e cordial." },
+      ],
+    },
+    {
+      id: "coordenacao",
+      titulo: "Coordenação",
+      perguntas: [
+        { id: "coord_acomp", texto: "A coordenação acompanha bem os alunos e está disponível quando a família precisa." },
+      ],
+    },
+    {
+      id: "direcao",
+      titulo: "Direção",
+      perguntas: [
+        { id: "direcao_conf", texto: "A direção é presente e transmite confiança na condução da escola." },
+      ],
+    },
+    {
+      id: "eventos_familiares",
+      titulo: "Eventos Familiares",
+      perguntas: [
+        { id: "ev_fam", texto: "Os eventos que envolvem as famílias (festas, datas comemorativas, apresentações) são bem organizados e acolhedores." },
+      ],
+    },
+    {
+      id: "eventos_pedagogicos",
+      titulo: "Eventos Pedagógicos",
+      perguntas: [
+        { id: "ev_ped", texto: "Os eventos pedagógicos (feiras, projetos, culminâncias) contribuem para o aprendizado do meu filho(a)." },
+      ],
+    },
+    {
+      id: "comunicacao",
+      titulo: "Comunicação da escola",
+      perguntas: [
+        { id: "comunic_clareza", texto: "A escola (direção, coordenação e secretaria) comunica avisos e informações com clareza e no tempo certo." },
+        { id: "comunic_retorno", texto: "Quando preciso falar com a escola, consigo atendimento e retorno com facilidade." },
       ],
     },
     {
@@ -448,7 +541,7 @@ export const ENQUETE_PAIS: EnqueteDef = {
 
   introTexto:
     "Esta pesquisa é anônima e leva poucos minutos. Sua opinião sincera nos ajuda a oferecer o melhor para o seu filho(a). 💙",
-  labelSerie: "Ano do seu filho(a)",
+  labelSerie: "Série / ano do seu filho(a)",
   labelTurma: "Turma",
 
   ajuda: {
@@ -469,10 +562,17 @@ export const ENQUETE_PAIS: EnqueteDef = {
     "Muito obrigado por compartilhar a sua opinião. Cada resposta ajuda a deixar o Centro Educacional Amadeus ainda melhor para o seu filho(a). 💙",
 
   passos: [
-    { id: "voce", emoji: "👋", titulo: "Vamos começar!", frase: "Primeiro, conte de qual ano é o seu filho(a)." },
+    { id: "voce", emoji: "👋", titulo: "Vamos começar!", frase: "Primeiro, conte de qual turma é o seu filho(a)." },
     { id: "professores", emoji: "📚", titulo: "Professores e equipe", frase: "Avalie quem você acompanha. Pode pular quem não conhece. 💬" },
     { id: "filho", emoji: "💙", titulo: "Meu filho na escola", frase: "Sobre o bem-estar e o acolhimento." },
-    { id: "estrutura", emoji: "🏫", titulo: "Estrutura e ambiente", frase: "Limpeza, organização e atendimento." },
+    { id: "seguranca", emoji: "🛡️", titulo: "Segurança", frase: "Sobre o cuidado e a segurança na escola." },
+    { id: "recepcao", emoji: "💁", titulo: "Recepção", frase: "Sobre o atendimento na chegada e na secretaria." },
+    { id: "limpeza", emoji: "🧼", titulo: "Limpeza", frase: "Sobre a limpeza e o cuidado com os espaços." },
+    { id: "coordenacao", emoji: "🧭", titulo: "Coordenação", frase: "Sobre o acompanhamento pedagógico." },
+    { id: "direcao", emoji: "🏫", titulo: "Direção", frase: "Sobre a condução da escola." },
+    { id: "eventos_familiares", emoji: "🎉", titulo: "Eventos Familiares", frase: "Festas, datas comemorativas e apresentações." },
+    { id: "eventos_pedagogicos", emoji: "🎓", titulo: "Eventos Pedagógicos", frase: "Feiras, projetos e culminâncias." },
+    { id: "comunicacao", emoji: "📣", titulo: "Comunicação da escola", frase: "Avisos, informações e retorno pra família." },
     { id: "cantina", emoji: "🍎", titulo: "Cantina e alimentação", frase: "Sobre a alimentação na escola." },
     { id: "fechar", emoji: "⭐", titulo: "Satisfação geral", frase: "Quase lá!" },
     { id: "ajuda", emoji: "🤝", titulo: "Pra terminar", frase: "Se quiser, deixe um recado." },

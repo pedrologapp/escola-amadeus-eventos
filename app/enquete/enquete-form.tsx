@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   ESCALA,
   itensDoProfessor,
+  professoresDe,
   turmasDe,
   type EnqueteDef,
   type ValorEscala,
@@ -68,6 +69,13 @@ export function EnqueteForm({
   const [ajudaContato, setAjudaContato] = useState("");
 
   const turmasDisponiveis = turmasDe(def, serie);
+
+  // Cards de professor visíveis para a turma escolhida (regente da turma +
+  // extras que aparecem sempre). Antes da escolha, mostra todos.
+  const professoresVisiveis = useMemo(
+    () => (serie && turma ? professoresDe(def, serie, turma) : def.professores),
+    [def, serie, turma],
+  );
 
   useEffect(() => {
     const agora = Date.now();
@@ -123,7 +131,7 @@ export function EnqueteForm({
     if (id === "professores") {
       if (!def.professoresObrigatorio) return 0;
       let f = 0;
-      for (const d of def.professores) {
+      for (const d of professoresVisiveis) {
         for (const it of itensDoProfessor(def, d)) {
           if (!disc[d.id]?.[it.id]) f++;
         }
@@ -167,13 +175,20 @@ export function EnqueteForm({
     const duracaoSeg = inicioRef.current
       ? Math.round((Date.now() - inicioRef.current) / 1000)
       : 0;
+    // Se o pai voltou e trocou a turma, descarta avaliações de quem não
+    // aparece mais (ex.: regente da turma antiga).
+    const idsVisiveis = new Set(professoresVisiveis.map((p) => p.id));
+    const discEnvio = Object.fromEntries(
+      Object.entries(disc).filter(([id]) => idsVisiveis.has(id)),
+    );
+    const dificuldadeEnvio = dificuldade.filter((id) => idsVisiveis.has(id));
     startTransition(async () => {
       const r = await enviarEnquete({
         slug: def.slug,
         serie,
         turma,
-        disc,
-        dificuldade,
+        disc: discEnvio,
+        dificuldade: dificuldadeEnvio,
         clima,
         comentarios,
         abertas,
@@ -303,7 +318,7 @@ export function EnqueteForm({
                 pular quem não faz parte do dia a dia do seu filho(a). 🙂
               </div>
             )}
-            {def.professores.map((d) => (
+            {professoresVisiveis.map((d) => (
               <Card key={d.id}>
                 <CardContent className="space-y-4 pt-5">
                   <div>
@@ -332,7 +347,7 @@ export function EnqueteForm({
                     </span>
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {def.professores.map((d) => {
+                    {professoresVisiveis.map((d) => {
                       const on = dificuldade.includes(d.id);
                       return (
                         <button
