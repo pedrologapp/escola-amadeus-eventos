@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Heart, MessageSquare, QrCode } from "lucide-react";
+import { Download, Heart, MessageSquare, Printer, QrCode } from "lucide-react";
 import {
   comentariosDe,
   ESCALA,
@@ -9,6 +9,7 @@ import {
   itensDoProfessor,
   NAO_SEI,
   scoreDe,
+  todasClima,
   type EnqueteDef,
   type PerguntaClima,
   type ValorEscala,
@@ -86,6 +87,11 @@ function etiqueta(serie: string | null, turma: string | null) {
   return `${serie ?? "Série ?"}${turma ? ` · Turma ${turma}` : ""}`;
 }
 
+/** Escapa um valor para célula de CSV (separador ";", Excel pt-BR). */
+function celulaCsv(v: unknown): string {
+  return `"${(v ?? "").toString().replace(/"/g, '""')}"`;
+}
+
 export function EnqueteDashboard({
   def,
   respostas,
@@ -140,6 +146,76 @@ export function EnqueteDashboard({
     });
 
   const pedidosAjuda = respostas.filter((r) => r.respostas?.ajuda?.quer);
+
+  // Exporta as respostas em análise (respeita os filtros) como planilha CSV.
+  function baixarCsv() {
+    const rotulo: Record<string, string> = { [NAO_SEI]: "Não sei avaliar" };
+    for (const e of ESCALA) rotulo[e.valor] = e.label;
+    const rot = (v?: string) => (v ? (rotulo[v] ?? v) : "");
+
+    const perguntas = todasClima(def);
+    const cabecalho = [
+      "Data/hora",
+      "Série",
+      "Turma",
+      ...(def.perguntasPerfil ?? []).map((p) => p.label),
+      ...perguntas.map((p) => p.texto),
+      ...def.professores.flatMap((d) =>
+        itensDoProfessor(def, d).map(
+          (it) => `${d.nome} (${d.subtitulo}) — ${it.tituloPainel}`,
+        ),
+      ),
+      ...(def.perguntaDificuldade ? [def.perguntaDificuldade] : []),
+      ...comentarios.map((c) => `Comentário — ${c.titulo}`),
+      ...def.abertas.map((a) => a.texto),
+      "Pediu contato",
+      "Contato",
+      "Status",
+      "IP",
+    ];
+    const linhas = lista.map((r) => [
+      formatDateTimeBrt(r.created_at),
+      r.serie ?? "",
+      r.turma ?? "",
+      ...(def.perguntasPerfil ?? []).map(
+        (p) => r.respostas?.perfil?.[p.id] ?? "",
+      ),
+      ...perguntas.map((p) => rot(r.respostas?.clima?.[p.id])),
+      ...def.professores.flatMap((d) =>
+        itensDoProfessor(def, d).map((it) =>
+          rot(r.respostas?.disc?.[d.id]?.[it.id]),
+        ),
+      ),
+      ...(def.perguntaDificuldade
+        ? [
+            (r.respostas?.dificuldade ?? [])
+              .map(
+                (id) => def.professores.find((d) => d.id === id)?.nome ?? id,
+              )
+              .join(", "),
+          ]
+        : []),
+      ...comentarios.map((c) => r.respostas?.comentarios?.[c.id] ?? ""),
+      ...def.abertas.map((a) => r.respostas?.abertas?.[a.id] ?? ""),
+      r.respostas?.ajuda?.quer ? "Sim" : "Não",
+      r.respostas?.ajuda?.contato ?? "",
+      r.meta?.suspeito ? "duvidosa" : "ok",
+      r.meta?.ip ?? "",
+    ]);
+    // BOM faz o Excel abrir o arquivo como UTF-8 (acentos corretos).
+    const csv =
+      "﻿" +
+      [cabecalho, ...linhas]
+        .map((l) => l.map(celulaCsv).join(";"))
+        .join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `relatorio-${def.slug}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   // Ranking por tema: "Professores" (agregado dos cards) + uma linha por seção.
   // "Não sei avaliar" fica fora da média; temas com poucos pontos não exibem média.
@@ -201,8 +277,8 @@ export function EnqueteDashboard({
         <ShareCard shareUrl={shareUrl} />
       </div>
 
-      {/* Filtros */}
-      <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-white p-3 shadow-sm">
+      {/* Filtros e exportação */}
+      <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-white p-3 shadow-sm print:hidden">
         <select
           value={filtroSerie}
           onChange={(e) => setFiltroSerie(e.target.value)}
@@ -224,6 +300,22 @@ export function EnqueteDashboard({
           />
           Ocultar respostas duvidosas
         </label>
+        <button
+          type="button"
+          onClick={baixarCsv}
+          className="flex items-center gap-1.5 rounded-xl border border-amadeus-blue/30 bg-amadeus-blue-50 px-3 py-2 text-sm font-semibold text-amadeus-blue transition-colors hover:bg-amadeus-blue/10"
+        >
+          <Download className="size-4" />
+          Baixar CSV
+        </button>
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="flex items-center gap-1.5 rounded-xl border border-border bg-white px-3 py-2 text-sm font-semibold transition-colors hover:bg-muted/50"
+        >
+          <Printer className="size-4" />
+          Imprimir / PDF
+        </button>
         <span className="ml-auto text-sm font-semibold text-muted-foreground">
           Analisando {lista.length} resposta{lista.length === 1 ? "" : "s"}
         </span>
@@ -514,7 +606,8 @@ export function EnqueteDashboard({
         })}
       </div>
 
-      {/* Respostas individuais (com IP) */}
+      {/* Respostas individuais (com IP) — fora da impressão (dado sensível) */}
+      <div className="print:hidden">
       <SectionHeader>🌐 Respostas individuais (IP)</SectionHeader>
       <details className="mb-10 rounded-2xl border border-border bg-white p-4 shadow-sm">
         <summary className="cursor-pointer text-sm font-semibold text-amadeus-blue">
@@ -561,6 +654,7 @@ export function EnqueteDashboard({
           casa/rede). Use só como referência.
         </p>
       </details>
+      </div>
     </div>
   );
 }
@@ -658,7 +752,7 @@ function ShareCard({ shareUrl }: { shareUrl: string }) {
     shareUrl,
   )}`;
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-border bg-white p-3 shadow-sm">
+    <div className="flex items-center gap-3 rounded-2xl border border-border bg-white p-3 shadow-sm print:hidden">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={qr}
