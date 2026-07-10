@@ -63,6 +63,9 @@ export function CobrancaForm() {
   const [selecionado, setSelecionado] = useState<Aluno | null>(null);
   const [buscando, setBuscando] = useState(false);
   const [showDrop, setShowDrop] = useState(false);
+  // Aluno que não está na base: nome digitado à mão
+  const [semCadastro, setSemCadastro] = useState(false);
+  const [alunoManual, setAlunoManual] = useState("");
 
   // Cobrança
   const [descricao, setDescricao] = useState("");
@@ -127,8 +130,9 @@ export function CobrancaForm() {
     return { total: valor, parcela: valor / parcelas, recebe: valor - taxas };
   }, [valor, metodo, parcelas, repassarJuros]);
 
+  const alunoOk = semCadastro ? alunoManual.trim().length >= 2 : !!selecionado;
   const valido =
-    !!selecionado &&
+    alunoOk &&
     descricao.trim().length >= 3 &&
     valor >= 1 &&
     nome.trim().length >= 2 &&
@@ -136,11 +140,12 @@ export function CobrancaForm() {
     telefone.length >= 8;
 
   function submit() {
-    if (!valido || !selecionado) return;
+    if (!valido) return;
     setErro(null);
     startTransition(async () => {
       const result = await criarCobrancaAvulsa({
-        aluno_id: selecionado.id,
+        aluno_id: semCadastro ? null : (selecionado?.id ?? null),
+        aluno_nome: semCadastro ? alunoManual.trim() : undefined,
         descricao: descricao.trim(),
         valor,
         metodo_cobranca: metodo,
@@ -221,6 +226,22 @@ export function CobrancaForm() {
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {semCadastro ? (
+            <div className="space-y-1.5">
+              <Label htmlFor="aluno-manual">Nome do aluno *</Label>
+              <Input
+                id="aluno-manual"
+                value={alunoManual}
+                onChange={(e) => setAlunoManual(e.target.value)}
+                placeholder="Digite o nome completo do aluno"
+                autoComplete="off"
+              />
+              <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                Cobrança sem vínculo com a base de alunos — o nome vai como
+                digitado na fatura e na listagem.
+              </p>
+            </div>
+          ) : (
           <div className="relative">
             <Label htmlFor="busca">Nome do aluno *</Label>
             <Input
@@ -260,7 +281,8 @@ export function CobrancaForm() {
               </div>
             )}
           </div>
-          {selecionado && (
+          )}
+          {!semCadastro && selecionado && (
             <div className="mt-3 flex items-center justify-between rounded-2xl border border-green-300 bg-green-50 px-4 py-3">
               <div className="flex items-center gap-3">
                 <CheckCircle className="size-5 text-green-700" />
@@ -286,6 +308,20 @@ export function CobrancaForm() {
               </Button>
             </div>
           )}
+          <button
+            type="button"
+            onClick={() => {
+              setSemCadastro(!semCadastro);
+              setSelecionado(null);
+              setBusca("");
+              setAlunoManual("");
+            }}
+            className="mt-3 text-sm font-semibold text-amadeus-blue underline underline-offset-2 hover:opacity-80"
+          >
+            {semCadastro
+              ? "← Voltar a buscar aluno cadastrado"
+              : "O aluno não está na lista? Cobrar sem cadastro"}
+          </button>
         </CardContent>
       </Card>
 

@@ -7,17 +7,23 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { calcularTotal } from "@/lib/pricing";
 import { validarCPF, telefoneValido } from "@/lib/validators";
 
-const cobrancaSchema = z.object({
-  aluno_id: z.string().uuid(),
-  descricao: z.string().min(3, "Descreva o que está sendo cobrado."),
-  valor: z.number().min(1, "Valor mínimo de R$ 1,00."),
-  metodo_cobranca: z.enum(["aberto", "pix", "cartao"]),
-  parcelas: z.number().int().min(1).max(12),
-  repassar_juros: z.boolean(),
-  responsavel_nome: z.string().min(2, "Nome muito curto"),
-  cpf: z.string().refine((v) => validarCPF(v), "CPF inválido"),
-  telefone: z.string().refine((v) => telefoneValido(v), "Telefone inválido"),
-});
+const cobrancaSchema = z
+  .object({
+    // Sem aluno cadastrado: aluno_id null + aluno_nome digitado à mão.
+    aluno_id: z.string().uuid().nullable(),
+    aluno_nome: z.string().trim().optional(),
+    descricao: z.string().min(3, "Descreva o que está sendo cobrado."),
+    valor: z.number().min(1, "Valor mínimo de R$ 1,00."),
+    metodo_cobranca: z.enum(["aberto", "pix", "cartao"]),
+    parcelas: z.number().int().min(1).max(12),
+    repassar_juros: z.boolean(),
+    responsavel_nome: z.string().min(2, "Nome muito curto"),
+    cpf: z.string().refine((v) => validarCPF(v), "CPF inválido"),
+    telefone: z.string().refine((v) => telefoneValido(v), "Telefone inválido"),
+  })
+  .refine((d) => d.aluno_id || (d.aluno_nome && d.aluno_nome.length >= 2), {
+    message: "Escolha um aluno da lista ou digite o nome dele.",
+  });
 
 export type CobrancaAvulsaState =
   | { ok: true; cobrancaId: string; paymentUrl: string }
@@ -46,15 +52,20 @@ export async function criarCobrancaAvulsa(
 
   const admin = createAdminClient();
 
-  const { data: aluno } = await admin
-    .from("alunos")
-    .select("nome_completo, serie, turma")
-    .eq("id", d.aluno_id)
-    .maybeSingle();
-
-  if (!aluno) {
-    return { ok: false, error: "Aluno não encontrado." };
+  let aluno: { nome_completo: string; serie: string; turma: string } | null =
+    null;
+  if (d.aluno_id) {
+    const { data } = await admin
+      .from("alunos")
+      .select("nome_completo, serie, turma")
+      .eq("id", d.aluno_id)
+      .maybeSingle();
+    if (!data) {
+      return { ok: false, error: "Aluno não encontrado." };
+    }
+    aluno = data;
   }
+  const alunoNome = aluno?.nome_completo ?? d.aluno_nome?.trim() ?? "";
 
   // Total calculado NO SERVIDOR (ignora o que o cliente exibiu):
   // cartão com repasse = base + taxas (mesma regra dos eventos);
@@ -71,6 +82,7 @@ export async function criarCobrancaAvulsa(
     .from("cobrancas_avulsas")
     .insert({
       aluno_id: d.aluno_id,
+      aluno_nome: d.aluno_id ? null : alunoNome,
       descricao: d.descricao.trim(),
       valor: d.valor,
       metodo_cobranca: d.metodo_cobranca,
@@ -135,10 +147,10 @@ export async function criarCobrancaAvulsa(
               ? "credit"
               : "undefined",
         installments: parcelas,
-        // Aluno
-        studentName: aluno.nome_completo,
-        studentGrade: aluno.serie,
-        studentClass: aluno.turma,
+        // Aluno (sem cadastro: nome digitado à mão, série/turma vazias)
+        studentName: alunoNome,
+        studentGrade: aluno?.serie ?? "",
+        studentClass: aluno?.turma ?? "",
         // Responsável
         parentName: d.responsavel_nome.trim(),
         cpf: d.cpf,

@@ -18,7 +18,7 @@ export default async function CobrancasPage() {
   const { data: cobrancas, error } = await supabase
     .from("cobrancas_avulsas")
     .select(
-      "id, descricao, valor, valor_total, metodo_cobranca, parcelas, repassar_juros, responsavel_nome, telefone, status_pagamento, payment_url, created_at, link_enviado_em, link_erro, confirmacao_enviada_em, confirmacao_erro, alunos(nome_completo, serie, turma)",
+      "id, descricao, valor, valor_total, metodo_cobranca, parcelas, repassar_juros, responsavel_nome, telefone, status_pagamento, payment_url, created_at, link_enviado_em, link_erro, confirmacao_enviada_em, confirmacao_erro, aluno_nome, alunos(nome_completo, serie, turma)",
     )
     .order("created_at", { ascending: false })
     .limit(200);
@@ -57,6 +57,7 @@ export default async function CobrancasPage() {
     confirmacao_enviada_em: c.confirmacao_enviada_em ?? null,
     confirmacao_erro: c.confirmacao_erro ?? null,
     aluno: (c.alunos as unknown as CobrancaRow["aluno"]) ?? null,
+    aluno_nome: c.aluno_nome ?? null,
   }));
 
   const totalPago = lista

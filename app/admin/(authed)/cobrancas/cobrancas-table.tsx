@@ -30,6 +30,8 @@ export interface CobrancaRow {
   confirmacao_enviada_em: string | null;
   confirmacao_erro: string | null;
   aluno: { nome_completo: string; serie: string; turma: string } | null;
+  /** Nome digitado à mão quando o aluno não está cadastrado. */
+  aluno_nome: string | null;
 }
 
 const statusBadge: Record<InscricaoStatus, { label: string; className: string }> =
@@ -217,6 +219,13 @@ export function CobrancasTable({ cobrancas }: { cobrancas: CobrancaRow[] }) {
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {c.aluno.serie} · Turma {c.aluno.turma}
+                        </div>
+                      </>
+                    ) : c.aluno_nome ? (
+                      <>
+                        <div className="font-semibold">{c.aluno_nome}</div>
+                        <div className="text-xs text-muted-foreground">
+                          sem cadastro
                         </div>
                       </>
                     ) : (
