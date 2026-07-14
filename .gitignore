@@ -47,3 +47,4 @@ next-env.d.ts
 
 # commit message scratch
 .commit-msg.tmp
+supabase/.temp/

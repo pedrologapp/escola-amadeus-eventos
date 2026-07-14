@@ -1,0 +1,3016 @@
+{
+  "name": "Escola Amadeus - Sistema",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://eventos.escolaamadeus.com/api/inscricoes/log",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Webhook-Secret",
+              "value": "1d3321952567de9e6c58e7fdbd6f23c01f7757495c19bc527fa21905a35fff95"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "=  {\n    \"inscricaoId\": \"{{ $('Inscr: Sanitizar').first().json.inscricaoId }}\",\n    \"etapa\": \"cliente_asaas_criado\",\n    \"mensagem\": \"Cliente criado/encontrado no Asaas\",\n    \"detalhe\": { \"asaasCustomerId\": \"{{ $json.id }}\" }\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1376,
+        1584
+      ],
+      "id": "5e8f219d-2804-4b59-bd22-f026da810c76",
+      "name": "Log: Cliente Asaas"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://eventos.escolaamadeus.com/api/inscricoes/log",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Webhook-Secret",
+              "value": "1d3321952567de9e6c58e7fdbd6f23c01f7757495c19bc527fa21905a35fff95"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "= {\n    \"inscricaoId\": \"{{ $('Inscr: Sanitizar').first().json.inscricaoId }}\",\n    \"etapa\": \"cobranca_criada\",\n    \"mensagem\": \"Cobrança criada no Asaas\",\n    \"detalhe\": { \"asaasPaymentId\": \"{{ $json.id }}\", \"billingType\": \"{{ $json.billingType }}\" }\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -768,
+        1584
+      ],
+      "id": "519831ba-081a-4b88-b54f-164e8252a3a1",
+      "name": "Log: Cobranca Criada"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.asaas.com/api/v3/customers",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "access_token",
+              "value": "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmE3ZTY4OWQ0LTU0MmUtNDQwOS1hZjQ2LTljMmNlYmFhZjI0NTo6JGFhY2hfNGI1MDAzZjQtOWU2Ni00NTY5LThmYjEtZWU5ZmU4ZWRhN2E3"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"{{ $('Inscr: Sanitizar').item.json.parentName }}\",\n  \"email\": \"{{ $json.email }}\",\n  \"phone\": \"{{ $json.phone }}\",\n  \"cpfCnpj\": \"{{ $json.cpf }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1376,
+        1392
+      ],
+      "id": "f56f74b4-1f67-4d94-9aa6-f76d4785ac33",
+      "name": "Inscr: Asaas Customer"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Sanitiza telefone pro formato WAHA: 55DDDNNNNNNNN@c.us (sem 9 extra)\nconst data = $input.first().json.body;\n\nconst formatPhone = (raw) => {\n  let d = (raw || '').toString().replace(/\\D/g, '');\n  if (d.startsWith('55') && d.length > 11) d = d.substring(2);\n  let ddd, num;\n  if (d.length <= 9) { ddd = '84'; num = d; }\n  else { ddd = d.substring(0, 2); num = d.substring(2); }\n  if (num.length === 9 && num.startsWith('9')) num = num.substring(1);\n  return { tel: `55${ddd}${num}`, chatId: `55${ddd}${num}@c.us` };\n};\n\nconst { tel, chatId } = formatPhone(data.phone);\n\nreturn [{ json: {\n  ...data,\n  phone_clean: tel,\n  phone_waha: chatId,\n  cpf_clean: (data.cpf || '').replace(/\\D/g, ''),\n  due_date: new Date(Date.now() + 86400000).toISOString().slice(0, 10),\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1568,
+        1392
+      ],
+      "id": "f681d89f-72fc-486e-8968-61eace657983",
+      "name": "Inscr: Sanitizar"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "eventosamadeus",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1776,
+        1392
+      ],
+      "id": "a8024365-66f9-45e8-9431-28883d2c3e39",
+      "name": "Inscr: Webhook",
+      "webhookId": "amadeus-eventosamadeus"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.asaas.com/api/v3/payments",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "access_token",
+              "value": "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmE3ZTY4OWQ0LTU0MmUtNDQwOS1hZjQ2LTljMmNlYmFhZjI0NTo6JGFhY2hfNGI1MDAzZjQtOWU2Ni00NTY5LThmYjEtZWU5ZmU4ZWRhN2E3"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "=  {\n    \"customer\": \"{{ $('Inscr: Asaas Customer').first().json.id }}\",\n    \"billingType\": \"CREDIT_CARD\",\n    \"value\": {{ $('Inscr: Sanitizar').first().json.amount }},\n    \"dueDate\": \"{{ $('Inscr: Sanitizar').first().json.due_date }}\",\n    \"installmentCount\": {{ $('Inscr: Sanitizar').first().json.installments }},\n    \"installmentValue\": {{ ($('Inscr: Sanitizar').first().json.amount / $('Inscr: Sanitizar').first().json.installments).toFixed(2) }},\n    \"externalReference\": \"{{ $('Inscr: Sanitizar').first().json.inscricaoId }}\",\n    \"description\": \"{{ $('Inscr: Sanitizar').first().json.event }} - {{ $('Inscr: Sanitizar').first().json.studentName }}\"\n  }\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -976,
+        1488
+      ],
+      "id": "e787ffa2-6232-45c4-acfc-924a66325cff",
+      "name": "Inscr: Asaas Cartao"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.asaas.com/api/v3/payments",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "access_token",
+              "value": "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmE3ZTY4OWQ0LTU0MmUtNDQwOS1hZjQ2LTljMmNlYmFhZjI0NTo6JGFhY2hfNGI1MDAzZjQtOWU2Ni00NTY5LThmYjEtZWU5ZmU4ZWRhN2E3"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "= {\n    \"customer\": \"{{ $('Inscr: Asaas Customer').first().json.id }}\",\n    \"billingType\": \"PIX\",\n    \"value\": {{ $('Inscr: Sanitizar').first().json.amount }},\n    \"dueDate\": \"{{ $('Inscr: Sanitizar').first().json.due_date }}\",\n    \"externalReference\": \"{{ $('Inscr: Sanitizar').first().json.inscricaoId }}\",\n    \"description\": \"{{ $('Inscr: Sanitizar').first().json.event }} - {{ $('Inscr: Sanitizar').first().json.studentName }}\"\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -976,
+        1312
+      ],
+      "id": "db11641d-1220-4b71-a287-831211574260",
+      "name": "Inscr: Asaas PIX"
+    },
+    {
+      "parameters": {
+        "content": "## PROCESSA PAGAMENTO\n",
+        "height": 672,
+        "width": 1792
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1904,
+        1232
+      ],
+      "typeVersion": 1,
+      "id": "64eb4dd2-9327-46fa-bc96-b1c6a88027ba",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Image",
+        "session": "=amadeus",
+        "chatId": "={{ $json.phone_waha }}",
+        "file": "= {\n    \"mimetype\": \"image/png\",\n    \"filename\": \"qrcode.png\",\n    \"url\": \"{{ $json.qr_url }}\"\n  }",
+        "caption": "=💙 {{ $('Notif: Buscar Evento').first().json.nome }}\n\n  🎟️  Senha: *{{ $json.senha_label }}*\n  👤 Aluno: 👤 Aluno: *{{ $json.aluno_nome }}*{{ $json.aluno_serie ? ' (' + $json.aluno_serie + ')' : '' }}\n  📅 Data: *{{ ($('Notif: Buscar Evento').first().json.data_evento || '').split('-').reverse().join('/') }}*\n  📍 Local: *{{ $('Notif: Buscar Evento').first().json.local }}*\n\n  Apresente este QR Code na entrada do evento. ✨",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        2080,
+        2576
+      ],
+      "id": "df2cb716-0da0-4961-a985-686ba0f1dd20",
+      "name": "Enviar_QRCode",
+      "credentials": {
+        "wahaApi": {
+          "id": "Wa5n1cK3Gl4WH4bW",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Text",
+        "session": "=amadeus",
+        "chatId": "={{ $json.phone_waha }}",
+        "text": "={{ $json.texto }}",
+        "linkPreview": "=",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        1248,
+        2576
+      ],
+      "id": "49092094-9567-4d88-a944-db9600d022f9",
+      "name": "Enviar_Confirmacao",
+      "credentials": {
+        "wahaApi": {
+          "id": "Wa5n1cK3Gl4WH4bW",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Contacts",
+        "operation": "Check Exists",
+        "session": "=amadeus",
+        "phone": "={{ $('Notif: Formatar Telefone').item.json.phoneComNove }}",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        -176,
+        2784
+      ],
+      "id": "b0caf600-bb34-4629-9bec-5ad5129c5e6d",
+      "name": "Notif: Check Com 9",
+      "credentials": {
+        "wahaApi": {
+          "id": "Wa5n1cK3Gl4WH4bW",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Contacts",
+        "operation": "Check Exists",
+        "session": "=amadeus",
+        "phone": "={{ $json.phoneSemNove }}",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        -368,
+        2576
+      ],
+      "id": "e0e7a526-2aae-4bfe-b47f-d68386c31185",
+      "name": "Notif: Check Sem 9",
+      "credentials": {
+        "wahaApi": {
+          "id": "Wa5n1cK3Gl4WH4bW",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## CONFIRMAR PAGAMENTO\n",
+        "height": 1632,
+        "width": 4512
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1904,
+        1920
+      ],
+      "typeVersion": 1,
+      "id": "701141bd-6fb7-449d-a868-a74bc6c7cd39",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "jsCode": " const semNove = $('Notif: Formatar Telefone').first().json;\n  const checkSem = $('Notif: Check Sem 9').first().json;\n\n  let checkCom = null;\n  try {\n    checkCom = $('Notif: Check Com 9').first().json;\n  } catch {\n    // Não executou (sem 9 deu true) — esperado.\n  }\n\n  let chatId = null;\n  let formato = null;\n\n  if (checkSem?.numberExists) {\n    chatId = checkSem.chatId || semNove.chatIdSemNove;\n    formato = 'sem9';\n  } else if (checkCom?.numberExists) {\n    chatId = checkCom.chatId || semNove.chatIdComNove;\n  } else if (checkCom?.numberExists) {\n    chatId = checkCom.chatId || semNove.chatIdComNove;\n    formato = 'com9';\n  } else {\n    // O check do WAHA retorna false intermitente sob carga.\n    // Em vez de travar o fluxo, usa o formato sem 9 (padrão BR) e segue.\n    chatId = semNove.chatIdSemNove;\n    formato = 'fallback-sem9';\n  }\n\n  return [{ json: { chatId, formato, phoneRaw: semNove.raw } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        2576
+      ],
+      "id": "343230c9-7ba7-4507-8847-179b719f8b49",
+      "name": "Notif: Resolver chatId"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        64,
+        2576
+      ],
+      "id": "27dce4ae-5f2e-413e-80ab-9e36263bdac4",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inscricao = $('Notif: Buscar Inscricao').first().json;\n\n  let d = (inscricao.telefone || '').toString().replace(/\\D/g, '');\n  if (d.startsWith('55') && d.length > 11) d = d.substring(2);\n\n  let ddd, num;\n  if (d.length <= 9) { ddd = '84'; num = d; }\n  else { ddd = d.substring(0, 2); num = d.substring(2); }\n\n  // Garante \"num\" sem o 9 do começo (8 dígitos)\n  const numSemNove = (num.length === 9 && num.startsWith('9')) ? num.substring(1) : num;\n\n  return [{ json: {\n    raw: inscricao.telefone,\n    phoneSemNove: `55${ddd}${numSemNove}`,\n    phoneComNove: `55${ddd}9${numSemNove}`,\n    chatIdSemNove: `55${ddd}${numSemNove}@c.us`,\n    chatIdComNove: `55${ddd}9${numSemNove}@c.us`,\n  }}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -560,
+        2576
+      ],
+      "id": "7de45f84-25d8-450c-9a81-99b4b5574c5d",
+      "name": "Notif: Formatar Telefone"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f1a6017e-8c28-4237-af1d-143c71bb5103",
+              "leftValue": "={{ $json.numberExists }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -176,
+        2576
+      ],
+      "id": "5c709a17-436f-4f9d-b768-2b0cb6cb94d8",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "8b1f7f07-5425-4bf2-9f71-2214cff38a67",
+              "leftValue": "={{ $('Notif: Buscar Evento').item.json.nome }}",
+              "rightValue": "=OBMEP",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1664,
+        2576
+      ],
+      "id": "16702c08-ad17-473c-a0bd-62fb8dadb548",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://eventos.escolaamadeus.com/api/inscricoes/etapa",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Webhook-Secret",
+              "value": "1d3321952567de9e6c58e7fdbd6f23c01f7757495c19bc527fa21905a35fff95"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "= {\n    \"inscricaoId\": \"{{ $('Notif: Validar').first().json.inscricaoId }}\",\n    \"etapa\": \"confirmacao\",\n    \"sucesso\": true\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1456,
+        2576
+      ],
+      "id": "b4afa2e8-30fb-4cd4-b4b7-801e40562938",
+      "name": "Notif: Etapa Confirmacao ok"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "={{ $json.inscricaoId }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1168,
+        2576
+      ],
+      "id": "7e0307ff-7589-47c9-8e0e-5529f76a90c8",
+      "name": "Notif: Buscar Inscricao",
+      "credentials": {
+        "supabaseApi": {
+          "id": "twGMaqD94DHqfjbv",
+          "name": "SEA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "eventos",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $('Notif: Buscar Inscricao').item.json.evento_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -976,
+        2576
+      ],
+      "id": "36cf808a-ab8e-44a0-a12e-072ff623fd0e",
+      "name": "Notif: Buscar Evento",
+      "credentials": {
+        "supabaseApi": {
+          "id": "twGMaqD94DHqfjbv",
+          "name": "SEA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": " const inscricao = $('Notif: Buscar Inscricao').first().json;\n  const aluno     = $('Notif: Buscar Aluno').first().json;\n  const evento    = $('Notif: Buscar Evento').first().json;\n\n  const phoneWaha = $('Notif: Resolver chatId').first().json.chatId;\n\n  // Monta as linhas de senhas a partir dos itens da inscrição\n  const itens = inscricao.itens || [];\n  let total = 0;\n  const linhas = itens\n    .filter(it => (it.qtd || 0) > 0)\n    .map(it => {\n      const q = it.qtd || 0;\n      total += q;\n      return `• ${q > 1 ? q + 'x ' : ''}${(it.nome || 'Senha').trim()}`;\n    })\n    .join('\\n');\n\n  const nomeEvento = (evento.nome || '').trim();\n  const nomeAluno  = (aluno?.nome_completo || inscricao.responsavel_nome || '').trim();\n\n  const texto =\n  `🎉 *Pagamento confirmado!*\n\n    *${nomeEvento}*\n    Aluno(a): ${nomeAluno}\n\n    ✅ ${total} ${total === 1 ? 'senha confirmada' : 'senhas confirmadas'}\n\n\n   Qualquer dúvida, estamos à disposição! 💙\n   Escola Amadeus`;\n\n  return [{ json: { texto, phone_waha: phoneWaha } }];;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1056,
+        2576
+      ],
+      "id": "85765920-11ea-4171-be4d-44f9f2a527d5",
+      "name": "Notif: Montar Texto"
+    },
+    {
+      "parameters": {
+        "jsCode": " const inscricao = $('Notif: Buscar Inscricao').first().json;\n  const evento    = $('Notif: Buscar Evento').first().json;\n  const aluno     = $('Notif: Buscar Aluno').first().json;\n\n  const phoneWaha = $('Notif: Resolver chatId').first().json.chatId;\n\n  // Token único, com prefixo do slug do evento\n  const eventoShort = (evento.slug || 'EVT').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);\n  const gerarToken = () => {\n    const ts  = Date.now().toString(36).toUpperCase();\n    const rnd = Math.random().toString(36).substring(2, 8).toUpperCase();\n    return 'AMZ-' + eventoShort + '-' + ts + '-' + rnd;\n  };\n\n  // Loop pelos itens da inscrição (cada item = um tipo com qtd)\n  const itens = (inscricao.itens || []).filter(it => (it.qtd || 0) > 0);\n  const totalIngressos = itens.reduce((s, it) => s + (it.qtd || 0), 0);\n  if (totalIngressos < 1) {\n    throw new Error('Inscrição sem ingressos — nada pra gerar');\n  }\n\n  const tickets = [];\n  let ordem = 0;\n\n  for (const item of itens) {\n    const qtd = item.qtd || 0;\n    for (let i = 1; i <= qtd; i++) {\n      ordem++;\n      const senhaLabel = 'Senha ' + ordem + ' de ' + totalIngressos;\n      const token = gerarToken();\n      const dadosQR = ((aluno?.nome_completo || inscricao.responsavel_nome) || '') + ' | ' + item.nome + ' | ' + token;\n      const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&format=png&data=' + encodeURIComponent(dadosQR);\n      tickets.push({ json: {\n        // --- colunas da tabela tickets ---\n        inscricao_id:     inscricao.id,\n        evento_id:        inscricao.evento_id,\n        tipo_ingresso_id: item.tipo_id || null,\n        nome_tipo:        item.nome || 'Senha',\n        preco_unitario:   Number(item.preco_unitario || 0),\n        ordem,\n        token,\n        qr_url:           qrUrl,\n        status:           'ativo',\n        aluno_nome:       aluno.nome_completo || '',\n        // --- extras pra mensagem / WAHA (não vão pro banco) ---\n        phone_waha:       phoneWaha,\n        evento:           (evento.nome || '').trim(),\n        numero_senha:     ordem,\n        total_senhas:     totalIngressos,\n        senha_label:      senhaLabel,\n        descricao:        item.nome || 'Senha',\n      }});\n    }\n  }\n\n  return tickets;\n"
+      },
+      "name": "Gerar_Tokens",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1904,
+        2576
+      ],
+      "id": "7cc3318a-76ff-4371-a875-dd5dd1942b7d"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://eventos.escolaamadeus.com/api/inscricoes/etapa",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Webhook-Secret",
+              "value": "1d3321952567de9e6c58e7fdbd6f23c01f7757495c19bc527fa21905a35fff95"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "=\n  {\n    \"inscricaoId\": \"{{ $('Notif: Validar').first().json.inscricaoId }}\",\n    \"etapa\": \"qrcode\",\n    \"sucesso\": true\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2256,
+        2576
+      ],
+      "id": "30acb735-66ba-4da2-b1ac-9e029e09f9f5",
+      "name": "Notif: Etapa QR ok",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://eventos.escolaamadeus.com/api/inscricoes/confirmar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Webhook-Secret",
+              "value": "1d3321952567de9e6c58e7fdbd6f23c01f7757495c19bc527fa21905a35fff95"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "= {\n    \"inscricaoId\": \"{{ $('Notif: Gerar Tickets').first().json.inscricao_id }}\",\n    \"status\": \"pago\",\n    \"asaasPaymentId\": \"{{ $('Notif: Validar').first().json.asaasPaymentId }}\"\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        848,
+        2576
+      ],
+      "id": "d5086c96-dd0a-4ff9-9043-e65408197960",
+      "name": "Notif: Marcar Pago",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "tableId": "tickets",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "inscricao_id",
+              "fieldValue": "={{ $json.inscricao_id }}"
+            },
+            {
+              "fieldId": "evento_id",
+              "fieldValue": "={{ $json.evento_id }}"
+            },
+            {
+              "fieldId": "tipo_ingresso_id",
+              "fieldValue": "={{ $json.tipo_ingresso_id }}"
+            },
+            {
+              "fieldId": "nome_tipo",
+              "fieldValue": "={{ $json.nome_tipo }}"
+            },
+            {
+              "fieldId": "preco_unitario",
+              "fieldValue": "={{ $json.preco_unitario }}"
+            },
+            {
+              "fieldId": "ordem",
+              "fieldValue": "={{ $json.ordem }}"
+            },
+            {
+              "fieldId": "token",
+              "fieldValue": "={{ $json.token }}"
+            },
+            {
+              "fieldId": "qr_url",
+              "fieldValue": "={{ $json.qr_url }}"
+            },
+            {
+              "fieldId": "aluno_nome",
+              "fieldValue": "={{ $json.aluno_nome }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        656,
+        2576
+      ],
+      "id": "4d83b07d-3622-4c2b-8067-dfb368e330d7",
+      "name": "Notif: Insert Tickets",
+      "retryOnFail": false,
+      "executeOnce": false,
+      "alwaysOutputData": false,
+      "credentials": {
+        "supabaseApi": {
+          "id": "twGMaqD94DHqfjbv",
+          "name": "SEA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "  const inscricao = $('Notif: Buscar Inscricao').first().json;\n  const evento = $('Notif: Buscar Evento').first().json;\n  const aluno = $('Notif: Buscar Aluno').first().json;\n\n  // Prefixo do token baseado no slug do evento\n  const eventoShort = (evento.slug || 'EVT').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);\n  const gerarToken = () => {\n    const ts = Date.now().toString(36).toUpperCase();\n    const rnd = Math.random().toString(36).substring(2, 8).toUpperCase();\n    return `AMZ-${eventoShort}-${ts}-${rnd}`;\n  };\n\n  // Loop pelos itens da inscrição, gera 1 ticket por senha\n  const tickets = [];\n  let ordem = 0;\n  const itens = inscricao.itens || [];\n  for (const item of itens) {\n    const qtd = item.qtd || 1;\n    for (let i = 0; i < qtd; i++) {\n      ordem += 1;\n      const token = gerarToken();\n      tickets.push({\n        inscricao_id: inscricao.id,\n        evento_id: inscricao.evento_id,\n        tipo_ingresso_id: item.tipo_id || null,\n        nome_tipo: item.nome || 'Senha',\n        preco_unitario: Number(item.preco_unitario || 0),\n        ordem,\n        token,\n        qr_url: `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(token)}&size=500x500&margin=10`,\n        aluno_nome: aluno?.nome_completo || inscricao.responsavel_nome || null,\n        phone_waha: $('Notif: Resolver chatId').first().json.chatId,\n        _evento_nome: evento.nome,\n        _aluno_serie: aluno?.serie || '',\n        _aluno_turma: aluno?.turma || '',\n        _responsavel_nome: inscricao.responsavel_nome,\n      });\n    }\n  }\n\n  if (tickets.length === 0) {\n    throw new Error('Inscrição sem itens — nenhum ticket pra gerar');\n  }\n\n  return tickets.map(t => ({ json: t }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        2576
+      ],
+      "id": "4ec47ccf-cc38-4bcc-a78d-d9888439c23b",
+      "name": "Notif: Gerar Tickets"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "alunos",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $('Notif: Buscar Inscricao').item.json.aluno_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        2576
+      ],
+      "id": "7b49aabc-18c8-4ea4-9fc2-667b6de05ca1",
+      "name": "Notif: Buscar Aluno",
+      "alwaysOutputData": true,
+      "retryOnFail": false,
+      "executeOnce": false,
+      "credentials": {
+        "supabaseApi": {
+          "id": "twGMaqD94DHqfjbv",
+          "name": "SEA"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"ok\": true,\n  \"skipped\": true,\n  \"motivo\": \"{{ $json.motivo }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -992,
+        2320
+      ],
+      "id": "6e1852f5-bca7-4d72-99e6-f81918398b17",
+      "name": "Notif: Respond Skip"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-1",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEqual"
+              }
+            },
+            {
+              "id": "70b06516-f11f-4c47-9ca7-dfb6dbe827e9",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1408,
+        2368
+      ],
+      "id": "84fb055b-ce59-491b-8abd-28f7681d1f82",
+      "name": "Notif: Continuar?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json.body;\n\n  const ref = d?.payment?.externalReference || '';\n\n  const isEventoUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(ref);\n  const isAvulsa = ref.startsWith('avulsa_');\n\n  const isValid =\n    ['PAYMENT_RECEIVED', 'PAYMENT_CONFIRMED'].includes(d?.event) &&\n    ['RECEIVED', 'CONFIRMED'].includes(d?.payment?.status) &&\n    d?.payment?.value > 0 &&\n    (isEventoUuid || isAvulsa);\n\n  let shouldProcess = true;\n  if (d?.payment?.billingType === 'CREDIT_CARD') {\n    const n = d?.payment?.installmentNumber || 1;\n    shouldProcess = n === 1;\n  }\n\n  if (!isValid || !shouldProcess) {\n    let motivo = 'pagamento de outro sistema';\n    if (!shouldProcess) motivo = 'parcela > 1';\n    else if ((isEventoUuid || isAvulsa) && !isValid) motivo = 'evento inválido';\n    return [{ json: { skip: true, motivo } }];\n  }\n\n  if (isAvulsa) {\n    return [{ json: {\n      skip: false,\n      tipo: 'avulsa',\n      cobrancaId: ref.substring('avulsa_'.length),\n      asaasPaymentId: d.payment.id,\n      amount: d.payment.value,\n    } }];\n  }\n\n  return [{ json: {\n    skip: false,\n    tipo: 'evento',\n    inscricaoId: ref,\n    asaasPaymentId: d.payment.id,\n    amount: d.payment.value,\n    billingType: d.payment.billingType,\n  } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1600,
+        2368
+      ],
+      "id": "d46f4dd8-8452-4943-86df-9ef5b031a01e",
+      "name": "Notif: Validar"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "eventospagamentos2026",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1808,
+        2368
+      ],
+      "id": "a40357ee-e464-451b-aa5e-6d44681c2b07",
+      "name": "Notif: Webhook",
+      "webhookId": "amadeus-eventospagamentos"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"ok\": true,\n  \"inscricaoId\": \"{{ $('Notif: Gerar Tickets').first().json.inscricao_id }}\",\n  \"totalTickets\": {{ $('Notif: Gerar Tickets').all().length }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2288,
+        2832
+      ],
+      "id": "91e2f96c-997c-4ddd-bb1d-f20e820f1ea8",
+      "name": "Notif: Respond Sucesso1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://eventos.escolaamadeus.com/api/inscricoes/log",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Webhook-Secret",
+              "value": "1d3321952567de9e6c58e7fdbd6f23c01f7757495c19bc527fa21905a35fff95"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "=  {\n    \"inscricaoId\": \"{{ $('Notif: Gerar Tickets').first().json.inscricao_id }}\",\n    \"etapa\": \"tickets_gerados\",\n    \"mensagem\": \"{{ $('Notif: Gerar Tickets').all().length }} ticket(s) gerado(s) e salvo(s)\"\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        656,
+        2768
+      ],
+      "id": "a596ee54-3de7-430c-8218-6a6e300151b3",
+      "name": "Log: Tickets Gerados"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://eventos.escolaamadeus.com/api/inscricoes/log",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Webhook-Secret",
+              "value": "1d3321952567de9e6c58e7fdbd6f23c01f7757495c19bc527fa21905a35fff95"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "=\n  {\n    \"inscricaoId\": \"{{ $('Notif: Validar').first().json.inscricaoId }}\",\n    \"etapa\": \"notificacao_asaas_recebida\",\n    \"mensagem\": \"Asaas notificou pagamento confirmado\"\n  }\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1168,
+        2768
+      ],
+      "id": "e24aded2-a4f7-4606-b1fb-8e21febbfff0",
+      "name": "Log: Notificacao Recebida"
+    },
+    {
+      "parameters": {
+        "jsCode": "const a = $input.first().json;\nreturn [{ json: {\n  paymentUrl: a.invoiceUrl || a.bankSlipUrl || '',\n  asaasPaymentId: a.id,\n  billingType: a.billingType,\n  status: a.status,\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -576,
+        1392
+      ],
+      "id": "219a1ec9-dbc0-4ef9-ac4a-eafcb3db4e13",
+      "name": "Inscr: Montar Resposta"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -368,
+        1392
+      ],
+      "id": "eb54691c-39c1-437c-9277-77e34b7e7c3f",
+      "name": "Inscr: Respond"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Inscr: Sanitizar').item.json.paymentMethod }}",
+                    "rightValue": "pix",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "7e398477-d771-436f-854d-50601779fbd8"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "pix"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Inscr: Sanitizar').item.json.paymentMethod }}",
+                    "rightValue": "credit",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "03d4fb87-ab54-4b2f-bdc8-608ca26e325f"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "cartao"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -1168,
+        1392
+      ],
+      "id": "ae6e0a0f-015e-44da-ab7c-29237d8d36c6",
+      "name": "Inscr: PIX ou Cartao?"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        -768,
+        1392
+      ],
+      "id": "6bf8513e-e485-4ee6-a998-708e3c91e423",
+      "name": "Inscr: Merge"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cobrancaavulsa",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        48,
+        1392
+      ],
+      "id": "8c9708d6-8c6a-4a38-bedd-68db326be14c",
+      "name": "Avulsa: Webhook",
+      "webhookId": "amadeus-cobrancaavulsa"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Sanitiza telefone pro formato WAHA: 55DDDNNNNNNNN@c.us (sem 9 extra)\nconst data = $input.first().json.body;\n\nconst formatPhone = (raw) => {\n  let d = (raw || '').toString().replace(/\\D/g, '');\n  if (d.startsWith('55') && d.length > 11) d = d.substring(2);\n  let ddd, num;\n  if (d.length <= 9) { ddd = '84'; num = d; }\n  else { ddd = d.substring(0, 2); num = d.substring(2); }\n  if (num.length === 9 && num.startsWith('9')) num = num.substring(1);\n  return { tel: `55${ddd}${num}`, chatId: `55${ddd}${num}@c.us` };\n};\n\nconst { tel, chatId } = formatPhone(data.phone);\n\nreturn [{ json: {\n  ...data,\n  phone_clean: tel,\n  phone_waha: chatId,\n  cpf_clean: (data.cpf || '').replace(/\\D/g, ''),\n  due_date: new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10),\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        1392
+      ],
+      "id": "a60fe095-0818-4f0c-9531-c2a39b2f1e91",
+      "name": "Avulsa: Sanitizar"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.asaas.com/api/v3/customers",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "access_token",
+              "value": "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmE3ZTY4OWQ0LTU0MmUtNDQwOS1hZjQ2LTljMmNlYmFhZjI0NTo6JGFhY2hfNGI1MDAzZjQtOWU2Ni00NTY5LThmYjEtZWU5ZmU4ZWRhN2E3"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"{{ $json.parentName }}\",\n  \"cpfCnpj\": \"{{ $json.cpf_clean }}\",\n  \"mobilePhone\": \"{{ $json.phone_clean }}\",\n  \"externalReference\": \"{{ $json.externalReference }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        1392
+      ],
+      "id": "b8999341-f8db-4ab6-bc54-ea020fd5adbd",
+      "name": "Avulsa: Asaas Customer"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Monta o body da cobrança conforme o método escolhido no admin:\n// 'undefined' = link aberto | 'pix' = só PIX | 'credit' = cartão parcelado.\n// valorTotal já vem com juros repassados (calculado no site).\nconst d = $('Avulsa: Sanitizar').first().json;\nconst customerId = $input.first().json.id;\n\nconst total = Number(d.valorTotal || d.amount);\n\nconst body = {\n  customer: customerId,\n  value: total,\n  dueDate: d.due_date,\n  externalReference: d.externalReference,\n  description: `${d.descricao} - ${d.studentName}`,\n};\n\nif (d.paymentMethod === 'pix') {\n  body.billingType = 'PIX';\n} else if (d.paymentMethod === 'credit') {\n  body.billingType = 'CREDIT_CARD';\n  const n = Number(d.installments || 1);\n  if (n > 1) {\n    body.installmentCount = n;\n    body.installmentValue = Number((total / n).toFixed(2));\n  }\n} else {\n  body.billingType = 'UNDEFINED';\n}\n\nreturn [{ json: { asaas_body: body } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        608,
+        1392
+      ],
+      "id": "553cdc34-8e82-4e0b-87f1-4e959aefd678",
+      "name": "Avulsa: Montar Cobranca"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.asaas.com/api/v3/payments",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "access_token",
+              "value": "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmE3ZTY4OWQ0LTU0MmUtNDQwOS1hZjQ2LTljMmNlYmFhZjI0NTo6JGFhY2hfNGI1MDAzZjQtOWU2Ni00NTY5LThmYjEtZWU5ZmU4ZWRhN2E3"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.asaas_body) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        1392
+      ],
+      "id": "81799b99-9655-4aa1-853d-7901e597df88",
+      "name": "Avulsa: Asaas Cobranca"
+    },
+    {
+      "parameters": {
+        "jsCode": "const a = $input.first().json;\nreturn [{ json: {\n  success: true,\n  paymentUrl: a.invoiceUrl || a.bankSlipUrl || '',\n  asaasPaymentId: a.id,\n  asaasCustomerId: a.customer,\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1088,
+        1424
+      ],
+      "id": "c8df23f0-8658-4dbd-ba40-6a6790e10a8e",
+      "name": "Avulsa: Montar Resposta"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1296,
+        1328
+      ],
+      "id": "806ba203-b4ba-4dc1-9da2-65fd2eeae832",
+      "name": "Avulsa: Respond"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $('Avulsa: Sanitizar').first().json.phone;\n\nlet d = (raw || '').toString().replace(/\\D/g, '');\nif (d.startsWith('55') && d.length > 11) d = d.substring(2);\n\nlet ddd, num;\nif (d.length <= 9) { ddd = '84'; num = d; }\nelse { ddd = d.substring(0, 2); num = d.substring(2); }\n\nconst numSemNove = (num.length === 9 && num.startsWith('9')) ? num.substring(1) : num;\n\nreturn [{ json: {\n  raw,\n  phoneSemNove: `55${ddd}${numSemNove}`,\n  phoneComNove: `55${ddd}9${numSemNove}`,\n  chatIdSemNove: `55${ddd}${numSemNove}@c.us`,\n  chatIdComNove: `55${ddd}9${numSemNove}@c.us`,\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1296,
+        1520
+      ],
+      "id": "2a4f4a0b-f19f-4ae6-a584-3e17f80986c9",
+      "name": "Avulsa: Formatar Telefone"
+    },
+    {
+      "parameters": {
+        "resource": "Contacts",
+        "operation": "Check Exists",
+        "session": "=amadeus",
+        "phone": "={{ $json.phoneSemNove }}",
+        "requestOptions": {}
+      },
+      "name": "Avulsa: Check Sem 9",
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        1488,
+        1520
+      ],
+      "id": "8149ed0a-2ecb-4ffb-a91b-b3669ba8ec5b",
+      "credentials": {
+        "wahaApi": {
+          "id": "Wa5n1cK3Gl4WH4bW",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "av-if-existe-cond1",
+              "leftValue": "={{ $json.numberExists }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1680,
+        1520
+      ],
+      "id": "502a0b59-7e46-4ab9-88cc-5985330ae875",
+      "name": "Avulsa: If Existe"
+    },
+    {
+      "parameters": {
+        "resource": "Contacts",
+        "operation": "Check Exists",
+        "session": "=amadeus",
+        "phone": "={{ $('Avulsa: Formatar Telefone').first().json.phoneComNove }}",
+        "requestOptions": {}
+      },
+      "name": "Avulsa: Check Com 9",
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        1680,
+        1712
+      ],
+      "id": "2e70e226-cfae-48a6-8b0a-978c34012143",
+      "credentials": {
+        "wahaApi": {
+          "id": "Wa5n1cK3Gl4WH4bW",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1872,
+        1520
+      ],
+      "id": "28f192b8-6bbb-42ff-bccd-8357450228cb",
+      "name": "Avulsa: Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "const semNove = $('Avulsa: Formatar Telefone').first().json;\nconst checkSem = $('Avulsa: Check Sem 9').first().json;\n\nlet checkCom = null;\ntry {\n  checkCom = $('Avulsa: Check Com 9').first().json;\n} catch {\n  // Não executou (sem 9 funcionou) — esperado.\n}\n\nlet chatId = null;\nif (checkSem?.numberExists) chatId = semNove.chatIdSemNove;\nelse if (checkCom?.numberExists) chatId = semNove.chatIdComNove;\n\nif (!chatId) {\n  throw new Error(`Número ${semNove.raw} não tem WhatsApp registrado.`);\n}\n\nreturn [{ json: { chatId } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2064,
+        1520
+      ],
+      "id": "e58ea17f-14c2-4552-9a61-25e8471097cd",
+      "name": "Avulsa: Resolver chatId"
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $('Avulsa: Sanitizar').first().json;\nconst resp = $('Avulsa: Montar Resposta').first().json;\nconst chatId = $('Avulsa: Resolver chatId').first().json.chatId;\n\nconst brl = (v) => Number(v).toLocaleString('pt-BR', {\n  style: 'currency', currency: 'BRL',\n});\n\nconst total = Number(d.valorTotal || d.amount);\nconst n = Number(d.installments || 1);\n\nlet linhaPagamento;\nif (d.paymentMethod === 'pix') {\n  linhaPagamento = `💠 Pagamento via PIX: *${brl(total)}*`;\n} else if (d.paymentMethod === 'credit') {\n  linhaPagamento = n > 1\n    ? `💳 Cartão em *${n}x de ${brl(total / n)}* (total ${brl(total)})`\n    : `💳 Cartão à vista: *${brl(total)}*`;\n} else {\n  linhaPagamento = `💳 Pague por PIX ou cartão: *${brl(total)}*`;\n}\n\nconst texto = `🧾 *Escola Amadeus*\n\nOlá, ${d.parentName}!\nSegue a cobrança referente a:\n\n*${d.descricao}*\nAluno(a): ${d.studentName} (${d.studentGrade} · Turma ${d.studentClass})\n\n${linhaPagamento}\n\nLink de pagamento:\n${resp.paymentUrl}\n\nQualquer dúvida, fale com a secretaria. 💙`;\n\nreturn [{ json: { chatId, texto } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2256,
+        1520
+      ],
+      "id": "70febcde-677e-48a2-b064-0e475ecb7eaa",
+      "name": "Avulsa: Montar Msg Link"
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Text",
+        "session": "=amadeus",
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ $json.texto }}",
+        "requestOptions": {}
+      },
+      "name": "Avulsa: Enviar Link",
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        2448,
+        1520
+      ],
+      "id": "038c044c-dd00-49f7-9e5b-cac8d2bf36a4",
+      "credentials": {
+        "wahaApi": {
+          "id": "Wa5n1cK3Gl4WH4bW",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## COBRANÇA AVULSA — CRIAR\nSite chama /webhook/cobrancaavulsa → cria cliente + cobrança UNDEFINED no Asaas (pagador escolhe PIX/cartão) → responde paymentUrl pro site → envia o link no WhatsApp.",
+        "height": 672,
+        "width": 2704
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -96,
+        1232
+      ],
+      "typeVersion": 1,
+      "id": "83761997-8682-407c-80bc-73a258ccc0c3",
+      "name": "Sticky Avulsa Criar"
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Text",
+        "session": "=amadeus",
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ $json.texto }}",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        576,
+        2992
+      ],
+      "id": "d623bd65-ecd9-428e-8c0f-16b82ce6abad",
+      "name": "Enviar_Confirmacao1",
+      "credentials": {
+        "wahaApi": {
+          "id": "Wa5n1cK3Gl4WH4bW",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Contacts",
+        "operation": "Check Exists",
+        "session": "=amadeus",
+        "phone": "{{ $('Notif: Formatar Telefone1').item.json.phoneComNove }}",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        -544,
+        3200
+      ],
+      "id": "bf4e276d-dc6b-4039-9cef-25edc5552e09",
+      "name": "Notif: Check Com ",
+      "credentials": {
+        "wahaApi": {
+          "id": "Wa5n1cK3Gl4WH4bW",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Contacts",
+        "operation": "Check Exists",
+        "session": "=amadeus",
+        "phone": "={{ $json.phoneSemNove }}",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        -736,
+        2992
+      ],
+      "id": "f357bae4-82b8-44f5-9e83-e203de15fb8a",
+      "name": "Notif: Check Sem ",
+      "credentials": {
+        "wahaApi": {
+          "id": "Wa5n1cK3Gl4WH4bW",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const semNove = $('Notif: Formatar Telefone1').first().json;\nconst checkSem = $('Notif: Check Sem ').first().json;\n\nlet checkCom = null;\ntry {\n  checkCom = $('Notif: Check Com ').first().json;\n} catch {\n  // Não executou (sem 9 deu true) — esperado.\n}\n\nlet chatId = null;\nlet formato = null;\n\nif (checkSem?.numberExists) {\n  chatId = checkSem.chatId || semNove.chatIdSemNove;\n  formato = 'sem9';\n} else if (checkCom?.numberExists) {\n  chatId = checkCom.chatId || semNove.chatIdComNove;\n  formato = 'com9';\n} else {\n  // O check do WAHA retorna false intermitente sob carga.\n  // Em vez de travar o fluxo, usa o formato sem 9 (padrão BR) e segue.\n  chatId = semNove.chatIdSemNove;\n  formato = 'fallback-sem9';\n}\n\nreturn [{ json: { chatId, formato, phoneRaw: semNove.raw } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -112,
+        2992
+      ],
+      "id": "24b78ccb-8a56-4af9-8328-b079699f158a",
+      "name": "Notif: Resolver chatId1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -304,
+        2992
+      ],
+      "id": "ae7f11db-0845-4270-bebf-b3216298e410",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inscricao = $('Avulsa: Buscar Cobranca').first().json;\n\n  let d = (inscricao.telefone || '').toString().replace(/\\D/g, '');\n  if (d.startsWith('55') && d.length > 11) d = d.substring(2);\n\n  let ddd, num;\n  if (d.length <= 9) { ddd = '84'; num = d; }\n  else { ddd = d.substring(0, 2); num = d.substring(2); }\n\n  // Garante \"num\" sem o 9 do começo (8 dígitos)\n  const numSemNove = (num.length === 9 && num.startsWith('9')) ? num.substring(1) : num;\n\n  return [{ json: {\n    raw: inscricao.telefone,\n    phoneSemNove: `55${ddd}${numSemNove}`,\n    phoneComNove: `55${ddd}9${numSemNove}`,\n    chatIdSemNove: `55${ddd}${numSemNove}@c.us`,\n    chatIdComNove: `55${ddd}9${numSemNove}@c.us`,\n  }}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -928,
+        2992
+      ],
+      "id": "aa7ec3e8-ddbf-48fa-8160-75eb69a386db",
+      "name": "Notif: Formatar Telefone1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f1a6017e-8c28-4237-af1d-143c71bb5103",
+              "leftValue": "={{ $json.numberExists }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -544,
+        2992
+      ],
+      "id": "5e14af7d-b187-4252-a689-ca3be8026646",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://eventos.escolaamadeus.com/api/cobrancas/etapa ",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Webhook-Secret",
+              "value": "1d3321952567de9e6c58e7fdbd6f23c01f7757495c19bc527fa21905a35fff95"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"cobrancaId\": \"{{ $('Notif: Validar').first().json.cobrancaId }}\",\n    \"etapa\": \"confirmacao\",\n    \"sucesso\": true\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        848,
+        2992
+      ],
+      "id": "2e115a87-205a-49c0-bfe0-ed07305ec675",
+      "name": "Notif: Etapa Confirmacao ok1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const cobranca = $('Avulsa: Buscar Cobranca').first().json;\n\n  const formatPhone = (raw) => {\n    let d = (raw || '').toString().replace(/\\D/g, '');\n    if (d.startsWith('55') && d.length > 11) d = d.substring(2);\n    let ddd, num;\n    if (d.length <= 9) { ddd = '84'; num = d; }\n    else { ddd = d.substring(0, 2); num = d.substring(2); }\n    if (num.length === 9 && num.startsWith('9')) num = num.substring(1);\n    return `55${ddd}${num}@c.us`;\n  };\n\n  const chatId = formatPhone(cobranca.telefone);\n\n  const valor = Number(cobranca.valor_total || cobranca.valor).toLocaleString('pt-BR', {\n    style: 'currency',\n    currency: 'BRL',\n  });\n\n  const texto = '✅ *Pagamento confirmado!*\\n\\n' +\n    '*' + cobranca.descricao + '*\\n' +\n    'Valor: ' + valor + '\\n\\n' +\n    'Obrigado, ' + cobranca.responsavel_nome + '! 💙\\n\\n' +\n    '— Escola Amadeus';\n\n  return [{ json: { chatId, texto } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        368,
+        2992
+      ],
+      "id": "222942ee-4440-444a-baf0-6a0524f0e6e2",
+      "name": "Notif: Montar Texto1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://eventos.escolaamadeus.com/api/cobrancas/confirmar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Webhook-Secret",
+              "value": "1d3321952567de9e6c58e7fdbd6f23c01f7757495c19bc527fa21905a35fff95"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "= {\n    \"cobrancaId\": \"{{ $('Notif: Validar').first().json.cobrancaId }}\",\n    \"status\": \"pago\",\n    \"asaasPaymentId\": \"{{ $('Notif: Validar').first().json.asaasPaymentId }}\"\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        112,
+        2992
+      ],
+      "id": "12441c08-7bfa-4984-abd0-7d61ef76359f",
+      "name": "Notif: Marcar Pago1",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "=  {\n    \"ok\": true\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1040,
+        2992
+      ],
+      "id": "931467ee-28ac-443d-9dd1-fe3e82f2d706",
+      "name": "Notif: Respond Sucesso"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://eventos.escolaamadeus.com/api/inscricoes/log",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Webhook-Secret",
+              "value": "1d3321952567de9e6c58e7fdbd6f23c01f7757495c19bc527fa21905a35fff95"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "=\n  {\n    \"inscricaoId\": \"{{ $('Notif: Validar').item.json.cobrancaId }}\",\n    \"etapa\": \"notificacao_asaas_recebida\",\n    \"mensagem\": \"Asaas notificou pagamento confirmado\"\n  }\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1184,
+        3184
+      ],
+      "id": "31ab57e9-f0f5-49c3-a5ca-54941f60007a",
+      "name": "Log: Notificacao Recebida1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "720f6363-5909-4599-85c4-885ef4561fb4",
+              "leftValue": "={{ $json.tipo }}",
+              "rightValue": "=avulsa",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1424,
+        2656
+      ],
+      "id": "c8a33d2f-af1c-4454-b625-b938d6bbd921",
+      "name": "If4"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "={{ $json.cobrancaId }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1184,
+        2992
+      ],
+      "id": "adae1e1d-b0ad-4eef-9a98-a0917a7a21eb",
+      "name": "Avulsa: Buscar Cobranca",
+      "credentials": {
+        "supabaseApi": {
+          "id": "Ox4Vgc3FsnrAUcEo",
+          "name": "Supabase account - AgenteFinanceiro"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## REENVIO DE QR CODES\n\nWorkflow disparado pelo site quando o admin clica em \"Reenviar QR\" numa inscrição já paga.\n\n**Antes de ativar:**\n1. Configure as credenciais:\n   - **Supabase** (SEA - HUB) nos 4 nós de busca\n   - **WAHA** (WAHA account) nos 3 nós WAHA\n2. Ajuste a URL no nó `Marcar QR Reenviado` se necessário (https://SEU-SITE/api/inscricoes/confirmar)\n3. Ative o workflow\n4. Copie a URL de produção do nó `Webhook` e coloque em `N8N_REENVIO_QR_URL` no .env do site",
+        "height": 320,
+        "width": 480
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1792,
+        3616
+      ],
+      "typeVersion": 1,
+      "id": "8b72f6fe-715f-4271-af36-f59854d5ade1",
+      "name": "Sticky Instrucoes"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "reenvio-qr",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1808,
+        4112
+      ],
+      "id": "0c7744e7-9b29-4e04-93e6-719f12b287e4",
+      "name": "Webhook",
+      "webhookId": "amadeus-reenvio-qr"
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json.body;\nconst inscricaoId = d?.inscricaoId;\nconst isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(inscricaoId || '');\nif (!isUuid) {\n  throw new Error('inscricaoId ausente ou inválido');\n}\nreturn [{ json: { inscricaoId, adminEmail: d?.adminEmail || 'admin' } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1600,
+        4112
+      ],
+      "id": "74af77ee-e0a0-4676-97c8-ecb0b62f3407",
+      "name": "Validar"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "inscricoes",
+        "limit": 1,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('Validar').first().json.inscricaoId }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1408,
+        4112
+      ],
+      "id": "0acc95a9-0da1-4612-8be6-85220bcc87df",
+      "name": "Buscar Inscricao",
+      "credentials": {
+        "supabaseApi": {
+          "id": "twGMaqD94DHqfjbv",
+          "name": "SEA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "eventos",
+        "limit": 1,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('Buscar Inscricao').item.json.evento_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1200,
+        3920
+      ],
+      "id": "fc83646d-f8c2-4351-9df1-c67ada314103",
+      "name": "Buscar Evento",
+      "credentials": {
+        "supabaseApi": {
+          "id": "twGMaqD94DHqfjbv",
+          "name": "SEA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "alunos",
+        "limit": 1,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('Buscar Inscricao').item.json.aluno_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1200,
+        4112
+      ],
+      "id": "ca67e56a-9cc7-4600-8bb7-70e8c041c019",
+      "name": "Buscar Aluno",
+      "credentials": {
+        "supabaseApi": {
+          "id": "twGMaqD94DHqfjbv",
+          "name": "SEA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "tickets",
+        "returnAll": true,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "inscricao_id",
+              "condition": "eq",
+              "keyValue": "={{ $('Validar').first().json.inscricaoId }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1200,
+        4304
+      ],
+      "id": "193aeebe-d917-43ec-aafc-769cb264f739",
+      "name": "Buscar Tickets",
+      "credentials": {
+        "supabaseApi": {
+          "id": "twGMaqD94DHqfjbv",
+          "name": "SEA"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const inscricao = $('Buscar Inscricao').first().json;\n\nlet d = (inscricao.telefone || '').toString().replace(/\\D/g, '');\nif (d.startsWith('55') && d.length > 11) d = d.substring(2);\n\nlet ddd, num;\nif (d.length <= 9) { ddd = '84'; num = d; }\nelse { ddd = d.substring(0, 2); num = d.substring(2); }\n\nconst numSemNove = (num.length === 9 && num.startsWith('9')) ? num.substring(1) : num;\n\nreturn [{ json: {\n  raw: inscricao.telefone,\n  phoneSemNove: `55${ddd}${numSemNove}`,\n  phoneComNove: `55${ddd}9${numSemNove}`,\n  chatIdSemNove: `55${ddd}${numSemNove}@c.us`,\n  chatIdComNove: `55${ddd}9${numSemNove}@c.us`,\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -896,
+        4128
+      ],
+      "id": "b63f7469-7f30-4ec3-bc68-f1a64d97d4e4",
+      "name": "Formatar Telefone"
+    },
+    {
+      "parameters": {
+        "resource": "Contacts",
+        "operation": "Check Exists",
+        "session": "=amadeus",
+        "phone": "={{ $json.phoneSemNove }}",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        -688,
+        4128
+      ],
+      "id": "d45845fe-50d8-4623-9551-1f119a5da2e7",
+      "name": "Check Sem 9",
+      "credentials": {
+        "wahaApi": {
+          "id": "Wa5n1cK3Gl4WH4bW",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "exists-cond",
+              "leftValue": "={{ $json.numberExists }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -496,
+        4128
+      ],
+      "id": "ab072f5f-2693-4749-a3e9-0829f17138d1",
+      "name": "Existe sem 9?"
+    },
+    {
+      "parameters": {
+        "resource": "Contacts",
+        "operation": "Check Exists",
+        "session": "=amadeus",
+        "phone": "={{ $('Formatar Telefone').item.json.phoneComNove }}",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        -288,
+        4224
+      ],
+      "id": "45a7a472-94f2-4870-866d-866540935a12",
+      "name": "Check Com 9",
+      "credentials": {
+        "wahaApi": {
+          "id": "Wa5n1cK3Gl4WH4bW",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": " const semNove = $('Formatar Telefone').first().json;\n  const checkSem = $('Check Sem 9').first().json;\n  \n  let checkCom = null;\n  try {\n    checkCom = $('Check Com 9').first().json;\n  } catch {\n    // Não executou (sem 9 deu true) — esperado.\n  }\n\n  let chatId = null;\n  let formato = null;\n\n  if (checkSem?.numberExists) {\n    chatId = checkSem.chatId || semNove.chatIdSemNove;\n    formato = 'sem9';\n  } else if (checkCom?.numberExists) {\n    chatId = checkCom.chatId || semNove.chatIdComNove;\n    formato = 'com9';\n  } else {\n    // O check do WAHA retorna false intermitente sob carga.\n    // Em vez de travar o fluxo, usa o formato sem 9 (padrão BR) e segue.\n    chatId = semNove.chatIdSemNove;\n    formato = 'fallback-sem9';\n  }\n\n  return [{ json: { chatId, formato, phoneRaw: semNove.raw } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        4128
+      ],
+      "id": "989c60f4-22c0-4f63-a9e2-372d64f3a254",
+      "name": "Resolver chatId"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inscricao = $('Buscar Inscricao').first().json;\nconst aluno     = $('Buscar Aluno').first().json;\nconst evento    = $('Buscar Evento').first().json;\nconst phoneWaha = $('Resolver chatId').first().json.chatId;\n\nconst itens = inscricao.itens || [];\nlet total = 0;\nconst linhas = itens\n  .filter(it => (it.qtd || 0) > 0)\n  .map(it => {\n    const q = it.qtd || 0;\n    total += q;\n    return `• ${q > 1 ? q + 'x ' : ''}${(it.nome || 'Senha').trim()}`;\n  })\n  .join('\\n');\n\nconst nomeEvento = (evento.nome || '').trim();\nconst nomeAluno  = (aluno.nome_completo || '').trim();\n\nconst texto =\n`🔁 *Reenvio dos seus QR Codes*\n\n  *${nomeEvento}*\n  Aluno(a): ${nomeAluno}\n\n  ✅ ${total} ${total === 1 ? 'senha' : 'senhas'}\n\n A seguir, os QR Codes pra entrada no evento. 💙\n Escola Amadeus`;\n\nreturn [{ json: { texto, phone_waha: phoneWaha } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        112,
+        4128
+      ],
+      "id": "5af196ff-46ca-44ec-8c89-f34bccc2097a",
+      "name": "Montar Texto Reenvio"
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Text",
+        "session": "=amadeus",
+        "chatId": "={{ $json.phone_waha }}",
+        "text": "={{ $json.texto }}",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        320,
+        4128
+      ],
+      "id": "06217643-3c0c-4e05-b8eb-82e0250b9fd0",
+      "name": "Enviar Texto Reenvio",
+      "credentials": {
+        "wahaApi": {
+          "id": "Wa5n1cK3Gl4WH4bW",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": " const inscricao = $('Buscar Inscricao').first().json;\n  const evento = $('Buscar Evento').first().json;\n  const aluno  = $('Buscar Aluno').first().json;\n  const phoneWaha = $('Resolver chatId').first().json.chatId;\n                              \n  let tickets = [];\n  try {\n    tickets = $('Buscar Tickets').all().map(i => i.json);\n  } catch {\n    // Buscar Tickets sem resultado — esperado em inscrição nova.\n  }\n\n  if (tickets.length === 0) {\n    // Inscrição sem tickets: gera QRs novos na hora\n    const eventoShort = (evento.slug || 'EVT').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);\n    const gerarToken = () => {\n      const ts = Date.now().toString(36).toUpperCase();\n      const rnd = Math.random().toString(36).substring(2, 8).toUpperCase();\n      return 'AMZ-' + eventoShort + '-' + ts + '-' + rnd;\n    };\n\n    const itens = (inscricao.itens || []).filter(it => (it.qtd || 0) > 0);\n    let ordem = 0;\n    for (const item of itens) {\n      for (let i = 0; i < (item.qtd || 0); i++) {\n        ordem++;\n        const token = gerarToken();\n        const dadosQR = (aluno?.nome_completo || '') + ' | ' + (item.nome || 'Senha') + ' | ' + token;\n        tickets.push({\n          nome_tipo: item.nome || 'Senha',\n          ordem,\n          token,\n          qr_url: 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&format=png&data=' + encodeURIComponent(dadosQR),\n        });\n      }\n    }\n    if (tickets.length === 0) {\n      throw new Error('Inscrição sem itens e sem tickets — nada pra enviar.');\n    }\n  }\n\n  const total = tickets.length;\n  return tickets\n    .sort((a, b) => (a.ordem || 0) - (b.ordem || 0))\n    .map((t, i) => ({ json: {\n      phone_waha:   phoneWaha,\n      qr_url:       t.qr_url,\n      token:        t.token,\n      nome_tipo:    t.nome_tipo,\n      ordem:        t.ordem || i + 1,\n      senha_label:  'Senha ' + (t.ordem || i + 1) + ' de ' + total,\n      evento_nome:  (evento.nome || '').trim(),\n      aluno_nome:   aluno?.nome_completo || '',\n      aluno_serie:  aluno?.serie || '',\n      evento_data:  evento.data_evento || '',\n      evento_local: evento.local || '',\n    }}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        512,
+        4128
+      ],
+      "id": "a900c260-292c-491d-8e18-29dd12fa4d31",
+      "name": "Gerar Items QR"
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Image",
+        "session": "=amadeus",
+        "chatId": "={{ $json.phone_waha }}",
+        "file": "= {\n    \"mimetype\": \"image/png\",\n    \"filename\": \"qrcode.png\",\n    \"url\": \"{{ $json.qr_url }} \"\n  } ",
+        "caption": "=💙 {{ $json.evento_nome }}\n\n  🎟️  Senha: *{{ $json.senha_label }}*\n  👤 Aluno: *{{ $json.aluno_nome }}* ({{ $json.aluno_serie }})\n  📅 Data: *{{ ($json.evento_data || '').split('-').reverse().join('/') }}*\n  📍 Local: *{{ $json.evento_local }}*\n\n  Apresente este QR Code na entrada do evento. ✨",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        720,
+        4128
+      ],
+      "id": "8cd1f859-b01a-4e83-a13b-f199c4561f7e",
+      "name": "Enviar QR Reenvio",
+      "credentials": {
+        "wahaApi": {
+          "id": "Wa5n1cK3Gl4WH4bW",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://eventos.escolaamadeus.com/api/inscricoes/etapa",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Webhook-Secret",
+              "value": "1d3321952567de9e6c58e7fdbd6f23c01f7757495c19bc527fa21905a35fff95"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"inscricaoId\": \"{{ $('Validar').first().json.inscricaoId }}\",\n  \"etapa\": \"qrcode\",\n  \"sucesso\": true,\n  \"mensagem\": \"Reenvio manual disparado por {{ $('Validar').first().json.adminEmail }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        912,
+        4128
+      ],
+      "id": "44b52063-e673-42c1-a0e1-563287ef5317",
+      "name": "Marcar QR Reenviado",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"ok\": true,\n  \"inscricaoId\": \"{{ $('Validar').first().json.inscricaoId }}\",\n  \"totalQRs\": {{ $('Gerar Items QR').all().length }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1168,
+        4144
+      ],
+      "id": "bfea1a82-98be-4dc3-a48a-c50adadc8ff0",
+      "name": "Respond Sucesso"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "webhook.escolaamadeus.com",
+            "user-agent": "node",
+            "content-length": "131",
+            "accept": "*/*",
+            "accept-encoding": "br, gzip, deflate",
+            "accept-language": "*",
+            "content-type": "application/json",
+            "sec-fetch-mode": "cors",
+            "x-forwarded-for": "100.54.199.193",
+            "x-forwarded-host": "webhook.escolaamadeus.com",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "b640cebf532f",
+            "x-invocation-id": "gru1::h2lbr-1781296369217-45aed6b470c0",
+            "x-real-ip": "100.54.199.193",
+            "x-vercel-id": "gru1::h2lbr-1781296369217-45aed6b470c0",
+            "x-webhook-secret": "1d3321952567de9e6c58e7fdbd6f23c01f7757495c19bc527fa21905a35fff95"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "inscricaoId": "5de7db3e-71f9-4d25-a8ca-edfe749197b7",
+            "adminEmail": "pedrolog.app@gmail.com",
+            "timestamp": "2026-06-12T20:32:49.656Z"
+          },
+          "webhookUrl": "https://webhook.escolaamadeus.com/webhook/reenvio-qr",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ],
+    "Notif: Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "webhook.escolaamadeus.com",
+            "user-agent": "Asaas_Prod/3.0",
+            "content-length": "1503",
+            "accept": "application/json",
+            "accept-encoding": "gzip",
+            "asaas-access-token": "whsec_tfberGjUbg_sjEi9cR1LYUbtTS-4M5fFuC4VSyvxvp0",
+            "cache-control": "no-cache",
+            "content-type": "application/json",
+            "pragma": "no-cache",
+            "traceparent": "00-6a54c4310000000066e9a76f6af8874e-0eb1c08b1e9801c2-00",
+            "tracestate": "dd=s:0;p:0eb1c08b1e9801c2;t.tid:6a54c43100000000;t.ksr:0.049261",
+            "x-datadog-parent-id": "1058839091155042754",
+            "x-datadog-sampling-priority": "0",
+            "x-datadog-tags": "_dd.p.tid=6a54c43100000000,_dd.p.ksr=0.049261",
+            "x-datadog-trace-id": "7415642358420113230",
+            "x-forwarded-for": "54.94.183.101",
+            "x-forwarded-host": "webhook.escolaamadeus.com",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "b640cebf532f",
+            "x-real-ip": "54.94.183.101"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "id": "evt_15e444ff9b9ab9ec29294aa1abe68025&1417167018",
+            "event": "PAYMENT_CONFIRMED",
+            "dateCreated": "2026-07-13 07:55:44",
+            "account": {
+              "id": "369bd905-7023-492b-8887-31ae25bb6b6e",
+              "ownerId": null
+            },
+            "payment": {
+              "object": "payment",
+              "id": "pay_5ap9npea9qprpn8u",
+              "dateCreated": "2026-07-10",
+              "customer": "cus_000186603659",
+              "installment": "30ee52e7-04f6-4c8f-8657-874dfcca9bf0",
+              "checkoutSession": null,
+              "paymentLink": null,
+              "value": 74,
+              "netValue": 71.34,
+              "originalValue": null,
+              "interestValue": null,
+              "description": "Parcela 1 de 6. Livro - Ana Liz Marinho Silva",
+              "billingType": "CREDIT_CARD",
+              "confirmedDate": "2026-07-13",
+              "creditCard": {
+                "creditCardNumber": "0444",
+                "creditCardBrand": "VISA"
+              },
+              "pixTransaction": null,
+              "status": "CONFIRMED",
+              "dueDate": "2026-07-13",
+              "originalDueDate": "2026-07-13",
+              "paymentDate": null,
+              "clientPaymentDate": "2026-07-13",
+              "installmentNumber": 1,
+              "invoiceUrl": "https://www.asaas.com/i/5ap9npea9qprpn8u",
+              "invoiceNumber": "854730817",
+              "externalReference": "avulsa_8a22f9a7-73a1-4e2b-93b4-d6bc5d4f28e8",
+              "deleted": false,
+              "anticipated": false,
+              "anticipable": false,
+              "creditDate": "2026-08-14",
+              "estimatedCreditDate": "2026-08-14",
+              "transactionReceiptUrl": "https://www.asaas.com/comprovantes/0262950731908725",
+              "nossoNumero": null,
+              "bankSlipUrl": null,
+              "lastInvoiceViewedDate": "2026-07-10T18:37:55Z",
+              "lastBankSlipViewedDate": null,
+              "discount": {
+                "value": 0,
+                "limitDate": null,
+                "dueDateLimitDays": 0,
+                "type": "FIXED"
+              },
+              "fine": {
+                "value": 0,
+                "type": "FIXED"
+              },
+              "interest": {
+                "value": 0,
+                "type": "PERCENTAGE"
+              },
+              "postalService": false,
+              "escrow": null,
+              "refunds": null
+            }
+          },
+          "webhookUrl": "https://webhook.escolaamadeus.com/webhook/eventospagamentos2026",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Inscr: Asaas Customer": {
+      "main": [
+        [
+          {
+            "node": "Inscr: PIX ou Cartao?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log: Cliente Asaas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inscr: Sanitizar": {
+      "main": [
+        [
+          {
+            "node": "Inscr: Asaas Customer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inscr: Webhook": {
+      "main": [
+        [
+          {
+            "node": "Inscr: Sanitizar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inscr: Asaas Cartao": {
+      "main": [
+        [
+          {
+            "node": "Inscr: Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Inscr: Asaas PIX": {
+      "main": [
+        [
+          {
+            "node": "Inscr: Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar_Confirmacao": {
+      "main": [
+        [
+          {
+            "node": "Notif: Etapa Confirmacao ok",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notif: Check Sem 9": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notif: Resolver chatId": {
+      "main": [
+        [
+          {
+            "node": "Notif: Gerar Tickets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notif: Check Com 9": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Notif: Resolver chatId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notif: Formatar Telefone": {
+      "main": [
+        [
+          {
+            "node": "Notif: Check Sem 9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notif: Check Com 9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Gerar_Tokens",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notif: Respond Sucesso1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notif: Etapa Confirmacao ok": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notif: Buscar Inscricao": {
+      "main": [
+        [
+          {
+            "node": "Notif: Buscar Evento",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log: Notificacao Recebida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notif: Buscar Evento": {
+      "main": [
+        [
+          {
+            "node": "Notif: Buscar Aluno",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notif: Montar Texto": {
+      "main": [
+        [
+          {
+            "node": "Enviar_Confirmacao",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerar_Tokens": {
+      "main": [
+        [
+          {
+            "node": "Enviar_QRCode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar_QRCode": {
+      "main": [
+        [
+          {
+            "node": "Notif: Etapa QR ok",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notif: Marcar Pago": {
+      "main": [
+        [
+          {
+            "node": "Notif: Montar Texto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notif: Insert Tickets": {
+      "main": [
+        [
+          {
+            "node": "Notif: Marcar Pago",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log: Tickets Gerados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notif: Gerar Tickets": {
+      "main": [
+        [
+          {
+            "node": "Notif: Insert Tickets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notif: Buscar Aluno": {
+      "main": [
+        [
+          {
+            "node": "Notif: Formatar Telefone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notif: Continuar?": {
+      "main": [
+        [
+          {
+            "node": "Notif: Respond Skip",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notif: Validar": {
+      "main": [
+        [
+          {
+            "node": "Notif: Continuar?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notif: Webhook": {
+      "main": [
+        [
+          {
+            "node": "Notif: Validar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notif: Etapa QR ok": {
+      "main": [
+        [
+          {
+            "node": "Notif: Respond Sucesso1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inscr: Montar Resposta": {
+      "main": [
+        [
+          {
+            "node": "Inscr: Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inscr: PIX ou Cartao?": {
+      "main": [
+        [
+          {
+            "node": "Inscr: Asaas PIX",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Inscr: Asaas Cartao",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inscr: Merge": {
+      "main": [
+        [
+          {
+            "node": "Inscr: Montar Resposta",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log: Cobranca Criada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avulsa: Webhook": {
+      "main": [
+        [
+          {
+            "node": "Avulsa: Sanitizar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avulsa: Sanitizar": {
+      "main": [
+        [
+          {
+            "node": "Avulsa: Asaas Customer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avulsa: Asaas Customer": {
+      "main": [
+        [
+          {
+            "node": "Avulsa: Montar Cobranca",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avulsa: Montar Cobranca": {
+      "main": [
+        [
+          {
+            "node": "Avulsa: Asaas Cobranca",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avulsa: Asaas Cobranca": {
+      "main": [
+        [
+          {
+            "node": "Avulsa: Montar Resposta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avulsa: Montar Resposta": {
+      "main": [
+        [
+          {
+            "node": "Avulsa: Respond",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Avulsa: Formatar Telefone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avulsa: Formatar Telefone": {
+      "main": [
+        [
+          {
+            "node": "Avulsa: Check Sem 9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avulsa: Check Sem 9": {
+      "main": [
+        [
+          {
+            "node": "Avulsa: If Existe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avulsa: If Existe": {
+      "main": [
+        [
+          {
+            "node": "Avulsa: Merge",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Avulsa: Check Com 9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avulsa: Check Com 9": {
+      "main": [
+        [
+          {
+            "node": "Avulsa: Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Avulsa: Merge": {
+      "main": [
+        [
+          {
+            "node": "Avulsa: Resolver chatId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avulsa: Resolver chatId": {
+      "main": [
+        [
+          {
+            "node": "Avulsa: Montar Msg Link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avulsa: Montar Msg Link": {
+      "main": [
+        [
+          {
+            "node": "Avulsa: Enviar Link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar_Confirmacao1": {
+      "main": [
+        [
+          {
+            "node": "Notif: Etapa Confirmacao ok1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notif: Check Com ": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Notif: Check Sem ": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notif: Resolver chatId1": {
+      "main": [
+        [
+          {
+            "node": "Notif: Marcar Pago1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Notif: Resolver chatId1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notif: Formatar Telefone1": {
+      "main": [
+        [
+          {
+            "node": "Notif: Check Sem ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notif: Check Com ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notif: Etapa Confirmacao ok1": {
+      "main": [
+        [
+          {
+            "node": "Notif: Respond Sucesso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notif: Montar Texto1": {
+      "main": [
+        [
+          {
+            "node": "Enviar_Confirmacao1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notif: Marcar Pago1": {
+      "main": [
+        [
+          {
+            "node": "Notif: Montar Texto1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If4": {
+      "main": [
+        [
+          {
+            "node": "Avulsa: Buscar Cobranca",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notif: Buscar Inscricao",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avulsa: Buscar Cobranca": {
+      "main": [
+        [
+          {
+            "node": "Log: Notificacao Recebida1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notif: Formatar Telefone1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar": {
+      "main": [
+        [
+          {
+            "node": "Buscar Inscricao",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Inscricao": {
+      "main": [
+        [
+          {
+            "node": "Buscar Evento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Evento": {
+      "main": [
+        [
+          {
+            "node": "Buscar Aluno",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Aluno": {
+      "main": [
+        [
+          {
+            "node": "Buscar Tickets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Tickets": {
+      "main": [
+        [
+          {
+            "node": "Formatar Telefone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatar Telefone": {
+      "main": [
+        [
+          {
+            "node": "Check Sem 9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Sem 9": {
+      "main": [
+        [
+          {
+            "node": "Existe sem 9?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Existe sem 9?": {
+      "main": [
+        [
+          {
+            "node": "Resolver chatId",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check Com 9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Com 9": {
+      "main": [
+        [
+          {
+            "node": "Resolver chatId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolver chatId": {
+      "main": [
+        [
+          {
+            "node": "Montar Texto Reenvio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar Texto Reenvio": {
+      "main": [
+        [
+          {
+            "node": "Enviar Texto Reenvio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Texto Reenvio": {
+      "main": [
+        [
+          {
+            "node": "Gerar Items QR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerar Items QR": {
+      "main": [
+        [
+          {
+            "node": "Enviar QR Reenvio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar QR Reenvio": {
+      "main": [
+        [
+          {
+            "node": "Marcar QR Reenviado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar QR Reenviado": {
+      "main": [
+        [
+          {
+            "node": "Respond Sucesso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "b112a98d-73fa-4c2b-ad2c-7e54c1dda87f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ed6c9f56b80fbffea7e37962c8917580a380804ec8f6410c5c03cabeb9deb95c"
+  },
+  "nodeGroups": [],
+  "id": "Y9o8xQ279tNJY1PV",
+  "tags": []
+}
