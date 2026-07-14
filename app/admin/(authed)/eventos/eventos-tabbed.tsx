@@ -26,6 +26,7 @@ export interface AdminEventoItem {
   nome: string;
   data_evento: string;
   hora_evento: string | null;
+  hora_fim: string | null;
   local: string | null;
   imagem_capa_url: string | null;
   cor_tematica: string | null;
@@ -190,7 +191,8 @@ function EventoCardAdmin({ evento }: { evento: AdminEventoItem }) {
           <span className="flex items-center gap-1.5">
             <CalendarDays className="size-3.5" />
             {formatDate(evento.data_evento)}
-            {evento.hora_evento && ` · ${evento.hora_evento.slice(0, 5)}`}
+            {evento.hora_evento &&
+              ` · ${evento.hora_evento.slice(0, 5)}${evento.hora_fim ? ` – ${evento.hora_fim.slice(0, 5)}` : ""}`}
           </span>
           {evento.local && (
             <span className="flex items-center gap-1.5">

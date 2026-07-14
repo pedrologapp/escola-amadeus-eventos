@@ -21,6 +21,7 @@ export interface EventoListItem {
   descricao_curta: string | null;
   data_evento: string;
   hora_evento: string | null;
+  hora_fim: string | null;
   local: string | null;
   imagem_capa_url: string | null;
   cor_tematica: string | null;
@@ -148,7 +149,10 @@ function EventoCard({
   concluido: boolean;
 }) {
   const cor = evento.cor_tematica ?? "#1B3B7C";
-  const hora = evento.hora_evento?.slice(0, 5);
+  const hora = evento.hora_evento
+    ? evento.hora_evento.slice(0, 5) +
+      (evento.hora_fim ? ` – ${evento.hora_fim.slice(0, 5)}` : "")
+    : undefined;
 
   return (
     <Link href={`/eventos/${evento.slug}`} className="group">

@@ -86,7 +86,7 @@ export default async function EventoPublicPage({ params }: PageProps) {
   const { data: evento } = await supabase
     .from("eventos")
     .select(
-      "id, slug, nome, descricao_curta, descricao_longa, data_evento, hora_evento, local, imagem_capa_url, cor_tematica, prazo_inscricao, destinacao_valores, infos_importantes, max_parcelas, metodos_pagamento, series_permitidas, turmas_permitidas, status, mostrar_estoque_publico, pagamento_familiar, tipos_ingresso(id, nome, preco, descricao, ordem, lotes, max_ingressos)",
+      "id, slug, nome, descricao_curta, descricao_longa, data_evento, hora_evento, hora_fim, local, imagem_capa_url, cor_tematica, prazo_inscricao, destinacao_valores, infos_importantes, max_parcelas, metodos_pagamento, series_permitidas, turmas_permitidas, status, mostrar_estoque_publico, pagamento_familiar, tipos_ingresso(id, nome, preco, descricao, ordem, lotes, max_ingressos)",
     )
     .eq("slug", slug)
     .in("status", ["publicado", "encerrado"])
@@ -108,7 +108,10 @@ export default async function EventoPublicPage({ params }: PageProps) {
   const corFundoSuave = `${cor}14`; // ~8% opacity em hex
   const corFundoChip = `${cor}1F`; // ~12%
 
-  const hora = evento.hora_evento?.slice(0, 5);
+  const hora = evento.hora_evento
+    ? evento.hora_evento.slice(0, 5) +
+      (evento.hora_fim ? ` – ${evento.hora_fim.slice(0, 5)}` : "")
+    : undefined;
   const prazoData = evento.prazo_inscricao
     ? new Date(evento.prazo_inscricao)
     : null;

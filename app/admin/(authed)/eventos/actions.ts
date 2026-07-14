@@ -35,6 +35,7 @@ const createEventoSchema = z.object({
   descricao_longa: z.string().optional().nullable(),
   data_evento: z.string().min(1, "Informe a data"),
   hora_evento: z.string().optional().nullable(),
+  hora_fim: z.string().optional().nullable(),
   local: z.string().optional().nullable(),
   cor_tematica: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida"),
   series_permitidas: z.array(z.string()).nullable(),
@@ -67,6 +68,7 @@ export async function createEvento(
     descricao_longa: emptyToNull(formData.get("descricao_longa")?.toString()),
     data_evento: formData.get("data_evento")?.toString() ?? "",
     hora_evento: emptyToNull(formData.get("hora_evento")?.toString()),
+    hora_fim: emptyToNull(formData.get("hora_fim")?.toString()),
     local: emptyToNull(formData.get("local")?.toString()),
     cor_tematica: formData.get("cor_tematica")?.toString() ?? "#1B3B7C",
     series_permitidas: parseArrayField(formData, "series_permitidas"),
@@ -145,6 +147,7 @@ export async function createEvento(
       descricao_longa: data.descricao_longa,
       data_evento: data.data_evento,
       hora_evento: data.hora_evento,
+      hora_fim: data.hora_fim,
       local: data.local,
       imagem_capa_url: imagemCapaUrl,
       cor_tematica: data.cor_tematica,
@@ -257,6 +260,7 @@ export async function updateEvento(
     descricao_longa: emptyToNull(formData.get("descricao_longa")?.toString()),
     data_evento: formData.get("data_evento")?.toString() ?? "",
     hora_evento: emptyToNull(formData.get("hora_evento")?.toString()),
+    hora_fim: emptyToNull(formData.get("hora_fim")?.toString()),
     local: emptyToNull(formData.get("local")?.toString()),
     cor_tematica: formData.get("cor_tematica")?.toString() ?? "#1B3B7C",
     series_permitidas: parseArrayField(formData, "series_permitidas"),
@@ -333,6 +337,7 @@ export async function updateEvento(
       descricao_longa: data.descricao_longa,
       data_evento: data.data_evento,
       hora_evento: data.hora_evento,
+      hora_fim: data.hora_fim,
       local: data.local,
       cor_tematica: data.cor_tematica,
       series_permitidas: data.series_permitidas,
@@ -425,7 +430,7 @@ export async function duplicateEvento(
   const { data: source, error: fetchErr } = await supabase
     .from("eventos")
     .select(
-      "slug, nome, descricao_curta, descricao_longa, data_evento, hora_evento, local, imagem_capa_url, cor_tematica, series_permitidas, turmas_permitidas, metodos_pagamento, max_parcelas, prazo_inscricao, destinacao_valores, infos_importantes, mostrar_estoque_publico, pagamento_familiar, tipos_ingresso(nome, preco, descricao, icone, cor, ordem, ativo, max_ingressos, lotes)",
+      "slug, nome, descricao_curta, descricao_longa, data_evento, hora_evento, hora_fim, local, imagem_capa_url, cor_tematica, series_permitidas, turmas_permitidas, metodos_pagamento, max_parcelas, prazo_inscricao, destinacao_valores, infos_importantes, mostrar_estoque_publico, pagamento_familiar, tipos_ingresso(nome, preco, descricao, icone, cor, ordem, ativo, max_ingressos, lotes)",
     )
     .eq("id", eventoId)
     .maybeSingle();
@@ -445,6 +450,7 @@ export async function duplicateEvento(
       descricao_longa: source.descricao_longa,
       data_evento: source.data_evento,
       hora_evento: source.hora_evento,
+      hora_fim: source.hora_fim,
       local: source.local,
       imagem_capa_url: source.imagem_capa_url,
       cor_tematica: source.cor_tematica,

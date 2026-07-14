@@ -21,6 +21,7 @@ export type Evento = {
   descricao_longa: string | null;
   data_evento: string;
   hora_evento: string | null;
+  hora_fim: string | null;
   local: string | null;
   imagem_capa_url: string | null;
   imagens_galeria: string[] | null;

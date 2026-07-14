@@ -15,7 +15,7 @@ export default async function AdminEventosPage() {
   const { data: eventos, error } = await supabase
     .from("eventos")
     .select(
-      "id, slug, nome, data_evento, hora_evento, local, imagem_capa_url, cor_tematica, status, inscricoes(count)",
+      "id, slug, nome, data_evento, hora_evento, hora_fim, local, imagem_capa_url, cor_tematica, status, inscricoes(count)",
     )
     .order("data_evento", { ascending: false });
 
@@ -49,6 +49,7 @@ export default async function AdminEventosPage() {
       nome: ev.nome,
       data_evento: ev.data_evento,
       hora_evento: ev.hora_evento,
+      hora_fim: ev.hora_fim,
       local: ev.local,
       imagem_capa_url: ev.imagem_capa_url,
       cor_tematica: ev.cor_tematica,

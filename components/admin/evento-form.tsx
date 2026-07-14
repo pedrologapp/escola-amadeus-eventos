@@ -84,6 +84,7 @@ export interface EventoFormInitial {
   descricao_longa: string | null;
   data_evento: string;
   hora_evento: string | null;
+  hora_fim?: string | null;
   local: string | null;
   imagem_capa_url: string | null;
   cor_tematica: string;
@@ -352,6 +353,7 @@ export function EventoForm({
   const horaInicial = initial?.hora_evento
     ? initial.hora_evento.slice(0, 5)
     : "";
+  const horaFimInicial = initial?.hora_fim ? initial.hora_fim.slice(0, 5) : "";
   const prazoInicial = initial?.prazo_inscricao
     ? initial.prazo_inscricao.slice(0, 16)
     : "";
@@ -396,7 +398,7 @@ export function EventoForm({
               maxLength={140}
             />
           </Field>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-3">
             <Field label="Data do evento *" error={erros?.data_evento}>
               <Input
                 name="data_evento"
@@ -405,12 +407,19 @@ export function EventoForm({
                 required
               />
             </Field>
-            <Field label="Horário" error={erros?.hora_evento}>
+            <Field label="Horário de início" error={erros?.hora_evento}>
               <Input
                 name="hora_evento"
                 type="time"
                 defaultValue={horaInicial}
               />
+            </Field>
+            <Field
+              label="Horário de término"
+              hint="Opcional — aparece como '15:00 – 18:00'."
+              error={erros?.hora_fim}
+            >
+              <Input name="hora_fim" type="time" defaultValue={horaFimInicial} />
             </Field>
           </div>
           <Field label="Local" error={erros?.local}>
@@ -791,8 +800,8 @@ export function EventoForm({
               </Select>
             </Field>
             <Field
-              label="Prazo final de inscrição"
-              hint="Após essa data, ninguém poderá mais se inscrever."
+              label="Prazo final de pagamento"
+              hint="Após essa data, ninguém poderá mais se inscrever/pagar."
               error={erros?.prazo_inscricao}
             >
               <Input

@@ -33,7 +33,7 @@ export default async function HomePage() {
   const { data: eventos } = await supabase
     .from("eventos")
     .select(
-      "id, slug, nome, descricao_curta, data_evento, hora_evento, local, imagem_capa_url, cor_tematica",
+      "id, slug, nome, descricao_curta, data_evento, hora_evento, hora_fim, local, imagem_capa_url, cor_tematica",
     )
     .eq("status", "publicado")
     .order("data_evento", { ascending: true });

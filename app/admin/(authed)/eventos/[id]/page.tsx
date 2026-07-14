@@ -53,7 +53,7 @@ export default async function EventoDetailPage({ params }: PageProps) {
   const { data: evento } = await supabase
     .from("eventos")
     .select(
-      "id, slug, nome, descricao_curta, data_evento, hora_evento, local, imagem_capa_url, cor_tematica, series_permitidas, turmas_permitidas, metodos_pagamento, max_parcelas, prazo_inscricao, status, mostrar_estoque_publico, tipos_ingresso(id, nome, preco, descricao, ordem, max_ingressos, lotes)",
+      "id, slug, nome, descricao_curta, data_evento, hora_evento, hora_fim, local, imagem_capa_url, cor_tematica, series_permitidas, turmas_permitidas, metodos_pagamento, max_parcelas, prazo_inscricao, status, mostrar_estoque_publico, tipos_ingresso(id, nome, preco, descricao, ordem, max_ingressos, lotes)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -115,7 +115,10 @@ export default async function EventoDetailPage({ params }: PageProps) {
 
   const status = statusConfig[evento.status] ?? statusConfig.rascunho;
   const cor = evento.cor_tematica ?? "#1B3B7C";
-  const hora = evento.hora_evento?.slice(0, 5);
+  const hora = evento.hora_evento
+    ? evento.hora_evento.slice(0, 5) +
+      (evento.hora_fim ? ` – ${evento.hora_fim.slice(0, 5)}` : "")
+    : undefined;
 
   return (
     <div className="container mx-auto px-4 py-10">
