@@ -216,7 +216,7 @@ export default async function EventoDetailPage({ params }: PageProps) {
               </Info>
             )}
             {evento.prazo_inscricao && (
-              <Info label="Prazo de inscrição" icon={CalendarDays}>
+              <Info label="Prazo de pagamento" icon={CalendarDays}>
                 {formatDate(evento.prazo_inscricao)}
               </Info>
             )}
