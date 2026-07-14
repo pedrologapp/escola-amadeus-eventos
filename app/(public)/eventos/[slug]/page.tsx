@@ -227,7 +227,7 @@ export default async function EventoPublicPage({ params }: PageProps) {
                 </InfoLine>
               )}
               {prazoData && (
-                <InfoLine icon={AlertCircle} label="Inscrições até">
+                <InfoLine icon={AlertCircle} label="Pagamento até">
                   {formatDate(prazoData)}
                 </InfoLine>
               )}
@@ -306,7 +306,7 @@ export default async function EventoPublicPage({ params }: PageProps) {
               </InfoCard>
             )}
             {prazoData && (
-              <InfoCard icon={AlertCircle} label="Inscrições até" cor={cor}>
+              <InfoCard icon={AlertCircle} label="Pagamento até" cor={cor}>
                 {formatDate(prazoData)}
               </InfoCard>
             )}
