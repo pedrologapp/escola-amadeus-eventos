@@ -32,9 +32,33 @@ Migration `0019` aplicada e bucket privado `dia-dos-pais` criado em
 
 ### 1. Gerar os cards
 
-Em **admin.escolaamadeus.com/dia-dos-pais**, marque as séries e clique em
-**Gerar cards**. Isso cria uma linha por aluno, cada uma com um código
-curto próprio. Rodar de novo não duplica ninguém.
+Em **admin.escolaamadeus.com → Diversos → Dia dos Pais**.
+
+A tela lista os **inscritos do evento "Dia dos Pais 2026"** que ainda não
+têm card, separando pagos de pendentes. Os pagos já vêm marcados; desmarque
+quem não vai receber e clique em **Gerar N cards**.
+
+Quem pagou é quem entra — não adianta imprimir card para aluno que não vai.
+Os pendentes ficam num grupo à parte, desmarcados: se alguém acertar o
+pagamento em cima da hora, é só marcar e gerar.
+
+Um aluno com mais de uma inscrição conta uma vez só, e basta uma delas
+estar paga para ele aparecer como pago.
+
+Rodar de novo não duplica ninguém: quem já tem card sai da lista.
+
+> Para usar em outra edição (Dia das Mães, formatura), troque a constante
+> `NOME_DO_EVENTO` em `app/admin/(authed)/dia-dos-pais/page.tsx`.
+
+### 1.1. Irmãos
+
+Se dois filhos do mesmo pai gravaram **um vídeo juntos**, o pai leva **um
+card só**. Clique no ícone de pessoa (+) na linha do aluno e digite o nome
+do irmão — o card passa a mostrar "Fulano e Beltrano", com um QR e um
+vídeo, e o texto vira "veja o recado dos seus filhos".
+
+Isso é digitado na mão de propósito: o campo `familia_id` dos alunos está
+vazio no banco, então não existe como o sistema descobrir parentesco.
 
 ### 2. Instalar o ffmpeg (uma vez só)
 

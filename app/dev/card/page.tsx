@@ -42,7 +42,15 @@ const EXEMPLOS = [
     serie: "1º Ano",
     turma: "B",
   },
-  { id: "3", codigo: "z79nyy", aluno_nome: "João Pedro Nascimento", serie: "5º Ano", turma: "A" },
+  // Card de irmãos: dois nomes, um vídeo só
+  {
+    id: "3",
+    codigo: "z79nyy",
+    aluno_nome: "João Pedro Nascimento",
+    irmaos: ["Ana Beatriz Nascimento"],
+    serie: "5º Ano",
+    turma: "A",
+  },
   { id: "4", codigo: "cnd9v2", aluno_nome: "Ana Beatriz Lima", serie: "9º Ano", turma: "B" },
 ];
 

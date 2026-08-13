@@ -45,8 +45,20 @@ export interface DadosCard {
   id: string;
   codigo: string;
   aluno_nome: string;
+  /** Irmãos que dividem este card e este vídeo. Vazio = um aluno só. */
+  irmaos?: string[];
   serie: string | null;
   turma: string | null;
+}
+
+/**
+ * "Maria e João" para dois irmãos, "Maria, João e Ana" para três.
+ * O pai com mais de um filho leva UM card, então os nomes entram juntos.
+ */
+function nomesDoCard(aluno: DadosCard) {
+  const todos = [aluno.aluno_nome, ...(aluno.irmaos ?? [])].filter(Boolean);
+  if (todos.length === 1) return todos[0];
+  return `${todos.slice(0, -1).join(", ")} e ${todos[todos.length - 1]}`;
 }
 
 /**
@@ -71,6 +83,7 @@ export function CardImpresso({
   fotoUrl?: string;
   qrSvg: string;
 }) {
+  const nomes = nomesDoCard(aluno);
   const turma = [aluno.serie, aluno.turma && `Turma ${aluno.turma}`]
     .filter(Boolean)
     .join(" · ");
@@ -96,14 +109,14 @@ export function CardImpresso({
         <div className="retrato">
           {fotoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={fotoUrl} alt={aluno.aluno_nome} className="foto" />
+            <img src={fotoUrl} alt={nomes} className="foto" />
           ) : (
             <div className="foto foto-vazia">sem foto</div>
           )}
         </div>
 
         <p className="rotulo">Um recado de</p>
-        <p className={classeDoNome(aluno.aluno_nome)}>{aluno.aluno_nome}</p>
+        <p className={classeDoNome(nomes)}>{nomes}</p>
         {turma && <p className="aluno-turma">{turma}</p>}
 
         <div className="ornamento" aria-hidden>
@@ -121,7 +134,9 @@ export function CardImpresso({
         <p className="instrucao">
           Aponte a câmera do celular
           <br />
-          <strong>e veja o recado do seu filho</strong>
+          <strong>
+            e veja o recado {aluno.irmaos?.length ? "dos seus filhos" : "do seu filho"}
+          </strong>
         </p>
 
         <p className="frase">

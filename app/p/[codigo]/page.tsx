@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
-  assinarArquivo,
   codigoValido,
+  nomesDoCard,
   type VideoPais,
 } from "@/lib/dia-dos-pais";
+import { assinarArquivo } from "@/lib/dia-dos-pais-storage";
 
 /**
  * Página do vídeo do Dia dos Pais — o destino do QR impresso no card.
@@ -52,7 +53,7 @@ export async function generateMetadata({
   if (!video) return { title: "Vídeo não encontrado · Escola Amadeus" };
 
   return {
-    title: `Feliz Dia dos Pais! · ${video.aluno_nome}`,
+    title: `Feliz Dia dos Pais! · ${nomesDoCard(video)}`,
     description: `Um recado de ${primeiroNome(video.aluno_nome)} para o papai. Centro Educacional Amadeus.`,
     // O card é impresso e permanente; não queremos esses links em buscador.
     robots: { index: false, follow: false },
@@ -105,7 +106,7 @@ export default async function VideoDiaDosPaisPage({
               Um recado de
             </p>
             <h1 className="mt-2 text-[26px] leading-tight text-white sm:text-[32px]">
-              {video.aluno_nome}
+              {nomesDoCard(video)}
             </h1>
             {turma && (
               <p className="mt-2 text-[13px] italic text-[#f2b014]">{turma}</p>

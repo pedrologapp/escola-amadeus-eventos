@@ -1,15 +1,13 @@
-import "server-only";
-import { createAdminClient } from "@/lib/supabase/admin";
-
 /**
- * Dia dos Pais — vídeos dos alunos.
+ * Dia dos Pais — tipos, códigos e formatação de nome.
  *
  * Cada aluno tem um vídeo e um código curto. O card impresso (1/4 de
- * folha ofício) traz um QR apontando para /p/<codigo>.
+ * folha) traz um QR apontando para /p/<codigo>.
  *
- * Os arquivos ficam num bucket PRIVADO: são vídeos de crianças, então
- * nada é servido por URL pública permanente. A página gera uma signed
- * URL de curta duração a cada visita.
+ * Este módulo é neutro de propósito (nada de `server-only`): o painel do
+ * admin roda no navegador e precisa de `nomesDoCard` e dos tipos. O que
+ * toca o bucket privado com service role vive em
+ * `lib/dia-dos-pais-storage.ts`.
  */
 
 export const BUCKET_DIA_DOS_PAIS = "dia-dos-pais";
@@ -42,8 +40,11 @@ export function codigoValido(codigo: string): boolean {
 export interface VideoPais {
   id: string;
   codigo: string;
+  evento_id: string | null;
   aluno_id: string | null;
   aluno_nome: string;
+  /** Irmãos que dividem este card e este vídeo. Vazio = um aluno só. */
+  irmaos: string[];
   serie: string | null;
   turma: string | null;
   video_path: string | null;
@@ -53,47 +54,16 @@ export interface VideoPais {
 }
 
 /**
- * URL temporária pra um arquivo do bucket privado.
- * Retorna null se o path for null ou o arquivo não existir — quem chama
- * decide o fallback (card sem foto, página "vídeo chegando").
- */
-export async function assinarArquivo(
-  path: string | null,
-  segundos: number,
-): Promise<string | null> {
-  if (!path) return null;
-  const admin = createAdminClient();
-  const { data, error } = await admin.storage
-    .from(BUCKET_DIA_DOS_PAIS)
-    .createSignedUrl(path, segundos);
-  if (error || !data) return null;
-  return data.signedUrl;
-}
-
-/**
- * Assina vários arquivos de uma vez. A folha de impressão precisa de até
- * 70 fotos; uma chamada só evita 70 idas ao Storage.
+ * Como o nome aparece no card e na página: "Maria e João" para dois,
+ * "Maria, João e Ana" para três.
  *
- * Devolve um mapa path → URL assinada (paths que falharem ficam de fora).
+ * O pai com dois filhos leva UM card só, então os dois nomes precisam
+ * caber na mesma linha — por isso a lista usa "e" e não quebra.
  */
-export async function assinarVarios(
-  paths: (string | null)[],
-  segundos: number,
-): Promise<Map<string, string>> {
-  const limpos = [...new Set(paths.filter((p): p is string => !!p))];
-  const mapa = new Map<string, string>();
-  if (limpos.length === 0) return mapa;
-
-  const admin = createAdminClient();
-  const { data, error } = await admin.storage
-    .from(BUCKET_DIA_DOS_PAIS)
-    .createSignedUrls(limpos, segundos);
-  if (error || !data) return mapa;
-
-  for (const item of data) {
-    if (item.signedUrl && item.path) mapa.set(item.path, item.signedUrl);
-  }
-  return mapa;
+export function nomesDoCard(v: Pick<VideoPais, "aluno_nome" | "irmaos">) {
+  const todos = [v.aluno_nome, ...(v.irmaos ?? [])].filter(Boolean);
+  if (todos.length === 1) return todos[0];
+  return `${todos.slice(0, -1).join(", ")} e ${todos[todos.length - 1]}`;
 }
 
 /**

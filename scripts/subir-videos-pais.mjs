@@ -54,10 +54,13 @@ if (!pastaVideos && !pastaFotos) {
 
 // ---------------------------------------------------------------- env
 const raiz = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
-for (const linha of fs
+for (const bruta of fs
   .readFileSync(path.join(raiz, ".env.local"), "utf8")
-  .split("\n")) {
-  const m = linha.match(/^([A-Z_]+)=(.*)$/);
+  .split(/\r?\n/)) {
+  // `.trim()` antes do match: um .env.local com linhas em CRLF (o que
+  // acontece se alguma foi acrescentada por ferramenta do Windows) deixa
+  // um \r que impede o `$` de casar, e a variável some silenciosamente.
+  const m = bruta.trim().match(/^([A-Z_][A-Z0-9_]*)=(.*)$/);
   if (m) process.env[m[1]] ??= m[2].trim();
 }
 const URL_SUPABASE = process.env.NEXT_PUBLIC_SUPABASE_URL;

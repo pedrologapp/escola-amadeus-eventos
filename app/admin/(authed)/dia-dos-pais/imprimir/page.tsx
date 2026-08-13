@@ -1,6 +1,7 @@
 import QRCode from "qrcode";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { assinarVarios, urlDoQr, type VideoPais } from "@/lib/dia-dos-pais";
+import { urlDoQr, type VideoPais } from "@/lib/dia-dos-pais";
+import { assinarVarios } from "@/lib/dia-dos-pais-storage";
 import {
   CardImpresso,
   FORMATOS,

@@ -27,28 +27,31 @@ async function exigirLogin() {
 }
 
 /**
- * Cria uma linha em videos_pais pra cada aluno das séries escolhidas
- * que ainda não tem card.
+ * Cria os cards dos alunos escolhidos na lista de inscritos.
  *
- * Idempotente: rodar de novo não duplica ninguém (o índice unique em
- * aluno_id garante, e a gente filtra antes pra não gastar tentativa).
+ * Recebe IDs de ALUNO (e não de inscrição) porque é o aluno que tem
+ * card: se a mesma família aparecer em duas inscrições, continua sendo
+ * um card só, garantido pelo índice unique em videos_pais.aluno_id.
+ *
+ * Idempotente: quem já tem card é ignorado em silêncio, então dá pra
+ * clicar "gerar" de novo depois que mais gente pagar.
  */
-export async function gerarCards(series: string[]) {
+export async function gerarCardsDosAlunos(
+  eventoId: string,
+  alunoIds: string[],
+) {
   await exigirLogin();
-  if (series.length === 0) return { error: "Escolha ao menos uma série." };
+  if (alunoIds.length === 0) return { error: "Selecione ao menos um aluno." };
 
   const admin = createAdminClient();
 
   const { data: alunos, error: erroAlunos } = await admin
     .from("alunos")
     .select("id, nome_completo, serie, turma")
-    .in("serie", series)
-    .order("serie")
-    .order("turma")
-    .order("nome_completo");
+    .in("id", alunoIds);
 
   if (erroAlunos) return { error: `Erro ao buscar alunos: ${erroAlunos.message}` };
-  if (!alunos?.length) return { error: "Nenhum aluno nessas séries." };
+  if (!alunos?.length) return { error: "Nenhum aluno encontrado." };
 
   const { data: existentes } = await admin
     .from("videos_pais")
@@ -59,6 +62,7 @@ export async function gerarCards(series: string[]) {
     .filter((a) => !jaTem.has(a.id))
     .map((a) => ({
       codigo: gerarCodigo(),
+      evento_id: eventoId,
       aluno_id: a.id,
       aluno_nome: a.nome_completo,
       serie: a.serie,
@@ -66,7 +70,7 @@ export async function gerarCards(series: string[]) {
     }));
 
   if (novos.length === 0) {
-    return { ok: true, criados: 0, mensagem: "Todos já tinham card." };
+    return { ok: true, criados: 0, mensagem: "Os selecionados já tinham card." };
   }
 
   const { error } = await admin.from("videos_pais").insert(novos);
@@ -77,9 +81,32 @@ export async function gerarCards(series: string[]) {
 }
 
 /**
+ * Define os irmãos que dividem o card.
+ *
+ * É digitado na mão de propósito: `alunos.familia_id` está vazio no
+ * banco inteiro, então não existe como deduzir parentesco daqui.
+ */
+export async function definirIrmaos(id: string, nomes: string[]) {
+  await exigirLogin();
+
+  const limpos = nomes.map((n) => n.trim()).filter(Boolean).slice(0, 4);
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("videos_pais")
+    .update({ irmaos: limpos, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) return { error: `Erro ao salvar irmãos: ${error.message}` };
+
+  revalidatePath("/admin/dia-dos-pais");
+  return { ok: true };
+}
+
+/**
  * Devolve uma URL assinada pro navegador subir o arquivo direto.
- * `upsert` ligado porque trocar a foto/vídeo de um aluno é comum
- * (saiu tremido, gravou de novo) e o path é fixo por código.
+ * `upsert` ligado porque trocar a foto/vídeo é comum (saiu tremido,
+ * gravou de novo) e o path é fixo por código.
  */
 export async function criarUploadUrl(
   id: string,
