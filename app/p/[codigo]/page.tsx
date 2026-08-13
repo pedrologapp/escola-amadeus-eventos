@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
@@ -78,10 +79,6 @@ export default async function VideoDiaDosPaisPage({
     assinarArquivo(video.foto_path, VALIDADE_SEGUNDOS),
   ]);
 
-  const turma = [video.serie, video.turma && `Turma ${video.turma}`]
-    .filter(Boolean)
-    .join(" · ");
-
   return (
     <main
       className="min-h-screen bg-[#063376] text-white"
@@ -91,26 +88,43 @@ export default async function VideoDiaDosPaisPage({
           criar emenda, porque a arte tem transparência de verdade. */}
       <div className="bg-[radial-gradient(90%_55%_at_50%_0%,rgba(242,176,20,0.16)_0%,transparent_70%)]">
         <div className="mx-auto flex min-h-screen w-full max-w-xl flex-col px-6 pb-10 pt-7">
-          <header className="flex justify-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+          {/* next/image e não <img>: o pai abre isso no 4G, e assim o
+              Next serve WebP no tamanho da tela dele em vez dos PNGs
+              cheios (que existem por causa da impressão). */}
+          <header className="flex flex-col items-center">
+            {/* Marca da escola primeiro: o pai abre e já sabe de onde veio.
+                Versão negativa — o lockup normal tem texto azul-marinho,
+                que sumiria no azul do fundo. */}
+            <Image
+              src="/logo-amadeus-negativa.png"
+              alt="Centro Educacional Amadeus"
+              width={1600}
+              height={398}
+              priority
+              sizes="(max-width: 640px) 76vw, 288px"
+              className="h-auto w-64 max-w-[76%] sm:w-72"
+            />
+
+            <Image
               src="/dia-dos-pais-titulo.png"
               alt="Feliz Dia dos Pais"
-              className="w-56 max-w-[62%] sm:w-64"
+              width={1000}
+              height={992}
+              priority
+              sizes="(max-width: 640px) 62vw, 256px"
+              className="mt-6 h-auto w-56 max-w-[62%] sm:w-64"
             />
           </header>
 
-          {/* Quem gravou */}
-          <div className="mt-1 text-center">
-            <p className="text-[11px] uppercase tracking-[0.3em] text-white/45">
+          {/* Quem gravou. O respiro grande separa da logo — colado, o
+              "um recado de" parecia parte da arte. */}
+          <div className="mt-7 text-center">
+            <p className="text-[13px] font-bold uppercase tracking-[0.3em] text-[#f2b014]">
               Um recado de
             </p>
-            <h1 className="mt-2 text-[26px] leading-tight text-white sm:text-[32px]">
+            <h1 className="mt-3 text-[28px] font-bold leading-tight text-white sm:text-[34px]">
               {nomesDoCard(video)}
             </h1>
-            {turma && (
-              <p className="mt-2 text-[13px] italic text-[#f2b014]">{turma}</p>
-            )}
           </div>
 
           {/* Fio dourado — separador discreto, no lugar de mais espaço vazio */}
@@ -124,7 +138,10 @@ export default async function VideoDiaDosPaisPage({
                 playsInline
                 preload="metadata"
                 poster={fotoUrl ?? undefined}
-                className="aspect-[9/16] w-full rounded-2xl bg-black shadow-[0_18px_50px_-12px_rgba(0,0,0,0.7)] ring-1 ring-[#f2b014]/40 sm:aspect-video"
+                // Sem proporção fixa: os vídeos são gravados no celular, em
+                // pé, e forçar 16:9 punha tarja preta dos dois lados. Assim
+                // o player toma a forma do vídeo, seja ele qual for.
+                className="mx-auto max-h-[72vh] w-auto max-w-full rounded-2xl bg-black shadow-[0_18px_50px_-12px_rgba(0,0,0,0.7)] ring-1 ring-[#f2b014]/40"
               >
                 <source src={videoUrl} type="video/mp4" />
                 Seu navegador não consegue exibir este vídeo.
@@ -142,26 +159,19 @@ export default async function VideoDiaDosPaisPage({
             )}
           </div>
 
-          {/* Frase da campanha */}
-          <blockquote className="mt-8 text-center text-[15px] italic leading-relaxed text-white/75">
+          <blockquote className="mt-9 text-center text-[17px] italic leading-relaxed text-white/85">
             “Todo filho guarda um pouco do pai
             <br />
             no adulto em quem se torna.”
           </blockquote>
 
-          <p className="mt-6 text-center text-sm leading-relaxed text-white/55">
+          <p className="mt-5 text-center text-[15px] leading-relaxed text-white/75">
             Este vídeo é seu, para guardar e rever sempre que quiser.
           </p>
 
-          <footer className="mt-auto flex flex-col items-center gap-2.5 pt-10">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/logo-amadeus.png"
-              alt=""
-              className="size-10 rounded-full bg-white p-0.5"
-            />
-            <p className="text-[10px] uppercase tracking-[0.28em] text-white/50">
-              Centro Educacional Amadeus
+          <footer className="mt-auto pt-10">
+            <p className="text-center text-[12px] text-white/55">
+              Este link é exclusivo da sua família. Guarde o cartão!
             </p>
           </footer>
         </div>

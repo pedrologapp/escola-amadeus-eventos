@@ -83,10 +83,10 @@ export function CardImpresso({
   fotoUrl?: string;
   qrSvg: string;
 }) {
+  // Série e turma não aparecem no card: quem recebe é o pai, e o que
+  // importa pra ele é o nome do filho. A escola usa esses campos só pra
+  // ordenar e separar as folhas na hora de imprimir.
   const nomes = nomesDoCard(aluno);
-  const turma = [aluno.serie, aluno.turma && `Turma ${aluno.turma}`]
-    .filter(Boolean)
-    .join(" · ");
 
   return (
     <article className="card">
@@ -117,7 +117,6 @@ export function CardImpresso({
 
         <p className="rotulo">Um recado de</p>
         <p className={classeDoNome(nomes)}>{nomes}</p>
-        {turma && <p className="aluno-turma">{turma}</p>}
 
         <div className="ornamento" aria-hidden>
           <span className="fio" />
@@ -146,9 +145,15 @@ export function CardImpresso({
         </p>
 
         <footer className="card-rodape">
+          {/* Versão negativa da logo: fundo transparente e "AMADEUS" em
+              branco. O lockup original tem texto azul-marinho, que sumiria
+              no azul do card, e um selo branco atrás sujaria a peça. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-amadeus.png" alt="" className="logo-escola" />
-          <span>Centro Educacional Amadeus</span>
+          <img
+            src="/logo-amadeus-negativa.png"
+            alt="Centro Educacional Amadeus"
+            className="logo-escola"
+          />
         </footer>
       </div>
     </article>
@@ -201,7 +206,7 @@ export function cssCard(d: Dim) {
   /* Alturas somadas: ~147mm num card de 165mm, deixando ~6mm de folga
      pra nomes que quebram em 3 linhas. Mexer nestes fatores sem refazer
      a conta faz o rodapé sair cortado. */
-  .titulo-arte { width: ${d.cardW * 0.34}mm; height: auto; display: block; }
+  .titulo-arte { width: ${d.cardW * 0.30}mm; height: auto; display: block; }
 
   /* ---- Retrato ----
      Maior que o QR de propósito: quem tem que dominar o card é a
@@ -212,7 +217,7 @@ export function cssCard(d: Dim) {
     border: .22mm solid rgba(242,176,20,.5);   /* anel externo fino */
   }
   .foto {
-    display: block; width: ${util * 0.17}mm; height: ${util * 0.17}mm;
+    display: block; width: ${util * 0.16}mm; height: ${util * 0.16}mm;
     object-fit: cover; border-radius: 50%;
     border: .7mm solid #f2b014;                 /* anel interno cheio */
   }
@@ -223,10 +228,12 @@ export function cssCard(d: Dim) {
   }
 
   /* ---- Tipografia ---- */
+  /* Em caixa alta, dourado e com peso: antes era cinza-claro e miúdo,
+     e sumia contra o azul. O respiro maior separa da foto. */
   .rotulo {
-    margin: ${util * 0.022}mm 0 0; font-size: 5.5pt;
-    text-transform: uppercase; letter-spacing: .32em;
-    color: rgba(255,255,255,.45);
+    margin: ${util * 0.03}mm 0 0; font-size: 6.5pt; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .3em;
+    color: #f2b014;
   }
   .aluno-nome {
     /* Palatino não tem peso 800 — acima de 700 o navegador engorda a
@@ -236,9 +243,11 @@ export function cssCard(d: Dim) {
   }
   .aluno-nome.nome-medio { font-size: 12pt; }
   .aluno-nome.nome-longo { font-size: 10.5pt; line-height: 1.2; }
+  /* Branco suave: o dourado agora é do rótulo acima, e dois dourados
+     seguidos brigavam entre si. */
   .aluno-turma {
-    margin: ${util * 0.008}mm 0 0; font-size: 7.5pt; font-style: italic;
-    color: #f2b014;
+    margin: ${util * 0.01}mm 0 0; font-size: 8pt; font-style: italic;
+    color: rgba(255,255,255,.75);
   }
 
   /* ---- Ornamento ---- */
@@ -267,33 +276,32 @@ export function cssCard(d: Dim) {
     background: #fff; border-radius: 1.2mm;
     box-shadow: 0 .6mm 1.6mm rgba(0,0,0,.3);
   }
-  .qr { width: ${util * 0.14}mm; height: ${util * 0.14}mm; }
+  .qr { width: ${util * 0.125}mm; height: ${util * 0.125}mm; }
   .qr svg { width: 100%; height: 100%; display: block; }
 
+  /* Corpo e opacidade subiram: a 6–7pt translúcido, o texto imprimia
+     acinzentado e quase não se lia no azul. */
   .instrucao {
-    margin: ${util * 0.018}mm 0 0; font-size: 7pt; line-height: 1.4;
-    color: rgba(255,255,255,.78);
+    margin: ${util * 0.02}mm 0 0; font-size: 8pt; line-height: 1.4;
+    color: #fff;
   }
   .instrucao strong { color: #f2b014; font-weight: 700; }
 
   .frase {
-    margin: ${util * 0.02}mm 0 0; max-width: ${d.cardW * 0.74}mm;
-    font-size: 6pt; line-height: 1.5; font-style: italic;
-    color: rgba(255,255,255,.55);
+    margin: ${util * 0.022}mm 0 0; max-width: ${d.cardW * 0.78}mm;
+    font-size: 7pt; line-height: 1.5; font-style: italic;
+    color: rgba(255,255,255,.82);
   }
 
   /* ---- Rodapé ---- */
   .card-rodape {
-    margin-top: auto; padding-top: ${util * 0.016}mm;
-    display: flex; flex-direction: column; align-items: center; gap: 1.1mm;
+    margin-top: auto; padding-top: ${util * 0.018}mm;
+    display: flex; justify-content: center;
   }
+  /* A logo é horizontal (≈4:1), então largura generosa custa pouca
+     altura — cabe bem no rodapé sem apertar o resto. */
   .card-rodape .logo-escola {
-    width: 6mm; height: 6mm; object-fit: contain;
-    background: #fff; border-radius: 50%; padding: .4mm;
-  }
-  .card-rodape span {
-    font-size: 4.8pt; letter-spacing: .26em; text-transform: uppercase;
-    color: rgba(255,255,255,.5);
+    width: ${d.cardW * 0.62}mm; height: auto; display: block;
   }
 `;
 }
