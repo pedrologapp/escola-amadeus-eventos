@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Printer } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { type VideoPais } from "@/lib/dia-dos-pais";
+import { ordenarPorTurma, type VideoPais } from "@/lib/dia-dos-pais";
 import { assinarVarios } from "@/lib/dia-dos-pais-storage";
 import { Button } from "@/components/ui/button";
 import { PainelDiaDosPais, type CardComFoto, type Inscrito } from "./painel";
@@ -31,14 +31,10 @@ export default async function AdminDiaDosPaisPage() {
     .limit(1);
   const evento = eventos?.[0] ?? null;
 
-  // Cards já criados
-  const { data: dados } = await admin
-    .from("videos_pais")
-    .select("*")
-    .order("serie")
-    .order("turma")
-    .order("aluno_nome");
-  const cards = (dados ?? []) as VideoPais[];
+  // Cards já criados. A ordem final é feita em JS: o banco só sabe
+  // ordenar série como texto, e aí "1º Ano" viria antes de "Maternal".
+  const { data: dados } = await admin.from("videos_pais").select("*");
+  const cards = ordenarPorTurma((dados ?? []) as VideoPais[]);
 
   const fotos = await assinarVarios(
     cards.map((c) => c.foto_path),
@@ -89,16 +85,15 @@ export default async function AdminDiaDosPaisPage() {
 
       porAluno.set(a.id, {
         alunoId: a.id,
-        nome: a.nome_completo,
+        aluno_nome: a.nome_completo,
         serie: a.serie,
         turma: a.turma,
         responsavel: i.responsavel_nome,
         pago,
       });
     }
-    inscritos = [...porAluno.values()].sort((a, b) =>
-      a.nome.localeCompare(b.nome, "pt-BR"),
-    );
+    // Mesma ordem da lista de cards: série, turma, nome.
+    inscritos = ordenarPorTurma([...porAluno.values()]);
   }
 
   const comVideo = cards.filter((c) => c.video_path).length;

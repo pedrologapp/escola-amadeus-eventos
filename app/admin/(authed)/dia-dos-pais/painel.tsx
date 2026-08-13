@@ -1,12 +1,14 @@
 "use client";
 
 import { useMemo, useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Check,
   ExternalLink,
   Image as ImageIcon,
   Loader2,
+  Printer,
   Trash2,
   UserPlus,
   Video,
@@ -15,6 +17,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { nomesDoCard, type VideoPais } from "@/lib/dia-dos-pais";
 import {
   confirmarUpload,
@@ -37,7 +40,7 @@ export interface CardComFoto extends VideoPais {
 
 export interface Inscrito {
   alunoId: string;
-  nome: string;
+  aluno_nome: string;
   serie: string | null;
   turma: string | null;
   responsavel: string;
@@ -52,16 +55,44 @@ interface Props {
 
 export function PainelDiaDosPais({ cards, inscritos, eventoId }: Props) {
   const [busca, setBusca] = useState("");
+  const [serie, setSerie] = useState("");
+  const [turma, setTurma] = useState("");
+
+  // As opções saem dos cards existentes, na ordem em que já vieram
+  // ordenados do servidor (série pedagógica, turma, nome).
+  const series = useMemo(
+    () => [...new Set(cards.map((c) => c.serie).filter(Boolean))] as string[],
+    [cards],
+  );
+  // A lista de turmas acompanha a série escolhida: não adianta oferecer
+  // "Turma C" se a série selecionada só tem A e B.
+  const turmas = useMemo(() => {
+    const base = serie ? cards.filter((c) => c.serie === serie) : cards;
+    return [...new Set(base.map((c) => c.turma).filter(Boolean))].sort() as string[];
+  }, [cards, serie]);
 
   const filtrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
-    if (!termo) return cards;
-    return cards.filter((c) =>
-      `${c.aluno_nome} ${c.irmaos.join(" ")} ${c.serie ?? ""} ${c.turma ?? ""}`
+    return cards.filter((c) => {
+      if (serie && c.serie !== serie) return false;
+      if (turma && c.turma !== turma) return false;
+      if (!termo) return true;
+      return `${c.aluno_nome} ${c.irmaos.join(" ")} ${c.serie ?? ""} ${c.turma ?? ""}`
         .toLowerCase()
-        .includes(termo),
-    );
-  }, [cards, busca]);
+        .includes(termo);
+    });
+  }, [cards, busca, serie, turma]);
+
+  // Leva o mesmo filtro pra folha de impressão, pra imprimir turma a turma.
+  const urlImpressao = useMemo(() => {
+    const p = new URLSearchParams();
+    if (serie) p.set("serie", serie);
+    if (turma) p.set("turma", turma);
+    const q = p.toString();
+    return `/admin/dia-dos-pais/imprimir${q ? `?${q}` : ""}`;
+  }, [serie, turma]);
+
+  const filtroAtivo = !!(serie || turma || busca);
 
   return (
     <div className="space-y-6">
@@ -71,16 +102,74 @@ export function PainelDiaDosPais({ cards, inscritos, eventoId }: Props) {
 
       {cards.length > 0 && (
         <section>
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
             <h2 className="text-lg font-extrabold text-amadeus-blue">
-              Cards gerados ({cards.length})
+              Cards gerados ({filtrados.length}
+              {filtrados.length !== cards.length && ` de ${cards.length}`})
             </h2>
-            <Input
-              placeholder="Buscar aluno, série ou turma…"
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              className="max-w-sm"
-            />
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Select
+                value={serie}
+                onChange={(e) => {
+                  setSerie(e.target.value);
+                  setTurma(""); // a turma antiga pode não existir na nova série
+                }}
+                className="h-9 w-44 text-sm"
+                aria-label="Filtrar por série"
+              >
+                <option value="">Todas as séries</option>
+                {series.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </Select>
+
+              <Select
+                value={turma}
+                onChange={(e) => setTurma(e.target.value)}
+                className="h-9 w-36 text-sm"
+                aria-label="Filtrar por turma"
+              >
+                <option value="">Todas as turmas</option>
+                {turmas.map((t) => (
+                  <option key={t} value={t}>
+                    Turma {t}
+                  </option>
+                ))}
+              </Select>
+
+              <Input
+                placeholder="Buscar aluno…"
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                className="h-9 w-52 text-sm"
+              />
+
+              {filtroAtivo && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSerie("");
+                    setTurma("");
+                    setBusca("");
+                  }}
+                  className="text-xs font-semibold text-muted-foreground hover:text-amadeus-blue hover:underline"
+                >
+                  limpar
+                </button>
+              )}
+
+              {(serie || turma) && (
+                <Button asChild size="sm" variant="outline">
+                  <Link href={urlImpressao} target="_blank">
+                    <Printer className="size-3.5" />
+                    Imprimir esta seleção
+                  </Link>
+                </Button>
+              )}
+            </div>
           </div>
 
           <div className="overflow-hidden rounded-2xl border border-border/60 bg-white">
@@ -89,7 +178,7 @@ export function PainelDiaDosPais({ cards, inscritos, eventoId }: Props) {
             ))}
             {filtrados.length === 0 && (
               <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-                Ninguém encontrado com “{busca}”.
+                Nenhum card com esse filtro.
               </p>
             )}
           </div>
@@ -254,7 +343,7 @@ function GrupoInscritos({
               />
               <span className="min-w-0">
                 <span className="block truncate text-sm font-semibold text-foreground">
-                  {i.nome}
+                  {i.aluno_nome}
                 </span>
                 <span className="block truncate text-xs text-muted-foreground">
                   {[i.serie, i.turma && `Turma ${i.turma}`]

@@ -1,6 +1,6 @@
 import QRCode from "qrcode";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { urlDoQr, type VideoPais } from "@/lib/dia-dos-pais";
+import { ordenarPorTurma, urlDoQr, type VideoPais } from "@/lib/dia-dos-pais";
 import { assinarVarios } from "@/lib/dia-dos-pais-storage";
 import {
   CardImpresso,
@@ -43,18 +43,15 @@ export default async function ImprimirCardsPage({ searchParams }: Props) {
   const mostrarGuias = sp.guias !== "0";
 
   const admin = createAdminClient();
-  let query = admin
-    .from("videos_pais")
-    .select("*")
-    .order("serie")
-    .order("turma")
-    .order("aluno_nome");
+  let query = admin.from("videos_pais").select("*");
 
   if (sp.serie) query = query.eq("serie", sp.serie);
   if (sp.turma) query = query.eq("turma", sp.turma);
 
   const { data } = await query;
-  let alunos = (data ?? []) as VideoPais[];
+  // Série, turma e nome — na ordem pedagógica, que é a ordem de entrega
+  // das turmas. O banco só ordena série como texto e sairia errado.
+  let alunos = ordenarPorTurma((data ?? []) as VideoPais[]);
 
   // Por padrão só imprime quem já tem vídeo — card com QR que não leva
   // a lugar nenhum é papel jogado fora. ?todos=1 força incluir todos.

@@ -10,6 +10,8 @@
  * `lib/dia-dos-pais-storage.ts`.
  */
 
+import { SERIES_DISPONIVEIS } from "@/lib/constants";
+
 export const BUCKET_DIA_DOS_PAIS = "dia-dos-pais";
 
 /**
@@ -51,6 +53,34 @@ export interface VideoPais {
   foto_path: string | null;
   created_at: string;
   updated_at: string;
+}
+
+/**
+ * Ordena por série (na ordem pedagógica), depois turma, depois nome.
+ *
+ * Ordenar série como texto sai errado: alfabeticamente "1º Ano" vem antes
+ * de "Maternalzinho(2)", e os cards seriam entregues fora da ordem das
+ * turmas. A referência é SERIES_DISPONIVEIS, que já está na sequência
+ * certa (Maternalzinho → Maternal → Grupo IV/V → 1º ao 9º).
+ *
+ * Série desconhecida vai pro fim em vez de virar a primeira.
+ */
+export function ordenarPorTurma<
+  T extends { serie: string | null; turma: string | null; aluno_nome: string },
+>(lista: T[]): T[] {
+  const posicao = (serie: string | null) => {
+    const i = SERIES_DISPONIVEIS.indexOf(
+      serie as (typeof SERIES_DISPONIVEIS)[number],
+    );
+    return i === -1 ? SERIES_DISPONIVEIS.length : i;
+  };
+
+  return [...lista].sort(
+    (a, b) =>
+      posicao(a.serie) - posicao(b.serie) ||
+      (a.turma ?? "").localeCompare(b.turma ?? "", "pt-BR") ||
+      a.aluno_nome.localeCompare(b.aluno_nome, "pt-BR"),
+  );
 }
 
 /**
