@@ -174,8 +174,13 @@ async function acharFfmpeg() {
 const ESCALA_720 =
   "scale='if(gt(iw,ih),-2,min(720,iw))':'if(gt(iw,ih),min(720,ih),-2)':flags=lanczos";
 
-/** Teto por arquivo no bucket. Ficamos com folga abaixo dele. */
-const LIMITE_BUCKET_MB = 50;
+/**
+ * O bucket aceita 300MB (plano Pro), então estes números não são limite
+ * técnico: são tempo de carregamento no celular do pai. Passando de
+ * RECOMPRIMIR_ACIMA_MB, refaz com bitrate calculado em vez de confiar
+ * no CRF, que não garante tamanho em cena com muito movimento.
+ */
+const RECOMPRIMIR_ACIMA_MB = 35;
 const ALVO_MB = 20;
 
 /** Duração em segundos, pra calcular bitrate quando precisar. */
@@ -224,7 +229,7 @@ async function comprimir(entrada, saida) {
   ]);
 
   const mb = fs.statSync(saida).size / 1024 / 1024;
-  if (mb <= LIMITE_BUCKET_MB * 0.9) return { recomprimido: false };
+  if (mb <= RECOMPRIMIR_ACIMA_MB) return { recomprimido: false };
 
   // Bitrate que cabe no alvo, descontando o áudio.
   const dur = (await duracaoSegundos(entrada)) ?? 60;

@@ -29,10 +29,13 @@ import {
 
 const BUCKET = "dia-dos-pais";
 
-/** Acima disso o vídeo demora demais no 4G do pai. O script de lote
- *  entrega uns 8MB; se alguém subir o arquivo bruto do celular pela
- *  tela, avisamos em vez de deixar passar calado. */
-const AVISO_TAMANHO_VIDEO_MB = 25;
+/**
+ * O bucket aceita até 300MB, então o limite aqui não é técnico: é a
+ * paciência do pai. Um vídeo de 60MB no 4G leva quase um minuto pra
+ * começar; o mesmo vídeo comprimido abre quase na hora. Avisamos em vez
+ * de deixar passar calado, mas quem decide é a escola.
+ */
+const AVISO_TAMANHO_VIDEO_MB = 30;
 
 export interface CardComFoto extends VideoPais {
   fotoUrl: string | null;
@@ -464,9 +467,10 @@ function LinhaAluno({
         const mb = (arquivo.size / 1024 / 1024).toFixed(0);
         if (
           !confirm(
-            `Esse vídeo tem ${mb}MB. Vai demorar pra carregar no celular do pai ` +
-              `e consome muito espaço.\n\nO ideal é passar pelo script de compressão ` +
-              `(fica em ~8MB).\n\nSubir assim mesmo?`,
+            `Esse vídeo tem ${mb}MB.\n\nEle vai subir sem problema, mas no celular ` +
+              `do pai, no 4G, vai demorar bastante pra começar a tocar.\n\n` +
+              `Passando pelo script de compressão ele fica em torno de 10MB e abre ` +
+              `quase na hora.\n\nSubir assim mesmo?`,
           )
         ) {
           setSubindo(null);
