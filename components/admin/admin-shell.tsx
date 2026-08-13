@@ -3,9 +3,8 @@ import {
   CalendarDays,
   LayoutDashboard,
   LogOut,
-  MessageSquareHeart,
   Receipt,
-  Shirt,
+  Shapes,
 } from "lucide-react";
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
@@ -20,12 +19,16 @@ interface AdminShellProps {
   children: React.ReactNode;
 }
 
+/**
+ * Só o dia a dia fica na barra. Enquete, Fardamento e Dia dos Pais são
+ * campanhas com começo e fim e moram em /admin/diversos — as rotas delas
+ * continuam valendo, só saíram do menu.
+ */
 const navLinks = [
   { href: "/admin/dashboard", label: "Visão geral", icon: LayoutDashboard },
   { href: "/admin/eventos", label: "Eventos", icon: CalendarDays },
   { href: "/admin/cobrancas", label: "Cobranças", icon: Receipt },
-  { href: "/admin/enquete", label: "Enquete", icon: MessageSquareHeart },
-  { href: "/admin/fardamento", label: "Fardamento", icon: Shirt },
+  { href: "/admin/diversos", label: "Diversos", icon: Shapes },
 ];
 
 export function AdminShell({ userEmail, children }: AdminShellProps) {
