@@ -83,14 +83,46 @@ export function PainelDiaDosPais({ cards, inscritos, eventoId }: Props) {
     });
   }, [cards, busca, serie, turma]);
 
-  // Leva o mesmo filtro pra folha de impressão, pra imprimir turma a turma.
+  // Quem entra na folha de impressão. Começa vazio: imprimir papel é
+  // irreversível, então a escolha é explícita.
+  const [marcados, setMarcados] = useState<Set<string>>(new Set());
+
+  function alternarCard(codigo: string) {
+    setMarcados((s) => {
+      const n = new Set(s);
+      if (n.has(codigo)) n.delete(codigo);
+      else n.add(codigo);
+      return n;
+    });
+  }
+
+  const visiveisMarcados = filtrados.filter((c) => marcados.has(c.codigo)).length;
+  const todosVisiveisMarcados =
+    filtrados.length > 0 && visiveisMarcados === filtrados.length;
+
+  function alternarTodosVisiveis() {
+    setMarcados((s) => {
+      const n = new Set(s);
+      for (const c of filtrados) {
+        if (todosVisiveisMarcados) n.delete(c.codigo);
+        else n.add(c.codigo);
+      }
+      return n;
+    });
+  }
+
+  // Só os selecionados vão pra folha. Sem seleção, cai no filtro atual.
   const urlImpressao = useMemo(() => {
     const p = new URLSearchParams();
-    if (serie) p.set("serie", serie);
-    if (turma) p.set("turma", turma);
+    if (marcados.size > 0) {
+      p.set("codigos", [...marcados].join(","));
+    } else {
+      if (serie) p.set("serie", serie);
+      if (turma) p.set("turma", turma);
+    }
     const q = p.toString();
     return `/admin/dia-dos-pais/imprimir${q ? `?${q}` : ""}`;
-  }, [serie, turma]);
+  }, [marcados, serie, turma]);
 
   const filtroAtivo = !!(serie || turma || busca);
 
@@ -161,20 +193,59 @@ export function PainelDiaDosPais({ cards, inscritos, eventoId }: Props) {
                 </button>
               )}
 
-              {(serie || turma) && (
-                <Button asChild size="sm" variant="outline">
-                  <Link href={urlImpressao} target="_blank">
-                    <Printer className="size-3.5" />
-                    Imprimir esta seleção
-                  </Link>
-                </Button>
-              )}
+              <Button
+                asChild
+                size="sm"
+                variant={marcados.size > 0 ? "default" : "outline"}
+              >
+                <Link href={urlImpressao} target="_blank">
+                  <Printer className="size-3.5" />
+                  {marcados.size > 0
+                    ? `Imprimir ${marcados.size} selecionado${marcados.size === 1 ? "" : "s"}`
+                    : serie || turma
+                      ? "Imprimir esta seleção"
+                      : "Imprimir todos"}
+                </Link>
+              </Button>
             </div>
+          </div>
+
+          {/* Barra de seleção da folha de impressão */}
+          <div className="mb-2 flex flex-wrap items-center gap-3 rounded-xl bg-amadeus-blue-50/60 px-4 py-2 text-sm">
+            <label className="flex cursor-pointer items-center gap-2 font-semibold text-amadeus-blue">
+              <input
+                type="checkbox"
+                checked={todosVisiveisMarcados}
+                onChange={alternarTodosVisiveis}
+                className="size-4 accent-[#1b3b7c]"
+              />
+              Selecionar {filtroAtivo ? "os filtrados" : "todos"} ({filtrados.length})
+            </label>
+            {marcados.size > 0 && (
+              <>
+                <span className="text-muted-foreground">
+                  {marcados.size} marcado{marcados.size === 1 ? "" : "s"} para
+                  impressão
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setMarcados(new Set())}
+                  className="text-xs font-semibold text-muted-foreground hover:text-amadeus-blue hover:underline"
+                >
+                  limpar seleção
+                </button>
+              </>
+            )}
           </div>
 
           <div className="overflow-hidden rounded-2xl border border-border/60 bg-white">
             {filtrados.map((card) => (
-              <LinhaAluno key={card.id} card={card} />
+              <LinhaAluno
+                key={card.id}
+                card={card}
+                marcado={marcados.has(card.codigo)}
+                onAlternar={() => alternarCard(card.codigo)}
+              />
             ))}
             {filtrados.length === 0 && (
               <p className="px-4 py-8 text-center text-sm text-muted-foreground">
@@ -359,7 +430,15 @@ function GrupoInscritos({
   );
 }
 
-function LinhaAluno({ card }: { card: CardComFoto }) {
+function LinhaAluno({
+  card,
+  marcado,
+  onAlternar,
+}: {
+  card: CardComFoto;
+  marcado: boolean;
+  onAlternar: () => void;
+}) {
   const router = useRouter();
   const [erro, setErro] = useState<string | null>(null);
   const [subindo, setSubindo] = useState<"video" | "foto" | null>(null);
@@ -458,8 +537,20 @@ function LinhaAluno({ card }: { card: CardComFoto }) {
   }
 
   return (
-    <div className="border-b border-border/50 px-4 py-3 last:border-0">
+    <div
+      className={`border-b border-border/50 px-4 py-3 last:border-0 ${
+        marcado ? "bg-amadeus-blue-50/40" : ""
+      }`}
+    >
       <div className="flex flex-wrap items-center gap-3">
+        <input
+          type="checkbox"
+          checked={marcado}
+          onChange={onAlternar}
+          title="Incluir na folha de impressão"
+          className="size-4 shrink-0 accent-[#1b3b7c]"
+        />
+
         {card.fotoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img

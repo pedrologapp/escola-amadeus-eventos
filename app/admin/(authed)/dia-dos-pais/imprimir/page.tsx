@@ -1,6 +1,11 @@
 import QRCode from "qrcode";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ordenarPorTurma, urlDoQr, type VideoPais } from "@/lib/dia-dos-pais";
+import {
+  codigoValido,
+  ordenarPorTurma,
+  urlDoQr,
+  type VideoPais,
+} from "@/lib/dia-dos-pais";
 import { assinarVarios } from "@/lib/dia-dos-pais-storage";
 import {
   CardImpresso,
@@ -29,6 +34,7 @@ interface Props {
   searchParams: Promise<{
     serie?: string;
     turma?: string;
+    codigos?: string;
     todos?: string;
     formato?: string;
     guias?: string;
@@ -42,11 +48,22 @@ export default async function ImprimirCardsPage({ searchParams }: Props) {
   const dim = dimensoes(formato);
   const mostrarGuias = sp.guias !== "0";
 
+  // Seleção explícita feita na tela do admin. Quando existe, manda: os
+  // filtros de série/turma não se aplicam por cima dela.
+  const codigos = (sp.codigos ?? "")
+    .split(",")
+    .map((c) => c.trim())
+    .filter((c) => codigoValido(c));
+
   const admin = createAdminClient();
   let query = admin.from("videos_pais").select("*");
 
-  if (sp.serie) query = query.eq("serie", sp.serie);
-  if (sp.turma) query = query.eq("turma", sp.turma);
+  if (codigos.length > 0) {
+    query = query.in("codigo", codigos);
+  } else {
+    if (sp.serie) query = query.eq("serie", sp.serie);
+    if (sp.turma) query = query.eq("turma", sp.turma);
+  }
 
   const { data } = await query;
   // Série, turma e nome — na ordem pedagógica, que é a ordem de entrega
@@ -55,7 +72,11 @@ export default async function ImprimirCardsPage({ searchParams }: Props) {
 
   // Por padrão só imprime quem já tem vídeo — card com QR que não leva
   // a lugar nenhum é papel jogado fora. ?todos=1 força incluir todos.
-  if (sp.todos !== "1") alunos = alunos.filter((a) => a.video_path);
+  // Numa seleção explícita a escola já decidiu, então respeitamos.
+  const semVideo = alunos.filter((a) => !a.video_path).length;
+  if (sp.todos !== "1" && codigos.length === 0) {
+    alunos = alunos.filter((a) => a.video_path);
+  }
 
   const fotos = await assinarVarios(
     alunos.map((a) => a.foto_path),
@@ -96,9 +117,18 @@ export default async function ImprimirCardsPage({ searchParams }: Props) {
           <strong>{alunos.length}</strong> card
           {alunos.length === 1 ? "" : "s"} · {folhas.length} folha
           {folhas.length === 1 ? "" : "s"}
-          {sp.serie ? ` · ${sp.serie}` : ""}
-          {sp.turma ? ` · Turma ${sp.turma}` : ""}
+          {codigos.length > 0 ? " · seleção da tela" : ""}
+          {!codigos.length && sp.serie ? ` · ${sp.serie}` : ""}
+          {!codigos.length && sp.turma ? ` · Turma ${sp.turma}` : ""}
         </div>
+
+        {/* Card sem vídeo tem QR que não leva a lugar nenhum. Se a escola
+            selecionou algum assim, é melhor avisar antes do papel. */}
+        {semVideo > 0 && (
+          <div className="destino alerta">
+            ⚠ {semVideo} sem vídeo
+          </div>
+        )}
 
         <div className="seletor">
           {(Object.keys(FORMATOS) as Formato[]).map((f) => {

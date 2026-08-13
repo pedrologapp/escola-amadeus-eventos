@@ -27,6 +27,7 @@ import path from "node:path";
 import os from "node:os";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { fileURLToPath } from "node:url";
 
 const execFileAsync = promisify(execFile);
 
@@ -53,7 +54,9 @@ if (!pastaVideos && !pastaFotos) {
 }
 
 // ---------------------------------------------------------------- env
-const raiz = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
+// fileURLToPath e não url.pathname: no Windows o pathname vem como
+// "/C:/Users/..." e o path.resolve monta um caminho que não existe.
+const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 for (const bruta of fs
   .readFileSync(path.join(raiz, ".env.local"), "utf8")
   .split(/\r?\n/)) {
@@ -127,13 +130,75 @@ function casar(nomeArquivo, cards) {
 }
 
 // ---------------------------------------------------------------- ffmpeg
-async function temFfmpeg() {
-  try {
-    await execFileAsync("ffmpeg", ["-version"]);
-    return true;
-  } catch {
-    return false;
+/**
+ * Onde está o ffmpeg.
+ *
+ * O `winget install Gyan.FFmpeg` só coloca o binário no PATH de
+ * terminais abertos DEPOIS da instalação — quem instala e roda o script
+ * na mesma janela leva um "não encontrado" sem entender por quê. Então
+ * procuramos também na pasta onde o winget instala.
+ */
+let CAMINHO_FFMPEG = null;
+
+async function acharFfmpeg() {
+  const candidatos = ["ffmpeg"];
+
+  const local = process.env.LOCALAPPDATA;
+  if (local) {
+    const raizWinget = path.join(local, "Microsoft", "WinGet", "Packages");
+    try {
+      for (const pasta of fs.readdirSync(raizWinget)) {
+        if (!/ffmpeg/i.test(pasta)) continue;
+        const base = path.join(raizWinget, pasta);
+        for (const sub of fs.readdirSync(base)) {
+          candidatos.push(path.join(base, sub, "bin", "ffmpeg.exe"));
+        }
+      }
+    } catch {
+      // sem winget ou sem a pasta: segue só com o PATH
+    }
   }
+
+  for (const c of candidatos) {
+    try {
+      await execFileAsync(c, ["-version"]);
+      CAMINHO_FFMPEG = c;
+      return true;
+    } catch {
+      // tenta o próximo
+    }
+  }
+  return false;
+}
+
+const ESCALA_720 =
+  "scale='if(gt(iw,ih),-2,min(720,iw))':'if(gt(iw,ih),min(720,ih),-2)':flags=lanczos";
+
+/** Teto por arquivo no bucket. Ficamos com folga abaixo dele. */
+const LIMITE_BUCKET_MB = 50;
+const ALVO_MB = 20;
+
+/** Duração em segundos, pra calcular bitrate quando precisar. */
+async function duracaoSegundos(arquivo) {
+  const ffprobe = (CAMINHO_FFMPEG ?? "ffmpeg").replace(/ffmpeg(\.exe)?$/i, (m) =>
+    m.toLowerCase().startsWith("ffmpeg.exe") ? "ffprobe.exe" : "ffprobe",
+  );
+  try {
+    const { stdout } = await execFileAsync(ffprobe, [
+      "-v", "error", "-show_entries", "format=duration",
+      "-of", "default=noprint_wrappers=1:nokey=1", arquivo,
+    ]);
+    const d = parseFloat(stdout.trim());
+    return Number.isFinite(d) && d > 0 ? d : null;
+  } catch {
+    return null;
+  }
+}
+
+async function rodarFfmpeg(args) {
+  await execFileAsync(CAMINHO_FFMPEG ?? "ffmpeg", args, {
+    maxBuffer: 1024 * 1024 * 32,
+  });
 }
 
 /**
@@ -142,20 +207,40 @@ async function temFfmpeg() {
  * -movflags +faststart é o detalhe que mais importa: joga o índice do
  * arquivo pro começo, então o vídeo começa a tocar enquanto baixa. Sem
  * isso o pai fica olhando pra tela preta até o download inteiro acabar.
+ *
+ * Se o CRF não der conta (cena com muito movimento, granulação, vídeo
+ * muito longo), refaz com bitrate calculado pro tamanho alvo. Sem essa
+ * segunda passada o arquivo passa do teto do bucket e o upload morre
+ * com "Payload too large" — que foi o que aconteceu no primeiro teste.
  */
 async function comprimir(entrada, saida) {
-  await execFileAsync(
-    "ffmpeg",
-    [
-      "-y", "-i", entrada,
-      "-vf", "scale='if(gt(iw,ih),-2,min(720,iw))':'if(gt(iw,ih),min(720,ih),-2)':flags=lanczos",
-      "-c:v", "libx264", "-crf", "28", "-preset", "veryfast", "-pix_fmt", "yuv420p",
-      "-c:a", "aac", "-b:a", "96k", "-ac", "2",
-      "-movflags", "+faststart",
-      saida,
-    ],
-    { maxBuffer: 1024 * 1024 * 32 },
-  );
+  await rodarFfmpeg([
+    "-y", "-i", entrada,
+    "-vf", ESCALA_720,
+    "-c:v", "libx264", "-crf", "28", "-preset", "veryfast", "-pix_fmt", "yuv420p",
+    "-c:a", "aac", "-b:a", "96k", "-ac", "2",
+    "-movflags", "+faststart",
+    saida,
+  ]);
+
+  const mb = fs.statSync(saida).size / 1024 / 1024;
+  if (mb <= LIMITE_BUCKET_MB * 0.9) return { recomprimido: false };
+
+  // Bitrate que cabe no alvo, descontando o áudio.
+  const dur = (await duracaoSegundos(entrada)) ?? 60;
+  const kbps = Math.max(400, Math.floor((ALVO_MB * 8 * 1024) / dur) - 96);
+
+  await rodarFfmpeg([
+    "-y", "-i", entrada,
+    "-vf", ESCALA_720,
+    "-c:v", "libx264", "-b:v", `${kbps}k`, "-maxrate", `${Math.floor(kbps * 1.3)}k`,
+    "-bufsize", `${kbps * 2}k`, "-preset", "veryfast", "-pix_fmt", "yuv420p",
+    "-c:a", "aac", "-b:a", "96k", "-ac", "2",
+    "-movflags", "+faststart",
+    saida,
+  ]);
+
+  return { recomprimido: true, kbps };
 }
 
 // ---------------------------------------------------------------- supabase
@@ -260,14 +345,17 @@ async function processar(pasta, tipo, cards) {
       if (tipo === "video") {
         const destinoLocal = path.join(tmp, `${card.codigo}.mp4`);
         const antes = fs.statSync(origem).size;
-        await comprimir(origem, destinoLocal);
+        const { recomprimido, kbps } = await comprimir(origem, destinoLocal);
         const depois = fs.statSync(destinoLocal).size;
 
         await subir(destinoLocal, `videos/${card.codigo}.mp4`, "video/mp4");
         await gravarPath(card.id, "video_path", `videos/${card.codigo}.mp4`);
         fs.unlinkSync(destinoLocal);
 
-        console.log(`ok (${mb(antes)}MB → ${mb(depois)}MB)`);
+        console.log(
+          `ok (${mb(antes)}MB → ${mb(depois)}MB)` +
+            (recomprimido ? ` [2ª passada a ${kbps}kbps]` : ""),
+        );
       } else {
         const ext = path.extname(arquivo).toLowerCase() === ".png" ? "png" : "jpg";
         const tipoMime = ext === "png" ? "image/png" : "image/jpeg";
@@ -297,13 +385,16 @@ if (cards.length === 0) {
 console.log(`${cards.length} card(s) cadastrado(s).`);
 
 if (pastaVideos) {
-  if (!dry && !(await temFfmpeg())) {
+  if (!dry && !(await acharFfmpeg())) {
     console.error(
-      "\nffmpeg não encontrado no PATH. Instale com:\n" +
+      "\nffmpeg não encontrado. Instale com:\n" +
         "  winget install Gyan.FFmpeg\n" +
         "e abra um terminal novo depois.",
     );
     process.exit(1);
+  }
+  if (CAMINHO_FFMPEG && CAMINHO_FFMPEG !== "ffmpeg") {
+    console.log(`(usando ffmpeg de ${CAMINHO_FFMPEG})`);
   }
   await processar(pastaVideos, "video", cards);
 }
