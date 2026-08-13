@@ -118,12 +118,6 @@ export function CardImpresso({
         <p className="rotulo">Um recado de</p>
         <p className={classeDoNome(nomes)}>{nomes}</p>
 
-        <div className="ornamento" aria-hidden>
-          <span className="fio" />
-          <span className="losango" />
-          <span className="fio" />
-        </div>
-
         {/* QR sempre em caixa branca: contraste é o que faz a câmera ler
             de primeira, ainda mais sob luz fraca. */}
         <div className="qr-caixa">
@@ -138,11 +132,19 @@ export function CardImpresso({
           </strong>
         </p>
 
-        <p className="frase">
-          “Todo filho guarda um pouco do pai
-          <br />
-          no adulto em quem se torna.”
-        </p>
+        {/* Frase em lettering + o pai abraçando o filho ao lado. Ambas
+            as artes têm transparência, então assentam no azul do card
+            sem moldura nenhuma. */}
+        <div className="bloco-frase">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/dia-dos-pais-frase.png"
+            alt="Todo filho guarda um pouco do pai no adulto em quem se torna."
+            className="frase-arte"
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/dia-dos-pais-ilustracao.png" alt="" className="ilustracao" />
+        </div>
 
         <footer className="card-rodape">
           {/* Versão negativa da logo: fundo transparente e "AMADEUS" em
@@ -206,7 +208,7 @@ export function cssCard(d: Dim) {
   /* Alturas somadas: ~147mm num card de 165mm, deixando ~6mm de folga
      pra nomes que quebram em 3 linhas. Mexer nestes fatores sem refazer
      a conta faz o rodapé sair cortado. */
-  .titulo-arte { width: ${d.cardW * 0.30}mm; height: auto; display: block; }
+  .titulo-arte { width: ${d.cardW * 0.27}mm; height: auto; display: block; }
 
   /* ---- Retrato ----
      Maior que o QR de propósito: quem tem que dominar o card é a
@@ -231,7 +233,7 @@ export function cssCard(d: Dim) {
   /* Em caixa alta, dourado e com peso: antes era cinza-claro e miúdo,
      e sumia contra o azul. O respiro maior separa da foto. */
   .rotulo {
-    margin: ${util * 0.03}mm 0 0; font-size: 6.5pt; font-weight: 700;
+    margin: ${util * 0.024}mm 0 0; font-size: 6.5pt; font-weight: 700;
     text-transform: uppercase; letter-spacing: .3em;
     color: #f2b014;
   }
@@ -250,22 +252,8 @@ export function cssCard(d: Dim) {
     color: rgba(255,255,255,.75);
   }
 
-  /* ---- Ornamento ---- */
-  .ornamento {
-    display: flex; align-items: center; gap: 1.6mm;
-    margin-top: ${util * 0.02}mm;
-  }
-  .ornamento .fio {
-    display: block; width: ${d.cardW * 0.17}mm; height: .22mm;
-    background: linear-gradient(to right, transparent, rgba(242,176,20,.7));
-  }
-  .ornamento .fio:last-child {
-    background: linear-gradient(to left, transparent, rgba(242,176,20,.7));
-  }
-  .ornamento .losango {
-    display: block; width: 1.5mm; height: 1.5mm;
-    background: #f2b014; transform: rotate(45deg);
-  }
+  /* O ornamento de losango saiu: com a arte da frase colorida no rodapé,
+     ele virava ruído — e os ~6mm que ocupava foram pro lettering. */
 
   /* ---- QR ----
      14% da altura útil ≈ 21mm num card de ofício. Com a URL curta o QR
@@ -276,7 +264,7 @@ export function cssCard(d: Dim) {
     background: #fff; border-radius: 1.2mm;
     box-shadow: 0 .6mm 1.6mm rgba(0,0,0,.3);
   }
-  .qr { width: ${util * 0.125}mm; height: ${util * 0.125}mm; }
+  .qr { width: ${util * 0.115}mm; height: ${util * 0.115}mm; }
   .qr svg { width: 100%; height: 100%; display: block; }
 
   /* Corpo e opacidade subiram: a 6–7pt translúcido, o texto imprimia
@@ -287,11 +275,16 @@ export function cssCard(d: Dim) {
   }
   .instrucao strong { color: #f2b014; font-weight: 700; }
 
-  .frase {
-    margin: ${util * 0.022}mm 0 0; max-width: ${d.cardW * 0.78}mm;
-    font-size: 7pt; line-height: 1.5; font-style: italic;
-    color: rgba(255,255,255,.82);
+  /* A frase e a ilustração dividem uma faixa: o lettering é largo e
+     baixo, a criança é alta e estreita — juntos ocupam a mesma altura
+     que a frase em texto ocupava, sem roubar espaço do QR. */
+  .bloco-frase {
+    margin-top: ${util * 0.022}mm;
+    display: flex; align-items: flex-end; justify-content: center;
+    gap: 1.5mm; width: 100%;
   }
+  .frase-arte { width: ${d.cardW * 0.42}mm; height: auto; display: block; }
+  .ilustracao { width: ${d.cardW * 0.15}mm; height: auto; display: block; }
 
   /* ---- Rodapé ---- */
   .card-rodape {

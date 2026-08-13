@@ -18,7 +18,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { nomesDoCard, type VideoPais } from "@/lib/dia-dos-pais";
+import { nomesDoCard, urlDoQr, type VideoPais } from "@/lib/dia-dos-pais";
 import {
   confirmarUpload,
   criarUploadUrl,
@@ -611,10 +611,14 @@ function LinhaAluno({
             <UserPlus className="size-4" />
           </button>
           <a
-            href={`/p/${card.codigo}`}
+            // URL absoluta, a mesma que vai dentro do QR. Um link
+            // relativo aqui apontaria para admin.escolaamadeus.com/p/...,
+            // e o proxy reescreve tudo desse subdomínio para /admin/*,
+            // caindo em 404. De quebra, isso testa o link real do card.
+            href={urlDoQr(card.codigo)}
             target="_blank"
             rel="noreferrer"
-            title="Ver a página do pai"
+            title="Ver a página do pai (mesmo link do QR)"
             className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-amadeus-blue-50 hover:text-amadeus-blue"
           >
             <ExternalLink className="size-4" />

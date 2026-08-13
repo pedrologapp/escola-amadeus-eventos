@@ -108,11 +108,11 @@ export default async function VideoDiaDosPaisPage({
             <Image
               src="/dia-dos-pais-titulo.png"
               alt="Feliz Dia dos Pais"
-              width={1000}
-              height={992}
+              width={900}
+              height={751}
               priority
-              sizes="(max-width: 640px) 62vw, 256px"
-              className="mt-6 h-auto w-56 max-w-[62%] sm:w-64"
+              sizes="(max-width: 640px) 70vw, 288px"
+              className="mt-6 h-auto w-64 max-w-[70%] sm:w-72"
             />
           </header>
 
@@ -159,13 +159,29 @@ export default async function VideoDiaDosPaisPage({
             )}
           </div>
 
-          <blockquote className="mt-9 text-center text-[17px] italic leading-relaxed text-white/85">
-            “Todo filho guarda um pouco do pai
-            <br />
-            no adulto em quem se torna.”
-          </blockquote>
+          {/* Frase da campanha em lettering + a ilustração do pai com o
+              filho. As duas artes têm transparência real, então caem
+              direto no azul sem virar retângulo. */}
+          <div className="mt-10 flex flex-col items-center gap-2 sm:flex-row sm:justify-center sm:gap-4">
+            <Image
+              src="/dia-dos-pais-frase.png"
+              alt="Todo filho guarda um pouco do pai no adulto em quem se torna."
+              width={950}
+              height={600}
+              sizes="(max-width: 640px) 86vw, 340px"
+              className="h-auto w-full max-w-[340px]"
+            />
+            <Image
+              src="/dia-dos-pais-ilustracao.png"
+              alt=""
+              width={700}
+              height={1018}
+              sizes="(max-width: 640px) 45vw, 150px"
+              className="h-auto w-40 sm:w-[150px]"
+            />
+          </div>
 
-          <p className="mt-5 text-center text-[15px] leading-relaxed text-white/75">
+          <p className="mt-6 text-center text-[15px] leading-relaxed text-white/75">
             Este vídeo é seu, para guardar e rever sempre que quiser.
           </p>
 
