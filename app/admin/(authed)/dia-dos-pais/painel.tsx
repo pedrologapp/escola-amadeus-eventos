@@ -31,6 +31,7 @@ import {
   adicionarIrmao,
   confirmarUpload,
   criarUploadUrl,
+  definirBrilhoEmLote,
   definirBrilhoFoto,
   definirVideoConjunto,
   gerarCardsDosAlunos,
@@ -179,6 +180,21 @@ export function PainelDiaDosPais({ cards, inscritos, eventoId }: Props) {
 
   const filtroAtivo = !!(serie || turma || busca);
 
+  const router = useRouter();
+  const [aplicandoBrilho, setAplicandoBrilho] = useState(false);
+  const [msgBrilho, setMsgBrilho] = useState<string | null>(null);
+
+  async function clarearSelecionados(valor: number) {
+    setMsgBrilho(null);
+    setAplicandoBrilho(true);
+    const r = await definirBrilhoEmLote([...marcados], valor);
+    setAplicandoBrilho(false);
+    if (r.error) return setMsgBrilho(r.error);
+    setMsgBrilho(`${r.alterados} ajustado${r.alterados === 1 ? "" : "s"}`);
+    router.refresh();
+    setTimeout(() => setMsgBrilho(null), 3000);
+  }
+
   return (
     <div className="space-y-6">
       {eventoId && inscritos.length > 0 && (
@@ -300,9 +316,38 @@ export function PainelDiaDosPais({ cards, inscritos, eventoId }: Props) {
             {marcados.size > 0 && (
               <>
                 <span className="text-muted-foreground">
-                  {marcados.size} marcado{marcados.size === 1 ? "" : "s"} para
-                  impressão
+                  {marcados.size} selecionado{marcados.size === 1 ? "" : "s"}
                 </span>
+
+                {/* Foto escura costuma vir em lote — mesma sala, mesma
+                    luz. Clarear de uma vez evita repetir o mesmo clique
+                    dezenas de vezes. */}
+                <span className="flex items-center gap-1">
+                  <Sun className="size-3.5 text-amadeus-yellow-dark" />
+                  <span className="text-xs text-muted-foreground">
+                    clarear:
+                  </span>
+                  {NIVEIS_BRILHO.map((n) => (
+                    <button
+                      key={n.valor}
+                      type="button"
+                      disabled={aplicandoBrilho}
+                      onClick={() => clarearSelecionados(n.valor)}
+                      className="rounded-lg border border-border/70 bg-white px-2 py-0.5 text-xs font-semibold text-amadeus-blue transition-colors hover:bg-amadeus-yellow-50 disabled:opacity-50"
+                    >
+                      {n.valor === 100 ? "Original" : `${n.valor}%`}
+                    </button>
+                  ))}
+                  {aplicandoBrilho && (
+                    <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
+                  )}
+                  {msgBrilho && (
+                    <span className="text-xs font-semibold text-emerald-600">
+                      {msgBrilho}
+                    </span>
+                  )}
+                </span>
+
                 <button
                   type="button"
                   onClick={() => setMarcados(new Set())}

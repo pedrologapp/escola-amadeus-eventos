@@ -273,6 +273,52 @@ export async function definirBrilhoFoto(
   return { ok: true };
 }
 
+/**
+ * Aplica o mesmo brilho em vários cards de uma vez.
+ *
+ * Fotos escuras costumam vir em lote — mesma sala, mesma luz, mesma
+ * sessão de fotos. Ajustar uma a uma seria repetir o mesmo clique
+ * dezenas de vezes.
+ *
+ * Dentro de cada card vale para TODAS as crianças: se a luz estava
+ * ruim, estava ruim para os irmãos também. Depois dá pra afinar caso a
+ * caso pelo botão da foto.
+ */
+export async function definirBrilhoEmLote(codigos: string[], brilho: number) {
+  await exigirLogin();
+  if (codigos.length === 0) return { error: "Nenhum card selecionado." };
+
+  const valor = Math.min(250, Math.max(100, Math.round(brilho)));
+  const admin = createAdminClient();
+
+  const { data: cards, error: erroBusca } = await admin
+    .from("videos_pais")
+    .select("id, irmaos_dados")
+    .in("codigo", codigos);
+
+  if (erroBusca) return { error: `Erro ao buscar: ${erroBusca.message}` };
+
+  let alterados = 0;
+  for (const c of cards ?? []) {
+    const irmaos = ((c.irmaos_dados ?? []) as Irmao[]).map((i) => ({
+      ...i,
+      brilho: valor,
+    }));
+    const { error } = await admin
+      .from("videos_pais")
+      .update({
+        brilho_foto: valor,
+        irmaos_dados: irmaos,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", c.id);
+    if (!error) alterados++;
+  }
+
+  revalidatePath("/admin/dia-dos-pais");
+  return { ok: true, alterados };
+}
+
 /** Tira um irmão do card. O card próprio dele NÃO volta sozinho. */
 export async function removerIrmao(id: string, indice: number) {
   await exigirLogin();
