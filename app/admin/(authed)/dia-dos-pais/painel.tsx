@@ -29,6 +29,7 @@ import {
   removerCard,
   removerIrmao,
 } from "./actions";
+import { DialogoSenha } from "./dialogo-senha";
 
 const BUCKET = "dia-dos-pais";
 
@@ -462,6 +463,9 @@ function LinhaAluno({
   const [editandoIrmao, setEditandoIrmao] = useState(false);
   const [novoIrmao, setNovoIrmao] = useState("");
   const [sugestoes, setSugestoes] = useState<Sugestao[]>([]);
+  const [pedindoSenha, setPedindoSenha] = useState(false);
+  const [excluindo, setExcluindo] = useState(false);
+  const [erroSenha, setErroSenha] = useState<string | null>(null);
 
   /** indiceIrmao null = aluno principal; 0,1,2 = irmão daquela posição. */
   async function enviar(
@@ -578,18 +582,14 @@ function LinhaAluno({
     else router.refresh();
   }
 
-  async function excluir() {
-    if (
-      !confirm(
-        `Remover o card de ${nomesDoCard(card)}?\n\n` +
-          `Se esse card já foi impresso e entregue, o QR do papel para de funcionar.`,
-      )
-    ) {
-      return;
-    }
-    const r = await removerCard(card.id);
-    if (r.error) setErro(r.error);
-    else router.refresh();
+  async function excluir(senha: string) {
+    setErroSenha(null);
+    setExcluindo(true);
+    const r = await removerCard(card.id, senha);
+    setExcluindo(false);
+    if (r.error) return setErroSenha(r.error);
+    setPedindoSenha(false);
+    router.refresh();
   }
 
   return (
@@ -677,14 +677,32 @@ function LinhaAluno({
           </a>
           <button
             type="button"
-            onClick={excluir}
-            title="Remover card"
+            onClick={() => {
+              setErroSenha(null);
+              setPedindoSenha(true);
+            }}
+            title="Remover card (pede senha)"
             className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600"
           >
             <Trash2 className="size-4" />
           </button>
         </div>
       </div>
+
+      <DialogoSenha
+        aberto={pedindoSenha}
+        ocupado={excluindo}
+        erro={erroSenha}
+        titulo="Excluir card"
+        descricao={
+          `Isto apaga o card de ${nomesDoCard(card)} e os arquivos ` +
+          `(foto e vídeo) do servidor. Se o card já foi impresso e entregue, ` +
+          `o QR daquele papel para de funcionar para sempre. Digite a senha ` +
+          `para confirmar.`
+        }
+        onCancelar={() => setPedindoSenha(false)}
+        onConfirmar={excluir}
+      />
 
       {/* Como o vídeo foi gravado nesta família */}
       {card.irmaos_dados.length > 0 && (

@@ -338,11 +338,19 @@ export async function confirmarUpload(
 /**
  * Remove o card e os arquivos do Storage.
  *
- * Cuidado: se o card já foi impresso e entregue, o QR do papel para de
- * funcionar. A tela avisa antes de chamar isso.
+ * Exige a senha de ações sensíveis — a mesma de excluir evento. É a
+ * operação mais destrutiva do módulo: apaga o vídeo que a criança
+ * gravou e, se o card já foi impresso, o QR daquele papel para de
+ * funcionar para sempre.
+ *
+ * A senha é conferida AQUI, e não só na tela: validar no cliente
+ * protegeria o botão, não a ação.
  */
-export async function removerCard(id: string) {
+export async function removerCard(id: string, senha: string) {
   await exigirLogin();
+
+  const senhaCorreta = process.env.ADMIN_ACTION_PASSWORD || "Admim123";
+  if (senha !== senhaCorreta) return { error: "Senha incorreta." };
 
   const admin = createAdminClient();
   const { data: linha } = await admin
