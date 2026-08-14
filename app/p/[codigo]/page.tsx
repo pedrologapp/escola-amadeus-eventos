@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import {
   codigoValido,
   nomesDoCard,
-  participantesDoCard,
+  videosDoCard,
   type VideoPais,
 } from "@/lib/dia-dos-pais";
 import { assinarVarios } from "@/lib/dia-dos-pais-storage";
@@ -75,19 +75,19 @@ export default async function VideoDiaDosPaisPage({
   const video = await buscarVideo(codigo);
   if (!video) notFound();
 
-  // Cada criança tem o seu recado, então a página mostra um player por
-  // participante — o principal e cada irmão.
-  const participantes = participantesDoCard(video);
+  // Um player por criança, ou um só quando a família gravou junto —
+  // quem decide isso é a escola, no admin.
+  const vids = videosDoCard(video);
   const assinados = await assinarVarios(
-    participantes.flatMap((p) => [p.video_path, p.foto_path]),
+    vids.flatMap((p) => [p.video_path, p.foto_path]),
     VALIDADE_SEGUNDOS,
   );
-  const midias = participantes.map((p) => ({
+  const midias = vids.map((p) => ({
     nome: p.nome,
     videoUrl: p.video_path ? assinados.get(p.video_path) : undefined,
     fotoUrl: p.foto_path ? assinados.get(p.foto_path) : undefined,
   }));
-  const temIrmaos = midias.length > 1;
+  const identificarCadaVideo = midias.length > 1;
 
   return (
     <main
@@ -146,7 +146,7 @@ export default async function VideoDiaDosPaisPage({
               <div key={i}>
                 {/* Com irmãos, cada vídeo leva o nome de quem gravou —
                     senão o pai não sabe qual filho está vendo. */}
-                {temIrmaos && (
+                {identificarCadaVideo && (
                   <p className="mb-2 text-center text-[15px] font-bold text-[#f2b014]">
                     {m.nome}
                   </p>

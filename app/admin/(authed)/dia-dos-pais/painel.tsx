@@ -23,6 +23,7 @@ import {
   adicionarIrmao,
   confirmarUpload,
   criarUploadUrl,
+  definirVideoConjunto,
   gerarCardsDosAlunos,
   procurarIrmaos,
   removerCard,
@@ -564,6 +565,13 @@ function LinhaAluno({
     router.refresh();
   }
 
+  async function trocarModoVideo(conjunto: boolean) {
+    if (conjunto === card.video_conjunto) return;
+    const r = await definirVideoConjunto(card.id, conjunto);
+    if (r.error) setErro(r.error);
+    else router.refresh();
+  }
+
   async function tirarIrmao(indice: number) {
     const r = await removerIrmao(card.id, indice);
     if (r.error) setErro(r.error);
@@ -678,6 +686,42 @@ function LinhaAluno({
         </div>
       </div>
 
+      {/* Como o vídeo foi gravado nesta família */}
+      {card.irmaos_dados.length > 0 && (
+        <div className="mt-2.5 flex flex-wrap items-center gap-2 pl-14 text-xs">
+          <span className="font-semibold text-muted-foreground">Vídeo:</span>
+          <div className="flex overflow-hidden rounded-lg border border-border/70">
+            <button
+              type="button"
+              onClick={() => trocarModoVideo(false)}
+              className={`px-2.5 py-1 font-semibold transition-colors ${
+                !card.video_conjunto
+                  ? "bg-amadeus-blue text-white"
+                  : "bg-white text-muted-foreground hover:bg-amadeus-blue-50"
+              }`}
+            >
+              Um por criança
+            </button>
+            <button
+              type="button"
+              onClick={() => trocarModoVideo(true)}
+              className={`px-2.5 py-1 font-semibold transition-colors ${
+                card.video_conjunto
+                  ? "bg-amadeus-blue text-white"
+                  : "bg-white text-muted-foreground hover:bg-amadeus-blue-50"
+              }`}
+            >
+              Um vídeo só (gravaram juntos)
+            </button>
+          </div>
+          {card.video_conjunto && (
+            <span className="text-muted-foreground">
+              a página mostra só o vídeo de {card.aluno_nome.split(" ")[0]}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Irmãos: cada um com foto e vídeo próprios */}
       {(card.irmaos_dados.length > 0 || editandoIrmao) && (
         <div className="mt-3 space-y-2 pl-14">
@@ -715,15 +759,23 @@ function LinhaAluno({
                 progresso={progresso}
                 onArquivo={(f) => enviar("foto", f, idx)}
               />
-              <BotaoUpload
-                rotulo="Vídeo"
-                icone={<Video className="size-3.5" />}
-                aceita="video/*"
-                pronto={!!irmao.video_path}
-                ocupado={subindo === `video:${idx}`}
-                progresso={progresso}
-                onArquivo={(f) => enviar("video", f, idx)}
-              />
+              {/* Com vídeo conjunto não há o que subir aqui: a página
+                  mostra só o vídeo do aluno principal. */}
+              {card.video_conjunto ? (
+                <span className="px-2 text-xs italic text-muted-foreground">
+                  no vídeo do irmão
+                </span>
+              ) : (
+                <BotaoUpload
+                  rotulo="Vídeo"
+                  icone={<Video className="size-3.5" />}
+                  aceita="video/*"
+                  pronto={!!irmao.video_path}
+                  ocupado={subindo === `video:${idx}`}
+                  progresso={progresso}
+                  onArquivo={(f) => enviar("video", f, idx)}
+                />
+              )}
               <button
                 type="button"
                 onClick={() => tirarIrmao(idx)}

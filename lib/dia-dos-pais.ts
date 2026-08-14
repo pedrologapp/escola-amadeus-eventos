@@ -60,6 +60,8 @@ export interface VideoPais {
   aluno_nome: string;
   /** Irmãos que dividem este card. Vazio = card de um aluno só. */
   irmaos_dados: Irmao[];
+  /** true = um vídeo só pelos irmãos todos; false = um por criança. */
+  video_conjunto: boolean;
   serie: string | null;
   turma: string | null;
   video_path: string | null;
@@ -88,6 +90,35 @@ export function participantesDoCard(
     },
     ...(v.irmaos_dados ?? []),
   ];
+}
+
+/**
+ * Os vídeos que a página deve mostrar.
+ *
+ * Com `video_conjunto`, a família gravou um vídeo só com as crianças
+ * juntas: aparece um player, sem nome em cima (os dois estão ali). Sem
+ * ele, cada criança tem o seu e o nome identifica quem é quem.
+ *
+ * As FOTOS não seguem essa regra — são sempre uma por criança, porque
+ * enquadrar dois irmãos num retrato só obriga a cortar os dois.
+ */
+export function videosDoCard(
+  v: Pick<
+    VideoPais,
+    | "aluno_nome"
+    | "foto_path"
+    | "video_path"
+    | "irmaos_dados"
+    | "video_conjunto"
+  >,
+): { nome: string; video_path: string | null; foto_path: string | null }[] {
+  const todos = participantesDoCard(v);
+  if (v.video_conjunto) {
+    return [
+      { nome: nomesDoCard(v), video_path: v.video_path, foto_path: v.foto_path },
+    ];
+  }
+  return todos;
 }
 
 /**

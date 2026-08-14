@@ -205,6 +205,28 @@ export async function adicionarIrmao(
   return { ok: true, absorvido };
 }
 
+/**
+ * Escolhe se os irmãos aparecem num vídeo só ou cada um no seu.
+ *
+ * Não dá pra deduzir do arquivo: algumas famílias gravaram as crianças
+ * juntas, outras separadas. As fotos continuam uma por criança nos dois
+ * casos — num retrato só, os dois saem cortados.
+ */
+export async function definirVideoConjunto(id: string, conjunto: boolean) {
+  await exigirLogin();
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("videos_pais")
+    .update({ video_conjunto: conjunto, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) return { error: `Erro ao salvar: ${error.message}` };
+
+  revalidatePath("/admin/dia-dos-pais");
+  return { ok: true };
+}
+
 /** Tira um irmão do card. O card próprio dele NÃO volta sozinho. */
 export async function removerIrmao(id: string, indice: number) {
   await exigirLogin();
