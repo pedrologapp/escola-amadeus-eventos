@@ -50,6 +50,25 @@ export interface Irmao {
   aluno_id: string | null;
   foto_path: string | null;
   video_path: string | null;
+  /** Brilho na exibição, em %. 100 = original. Não altera o arquivo. */
+  brilho?: number;
+}
+
+/** Níveis oferecidos na tela. Passar de 200% "lava" a foto. */
+export const NIVEIS_BRILHO = [
+  { valor: 100, rotulo: "Original" },
+  { valor: 125, rotulo: "Clarear" },
+  { valor: 150, rotulo: "Clarear +" },
+  { valor: 180, rotulo: "Clarear ++" },
+] as const;
+
+/** O filtro CSS correspondente. O Chrome aplica isso também na impressão. */
+export function filtroBrilho(brilho?: number | null) {
+  const b = brilho ?? 100;
+  if (b === 100) return undefined;
+  // Um toque de contraste junto: brilho puro em foto subexposta deixa a
+  // imagem clara mas chapada, e o rosto continua sem definição.
+  return `brightness(${b}%) contrast(${100 + (b - 100) * 0.25}%)`;
 }
 
 export interface VideoPais {
@@ -62,6 +81,8 @@ export interface VideoPais {
   irmaos_dados: Irmao[];
   /** true = um vídeo só pelos irmãos todos; false = um por criança. */
   video_conjunto: boolean;
+  /** Brilho da foto do aluno principal, em %. 100 = original. */
+  brilho_foto: number;
   serie: string | null;
   turma: string | null;
   video_path: string | null;
@@ -79,7 +100,7 @@ export function participantesDoCard(
   v: Pick<
     VideoPais,
     "aluno_nome" | "foto_path" | "video_path" | "irmaos_dados"
-  >,
+  > & { brilho_foto?: number },
 ): Irmao[] {
   return [
     {
@@ -87,6 +108,7 @@ export function participantesDoCard(
       aluno_id: null,
       foto_path: v.foto_path,
       video_path: v.video_path,
+      brilho: v.brilho_foto ?? 100,
     },
     ...(v.irmaos_dados ?? []),
   ];
@@ -111,11 +133,21 @@ export function videosDoCard(
     | "irmaos_dados"
     | "video_conjunto"
   >,
-): { nome: string; video_path: string | null; foto_path: string | null }[] {
+): {
+  nome: string;
+  video_path: string | null;
+  foto_path: string | null;
+  brilho?: number;
+}[] {
   const todos = participantesDoCard(v);
   if (v.video_conjunto) {
     return [
-      { nome: nomesDoCard(v), video_path: v.video_path, foto_path: v.foto_path },
+      {
+        nome: nomesDoCard(v),
+        video_path: v.video_path,
+        foto_path: v.foto_path,
+        brilho: todos[0]?.brilho,
+      },
     ];
   }
   return todos;

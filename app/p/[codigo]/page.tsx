@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   codigoValido,
+  filtroBrilho,
   nomesDoCard,
   videosDoCard,
   type VideoPais,
@@ -86,6 +87,7 @@ export default async function VideoDiaDosPaisPage({
     nome: p.nome,
     videoUrl: p.video_path ? assinados.get(p.video_path) : undefined,
     fotoUrl: p.foto_path ? assinados.get(p.foto_path) : undefined,
+    brilho: p.brilho ?? video.brilho_foto,
   }));
   const identificarCadaVideo = midias.length > 1;
 
@@ -157,6 +159,9 @@ export default async function VideoDiaDosPaisPage({
                     playsInline
                     preload="metadata"
                     poster={m.fotoUrl}
+                    // O poster é a foto da criança, então segue o mesmo
+                    // ajuste de brilho aplicado no card.
+                    style={{ filter: filtroBrilho(m.brilho) }}
                     // Sem proporção fixa: os vídeos são gravados no celular,
                     // em pé, e forçar 16:9 punha tarja preta dos dois lados.
                     className="mx-auto max-h-[72vh] w-auto max-w-full rounded-2xl bg-black shadow-[0_18px_50px_-12px_rgba(0,0,0,0.7)] ring-1 ring-[#f2b014]/40"

@@ -227,6 +227,52 @@ export async function definirVideoConjunto(id: string, conjunto: boolean) {
   return { ok: true };
 }
 
+/**
+ * Ajusta o brilho com que a foto é exibida.
+ *
+ * Só o número é guardado — o arquivo original fica intocado no Storage.
+ * Dá pra experimentar, comparar e voltar ao original sem reenviar nada.
+ *
+ * @param indiceIrmao null = aluno principal; 0,1,2 = irmão.
+ */
+export async function definirBrilhoFoto(
+  id: string,
+  brilho: number,
+  indiceIrmao: number | null = null,
+) {
+  await exigirLogin();
+
+  const valor = Math.min(250, Math.max(100, Math.round(brilho)));
+  const admin = createAdminClient();
+
+  if (indiceIrmao === null) {
+    const { error } = await admin
+      .from("videos_pais")
+      .update({ brilho_foto: valor, updated_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) return { error: `Erro ao salvar: ${error.message}` };
+  } else {
+    const { data: card } = await admin
+      .from("videos_pais")
+      .select("irmaos_dados")
+      .eq("id", id)
+      .single<Pick<VideoPais, "irmaos_dados">>();
+
+    const irmaos = [...(card?.irmaos_dados ?? [])];
+    if (!irmaos[indiceIrmao]) return { error: "Irmão não encontrado." };
+    irmaos[indiceIrmao] = { ...irmaos[indiceIrmao], brilho: valor };
+
+    const { error } = await admin
+      .from("videos_pais")
+      .update({ irmaos_dados: irmaos, updated_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) return { error: `Erro ao salvar: ${error.message}` };
+  }
+
+  revalidatePath("/admin/dia-dos-pais");
+  return { ok: true };
+}
+
 /** Tira um irmão do card. O card próprio dele NÃO volta sozinho. */
 export async function removerIrmao(id: string, indice: number) {
   await exigirLogin();

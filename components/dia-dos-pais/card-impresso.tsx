@@ -9,6 +9,8 @@
  * três formatos de papel saem com as mesmas proporções.
  */
 
+import { filtroBrilho } from "@/lib/dia-dos-pais";
+
 /**
  * O card é sempre exatamente 1/4 da folha (metade da largura × metade
  * da altura). Assim, imprimindo no MESMO papel que deu origem à placa
@@ -80,8 +82,8 @@ export function CardImpresso({
   qrSvg,
 }: {
   aluno: DadosCard;
-  /** Uma URL por criança do card (a do principal primeiro). */
-  fotos: (string | undefined)[];
+  /** Uma foto por criança do card (a do principal primeiro). */
+  fotos: { url?: string; brilho?: number }[];
   qrSvg: string;
 }) {
   // Série e turma não aparecem no card: quem recebe é o pai, e o que
@@ -112,9 +114,16 @@ export function CardImpresso({
         <div className={`retratos ${fotos.length > 1 ? "duplo" : ""}`}>
           {fotos.map((f, i) => (
             <div className="retrato" key={i}>
-              {f ? (
+              {f?.url ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={f} alt="" className="foto" />
+                <img
+                  src={f.url}
+                  alt=""
+                  className="foto"
+                  // O Chrome aplica filtro CSS na impressão também, então
+                  // a foto clareada sai clareada no papel.
+                  style={{ filter: filtroBrilho(f.brilho) }}
+                />
               ) : (
                 <div className="foto foto-vazia">sem foto</div>
               )}

@@ -115,15 +115,17 @@ export default async function PreviaCardPage({
             // irmão, então leva duas fotos.
             fotos={
               i === 0
-                ? [undefined]
+                ? [{}]
                 : [
-                    retratoFalso(
-                      iniciais(e.aluno_nome),
-                      ["#8a6f4e", "#5f8f77", "#a96f92", "#6d88bd"][i],
-                    ),
-                    ...(e.irmaos ?? []).map((n) =>
-                      retratoFalso(iniciais(n), "#c07a4a"),
-                    ),
+                    {
+                      url: retratoFalso(
+                        iniciais(e.aluno_nome),
+                        ["#8a6f4e", "#5f8f77", "#a96f92", "#6d88bd"][i],
+                      ),
+                    },
+                    ...(e.irmaos ?? []).map((n) => ({
+                      url: retratoFalso(iniciais(n), "#c07a4a"),
+                    })),
                   ]
             }
             qrSvg={qrs[i]}

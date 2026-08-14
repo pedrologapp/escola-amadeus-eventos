@@ -190,10 +190,14 @@ export default async function ImprimirCardsPage({ searchParams }: Props) {
                 key={a.id}
                 aluno={{ ...a, irmaos: (a.irmaos_dados ?? []).map((x) => x.nome) }}
                 fotos={[
-                  a.foto_path ? fotos.get(a.foto_path) : undefined,
-                  ...(a.irmaos_dados ?? []).map((x) =>
-                    x.foto_path ? fotos.get(x.foto_path) : undefined,
-                  ),
+                  {
+                    url: a.foto_path ? fotos.get(a.foto_path) : undefined,
+                    brilho: a.brilho_foto,
+                  },
+                  ...(a.irmaos_dados ?? []).map((x) => ({
+                    url: x.foto_path ? fotos.get(x.foto_path) : undefined,
+                    brilho: x.brilho,
+                  })),
                 ]}
                 qrSvg={qrs[i]}
               />

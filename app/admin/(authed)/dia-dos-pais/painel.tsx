@@ -9,6 +9,7 @@ import {
   Image as ImageIcon,
   Loader2,
   Printer,
+  Sun,
   Trash2,
   UserPlus,
   Video,
@@ -19,6 +20,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import {
+  filtroBrilho,
+  NIVEIS_BRILHO,
   nomesDoCard,
   statusDoCard,
   urlDoQr,
@@ -28,6 +31,7 @@ import {
   adicionarIrmao,
   confirmarUpload,
   criarUploadUrl,
+  definirBrilhoFoto,
   definirVideoConjunto,
   gerarCardsDosAlunos,
   procurarIrmaos,
@@ -626,6 +630,12 @@ function LinhaAluno({
     router.refresh();
   }
 
+  async function mudarBrilho(valor: number, indiceIrmao: number | null) {
+    const r = await definirBrilhoFoto(card.id, valor, indiceIrmao);
+    if (r.error) setErro(r.error);
+    else router.refresh();
+  }
+
   async function trocarModoVideo(conjunto: boolean) {
     if (conjunto === card.video_conjunto) return;
     const r = await definirVideoConjunto(card.id, conjunto);
@@ -670,6 +680,7 @@ function LinhaAluno({
             src={card.fotoUrl}
             alt={card.aluno_nome}
             className="size-11 shrink-0 rounded-full object-cover"
+            style={{ filter: filtroBrilho(card.brilho_foto) }}
           />
         ) : (
           <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-amadeus-blue-50 text-amadeus-blue/40">
@@ -718,6 +729,12 @@ function LinhaAluno({
             progresso={progresso}
             onArquivo={(f) => enviar("foto", f)}
           />
+          {card.foto_path && (
+            <ControleBrilho
+              valor={card.brilho_foto}
+              onMudar={(v) => mudarBrilho(v, null)}
+            />
+          )}
           <BotaoUpload
             rotulo="Vídeo"
             icone={<Video className="size-3.5" />}
@@ -828,6 +845,7 @@ function LinhaAluno({
                   src={card.fotosIrmaos[idx]!}
                   alt=""
                   className="size-9 shrink-0 rounded-full object-cover"
+                  style={{ filter: filtroBrilho(irmao.brilho) }}
                 />
               ) : (
                 <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white text-amadeus-blue/30">
@@ -851,6 +869,12 @@ function LinhaAluno({
                 progresso={progresso}
                 onArquivo={(f) => enviar("foto", f, idx)}
               />
+              {irmao.foto_path && (
+                <ControleBrilho
+                  valor={irmao.brilho ?? 100}
+                  onMudar={(v) => mudarBrilho(v, idx)}
+                />
+              )}
               {/* Com vídeo conjunto não há o que subir aqui: a página
                   mostra só o vídeo do aluno principal. */}
               {card.video_conjunto ? (
@@ -959,6 +983,59 @@ function LinhaAluno({
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * Ajuste de brilho da foto. Só o número é salvo — o arquivo original
+ * fica intacto, então dá pra ir testando e voltar ao original sem
+ * reenviar nada.
+ */
+function ControleBrilho({
+  valor,
+  onMudar,
+}: {
+  valor: number;
+  onMudar: (v: number) => void;
+}) {
+  const [aberto, setAberto] = useState(false);
+
+  return (
+    <span className="relative">
+      <button
+        type="button"
+        onClick={() => setAberto((v) => !v)}
+        title="Ajustar brilho da foto"
+        className={`flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-bold transition-colors ${
+          valor > 100
+            ? "bg-amber-100 text-amber-800"
+            : "text-muted-foreground hover:bg-amadeus-blue-50 hover:text-amadeus-blue"
+        }`}
+      >
+        <Sun className="size-3.5" />
+        {valor > 100 && `${valor}%`}
+      </button>
+
+      {aberto && (
+        <span className="absolute right-0 z-30 mt-1 flex flex-col overflow-hidden rounded-xl border border-border/60 bg-white shadow-lg">
+          {NIVEIS_BRILHO.map((n) => (
+            <button
+              key={n.valor}
+              type="button"
+              onClick={() => {
+                onMudar(n.valor);
+                setAberto(false);
+              }}
+              className={`whitespace-nowrap px-3 py-1.5 text-left text-xs font-semibold transition-colors hover:bg-amadeus-blue-50 ${
+                n.valor === valor ? "bg-amadeus-blue-50 text-amadeus-blue" : ""
+              }`}
+            >
+              {n.rotulo}
+            </button>
+          ))}
+        </span>
+      )}
+    </span>
   );
 }
 
