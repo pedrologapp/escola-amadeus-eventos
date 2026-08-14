@@ -5,9 +5,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import {
   codigoValido,
   nomesDoCard,
+  participantesDoCard,
   type VideoPais,
 } from "@/lib/dia-dos-pais";
-import { assinarArquivo } from "@/lib/dia-dos-pais-storage";
+import { assinarVarios } from "@/lib/dia-dos-pais-storage";
 
 /**
  * Página do vídeo do Dia dos Pais — o destino do QR impresso no card.
@@ -74,10 +75,19 @@ export default async function VideoDiaDosPaisPage({
   const video = await buscarVideo(codigo);
   if (!video) notFound();
 
-  const [videoUrl, fotoUrl] = await Promise.all([
-    assinarArquivo(video.video_path, VALIDADE_SEGUNDOS),
-    assinarArquivo(video.foto_path, VALIDADE_SEGUNDOS),
-  ]);
+  // Cada criança tem o seu recado, então a página mostra um player por
+  // participante — o principal e cada irmão.
+  const participantes = participantesDoCard(video);
+  const assinados = await assinarVarios(
+    participantes.flatMap((p) => [p.video_path, p.foto_path]),
+    VALIDADE_SEGUNDOS,
+  );
+  const midias = participantes.map((p) => ({
+    nome: p.nome,
+    videoUrl: p.video_path ? assinados.get(p.video_path) : undefined,
+    fotoUrl: p.foto_path ? assinados.get(p.foto_path) : undefined,
+  }));
+  const temIrmaos = midias.length > 1;
 
   return (
     <main
@@ -130,33 +140,43 @@ export default async function VideoDiaDosPaisPage({
           {/* Fio dourado — separador discreto, no lugar de mais espaço vazio */}
           <div className="mx-auto mt-5 h-px w-24 bg-gradient-to-r from-transparent via-[#f2b014]/60 to-transparent" />
 
-          {/* O vídeo */}
-          <div className="mt-5">
-            {videoUrl ? (
-              <video
-                controls
-                playsInline
-                preload="metadata"
-                poster={fotoUrl ?? undefined}
-                // Sem proporção fixa: os vídeos são gravados no celular, em
-                // pé, e forçar 16:9 punha tarja preta dos dois lados. Assim
-                // o player toma a forma do vídeo, seja ele qual for.
-                className="mx-auto max-h-[72vh] w-auto max-w-full rounded-2xl bg-black shadow-[0_18px_50px_-12px_rgba(0,0,0,0.7)] ring-1 ring-[#f2b014]/40"
-              >
-                <source src={videoUrl} type="video/mp4" />
-                Seu navegador não consegue exibir este vídeo.
-              </video>
-            ) : (
-              <div className="rounded-2xl bg-white/[0.06] px-6 py-12 text-center ring-1 ring-white/10">
-                <p className="text-lg text-white">
-                  O vídeo está sendo preparado
-                </p>
-                <p className="mt-2 text-sm leading-relaxed text-white/60">
-                  Guarde o cartãozinho e tente de novo em algumas horas — o
-                  link é permanente e não muda.
-                </p>
+          {/* Um player por criança */}
+          <div className="mt-5 flex flex-col gap-8">
+            {midias.map((m, i) => (
+              <div key={i}>
+                {/* Com irmãos, cada vídeo leva o nome de quem gravou —
+                    senão o pai não sabe qual filho está vendo. */}
+                {temIrmaos && (
+                  <p className="mb-2 text-center text-[15px] font-bold text-[#f2b014]">
+                    {m.nome}
+                  </p>
+                )}
+                {m.videoUrl ? (
+                  <video
+                    controls
+                    playsInline
+                    preload="metadata"
+                    poster={m.fotoUrl}
+                    // Sem proporção fixa: os vídeos são gravados no celular,
+                    // em pé, e forçar 16:9 punha tarja preta dos dois lados.
+                    className="mx-auto max-h-[72vh] w-auto max-w-full rounded-2xl bg-black shadow-[0_18px_50px_-12px_rgba(0,0,0,0.7)] ring-1 ring-[#f2b014]/40"
+                  >
+                    <source src={m.videoUrl} type="video/mp4" />
+                    Seu navegador não consegue exibir este vídeo.
+                  </video>
+                ) : (
+                  <div className="rounded-2xl bg-white/[0.06] px-6 py-12 text-center ring-1 ring-white/10">
+                    <p className="text-lg text-white">
+                      O vídeo está sendo preparado
+                    </p>
+                    <p className="mt-2 text-sm leading-relaxed text-white/60">
+                      Guarde o cartãozinho e tente de novo em algumas horas —
+                      o link é permanente e não muda.
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
+            ))}
           </div>
 
           {/* Frase da campanha em lettering + a ilustração do pai com o

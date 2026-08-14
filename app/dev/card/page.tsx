@@ -33,6 +33,14 @@ function retratoFalso(iniciais: string, cor: string) {
   return `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
 }
 
+function iniciais(nome: string) {
+  return nome
+    .split(" ")
+    .slice(0, 2)
+    .map((p) => p[0])
+    .join("");
+}
+
 const EXEMPLOS = [
   { id: "1", codigo: "k7m2xq", aluno_nome: "Maria Clara", serie: "Grupo V", turma: "A" },
   {
@@ -103,18 +111,20 @@ export default async function PreviaCardPage({
             key={e.id}
             aluno={e}
             // O primeiro sai sem foto de propósito: é o estado que a
-            // escola vê se alguma criança faltar no dia.
-            fotoUrl={
+            // escola vê se alguma criança faltar no dia. O terceiro tem
+            // irmão, então leva duas fotos.
+            fotos={
               i === 0
-                ? undefined
-                : retratoFalso(
-                    e.aluno_nome
-                      .split(" ")
-                      .slice(0, 2)
-                      .map((p) => p[0])
-                      .join(""),
-                    ["#8a6f4e", "#5f8f77", "#a96f92", "#6d88bd"][i],
-                  )
+                ? [undefined]
+                : [
+                    retratoFalso(
+                      iniciais(e.aluno_nome),
+                      ["#8a6f4e", "#5f8f77", "#a96f92", "#6d88bd"][i],
+                    ),
+                    ...(e.irmaos ?? []).map((n) =>
+                      retratoFalso(iniciais(n), "#c07a4a"),
+                    ),
+                  ]
             }
             qrSvg={qrs[i]}
           />

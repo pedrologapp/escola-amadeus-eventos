@@ -36,13 +36,20 @@ export default async function AdminDiaDosPaisPage() {
   const { data: dados } = await admin.from("videos_pais").select("*");
   const cards = ordenarPorTurma((dados ?? []) as VideoPais[]);
 
+  // Miniatura de cada criança: o principal e cada irmão.
   const fotos = await assinarVarios(
-    cards.map((c) => c.foto_path),
+    cards.flatMap((c) => [
+      c.foto_path,
+      ...(c.irmaos_dados ?? []).map((i) => i.foto_path),
+    ]),
     VALIDADE_SEGUNDOS,
   );
   const comFoto: CardComFoto[] = cards.map((c) => ({
     ...c,
     fotoUrl: c.foto_path ? (fotos.get(c.foto_path) ?? null) : null,
+    fotosIrmaos: (c.irmaos_dados ?? []).map((i) =>
+      i.foto_path ? (fotos.get(i.foto_path) ?? null) : null,
+    ),
   }));
 
   // Inscritos do evento que ainda não viraram card

@@ -39,20 +39,55 @@ export function codigoValido(codigo: string): boolean {
   return new RegExp(`^[${ALFABETO}]{${TAMANHO_CODIGO}}$`).test(codigo);
 }
 
+/**
+ * Um irmão que divide o card. Tem foto e vídeo próprios: juntar dois
+ * irmãos numa foto só obriga a cortar os dois, e cada criança gravou
+ * o seu recado.
+ */
+export interface Irmao {
+  nome: string;
+  /** Preenchido quando o irmão também é aluno da escola. */
+  aluno_id: string | null;
+  foto_path: string | null;
+  video_path: string | null;
+}
+
 export interface VideoPais {
   id: string;
   codigo: string;
   evento_id: string | null;
   aluno_id: string | null;
   aluno_nome: string;
-  /** Irmãos que dividem este card e este vídeo. Vazio = um aluno só. */
-  irmaos: string[];
+  /** Irmãos que dividem este card. Vazio = card de um aluno só. */
+  irmaos_dados: Irmao[];
   serie: string | null;
   turma: string | null;
   video_path: string | null;
   foto_path: string | null;
   created_at: string;
   updated_at: string;
+}
+
+/**
+ * Todo mundo que aparece no card: o aluno principal e os irmãos, cada
+ * um com sua foto e seu vídeo. Quem desenha o card e a página itera
+ * sobre isso em vez de tratar o principal como caso especial.
+ */
+export function participantesDoCard(
+  v: Pick<
+    VideoPais,
+    "aluno_nome" | "foto_path" | "video_path" | "irmaos_dados"
+  >,
+): Irmao[] {
+  return [
+    {
+      nome: v.aluno_nome,
+      aluno_id: null,
+      foto_path: v.foto_path,
+      video_path: v.video_path,
+    },
+    ...(v.irmaos_dados ?? []),
+  ];
 }
 
 /**
@@ -90,8 +125,11 @@ export function ordenarPorTurma<
  * O pai com dois filhos leva UM card só, então os dois nomes precisam
  * caber na mesma linha — por isso a lista usa "e" e não quebra.
  */
-export function nomesDoCard(v: Pick<VideoPais, "aluno_nome" | "irmaos">) {
-  const todos = [v.aluno_nome, ...(v.irmaos ?? [])].filter(Boolean);
+export function nomesDoCard(v: Pick<VideoPais, "aluno_nome" | "irmaos_dados">) {
+  const todos = [
+    v.aluno_nome,
+    ...(v.irmaos_dados ?? []).map((i) => i.nome),
+  ].filter(Boolean);
   if (todos.length === 1) return todos[0];
   return `${todos.slice(0, -1).join(", ")} e ${todos[todos.length - 1]}`;
 }

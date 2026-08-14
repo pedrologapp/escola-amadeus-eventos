@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   BUCKET_DIA_DOS_PAIS,
   gerarCodigo,
+  type Irmao,
   type VideoPais,
 } from "@/lib/dia-dos-pais";
 
@@ -81,23 +82,148 @@ export async function gerarCardsDosAlunos(
 }
 
 /**
- * Define os irmãos que dividem o card.
+ * Procura o irmão entre os alunos da escola enquanto se digita.
  *
- * É digitado na mão de propósito: `alunos.familia_id` está vazio no
- * banco inteiro, então não existe como deduzir parentesco daqui.
+ * Marca quem já tem card próprio: esse é o caso perigoso — sem avisar,
+ * a família receberia dois cards (o do irmão sozinho e o conjunto).
  */
-export async function definirIrmaos(id: string, nomes: string[]) {
+export async function procurarIrmaos(termo: string) {
   await exigirLogin();
-
-  const limpos = nomes.map((n) => n.trim()).filter(Boolean).slice(0, 4);
+  if (termo.trim().length < 3) return { ok: true, alunos: [] };
 
   const admin = createAdminClient();
+  const { data, error } = await admin.rpc("buscar_alunos", {
+    termo: termo.trim(),
+  });
+  if (error) return { error: `Erro na busca: ${error.message}` };
+
+  const alunos = (data ?? []).slice(0, 8) as {
+    id: string;
+    nome_completo: string;
+    serie: string | null;
+    turma: string | null;
+  }[];
+  if (alunos.length === 0) return { ok: true, alunos: [] };
+
+  const { data: cards } = await admin
+    .from("videos_pais")
+    .select("id, codigo, aluno_id")
+    .in(
+      "aluno_id",
+      alunos.map((a) => a.id),
+    );
+  const porAluno = new Map((cards ?? []).map((c) => [c.aluno_id, c]));
+
+  return {
+    ok: true,
+    alunos: alunos.map((a) => ({
+      alunoId: a.id,
+      nome: a.nome_completo,
+      serie: a.serie,
+      turma: a.turma,
+      cardProprio: porAluno.get(a.id)?.codigo ?? null,
+    })),
+  };
+}
+
+/**
+ * Adiciona um irmão ao card.
+ *
+ * Se o irmão já tiver card próprio, este card ABSORVE o dele: leva a
+ * foto e o vídeo que já estavam lá e apaga o card duplicado. Sem isso a
+ * família receberia dois cards, e o erro só apareceria na entrega.
+ *
+ * `alunoId` é opcional: irmão que estuda em outra escola entra só pelo
+ * nome, e aí não há card pra absorver.
+ */
+export async function adicionarIrmao(
+  id: string,
+  irmao: { nome: string; alunoId?: string | null },
+) {
+  await exigirLogin();
+
+  const nome = irmao.nome.trim();
+  if (!nome) return { error: "Informe o nome do irmão." };
+
+  const admin = createAdminClient();
+  const { data: card, error: erroCard } = await admin
+    .from("videos_pais")
+    .select("id, irmaos_dados")
+    .eq("id", id)
+    .single<Pick<VideoPais, "id" | "irmaos_dados">>();
+
+  if (erroCard || !card) return { error: "Card não encontrado." };
+
+  const atuais = card.irmaos_dados ?? [];
+  if (atuais.length >= 3) {
+    return { error: "Um card comporta no máximo 3 irmãos." };
+  }
+  if (atuais.some((i) => i.nome.toLowerCase() === nome.toLowerCase())) {
+    return { error: `${nome} já está neste card.` };
+  }
+
+  // Absorve o card do irmão, se existir
+  let fotoPath: string | null = null;
+  let videoPath: string | null = null;
+  let absorvido: string | null = null;
+
+  if (irmao.alunoId) {
+    const { data: duplicado } = await admin
+      .from("videos_pais")
+      .select("id, codigo, foto_path, video_path")
+      .eq("aluno_id", irmao.alunoId)
+      .maybeSingle();
+
+    if (duplicado && duplicado.id !== id) {
+      fotoPath = duplicado.foto_path;
+      videoPath = duplicado.video_path;
+      absorvido = duplicado.codigo;
+      // Só remove a linha; os arquivos continuam no Storage e passam a
+      // ser referenciados por este card.
+      await admin.from("videos_pais").delete().eq("id", duplicado.id);
+    }
+  }
+
+  const novos: Irmao[] = [
+    ...atuais,
+    {
+      nome,
+      aluno_id: irmao.alunoId ?? null,
+      foto_path: fotoPath,
+      video_path: videoPath,
+    },
+  ];
+
   const { error } = await admin
     .from("videos_pais")
-    .update({ irmaos: limpos, updated_at: new Date().toISOString() })
+    .update({ irmaos_dados: novos, updated_at: new Date().toISOString() })
     .eq("id", id);
 
-  if (error) return { error: `Erro ao salvar irmãos: ${error.message}` };
+  if (error) return { error: `Erro ao salvar irmão: ${error.message}` };
+
+  revalidatePath("/admin/dia-dos-pais");
+  return { ok: true, absorvido };
+}
+
+/** Tira um irmão do card. O card próprio dele NÃO volta sozinho. */
+export async function removerIrmao(id: string, indice: number) {
+  await exigirLogin();
+
+  const admin = createAdminClient();
+  const { data: card } = await admin
+    .from("videos_pais")
+    .select("irmaos_dados")
+    .eq("id", id)
+    .single<Pick<VideoPais, "irmaos_dados">>();
+
+  const novos = (card?.irmaos_dados ?? []).filter((_, i) => i !== indice);
+
+  const { error } = await admin
+    .from("videos_pais")
+    .update({ irmaos_dados: novos, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) return { error: `Erro ao remover irmão: ${error.message}` };
 
   revalidatePath("/admin/dia-dos-pais");
   return { ok: true };
@@ -108,10 +234,16 @@ export async function definirIrmaos(id: string, nomes: string[]) {
  * `upsert` ligado porque trocar a foto/vídeo é comum (saiu tremido,
  * gravou de novo) e o path é fixo por código.
  */
+/**
+ * @param indiceIrmao null = aluno principal; 0,1,2 = irmão naquela
+ *   posição. O arquivo ganha sufixo (`-2`, `-3`) pra cada participante
+ *   ter o seu, em vez de um sobrescrever o do outro.
+ */
 export async function criarUploadUrl(
   id: string,
   tipo: "video" | "foto",
   extensao: string,
+  indiceIrmao: number | null = null,
 ) {
   await exigirLogin();
 
@@ -126,7 +258,8 @@ export async function criarUploadUrl(
 
   const ext = extensao.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 4);
   const pasta = tipo === "video" ? "videos" : "fotos";
-  const path = `${pasta}/${linha.codigo}.${ext || (tipo === "video" ? "mp4" : "jpg")}`;
+  const sufixo = indiceIrmao === null ? "" : `-${indiceIrmao + 2}`;
+  const path = `${pasta}/${linha.codigo}${sufixo}.${ext || (tipo === "video" ? "mp4" : "jpg")}`;
 
   const { data, error } = await admin.storage
     .from(BUCKET_DIA_DOS_PAIS)
@@ -143,17 +276,38 @@ export async function confirmarUpload(
   id: string,
   tipo: "video" | "foto",
   path: string,
+  indiceIrmao: number | null = null,
 ) {
   await exigirLogin();
 
   const admin = createAdminClient();
   const campo = tipo === "video" ? "video_path" : "foto_path";
-  const { error } = await admin
-    .from("videos_pais")
-    .update({ [campo]: path, updated_at: new Date().toISOString() })
-    .eq("id", id);
 
-  if (error) return { error: `Erro ao salvar: ${error.message}` };
+  if (indiceIrmao === null) {
+    const { error } = await admin
+      .from("videos_pais")
+      .update({ [campo]: path, updated_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) return { error: `Erro ao salvar: ${error.message}` };
+  } else {
+    // O irmão mora num jsonb, então precisa ler, alterar a posição e
+    // gravar de volta.
+    const { data: card } = await admin
+      .from("videos_pais")
+      .select("irmaos_dados")
+      .eq("id", id)
+      .single<Pick<VideoPais, "irmaos_dados">>();
+
+    const irmaos = [...(card?.irmaos_dados ?? [])];
+    if (!irmaos[indiceIrmao]) return { error: "Irmão não encontrado." };
+    irmaos[indiceIrmao] = { ...irmaos[indiceIrmao], [campo]: path };
+
+    const { error } = await admin
+      .from("videos_pais")
+      .update({ irmaos_dados: irmaos, updated_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) return { error: `Erro ao salvar: ${error.message}` };
+  }
 
   revalidatePath("/admin/dia-dos-pais");
   return { ok: true };
@@ -171,13 +325,16 @@ export async function removerCard(id: string) {
   const admin = createAdminClient();
   const { data: linha } = await admin
     .from("videos_pais")
-    .select("video_path, foto_path")
+    .select("video_path, foto_path, irmaos_dados")
     .eq("id", id)
-    .single<Pick<VideoPais, "video_path" | "foto_path">>();
+    .single<Pick<VideoPais, "video_path" | "foto_path" | "irmaos_dados">>();
 
-  const paths = [linha?.video_path, linha?.foto_path].filter(
-    (p): p is string => !!p,
-  );
+  // Inclui os arquivos dos irmãos, senão eles ficariam órfãos no bucket.
+  const paths = [
+    linha?.video_path,
+    linha?.foto_path,
+    ...(linha?.irmaos_dados ?? []).flatMap((i) => [i.video_path, i.foto_path]),
+  ].filter((p): p is string => !!p);
   if (paths.length) {
     await admin.storage.from(BUCKET_DIA_DOS_PAIS).remove(paths);
   }

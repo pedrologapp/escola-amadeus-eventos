@@ -20,11 +20,13 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { nomesDoCard, urlDoQr, type VideoPais } from "@/lib/dia-dos-pais";
 import {
+  adicionarIrmao,
   confirmarUpload,
   criarUploadUrl,
-  definirIrmaos,
   gerarCardsDosAlunos,
+  procurarIrmaos,
   removerCard,
+  removerIrmao,
 } from "./actions";
 
 const BUCKET = "dia-dos-pais";
@@ -39,6 +41,16 @@ const AVISO_TAMANHO_VIDEO_MB = 30;
 
 export interface CardComFoto extends VideoPais {
   fotoUrl: string | null;
+  /** Miniatura de cada irmão, na mesma ordem de irmaos_dados. */
+  fotosIrmaos: (string | null)[];
+}
+
+interface Sugestao {
+  alunoId: string;
+  nome: string;
+  serie: string | null;
+  turma: string | null;
+  cardProprio: string | null;
 }
 
 export interface Inscrito {
@@ -80,7 +92,7 @@ export function PainelDiaDosPais({ cards, inscritos, eventoId }: Props) {
       if (serie && c.serie !== serie) return false;
       if (turma && c.turma !== turma) return false;
       if (!termo) return true;
-      return `${c.aluno_nome} ${c.irmaos.join(" ")} ${c.serie ?? ""} ${c.turma ?? ""}`
+      return `${c.aluno_nome} ${c.irmaos_dados.map((i) => i.nome).join(" ")} ${c.serie ?? ""} ${c.turma ?? ""}`
         .toLowerCase()
         .includes(termo);
     });
@@ -444,14 +456,20 @@ function LinhaAluno({
 }) {
   const router = useRouter();
   const [erro, setErro] = useState<string | null>(null);
-  const [subindo, setSubindo] = useState<"video" | "foto" | null>(null);
+  const [subindo, setSubindo] = useState<string | null>(null);
   const [progresso, setProgresso] = useState(0);
   const [editandoIrmao, setEditandoIrmao] = useState(false);
   const [novoIrmao, setNovoIrmao] = useState("");
+  const [sugestoes, setSugestoes] = useState<Sugestao[]>([]);
 
-  async function enviar(tipo: "video" | "foto", arquivo: File) {
+  /** indiceIrmao null = aluno principal; 0,1,2 = irmão daquela posição. */
+  async function enviar(
+    tipo: "video" | "foto",
+    arquivo: File,
+    indiceIrmao: number | null = null,
+  ) {
     setErro(null);
-    setSubindo(tipo);
+    setSubindo(`${tipo}:${indiceIrmao ?? "p"}`);
     setProgresso(0);
 
     try {
@@ -478,7 +496,7 @@ function LinhaAluno({
         }
       }
 
-      const preparo = await criarUploadUrl(card.id, tipo, ext);
+      const preparo = await criarUploadUrl(card.id, tipo, ext, indiceIrmao);
       if (preparo.error || !preparo.token || !preparo.path) {
         throw new Error(preparo.error ?? "Falha ao preparar o upload.");
       }
@@ -493,7 +511,12 @@ function LinhaAluno({
       if (erroUp) throw new Error(erroUp.message);
 
       setProgresso(80);
-      const fim = await confirmarUpload(card.id, tipo, preparo.path);
+      const fim = await confirmarUpload(
+        card.id,
+        tipo,
+        preparo.path,
+        indiceIrmao,
+      );
       if (fim.error) throw new Error(fim.error);
 
       setProgresso(100);
@@ -505,23 +528,44 @@ function LinhaAluno({
     }
   }
 
-  async function salvarIrmao() {
-    const nome = novoIrmao.trim();
-    if (!nome) return setEditandoIrmao(false);
-    const r = await definirIrmaos(card.id, [...card.irmaos, nome]);
-    if (r.error) setErro(r.error);
-    else {
-      setNovoIrmao("");
-      setEditandoIrmao(false);
-      router.refresh();
-    }
+  /** Busca na base enquanto digita, pra não cadastrar nome inventado. */
+  async function buscar(termo: string) {
+    setNovoIrmao(termo);
+    if (termo.trim().length < 3) return setSugestoes([]);
+    const r = await procurarIrmaos(termo);
+    setSugestoes(r.alunos ?? []);
   }
 
-  async function tirarIrmao(nome: string) {
-    const r = await definirIrmaos(
-      card.id,
-      card.irmaos.filter((n) => n !== nome),
-    );
+  async function salvarIrmao(s?: Sugestao) {
+    const nome = (s?.nome ?? novoIrmao).trim();
+    if (!nome) return setEditandoIrmao(false);
+
+    // Se o irmão já tem card próprio, a família receberia DOIS cards.
+    // Este card absorve o dele — mas quem decide é a escola.
+    if (s?.cardProprio) {
+      const ok = confirm(
+        `${s.nome} já tem card próprio (/p/${s.cardProprio}).\n\n` +
+          `Se continuar, este card passa a valer pelos dois: a foto e o vídeo ` +
+          `que já estavam no card dele vêm junto, e o card separado é removido.\n\n` +
+          `Sem isso, essa família receberia dois cards.\n\nContinuar?`,
+      );
+      if (!ok) return;
+    }
+
+    const r = await adicionarIrmao(card.id, {
+      nome,
+      alunoId: s?.alunoId ?? null,
+    });
+    if (r.error) return setErro(r.error);
+
+    setNovoIrmao("");
+    setSugestoes([]);
+    setEditandoIrmao(false);
+    router.refresh();
+  }
+
+  async function tirarIrmao(indice: number) {
+    const r = await removerIrmao(card.id, indice);
     if (r.error) setErro(r.error);
     else router.refresh();
   }
@@ -588,7 +632,7 @@ function LinhaAluno({
             icone={<ImageIcon className="size-3.5" />}
             aceita="image/*"
             pronto={!!card.foto_path}
-            ocupado={subindo === "foto"}
+            ocupado={subindo === "foto:p"}
             progresso={progresso}
             onArquivo={(f) => enviar("foto", f)}
           />
@@ -597,7 +641,7 @@ function LinhaAluno({
             icone={<Video className="size-3.5" />}
             aceita="video/*"
             pronto={!!card.video_path}
-            ocupado={subindo === "video"}
+            ocupado={subindo === "video:p"}
             progresso={progresso}
             onArquivo={(f) => enviar("video", f)}
           />
@@ -634,43 +678,119 @@ function LinhaAluno({
         </div>
       </div>
 
-      {/* Irmãos que dividem este card */}
-      {(card.irmaos.length > 0 || editandoIrmao) && (
-        <div className="mt-2.5 flex flex-wrap items-center gap-2 pl-14">
-          {card.irmaos.map((nome) => (
-            <span
-              key={nome}
-              className="flex items-center gap-1.5 rounded-full bg-amadeus-yellow-50 px-3 py-1 text-xs font-semibold text-amadeus-yellow-dark"
+      {/* Irmãos: cada um com foto e vídeo próprios */}
+      {(card.irmaos_dados.length > 0 || editandoIrmao) && (
+        <div className="mt-3 space-y-2 pl-14">
+          {card.irmaos_dados.map((irmao, idx) => (
+            <div
+              key={idx}
+              className="flex flex-wrap items-center gap-3 rounded-xl bg-amadeus-yellow-50/60 px-3 py-2"
             >
-              {nome}
+              {card.fotosIrmaos[idx] ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={card.fotosIrmaos[idx]!}
+                  alt=""
+                  className="size-9 shrink-0 rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white text-amadeus-blue/30">
+                  <ImageIcon className="size-3.5" />
+                </div>
+              )}
+
+              <span className="min-w-32 flex-1 text-sm font-bold text-amadeus-yellow-dark">
+                {irmao.nome}
+                <span className="ml-2 font-normal text-muted-foreground">
+                  irmão
+                </span>
+              </span>
+
+              <BotaoUpload
+                rotulo="Foto"
+                icone={<ImageIcon className="size-3.5" />}
+                aceita="image/*"
+                pronto={!!irmao.foto_path}
+                ocupado={subindo === `foto:${idx}`}
+                progresso={progresso}
+                onArquivo={(f) => enviar("foto", f, idx)}
+              />
+              <BotaoUpload
+                rotulo="Vídeo"
+                icone={<Video className="size-3.5" />}
+                aceita="video/*"
+                pronto={!!irmao.video_path}
+                ocupado={subindo === `video:${idx}`}
+                progresso={progresso}
+                onArquivo={(f) => enviar("video", f, idx)}
+              />
               <button
                 type="button"
-                onClick={() => tirarIrmao(nome)}
+                onClick={() => tirarIrmao(idx)}
                 title="Tirar do card"
-                className="hover:text-red-600"
+                className="rounded-lg p-1.5 text-muted-foreground hover:bg-red-50 hover:text-red-600"
               >
-                <X className="size-3" />
+                <X className="size-3.5" />
               </button>
-            </span>
+            </div>
           ))}
 
           {editandoIrmao && (
-            <span className="flex items-center gap-1.5">
-              <Input
-                autoFocus
-                value={novoIrmao}
-                onChange={(e) => setNovoIrmao(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") salvarIrmao();
-                  if (e.key === "Escape") setEditandoIrmao(false);
-                }}
-                placeholder="Nome do irmão"
-                className="h-8 w-48 text-sm"
-              />
-              <Button size="sm" onClick={salvarIrmao}>
-                Salvar
-              </Button>
-            </span>
+            <div className="relative">
+              <div className="flex items-center gap-1.5">
+                <Input
+                  autoFocus
+                  value={novoIrmao}
+                  onChange={(e) => buscar(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") {
+                      setEditandoIrmao(false);
+                      setSugestoes([]);
+                    }
+                  }}
+                  placeholder="Buscar irmão pelo nome…"
+                  className="h-8 w-64 text-sm"
+                />
+                <Button size="sm" variant="outline" onClick={() => salvarIrmao()}>
+                  Usar este nome
+                </Button>
+              </div>
+
+              {sugestoes.length > 0 && (
+                <ul className="absolute z-20 mt-1 w-80 overflow-hidden rounded-xl border border-border/60 bg-white shadow-lg">
+                  {sugestoes.map((s) => (
+                    <li key={s.alunoId}>
+                      <button
+                        type="button"
+                        onClick={() => salvarIrmao(s)}
+                        className="flex w-full flex-col items-start px-3 py-2 text-left hover:bg-amadeus-blue-50"
+                      >
+                        <span className="text-sm font-semibold text-foreground">
+                          {s.nome}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {[s.serie, s.turma && `Turma ${s.turma}`]
+                            .filter(Boolean)
+                            .join(" · ")}
+                          {s.cardProprio && (
+                            <span className="ml-2 font-semibold text-amadeus-yellow-dark">
+                              já tem card — será unido a este
+                            </span>
+                          )}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {novoIrmao.trim().length >= 3 && sugestoes.length === 0 && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Nenhum aluno com esse nome. Pode usar assim mesmo se ele
+                  estuda em outra escola.
+                </p>
+              )}
+            </div>
           )}
         </div>
       )}

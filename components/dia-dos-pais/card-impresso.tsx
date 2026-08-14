@@ -45,7 +45,7 @@ export interface DadosCard {
   id: string;
   codigo: string;
   aluno_nome: string;
-  /** Irmãos que dividem este card e este vídeo. Vazio = um aluno só. */
+  /** Nomes dos irmãos que dividem este card. Vazio = um aluno só. */
   irmaos?: string[];
   serie: string | null;
   turma: string | null;
@@ -76,11 +76,12 @@ function classeDoNome(nome: string) {
 
 export function CardImpresso({
   aluno,
-  fotoUrl,
+  fotos,
   qrSvg,
 }: {
   aluno: DadosCard;
-  fotoUrl?: string;
+  /** Uma URL por criança do card (a do principal primeiro). */
+  fotos: (string | undefined)[];
   qrSvg: string;
 }) {
   // Série e turma não aparecem no card: quem recebe é o pai, e o que
@@ -106,13 +107,19 @@ export function CardImpresso({
           className="titulo-arte"
         />
 
-        <div className="retrato">
-          {fotoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={fotoUrl} alt={nomes} className="foto" />
-          ) : (
-            <div className="foto foto-vazia">sem foto</div>
-          )}
+        {/* Um retrato por criança. Enquadrar dois irmãos numa foto só
+            obriga a cortar os dois — melhor cada um com a sua. */}
+        <div className={`retratos ${fotos.length > 1 ? "duplo" : ""}`}>
+          {fotos.map((f, i) => (
+            <div className="retrato" key={i}>
+              {f ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={f} alt="" className="foto" />
+              ) : (
+                <div className="foto foto-vazia">sem foto</div>
+              )}
+            </div>
+          ))}
         </div>
 
         <p className="rotulo">Um recado de</p>
@@ -210,11 +217,15 @@ export function cssCard(d: Dim) {
      a conta faz o rodapé sair cortado. */
   .titulo-arte { width: ${d.cardW * 0.27}mm; height: auto; display: block; }
 
-  /* ---- Retrato ----
-     Maior que o QR de propósito: quem tem que dominar o card é a
-     criança, não o código. */
-  .retrato {
+  /* ---- Retratos ----
+     Maiores que o QR de propósito: quem tem que dominar o card é a
+     criança, não o código. Com irmãos, os retratos encolhem pra caber
+     lado a lado sem empurrar o resto do card. */
+  .retratos {
     margin-top: ${util * 0.015}mm;
+    display: flex; justify-content: center; gap: 2mm;
+  }
+  .retrato {
     padding: .8mm; border-radius: 50%;
     border: .22mm solid rgba(242,176,20,.5);   /* anel externo fino */
   }
@@ -222,6 +233,10 @@ export function cssCard(d: Dim) {
     display: block; width: ${util * 0.16}mm; height: ${util * 0.16}mm;
     object-fit: cover; border-radius: 50%;
     border: .7mm solid #f2b014;                 /* anel interno cheio */
+  }
+  .retratos.duplo .foto {
+    width: ${util * 0.125}mm; height: ${util * 0.125}mm;
+    border-width: .55mm;
   }
   .foto-vazia {
     display: flex; align-items: center; justify-content: center;

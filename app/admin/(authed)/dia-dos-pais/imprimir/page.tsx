@@ -78,8 +78,12 @@ export default async function ImprimirCardsPage({ searchParams }: Props) {
     alunos = alunos.filter((a) => a.video_path);
   }
 
+  // Uma foto por criança: o principal e cada irmão.
   const fotos = await assinarVarios(
-    alunos.map((a) => a.foto_path),
+    alunos.flatMap((a) => [
+      a.foto_path,
+      ...(a.irmaos_dados ?? []).map((i) => i.foto_path),
+    ]),
     VALIDADE_SEGUNDOS,
   );
 
@@ -179,18 +183,22 @@ export default async function ImprimirCardsPage({ searchParams }: Props) {
             </>
           )}
 
-          {indices.map((i) => (
-            <CardImpresso
-              key={alunos[i].id}
-              aluno={alunos[i]}
-              fotoUrl={
-                alunos[i].foto_path
-                  ? fotos.get(alunos[i].foto_path!)
-                  : undefined
-              }
-              qrSvg={qrs[i]}
-            />
-          ))}
+          {indices.map((i) => {
+            const a = alunos[i];
+            return (
+              <CardImpresso
+                key={a.id}
+                aluno={{ ...a, irmaos: (a.irmaos_dados ?? []).map((x) => x.nome) }}
+                fotos={[
+                  a.foto_path ? fotos.get(a.foto_path) : undefined,
+                  ...(a.irmaos_dados ?? []).map((x) =>
+                    x.foto_path ? fotos.get(x.foto_path) : undefined,
+                  ),
+                ]}
+                qrSvg={qrs[i]}
+              />
+            );
+          })}
         </div>
       ))}
     </>
