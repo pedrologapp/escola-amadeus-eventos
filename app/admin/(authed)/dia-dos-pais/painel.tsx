@@ -795,20 +795,27 @@ function LinhaAluno({
                   value={novoIrmao}
                   onChange={(e) => buscar(e.target.value)}
                   onKeyDown={(e) => {
+                    // Enter salva o que está digitado. A busca é um
+                    // atalho, não uma exigência: irmão de outra escola
+                    // nunca vai aparecer na lista.
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      salvarIrmao();
+                    }
                     if (e.key === "Escape") {
                       setEditandoIrmao(false);
                       setSugestoes([]);
                     }
                   }}
-                  placeholder="Buscar irmão pelo nome…"
+                  placeholder="Nome do irmão…"
                   className="h-8 w-64 text-sm"
                 />
-                <Button size="sm" variant="outline" onClick={() => salvarIrmao()}>
-                  Usar este nome
+                <Button size="sm" onClick={() => salvarIrmao()}>
+                  Adicionar
                 </Button>
               </div>
 
-              {sugestoes.length > 0 && (
+              {novoIrmao.trim().length >= 2 && (
                 <ul className="absolute z-20 mt-1 w-80 overflow-hidden rounded-xl border border-border/60 bg-white shadow-lg">
                   {sugestoes.map((s) => (
                     <li key={s.alunoId}>
@@ -833,14 +840,27 @@ function LinhaAluno({
                       </button>
                     </li>
                   ))}
-                </ul>
-              )}
 
-              {novoIrmao.trim().length >= 3 && sugestoes.length === 0 && (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Nenhum aluno com esse nome. Pode usar assim mesmo se ele
-                  estuda em outra escola.
-                </p>
+                  {/* Sempre disponível, mesmo com a busca vazia: o irmão
+                      pode não estudar aqui, ou o nome pode estar grafado
+                      diferente no cadastro. */}
+                  <li className={sugestoes.length ? "border-t border-border/60" : ""}>
+                    <button
+                      type="button"
+                      onClick={() => salvarIrmao()}
+                      className="flex w-full flex-col items-start px-3 py-2 text-left hover:bg-amadeus-yellow-50"
+                    >
+                      <span className="text-sm font-semibold text-amadeus-yellow-dark">
+                        Usar “{novoIrmao.trim()}”
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {sugestoes.length
+                          ? "escrever o nome exatamente assim"
+                          : "não é aluno da escola — tudo bem, entra do mesmo jeito"}
+                      </span>
+                    </button>
+                  </li>
+                </ul>
               )}
             </div>
           )}
