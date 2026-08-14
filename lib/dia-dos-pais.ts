@@ -122,6 +122,33 @@ export function videosDoCard(
 }
 
 /**
+ * O que ainda falta num card.
+ *
+ * Com irmãos a conta muda: a FOTO é sempre uma por criança, mas o VÍDEO
+ * depende de como a família gravou — com `video_conjunto`, um vídeo só
+ * já resolve o card inteiro.
+ */
+export function statusDoCard(
+  v: Pick<
+    VideoPais,
+    | "aluno_nome"
+    | "foto_path"
+    | "video_path"
+    | "irmaos_dados"
+    | "video_conjunto"
+  >,
+) {
+  const fotosFaltando = participantesDoCard(v).filter((p) => !p.foto_path).length;
+  const videosFaltando = videosDoCard(v).filter((p) => !p.video_path).length;
+
+  return {
+    fotosFaltando,
+    videosFaltando,
+    completo: fotosFaltando === 0 && videosFaltando === 0,
+  };
+}
+
+/**
  * Ordena por série (na ordem pedagógica), depois turma, depois nome.
  *
  * Ordenar série como texto sai errado: alfabeticamente "1º Ano" vem antes

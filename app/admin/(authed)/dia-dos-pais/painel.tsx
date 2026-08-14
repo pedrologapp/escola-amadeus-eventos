@@ -18,7 +18,12 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { nomesDoCard, urlDoQr, type VideoPais } from "@/lib/dia-dos-pais";
+import {
+  nomesDoCard,
+  statusDoCard,
+  urlDoQr,
+  type VideoPais,
+} from "@/lib/dia-dos-pais";
 import {
   adicionarIrmao,
   confirmarUpload,
@@ -74,6 +79,9 @@ export function PainelDiaDosPais({ cards, inscritos, eventoId }: Props) {
   const [busca, setBusca] = useState("");
   const [serie, setSerie] = useState("");
   const [turma, setTurma] = useState("");
+  const [status, setStatus] = useState<
+    "todos" | "faltando" | "sem-foto" | "sem-video" | "completos"
+  >("todos");
 
   // As opções saem dos cards existentes, na ordem em que já vieram
   // ordenados do servidor (série pedagógica, turma, nome).
@@ -93,12 +101,36 @@ export function PainelDiaDosPais({ cards, inscritos, eventoId }: Props) {
     return cards.filter((c) => {
       if (serie && c.serie !== serie) return false;
       if (turma && c.turma !== turma) return false;
+
+      if (status !== "todos") {
+        const s = statusDoCard(c);
+        if (status === "faltando" && s.completo) return false;
+        if (status === "sem-foto" && s.fotosFaltando === 0) return false;
+        if (status === "sem-video" && s.videosFaltando === 0) return false;
+        if (status === "completos" && !s.completo) return false;
+      }
+
       if (!termo) return true;
       return `${c.aluno_nome} ${c.irmaos_dados.map((i) => i.nome).join(" ")} ${c.serie ?? ""} ${c.turma ?? ""}`
         .toLowerCase()
         .includes(termo);
     });
-  }, [cards, busca, serie, turma]);
+  }, [cards, busca, serie, turma, status]);
+
+  // Quantos cards cada filtro de status pegaria — mostrado no seletor
+  // pra escola saber o tamanho do que falta sem precisar clicar.
+  const contagens = useMemo(() => {
+    let faltando = 0,
+      semFoto = 0,
+      semVideo = 0;
+    for (const c of cards) {
+      const s = statusDoCard(c);
+      if (!s.completo) faltando++;
+      if (s.fotosFaltando > 0) semFoto++;
+      if (s.videosFaltando > 0) semVideo++;
+    }
+    return { faltando, semFoto, semVideo, completos: cards.length - faltando };
+  }, [cards]);
 
   // Quem entra na folha de impressão. Começa vazio: imprimir papel é
   // irreversível, então a escolha é explícita.
@@ -187,6 +219,29 @@ export function PainelDiaDosPais({ cards, inscritos, eventoId }: Props) {
                     Turma {t}
                   </option>
                 ))}
+              </Select>
+
+              <Select
+                value={status}
+                onChange={(e) =>
+                  setStatus(e.target.value as typeof status)
+                }
+                className="h-9 w-52 text-sm"
+                aria-label="Filtrar pelo que falta"
+              >
+                <option value="todos">Todos ({cards.length})</option>
+                <option value="faltando">
+                  Falta algo ({contagens.faltando})
+                </option>
+                <option value="sem-foto">
+                  Sem foto ({contagens.semFoto})
+                </option>
+                <option value="sem-video">
+                  Sem vídeo ({contagens.semVideo})
+                </option>
+                <option value="completos">
+                  Prontos ({contagens.completos})
+                </option>
               </Select>
 
               <Input
@@ -467,6 +522,8 @@ function LinhaAluno({
   const [excluindo, setExcluindo] = useState(false);
   const [erroSenha, setErroSenha] = useState<string | null>(null);
 
+  const faltas = statusDoCard(card);
+
   /** indiceIrmao null = aluno principal; 0,1,2 = irmão daquela posição. */
   async function enviar(
     tipo: "video" | "foto",
@@ -630,6 +687,23 @@ function LinhaAluno({
               .join(" · ")}
             {" · "}
             <span className="font-mono">/p/{card.codigo}</span>
+            {/* O que falta, à vista: com irmãos, os botões sozinhos não
+                deixam claro se ainda falta alguém. */}
+            {faltas.completo ? (
+              <span className="ml-2 font-semibold text-emerald-600">pronto</span>
+            ) : (
+              <span className="ml-2 font-semibold text-amadeus-yellow-dark">
+                falta{" "}
+                {[
+                  faltas.fotosFaltando &&
+                    `${faltas.fotosFaltando} foto${faltas.fotosFaltando > 1 ? "s" : ""}`,
+                  faltas.videosFaltando &&
+                    `${faltas.videosFaltando} vídeo${faltas.videosFaltando > 1 ? "s" : ""}`,
+                ]
+                  .filter(Boolean)
+                  .join(" e ")}
+              </span>
+            )}
           </p>
           {erro && <p className="mt-1 text-xs text-red-600">{erro}</p>}
         </div>

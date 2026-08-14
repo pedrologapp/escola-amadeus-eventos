@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { Printer } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ordenarPorTurma, type VideoPais } from "@/lib/dia-dos-pais";
+import {
+  ordenarPorTurma,
+  statusDoCard,
+  type VideoPais,
+} from "@/lib/dia-dos-pais";
 import { assinarVarios } from "@/lib/dia-dos-pais-storage";
 import { Button } from "@/components/ui/button";
 import { PainelDiaDosPais, type CardComFoto, type Inscrito } from "./painel";
@@ -103,8 +107,12 @@ export default async function AdminDiaDosPaisPage() {
     inscritos = ordenarPorTurma([...porAluno.values()]);
   }
 
-  const comVideo = cards.filter((c) => c.video_path).length;
-  const semFoto = cards.filter((c) => !c.foto_path).length;
+  // Conta por card completo, não por coluna: com irmãos, um card pode
+  // ter o vídeo do principal e ainda faltar o do irmão.
+  const status = cards.map(statusDoCard);
+  const prontos = status.filter((s) => s.completo).length;
+  const faltamFotos = status.filter((s) => s.fotosFaltando > 0).length;
+  const faltamVideos = status.filter((s) => s.videosFaltando > 0).length;
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -131,14 +139,23 @@ export default async function AdminDiaDosPaisPage() {
       </div>
 
       {cards.length > 0 && (
-        <div className="mb-6 grid grid-cols-3 gap-3">
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Resumo label="Cards" valor={cards.length} />
           <Resumo
-            label="Com vídeo"
-            valor={comVideo}
-            alerta={comVideo < cards.length}
+            label="Prontos"
+            valor={prontos}
+            alerta={prontos < cards.length}
           />
-          <Resumo label="Sem foto" valor={semFoto} alerta={semFoto > 0} />
+          <Resumo
+            label="Falta foto"
+            valor={faltamFotos}
+            alerta={faltamFotos > 0}
+          />
+          <Resumo
+            label="Falta vídeo"
+            valor={faltamVideos}
+            alerta={faltamVideos > 0}
+          />
         </div>
       )}
 
