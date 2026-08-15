@@ -30,12 +30,13 @@ import {
 import {
   adicionarIrmao,
   confirmarUpload,
+  criarCardManual,
   criarUploadUrl,
   definirBrilhoEmLote,
   definirBrilhoFoto,
   definirVideoConjunto,
   gerarCardsDosAlunos,
-  procurarIrmaos,
+  procurarAlunos,
   removerCard,
   removerIrmao,
 } from "./actions";
@@ -200,6 +201,8 @@ export function PainelDiaDosPais({ cards, inscritos, eventoId }: Props) {
       {eventoId && inscritos.length > 0 && (
         <ListaDeInscritos inscritos={inscritos} eventoId={eventoId} />
       )}
+
+      <AdicionarManual eventoId={eventoId} />
 
       {cards.length > 0 && (
         <section>
@@ -377,6 +380,168 @@ export function PainelDiaDosPais({ cards, inscritos, eventoId }: Props) {
         </section>
       )}
     </div>
+  );
+}
+
+/**
+ * Cria card digitando o nome — pra quem não está na lista de inscritos:
+ * pagou em dinheiro na secretaria, entrou depois, ou não está no
+ * cadastro. Busca na base enquanto digita pra vincular ao aluno quando
+ * ele existir, mas aceita nome livre.
+ */
+function AdicionarManual({ eventoId }: { eventoId: string | null }) {
+  const router = useRouter();
+  const [aberto, setAberto] = useState(false);
+  const [nome, setNome] = useState("");
+  const [sugestoes, setSugestoes] = useState<Sugestao[]>([]);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+  const [salvando, setSalvando] = useState(false);
+
+  async function buscar(termo: string) {
+    setNome(termo);
+    setErro(null);
+    if (termo.trim().length < 3) return setSugestoes([]);
+    const r = await procurarAlunos(termo);
+    setSugestoes(r.alunos ?? []);
+  }
+
+  async function criar(s?: Sugestao) {
+    const usar = s?.nome ?? nome;
+    if (usar.trim().length < 3) {
+      return setErro("Informe o nome completo da criança.");
+    }
+    setErro(null);
+    setSalvando(true);
+    const r = await criarCardManual(eventoId, {
+      nome: usar,
+      alunoId: s?.alunoId ?? null,
+      serie: s?.serie ?? null,
+      turma: s?.turma ?? null,
+    });
+    setSalvando(false);
+    if (r.error) return setErro(r.error);
+
+    setMsg(`Card de ${usar} criado (/p/${r.codigo}).`);
+    setNome("");
+    setSugestoes([]);
+    router.refresh();
+    setTimeout(() => setMsg(null), 5000);
+  }
+
+  if (!aberto) {
+    return (
+      <div className="flex items-center gap-3">
+        <Button variant="outline" size="sm" onClick={() => setAberto(true)}>
+          <UserPlus className="size-4" />
+          Adicionar criança manualmente
+        </Button>
+        {msg && (
+          <span className="text-sm font-semibold text-emerald-600">{msg}</span>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <section className="rounded-2xl border border-border/60 bg-white p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-base font-extrabold text-amadeus-blue">
+            Adicionar criança manualmente
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Para quem não aparece na lista de inscritos — pagou na secretaria,
+            entrou depois, ou não está no cadastro.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setAberto(false);
+            setNome("");
+            setSugestoes([]);
+            setErro(null);
+          }}
+          className="rounded-lg p-1.5 text-muted-foreground hover:bg-amadeus-blue-50"
+          aria-label="Fechar"
+        >
+          <X className="size-4" />
+        </button>
+      </div>
+
+      <div className="relative mt-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            autoFocus
+            value={nome}
+            onChange={(e) => buscar(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                criar();
+              }
+              if (e.key === "Escape") setAberto(false);
+            }}
+            placeholder="Nome completo da criança…"
+            className="h-9 w-80 text-sm"
+          />
+          <Button size="sm" onClick={() => criar()} disabled={salvando}>
+            {salvando && <Loader2 className="size-3.5 animate-spin" />}
+            Criar card
+          </Button>
+        </div>
+
+        {erro && <p className="mt-2 text-sm text-red-600">{erro}</p>}
+
+        {nome.trim().length >= 3 && (
+          <ul className="absolute z-20 mt-1 w-96 overflow-hidden rounded-xl border border-border/60 bg-white shadow-lg">
+            {sugestoes.map((s) => (
+              <li key={s.alunoId}>
+                <button
+                  type="button"
+                  onClick={() => criar(s)}
+                  disabled={!!s.cardProprio}
+                  className="flex w-full flex-col items-start px-3 py-2 text-left hover:bg-amadeus-blue-50 disabled:opacity-50 disabled:hover:bg-white"
+                >
+                  <span className="text-sm font-semibold text-foreground">
+                    {s.nome}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {[s.serie, s.turma && `Turma ${s.turma}`]
+                      .filter(Boolean)
+                      .join(" · ")}
+                    {s.cardProprio && (
+                      <span className="ml-2 font-semibold text-amadeus-yellow-dark">
+                        já tem card
+                      </span>
+                    )}
+                  </span>
+                </button>
+              </li>
+            ))}
+
+            {/* Sempre disponível: pode ser criança de fora da escola. */}
+            <li className={sugestoes.length ? "border-t border-border/60" : ""}>
+              <button
+                type="button"
+                onClick={() => criar()}
+                className="flex w-full flex-col items-start px-3 py-2 text-left hover:bg-amadeus-yellow-50"
+              >
+                <span className="text-sm font-semibold text-amadeus-yellow-dark">
+                  Criar card para “{nome.trim()}”
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {sugestoes.length
+                    ? "escrever o nome exatamente assim"
+                    : "não está no cadastro — tudo bem, o card é criado igual"}
+                </span>
+              </button>
+            </li>
+          </ul>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -643,7 +808,7 @@ function LinhaAluno({
   async function buscar(termo: string) {
     setNovoIrmao(termo);
     if (termo.trim().length < 3) return setSugestoes([]);
-    const r = await procurarIrmaos(termo);
+    const r = await procurarAlunos(termo);
     setSugestoes(r.alunos ?? []);
   }
 

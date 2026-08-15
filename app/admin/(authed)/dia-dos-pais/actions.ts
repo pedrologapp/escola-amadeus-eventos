@@ -82,12 +82,13 @@ export async function gerarCardsDosAlunos(
 }
 
 /**
- * Procura o irmão entre os alunos da escola enquanto se digita.
+ * Procura alunos da escola enquanto se digita. Serve pra adicionar irmão
+ * e pra criar card manual.
  *
- * Marca quem já tem card próprio: esse é o caso perigoso — sem avisar,
- * a família receberia dois cards (o do irmão sozinho e o conjunto).
+ * Marca quem já tem card próprio: esse é o caso perigoso — sem avisar, a
+ * família receberia dois cards.
  */
-export async function procurarIrmaos(termo: string) {
+export async function procurarAlunos(termo: string) {
   await exigirLogin();
   if (termo.trim().length < 3) return { ok: true, alunos: [] };
 
@@ -124,6 +125,67 @@ export async function procurarIrmaos(termo: string) {
       cardProprio: porAluno.get(a.id)?.codigo ?? null,
     })),
   };
+}
+
+/**
+ * Cria um card avulso, digitando o nome na mão.
+ *
+ * A lista de inscritos cobre quem pagou pelo sistema, mas sempre sobra
+ * caso de fora: pagamento em dinheiro na secretaria, criança que entrou
+ * depois, aluno que não está no cadastro. Sem isso, a única saída seria
+ * mexer no banco.
+ *
+ * Se o nome bater com um aluno da base, passe o `alunoId`: o card fica
+ * vinculado e o aluno some da lista de inscritos pendentes. Sem isso, o
+ * card é livre — serve pra criança de fora da escola.
+ */
+export async function criarCardManual(
+  eventoId: string | null,
+  dados: {
+    nome: string;
+    alunoId?: string | null;
+    serie?: string | null;
+    turma?: string | null;
+  },
+) {
+  await exigirLogin();
+
+  const nome = dados.nome.trim();
+  if (nome.length < 3) return { error: "Informe o nome completo da criança." };
+
+  const admin = createAdminClient();
+
+  // Evita dois cards pro mesmo aluno — o pai receberia dois.
+  if (dados.alunoId) {
+    const { data: existente } = await admin
+      .from("videos_pais")
+      .select("codigo, aluno_nome")
+      .eq("aluno_id", dados.alunoId)
+      .maybeSingle();
+    if (existente) {
+      return {
+        error: `${existente.aluno_nome} já tem card (/p/${existente.codigo}).`,
+      };
+    }
+  }
+
+  const { data, error } = await admin
+    .from("videos_pais")
+    .insert({
+      codigo: gerarCodigo(),
+      evento_id: eventoId,
+      aluno_id: dados.alunoId ?? null,
+      aluno_nome: nome,
+      serie: dados.serie ?? null,
+      turma: dados.turma ?? null,
+    })
+    .select("codigo")
+    .single();
+
+  if (error) return { error: `Erro ao criar card: ${error.message}` };
+
+  revalidatePath("/admin/dia-dos-pais");
+  return { ok: true, codigo: data.codigo };
 }
 
 /**
