@@ -22,6 +22,9 @@ const loteSchema = z.object({
 });
 
 const tipoIngressoSchema = z.object({
+  // id do tipo já existente (só vem na edição). Preservá-lo é o que impede
+  // que as inscrições antigas fiquem apontando pra um tipo que não existe mais.
+  id: z.string().uuid().optional().nullable(),
   nome: z.string().min(1, "Nome do ingresso obrigatório"),
   preco: z.number().min(0, "Preço não pode ser negativo"),
   descricao: z.string().optional().nullable(),
@@ -50,6 +53,7 @@ const createEventoSchema = z.object({
   infos_importantes: z.array(z.string()),
   mostrar_estoque_publico: z.boolean().default(false),
   pagamento_familiar: z.boolean().default(false),
+  ingresso_unico: z.boolean().default(false),
   tipos_ingresso: z.array(tipoIngressoSchema).min(1, "Adicione ao menos um tipo de ingresso"),
 });
 
@@ -89,6 +93,7 @@ export async function createEvento(
       formData.get("mostrar_estoque_publico")?.toString() === "1",
     pagamento_familiar:
       formData.get("pagamento_familiar")?.toString() === "1",
+    ingresso_unico: formData.get("ingresso_unico")?.toString() === "1",
     tipos_ingresso: parseTiposIngresso(
       formData.get("tipos_ingresso")?.toString(),
     ),
@@ -161,6 +166,7 @@ export async function createEvento(
       infos_importantes: data.infos_importantes,
       mostrar_estoque_publico: data.mostrar_estoque_publico,
       pagamento_familiar: data.pagamento_familiar,
+      ingresso_unico: data.ingresso_unico,
     })
     .select("id")
     .single();
@@ -281,6 +287,7 @@ export async function updateEvento(
       formData.get("mostrar_estoque_publico")?.toString() === "1",
     pagamento_familiar:
       formData.get("pagamento_familiar")?.toString() === "1",
+    ingresso_unico: formData.get("ingresso_unico")?.toString() === "1",
     tipos_ingresso: parseTiposIngresso(
       formData.get("tipos_ingresso")?.toString(),
     ),
@@ -350,6 +357,7 @@ export async function updateEvento(
       infos_importantes: data.infos_importantes,
       mostrar_estoque_publico: data.mostrar_estoque_publico,
       pagamento_familiar: data.pagamento_familiar,
+      ingresso_unico: data.ingresso_unico,
       ...imagemUpdate,
     })
     .eq("id", eventoId);
@@ -358,26 +366,60 @@ export async function updateEvento(
     return { error: `Erro ao atualizar evento: ${updateErr.message}` };
   }
 
-  // Substitui tipos_ingresso (delete-all + insert-all)
-  await supabase.from("tipos_ingresso").delete().eq("evento_id", eventoId);
-
-  const tiposToInsert = data.tipos_ingresso.map((tipo, ordem) => ({
-    evento_id: eventoId,
-    nome: tipo.nome,
-    preco: tipo.preco,
-    descricao: tipo.descricao,
-    max_ingressos: tipo.max_ingressos ?? null,
-    lotes: tipo.lotes ?? [],
-    ordem,
-    ativo: true,
-  }));
-
-  const { error: tiposErr } = await supabase
+  // Reconcilia tipos_ingresso preservando os UUIDs existentes.
+  //
+  // NÃO usar delete-all + insert-all: os UUIDs mudariam e as inscrições já
+  // feitas (que guardam itens[].tipo_id no jsonb) passariam a apontar pra
+  // tipos inexistentes — quebrando a geração de tickets (FK) e a contagem
+  // de estoque em lib/estoque.ts.
+  const { data: existentes } = await supabase
     .from("tipos_ingresso")
-    .insert(tiposToInsert);
+    .select("id")
+    .eq("evento_id", eventoId);
 
-  if (tiposErr) {
-    return { error: `Erro ao salvar tipos de ingresso: ${tiposErr.message}` };
+  const idsExistentes = new Set((existentes ?? []).map((t) => t.id));
+  const idsMantidos = new Set<string>();
+
+  for (const [ordem, tipo] of data.tipos_ingresso.entries()) {
+    const campos = {
+      nome: tipo.nome,
+      preco: tipo.preco,
+      descricao: tipo.descricao,
+      max_ingressos: tipo.max_ingressos ?? null,
+      lotes: tipo.lotes ?? [],
+      ordem,
+      ativo: true,
+    };
+
+    if (tipo.id && idsExistentes.has(tipo.id)) {
+      idsMantidos.add(tipo.id);
+      const { error } = await supabase
+        .from("tipos_ingresso")
+        .update(campos)
+        .eq("id", tipo.id);
+      if (error) {
+        return { error: `Erro ao salvar tipos de ingresso: ${error.message}` };
+      }
+    } else {
+      const { error } = await supabase
+        .from("tipos_ingresso")
+        .insert({ evento_id: eventoId, ...campos });
+      if (error) {
+        return { error: `Erro ao salvar tipos de ingresso: ${error.message}` };
+      }
+    }
+  }
+
+  // Remove só os que o admin de fato tirou do formulário.
+  const removidos = [...idsExistentes].filter((id) => !idsMantidos.has(id));
+  if (removidos.length > 0) {
+    const { error } = await supabase
+      .from("tipos_ingresso")
+      .delete()
+      .in("id", removidos);
+    if (error) {
+      return { error: `Erro ao remover tipos de ingresso: ${error.message}` };
+    }
   }
 
   revalidatePath("/admin/eventos");
@@ -430,7 +472,7 @@ export async function duplicateEvento(
   const { data: source, error: fetchErr } = await supabase
     .from("eventos")
     .select(
-      "slug, nome, descricao_curta, descricao_longa, data_evento, hora_evento, hora_fim, local, imagem_capa_url, cor_tematica, series_permitidas, turmas_permitidas, metodos_pagamento, max_parcelas, prazo_inscricao, destinacao_valores, infos_importantes, mostrar_estoque_publico, pagamento_familiar, tipos_ingresso(nome, preco, descricao, icone, cor, ordem, ativo, max_ingressos, lotes)",
+      "slug, nome, descricao_curta, descricao_longa, data_evento, hora_evento, hora_fim, local, imagem_capa_url, cor_tematica, series_permitidas, turmas_permitidas, metodos_pagamento, max_parcelas, prazo_inscricao, destinacao_valores, infos_importantes, mostrar_estoque_publico, pagamento_familiar, ingresso_unico, tipos_ingresso(nome, preco, descricao, icone, cor, ordem, ativo, max_ingressos, lotes)",
     )
     .eq("id", eventoId)
     .maybeSingle();
@@ -464,6 +506,7 @@ export async function duplicateEvento(
       infos_importantes: source.infos_importantes,
       mostrar_estoque_publico: source.mostrar_estoque_publico ?? false,
       pagamento_familiar: source.pagamento_familiar ?? false,
+      ingresso_unico: source.ingresso_unico ?? false,
     })
     .select("id")
     .single();

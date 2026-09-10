@@ -86,7 +86,7 @@ export default async function EventoPublicPage({ params }: PageProps) {
   const { data: evento } = await supabase
     .from("eventos")
     .select(
-      "id, slug, nome, descricao_curta, descricao_longa, data_evento, hora_evento, hora_fim, local, imagem_capa_url, cor_tematica, prazo_inscricao, destinacao_valores, infos_importantes, max_parcelas, metodos_pagamento, series_permitidas, turmas_permitidas, status, mostrar_estoque_publico, pagamento_familiar, tipos_ingresso(id, nome, preco, descricao, ordem, lotes, max_ingressos)",
+      "id, slug, nome, descricao_curta, descricao_longa, data_evento, hora_evento, hora_fim, local, imagem_capa_url, cor_tematica, prazo_inscricao, destinacao_valores, infos_importantes, max_parcelas, metodos_pagamento, series_permitidas, turmas_permitidas, status, mostrar_estoque_publico, pagamento_familiar, ingresso_unico, tipos_ingresso(id, nome, preco, descricao, ordem, lotes, max_ingressos)",
     )
     .eq("slug", slug)
     .in("status", ["publicado", "encerrado"])
@@ -518,6 +518,7 @@ export default async function EventoPublicPage({ params }: PageProps) {
                 metodos_pagamento: evento.metodos_pagamento,
                 max_parcelas: evento.max_parcelas,
                 pagamento_familiar: evento.pagamento_familiar ?? false,
+                ingresso_unico: evento.ingresso_unico ?? false,
               }}
               tipos={tipos.map((t) => {
                 const est = estoque.get(t.id);
@@ -650,7 +651,13 @@ function DescricaoLonga({ texto, cor }: { texto: string; cor: string }) {
     }
   };
 
-  for (const linha of texto.split("\n")) {
+  // Normaliza "\n" literal (barra + n) que pode ter vindo da importação por IA,
+  // pra que a quebra funcione mesmo em eventos já salvos com o texto escapado.
+  const textoNormalizado = texto
+    .replace(/\\r\\n/g, "\n")
+    .replace(/\\n/g, "\n");
+
+  for (const linha of textoNormalizado.split("\n")) {
     const l = linha.trim();
     if (!l) {
       flushLista();

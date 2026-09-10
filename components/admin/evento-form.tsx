@@ -98,6 +98,7 @@ export interface EventoFormInitial {
   infos_importantes: string[] | null;
   mostrar_estoque_publico: boolean;
   pagamento_familiar?: boolean;
+  ingresso_unico?: boolean;
 }
 
 export interface EventoFormTipoInitialLote {
@@ -171,6 +172,9 @@ export function EventoForm({
   );
   const [pagamentoFamiliar, setPagamentoFamiliar] = useState(
     initial?.pagamento_familiar ?? false,
+  );
+  const [ingressoUnico, setIngressoUnico] = useState(
+    initial?.ingresso_unico ?? false,
   );
   const [series, setSeries] = useState<string[]>(
     initial?.series_permitidas ?? [],
@@ -346,6 +350,7 @@ export function EventoForm({
     formData.set("remover_imagem", removerImagem ? "1" : "0");
     formData.set("mostrar_estoque_publico", mostrarEstoque ? "1" : "0");
     formData.set("pagamento_familiar", pagamentoFamiliar ? "1" : "0");
+    formData.set("ingresso_unico", ingressoUnico ? "1" : "0");
     action(formData);
   }
 
@@ -895,6 +900,22 @@ export function EventoForm({
                 : "Pagamento por aluno (cada filho precisa da própria inscrição)"
             }
           />
+          <Switch
+            checked={ingressoUnico}
+            onChange={(e) => setIngressoUnico(e.target.checked)}
+            label={
+              ingressoUnico
+                ? "Ingresso único: 1 por inscrição, sem escolher quantidade"
+                : "Quantidade livre (o responsável escolhe quantos ingressos)"
+            }
+          />
+          {ingressoUnico && (
+            <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
+              🎟️ Os botões de + e − somem da página pública e a inscrição já
+              nasce com 1 ingresso. Use em evento de taxa por aluno, como o
+              Desfile Cívico.
+            </p>
+          )}
           {pagamentoFamiliar && (
             <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
               👨‍👩‍👧‍👦 Os irmãos são identificados pelo campo{" "}

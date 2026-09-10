@@ -76,6 +76,8 @@ interface EventoInfo {
   metodos_pagamento: ("pix" | "cartao")[];
   max_parcelas: number;
   pagamento_familiar: boolean;
+  /** true = 1 ingresso por inscrição; o público não escolhe quantidade. */
+  ingresso_unico: boolean;
 }
 
 interface Props {
@@ -150,9 +152,18 @@ export function InscricaoForm({ evento, tipos }: Props) {
   const [parcelas, setParcelas] = useState(1);
 
   // ---------- Quantidades por tipo ----------
+  // Com ingresso único a inscrição já nasce com 1 — não faz sentido obrigar
+  // a pessoa a clicar em "+" quando não existe outra opção.
   const [qtds, setQtds] = useState<Record<string, number>>(() =>
-    Object.fromEntries(tipos.map((t) => [t.id, 0])),
+    Object.fromEntries(
+      tipos.map((t, i) => [t.id, evento.ingresso_unico && i === 0 ? 1 : 0]),
+    ),
   );
+
+  /** Ingresso único com mais de um tipo: escolhe-se UM, sempre quantidade 1. */
+  function escolherUnico(tipoId: string) {
+    setQtds(Object.fromEntries(tipos.map((t) => [t.id, t.id === tipoId ? 1 : 0])));
+  }
 
   // ---------- Busca de alunos com debounce ----------
   useEffect(() => {
@@ -621,10 +632,14 @@ export function InscricaoForm({ evento, tipos }: Props) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2" style={{ color: cor }}>
             <Ticket className="size-5" />
-            Quantidade de ingressos
+            {evento.ingresso_unico ? "Ingresso" : "Quantidade de ingressos"}
           </CardTitle>
           <CardDescription>
-            Escolha quantos ingressos de cada tipo.
+            {evento.ingresso_unico
+              ? tipos.length > 1
+                ? "Escolha o tipo de ingresso. É um por inscrição."
+                : "Um ingresso por inscrição."
+              : "Escolha quantos ingressos de cada tipo."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -689,34 +704,58 @@ export function InscricaoForm({ evento, tipos }: Props) {
                       </div>
                     )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => dec(tipo.id)}
-                    disabled={q === 0 || esgotado}
-                    className="size-9"
-                  >
-                    <Minus className="size-3.5" />
-                  </Button>
-                  <span
-                    className="w-8 text-center text-xl font-extrabold tabular-nums"
-                    style={{ color: esgotado ? "#6b7280" : cor }}
-                  >
-                    {q}
-                  </span>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => inc(tipo.id)}
-                    disabled={esgotado || noLimite}
-                    className="size-9"
-                  >
-                    <Plus className="size-3.5" />
-                  </Button>
-                </div>
+                {evento.ingresso_unico ? (
+                  /* Ingresso único: nada de + e -. Com um tipo só, mostra
+                     que está incluso; com vários, vira escolha de um. */
+                  tipos.length > 1 ? (
+                    <Button
+                      type="button"
+                      variant={q > 0 ? "default" : "outline"}
+                      onClick={() => escolherUnico(tipo.id)}
+                      disabled={esgotado}
+                      style={q > 0 ? { background: cor } : undefined}
+                      className="min-w-24"
+                    >
+                      {q > 0 ? "Selecionado" : "Escolher"}
+                    </Button>
+                  ) : (
+                    <span
+                      className="text-sm font-bold"
+                      style={{ color: esgotado ? "#6b7280" : cor }}
+                    >
+                      {esgotado ? "Esgotado" : "1 ingresso"}
+                    </span>
+                  )
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => dec(tipo.id)}
+                      disabled={q === 0 || esgotado}
+                      className="size-9"
+                    >
+                      <Minus className="size-3.5" />
+                    </Button>
+                    <span
+                      className="w-8 text-center text-xl font-extrabold tabular-nums"
+                      style={{ color: esgotado ? "#6b7280" : cor }}
+                    >
+                      {q}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => inc(tipo.id)}
+                      disabled={esgotado || noLimite}
+                      className="size-9"
+                    >
+                      <Plus className="size-3.5" />
+                    </Button>
+                  </div>
+                )}
               </div>
             );
           })}
