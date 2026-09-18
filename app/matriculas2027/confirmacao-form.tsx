@@ -288,6 +288,9 @@ export function ConfirmacaoForm({
       {/* ---------- Quantas pessoas ---------- */}
       <fieldset className="mt-6">
         <legend className={rotuloBase}>Quantas pessoas vêm?</legend>
+        <p className="mb-3 text-sm leading-relaxed text-[#0B1733]/60">
+          Se possível, vir apenas os responsáveis.
+        </p>
         <div className="grid grid-cols-2 gap-3">
           {Array.from({ length: maxPessoas }, (_, i) => i + 1).map((n) => {
             const ativo = pessoas === n;
