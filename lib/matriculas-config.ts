@@ -53,7 +53,7 @@ export const MATRICULAS_2027: CampanhaMatriculas = {
   maxPessoas: 2,
 
   infos: [
-    "A reunião é para as famílias — cada família pode confirmar até 2 pessoas.",
+    "O encontro é para pais e responsáveis — se possível, não traga as crianças.",
     "Não é preciso levar documento: sua confirmação já fica registrada aqui.",
     "Chegue com 15 minutos de antecedência para acomodação.",
   ],
