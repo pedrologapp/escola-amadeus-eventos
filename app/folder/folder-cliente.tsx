@@ -143,7 +143,7 @@ function Capa({
   return (
     <section
       id="capa"
-      className="relative flex h-[100dvh] min-h-[640px] flex-col overflow-hidden px-6 pb-8 pt-9"
+      className="relative mx-auto flex h-[100dvh] min-h-[640px] w-full max-w-[470px] flex-col overflow-hidden px-6 pb-8 pt-9"
       style={{
         background:
           "radial-gradient(120% 70% at 50% 34%, #16224A 0%, #0A0D18 58%, #05060C 100%)",
@@ -322,13 +322,13 @@ function Secao({
   return (
     <section
       id={id}
-      className={`flex min-h-[100dvh] justify-center px-6 pb-12 pt-16 ${
+      className={`flex min-h-[100dvh] pb-12 pt-16 ${
         escuro ? "bg-[#05060C] text-[#FAF7F0]" : "bg-[#FAF7F0] text-[#17223D]"
       }`}
     >
-      {/* O folder é feito pra celular. Em tela larga ele fica numa coluna
-          centrada em vez de esticar a linha até ficar ilegível. */}
-      <div className="flex w-full max-w-[26rem] flex-col">{children}</div>
+      {/* Mesma coluna da página /geekie: o folder é feito pra celular, e em
+          tela larga ele continua sendo uma coluna de celular, centrada. */}
+      <div className="mx-auto flex w-full max-w-[470px] flex-col px-6">{children}</div>
     </section>
   );
 }
