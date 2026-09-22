@@ -25,10 +25,12 @@ import {
 /* As bolhas são posicionadas em cima de uma medida só, --d, que é o lado do
    palco. Assim a constelação inteira acompanha a largura do celular sem
    precisar de breakpoint. */
-const RAIO_DENTRO = 0.235;
-const RAIO_FORA = 0.415;
-const TAM_DENTRO = 0.15;
-const TAM_FORA = 0.155;
+const RAIO_DENTRO = 0.25;
+const RAIO_FORA = 0.425;
+const TAM_DENTRO = 0.145;
+const TAM_FORA = 0.145;
+/** O miolo é um disco creme: a logo tem tipografia azul e sumiria no preto. */
+const MEDALHA = 0.26;
 
 function angulos(quantidade: number, deslocamento: number): number[] {
   const passo = 360 / quantidade;
@@ -195,17 +197,28 @@ function Capa({
           </div>
 
           <div
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-            style={{ width: "calc(var(--d) * 0.23)", height: "calc(var(--d) * 0.23)" }}
+            className="absolute left-1/2 top-1/2 grid -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-[#FAF7F0]"
+            style={{
+              width: `calc(var(--d) * ${MEDALHA})`,
+              height: `calc(var(--d) * ${MEDALHA})`,
+            }}
           >
-            <Image
-              src="/folder/logo-30-anos.png"
-              alt="Centro Educacional Amadeus, 30 anos"
-              fill
-              priority
-              sizes="120px"
-              className="object-contain"
-            />
+            <div
+              className="relative"
+              style={{
+                width: `calc(var(--d) * ${MEDALHA * 0.76})`,
+                height: `calc(var(--d) * ${MEDALHA * 0.76})`,
+              }}
+            >
+              <Image
+                src="/folder/logo-30-anos.png"
+                alt="Centro Educacional Amadeus, 30 anos"
+                fill
+                priority
+                sizes="140px"
+                className="object-contain"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -280,10 +293,13 @@ function Bolha({
       <button
         type="button"
         onClick={aoTocar}
-        className={`${classeContra} flex size-full items-center justify-center rounded-full px-1 text-center leading-tight transition-colors ${
+        style={{ overflowWrap: "anywhere" }}
+        className={`${classeContra} flex size-full items-center justify-center rounded-full px-1.5 text-center leading-[1.1] transition-colors ${
           solida
             ? "bg-[#FAF7F0] text-[0.7rem] font-bold text-[#0B1733]"
-            : "border border-[#FAF7F0]/12 bg-[#FAF7F0]/[0.05] text-[0.62rem] font-semibold text-[#FAF7F0]/90"
+            : `border border-[#FAF7F0]/12 bg-[#FAF7F0]/[0.05] font-semibold text-[#FAF7F0]/90 ${
+                rotulo.length > 9 ? "text-[0.55rem]" : "text-[0.62rem]"
+              }`
         } ${ativa ? "ring-2 ring-[#E8B44C] ring-offset-2 ring-offset-[#0A0D18]" : ""}`}
       >
         {rotulo}
@@ -306,11 +322,13 @@ function Secao({
   return (
     <section
       id={id}
-      className={`flex min-h-[100dvh] flex-col px-6 pb-12 pt-16 ${
+      className={`flex min-h-[100dvh] justify-center px-6 pb-12 pt-16 ${
         escuro ? "bg-[#05060C] text-[#FAF7F0]" : "bg-[#FAF7F0] text-[#17223D]"
       }`}
     >
-      {children}
+      {/* O folder é feito pra celular. Em tela larga ele fica numa coluna
+          centrada em vez de esticar a linha até ficar ilegível. */}
+      <div className="flex w-full max-w-[26rem] flex-col">{children}</div>
     </section>
   );
 }
