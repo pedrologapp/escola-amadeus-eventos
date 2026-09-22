@@ -63,11 +63,27 @@ export function indiceSegmento(id: SegmentoId): number {
  * Peça do mosaico. `largo` e `alto` dão ao bloco o tamanho de duas colunas ou
  * de duas linhas, pra grade não ficar com todo mundo do mesmo tamanho.
  */
+export interface Foto {
+  src: string;
+  /** Tamanho real do arquivo, pra foto abrir inteira sem cortar nada. */
+  w: number;
+  h: number;
+}
+
+export type IconeEspaco =
+  | "auditorio"
+  | "quadra"
+  | "parquinho"
+  | "sala"
+  | "lanche"
+  | "invertida";
+
 export interface Peca {
   nome: string;
   resumo: string | null;
   nota?: string;
-  foto?: string;
+  foto?: Foto;
+  icone?: IconeEspaco;
   largo?: boolean;
   alto?: boolean;
 }
@@ -78,7 +94,7 @@ export const PROGRAMAS: Peca[] = [
     resumo:
       "Entender na individualidade de cada aluno seus potenciais e habilidades para que ele se descubra em sua própria luz.",
     nota: "Infantil, Fundamental 1 e 2",
-    foto: "/folder/programas/arboria.webp",
+    foto: { src: "/folder/programas/arboria.webp", w: 900, h: 681 },
     largo: true,
   },
   {
@@ -86,7 +102,7 @@ export const PROGRAMAS: Peca[] = [
     resumo:
       "Desenvolver habilidades como empatia, autonomia, liderança e equilíbrio emocional.",
     nota: "Infantil, Fundamental 1 e 2",
-    foto: "/folder/programas/socioemocional.webp",
+    foto: { src: "/folder/programas/socioemocional.webp", w: 365, h: 720 },
     alto: true,
   },
   {
@@ -94,21 +110,21 @@ export const PROGRAMAS: Peca[] = [
     resumo:
       "Tecnologia, lógica e criatividade aplicadas na prática, estimulando inovação e pensamento crítico.",
     nota: "Fundamental 1 e 2",
-    foto: "/folder/programas/robotica.webp",
+    foto: { src: "/folder/programas/robotica.webp", w: 640, h: 700 },
   },
   {
     nome: "Educação Financeira",
     resumo:
       "Compreender através da lógica, pensamento crítico e comportamental como realizar organização financeira para atingir seus próprios objetivos.",
     nota: "Infantil, Fundamental 1 e 2",
-    foto: "/folder/programas/financeira.webp",
+    foto: { src: "/folder/programas/financeira.webp", w: 510, h: 420 },
   },
   {
     nome: "Educação Bilíngue",
     resumo:
       "Aprendizado em duas línguas desde cedo, preparando para um mundo cada vez mais conectado.",
     nota: "Infantil, Fundamental 1 e 2",
-    foto: "/folder/programas/bilingue.webp",
+    foto: { src: "/folder/programas/bilingue.webp", w: 600, h: 690 },
     largo: true,
   },
 ];
@@ -120,21 +136,40 @@ export const ESPORTES: Peca[] = [
   {
     nome: "Karatê",
     resumo: null,
-    foto: "/folder/programas/esportes.webp",
+    foto: { src: "/folder/programas/esportes.webp", w: 490, h: 490 },
     largo: true,
     alto: true,
   },
-  { nome: "Futsal", resumo: null },
-  { nome: "Vôlei", resumo: null },
+  {
+    nome: "Futsal",
+    resumo: null,
+    foto: { src: "/folder/programas/futsal.webp", w: 470, h: 530 },
+  },
+  {
+    nome: "Vôlei",
+    resumo: null,
+    foto: { src: "/folder/programas/volei.webp", w: 500, h: 500 },
+  },
 ];
 
 export const ESPACOS: Peca[] = [
-  { nome: "Auditório", resumo: null, largo: true },
-  { nome: "Quadra", resumo: null },
-  { nome: "Parquinho", resumo: null },
-  { nome: "Salas climatizadas", resumo: null, nota: "com projetor ou TV", largo: true },
-  { nome: "Espaço do lanchinho", resumo: null, nota: "Educação Infantil" },
-  { nome: "Sala invertida", resumo: null, nota: "Fundamental 2" },
+  { nome: "Auditório", resumo: null, icone: "auditorio", largo: true },
+  { nome: "Quadra", resumo: null, icone: "quadra" },
+  { nome: "Parquinho", resumo: null, icone: "parquinho" },
+  {
+    nome: "Salas climatizadas",
+    resumo: null,
+    nota: "com projetor ou TV",
+    icone: "sala",
+    largo: true,
+  },
+  {
+    nome: "Espaço do lanchinho",
+    resumo: null,
+    nota: "Educação Infantil",
+    icone: "lanche",
+  },
+  { nome: "Sala invertida", resumo: null, nota: "Fundamental 2", icone: "invertida" },
 ];
 
 /**

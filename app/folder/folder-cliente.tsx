@@ -23,6 +23,7 @@ import {
   indiceSegmento,
   type CartaoLivro,
   type IconeComunicacao,
+  type IconeEspaco,
   type Peca,
   type SegmentoId,
 } from "@/lib/folder-config";
@@ -757,36 +758,91 @@ function SecaoMosaico({
   );
 }
 
-/* As peças têm tamanhos diferentes de propósito. Tocar numa abre o texto dela
-   embaixo, em vez de empurrar a grade inteira pra baixo. */
+/* As peças têm tamanhos diferentes de propósito. Tocar numa abre a foto
+   inteira, sem corte, com o texto embaixo. */
 function Mosaico({ pecas, escuro }: { pecas: Peca[]; escuro?: boolean }) {
   const [aberta, setAberta] = useState<string | null>(null);
   const escolhida = pecas.find((p) => p.nome === aberta) ?? null;
+
+  if (escolhida) {
+    return (
+      <div className="mt-6 flex flex-1 flex-col">
+        {escolhida.foto ? (
+          <Image
+            src={escolhida.foto.src}
+            alt={escolhida.nome}
+            width={escolhida.foto.w}
+            height={escolhida.foto.h}
+            sizes="(max-width: 470px) 92vw, 422px"
+            className="w-full rounded-[22px]"
+          />
+        ) : null}
+
+        <h3
+          className={`mt-5 font-serif text-[1.7rem] font-semibold leading-tight ${
+            escuro ? "text-[#FAF7F0]" : "text-[#17223D]"
+          }`}
+        >
+          {escolhida.nome}
+        </h3>
+        {escolhida.nota ? (
+          <span
+            className={`mt-1 text-[0.72rem] font-semibold uppercase tracking-[0.12em] ${
+              escuro ? "text-[#E8B44C]" : "text-[#B9862F]"
+            }`}
+          >
+            {escolhida.nota}
+          </span>
+        ) : null}
+        {escolhida.resumo ? (
+          <p
+            className={`mt-3 text-[1rem] leading-relaxed ${
+              escuro ? "text-[#FAF7F0]/72" : "text-[#5A657F]"
+            }`}
+          >
+            {escolhida.resumo}
+          </p>
+        ) : null}
+
+        <button
+          type="button"
+          onClick={() => setAberta(null)}
+          className={`mt-8 flex min-h-[3.375rem] items-center justify-center gap-2 rounded-full border text-[0.95rem] font-semibold ${
+            escuro
+              ? "border-[#FAF7F0]/22 text-[#FAF7F0]"
+              : "border-[#17223D]/22 text-[#17223D]"
+          }`}
+        >
+          <SetaLado cor={escuro ? "#E8B44C" : "#B9862F"} />
+          Voltar
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-6 flex flex-1 flex-col">
       <div className="grid grid-cols-2 gap-3 [grid-auto-rows:8.25rem]">
         {pecas.map((peca) => {
-          const ativa = aberta === peca.nome;
-          const clicavel = Boolean(peca.resumo);
+          const abrivel = Boolean(peca.foto || peca.resumo);
           return (
             <button
               key={peca.nome}
               type="button"
-              disabled={!clicavel}
-              onClick={() => setAberta(ativa ? null : peca.nome)}
-              className={`relative flex flex-col justify-end overflow-hidden rounded-[18px] border p-4 text-left transition-[box-shadow,border-color] ${
+              disabled={!abrivel}
+              onClick={() => setAberta(peca.nome)}
+              className={`relative flex flex-col justify-end overflow-hidden rounded-[18px] border p-4 text-left ${
                 peca.largo ? "col-span-2" : ""
               } ${peca.alto ? "row-span-2" : ""} ${
                 escuro
                   ? "border-[#FAF7F0]/12 bg-[#FAF7F0]/[0.05]"
                   : "border-[#17223D]/10 bg-[#17223D]/[0.045]"
-              } ${ativa ? "ring-2 ring-[#E8B44C]" : ""}`}
+              }`}
             >
               {peca.foto ? (
                 <>
                   <Image
-                    src={peca.foto}
+                    src={peca.foto.src}
                     alt=""
                     fill
                     sizes="(max-width: 470px) 50vw, 235px"
@@ -801,6 +857,12 @@ function Mosaico({ pecas, escuro }: { pecas: Peca[]; escuro?: boolean }) {
                     }}
                   />
                 </>
+              ) : null}
+
+              {peca.icone ? (
+                <span className="absolute left-4 top-4">
+                  <IconeEspacoSvg qual={peca.icone} escuro={escuro} />
+                </span>
               ) : null}
 
               <span className="relative">
@@ -822,15 +884,18 @@ function Mosaico({ pecas, escuro }: { pecas: Peca[]; escuro?: boolean }) {
                 ) : null}
               </span>
 
-              {clicavel ? (
+              {abrivel ? (
                 <span
                   aria-hidden
                   className={`absolute right-3 top-3 grid size-7 place-items-center rounded-full ${
-                    peca.foto ? "bg-[#05060C]/60" : escuro ? "bg-[#FAF7F0]/10" : "bg-[#17223D]/8"
+                    peca.foto
+                      ? "bg-[#05060C]/60"
+                      : escuro
+                        ? "bg-[#FAF7F0]/10"
+                        : "bg-[#17223D]/[0.08]"
                   }`}
                 >
                   <svg
-                    className={`transition-transform duration-200 ${ativa ? "rotate-45" : ""}`}
                     width="14"
                     height="14"
                     viewBox="0 0 24 24"
@@ -848,30 +913,74 @@ function Mosaico({ pecas, escuro }: { pecas: Peca[]; escuro?: boolean }) {
           );
         })}
       </div>
-
-      {escolhida?.resumo ? (
-        <div
-          className={`mt-3 rounded-[18px] p-5 ${
-            escuro ? "bg-[#FAF7F0]/[0.07]" : "bg-[#17223D]/[0.06]"
-          }`}
-        >
-          <span
-            className={`block text-[0.95rem] font-bold ${
-              escuro ? "text-[#FAF7F0]" : "text-[#17223D]"
-            }`}
-          >
-            {escolhida.nome}
-          </span>
-          <p
-            className={`mt-1.5 text-[0.9rem] leading-relaxed ${
-              escuro ? "text-[#FAF7F0]/72" : "text-[#5A657F]"
-            }`}
-          >
-            {escolhida.resumo}
-          </p>
-        </div>
-      ) : null}
     </div>
+  );
+}
+
+function IconeEspacoSvg({ qual, escuro }: { qual: IconeEspaco; escuro?: boolean }) {
+  const cor = escuro ? "#E8B44C" : "#B9862F";
+  const comum = {
+    width: 26,
+    height: 26,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: cor,
+    strokeWidth: 1.6,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+  };
+
+  if (qual === "auditorio") {
+    return (
+      <svg {...comum}>
+        <path d="M12 3v9" />
+        <rect x="9.5" y="3" width="5" height="7" rx="2.5" />
+        <path d="M6.5 11a5.5 5.5 0 0 0 11 0" />
+        <path d="M8 21h8M12 17v4" />
+      </svg>
+    );
+  }
+  if (qual === "quadra") {
+    return (
+      <svg {...comum}>
+        <rect x="3" y="5" width="18" height="14" rx="1.5" />
+        <path d="M12 5v14" />
+        <circle cx="12" cy="12" r="2.6" />
+        <path d="M3 9h2.5v6H3M21 9h-2.5v6H21" />
+      </svg>
+    );
+  }
+  if (qual === "parquinho") {
+    return (
+      <svg {...comum}>
+        <path d="M4 20V8l8-4 8 4v12" />
+        <path d="M4 14h16" />
+        <path d="M9.5 20v-4.5h5V20" />
+      </svg>
+    );
+  }
+  if (qual === "sala") {
+    return (
+      <svg {...comum}>
+        <rect x="3" y="4.5" width="18" height="12" rx="2" />
+        <path d="M8.5 20h7M12 16.5V20" />
+      </svg>
+    );
+  }
+  if (qual === "lanche") {
+    return (
+      <svg {...comum}>
+        <path d="M6 8h12l-1.2 11a2 2 0 0 1-2 1.8H9.2a2 2 0 0 1-2-1.8z" />
+        <path d="M9 8V6a3 3 0 0 1 6 0v2" />
+      </svg>
+    );
+  }
+  return (
+    <svg {...comum}>
+      <path d="M4 8h12l-3-3M20 16H8l3 3" />
+      <path d="M4 8v3M20 16v-3" />
+    </svg>
   );
 }
 
@@ -969,26 +1078,22 @@ function SecaoValores({
 function SecaoProximo({ aoTocar }: { aoTocar: (alvo: string) => void }) {
   return (
     <Secao id="proximo">
-      <div className="relative h-11 w-[15rem]">
-        <Image
-          src="/folder/marca-30-anos.png"
-          alt="Centro Educacional Amadeus"
-          fill
-          sizes="240px"
-          className="object-contain object-left"
-        />
+      <div className="flex flex-1 flex-col items-center justify-center gap-7 text-center">
+        <h2 className="font-serif text-[2.6rem] font-semibold leading-[1.05] text-[#17223D]">
+          Isso é o que nós
+          <br />
+          <span className="text-[#B9862F]">somos!</span>
+        </h2>
+        <div className="relative h-[15rem] w-full max-w-[17rem]">
+          <Image
+            src="/folder/marca-30-anos.png"
+            alt="Centro Educacional Amadeus, 30 anos"
+            fill
+            sizes="272px"
+            className="object-contain"
+          />
+        </div>
       </div>
-
-      <h2 className="mt-6 font-serif text-[2.5rem] font-semibold leading-[1.04] text-[#17223D]">
-        Venha ver
-        <br />
-        de perto.
-      </h2>
-      <p className="mt-2.5 max-w-[18rem] text-[0.95rem] leading-relaxed text-[#5A657F]">
-        Folder nenhum substitui entrar na escola e sentir o barulho do recreio.
-      </p>
-
-      <div className="flex-1" />
 
       <div className="flex flex-col gap-2.5">
         <Link
