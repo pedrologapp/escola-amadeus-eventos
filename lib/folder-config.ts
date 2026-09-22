@@ -122,16 +122,17 @@ export const ESPORTES: Peca[] = [
     resumo: null,
     foto: "/folder/programas/esportes.webp",
     largo: true,
+    alto: true,
   },
   { nome: "Futsal", resumo: null },
   { nome: "Vôlei", resumo: null },
 ];
 
 export const ESPACOS: Peca[] = [
-  { nome: "Auditório", resumo: null },
-  { nome: "Salas climatizadas", resumo: null, nota: "com projetor ou TV", largo: true },
+  { nome: "Auditório", resumo: null, largo: true },
   { nome: "Quadra", resumo: null },
   { nome: "Parquinho", resumo: null },
+  { nome: "Salas climatizadas", resumo: null, nota: "com projetor ou TV", largo: true },
   { nome: "Espaço do lanchinho", resumo: null, nota: "Educação Infantil" },
   { nome: "Sala invertida", resumo: null, nota: "Fundamental 2" },
 ];

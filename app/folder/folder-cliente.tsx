@@ -154,13 +154,13 @@ function Capa({
       {/* O gradiente sangra na largura toda, como no hero do /geekie. Só o
           conteúdo fica preso na coluna de celular. */}
       <div className="flex w-full max-w-[470px] flex-col px-6 pb-8 pt-8">
-        <div className="relative mx-auto h-9 w-[13.5rem]">
+        <div className="relative mx-auto h-12 w-[17rem]">
           <Image
             src="/folder/logo-horizontal.png"
             alt="Centro Educacional Amadeus"
             fill
             priority
-            sizes="216px"
+            sizes="272px"
             className="object-contain"
           />
         </div>
@@ -765,7 +765,7 @@ function Mosaico({ pecas, escuro }: { pecas: Peca[]; escuro?: boolean }) {
 
   return (
     <div className="mt-6 flex flex-1 flex-col">
-      <div className="grid grid-cols-2 gap-3 [grid-auto-rows:7.25rem]">
+      <div className="grid grid-cols-2 gap-3 [grid-auto-rows:8.25rem]">
         {pecas.map((peca) => {
           const ativa = aberta === peca.nome;
           const clicavel = Boolean(peca.resumo);
