@@ -143,12 +143,15 @@ function Capa({
   return (
     <section
       id="capa"
-      className="relative mx-auto flex h-[100dvh] min-h-[640px] w-full max-w-[470px] flex-col overflow-hidden px-6 pb-8 pt-9"
+      className="relative flex h-[100dvh] min-h-[640px] justify-center overflow-hidden"
       style={{
         background:
           "radial-gradient(120% 70% at 50% 34%, #16224A 0%, #0A0D18 58%, #05060C 100%)",
       }}
     >
+      {/* O gradiente sangra na largura toda, como no hero do /geekie. Só o
+          conteúdo fica preso na coluna de celular. */}
+      <div className="flex w-full max-w-[470px] flex-col px-6 pb-8 pt-9">
       <p className="text-center text-[0.62rem] uppercase tracking-[0.2em] text-[#FAF7F0]/45">
         Centro Educacional Amadeus
       </p>
@@ -176,6 +179,7 @@ function Capa({
                 classeContra="fd-contra-fora"
                 aoTocar={() => aoTocar(bolha.alvo)}
                 rotulo={bolha.rotulo}
+                linhas={bolha.linhas}
               />
             ))}
           </div>
@@ -241,6 +245,7 @@ function Capa({
           <Seta cor="#0B1733" />
         </button>
       </div>
+      </div>
     </section>
   );
 }
@@ -266,6 +271,7 @@ function Bolha({
   classeContra,
   aoTocar,
   rotulo,
+  linhas,
   solida = false,
   ativa = false,
 }: {
@@ -275,10 +281,13 @@ function Bolha({
   classeContra: string;
   aoTocar: () => void;
   rotulo: string;
+  linhas?: string[];
   solida?: boolean;
   ativa?: boolean;
 }) {
   const lado = `calc(var(--d) * ${tamanho})`;
+  const partes = linhas ?? [rotulo];
+  const maiorParte = Math.max(...partes.map((p) => p.length));
 
   return (
     <span
@@ -293,16 +302,23 @@ function Bolha({
       <button
         type="button"
         onClick={aoTocar}
-        style={{ overflowWrap: "anywhere" }}
-        className={`${classeContra} flex size-full items-center justify-center rounded-full px-1.5 text-center leading-[1.1] transition-colors ${
+        aria-label={rotulo}
+        className={`${classeContra} flex size-full items-center justify-center rounded-full px-1 text-center leading-[1.12] transition-colors ${
           solida
             ? "bg-[#FAF7F0] text-[0.7rem] font-bold text-[#0B1733]"
             : `border border-[#FAF7F0]/12 bg-[#FAF7F0]/[0.05] font-semibold text-[#FAF7F0]/90 ${
-                rotulo.length > 9 ? "text-[0.55rem]" : "text-[0.62rem]"
+                maiorParte > 8 ? "text-[0.56rem]" : "text-[0.62rem]"
               }`
         } ${ativa ? "ring-2 ring-[#E8B44C] ring-offset-2 ring-offset-[#0A0D18]" : ""}`}
       >
-        {rotulo}
+        <span>
+          {partes.map((parte, i) => (
+            <span key={parte} className="block">
+              {parte}
+              {i < partes.length - 1 ? <span className="sr-only"> </span> : null}
+            </span>
+          ))}
+        </span>
       </button>
     </span>
   );

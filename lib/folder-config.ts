@@ -163,6 +163,11 @@ export interface Bolha {
   alvo: string;
   /** Preenchida quando a bolha também escolhe a etapa. */
   segmento?: SegmentoId;
+  /**
+   * Onde o nome deve quebrar dentro do círculo. Sem isso o navegador parte no
+   * meio da palavra e sai "AgendaE / du".
+   */
+  linhas?: string[];
 }
 
 export const BOLHAS_DENTRO: Bolha[] = [
@@ -174,11 +179,11 @@ export const BOLHAS_DENTRO: Bolha[] = [
 export const BOLHAS_FORA: Bolha[] = [
   { rotulo: "Geekie", alvo: "material" },
   { rotulo: "Tablets", alvo: "material" },
-  { rotulo: "AgendaEdu", alvo: "material" },
-  { rotulo: "Projeto Arbória", alvo: "programas" },
-  { rotulo: "Socioemocional", alvo: "programas" },
+  { rotulo: "AgendaEdu", alvo: "material", linhas: ["Agenda", "Edu"] },
+  { rotulo: "Projeto Arbória", alvo: "programas", linhas: ["Projeto", "Arbória"] },
+  { rotulo: "Socioemocional", alvo: "programas", linhas: ["Socio", "emocional"] },
   { rotulo: "Robótica", alvo: "programas" },
-  { rotulo: "Ed. Financeira", alvo: "programas" },
+  { rotulo: "Ed. Financeira", alvo: "programas", linhas: ["Ed.", "Financeira"] },
   { rotulo: "Bilíngue", alvo: "programas" },
   { rotulo: "Inglês", alvo: "programas" },
   { rotulo: "Karatê", alvo: "esportes" },
