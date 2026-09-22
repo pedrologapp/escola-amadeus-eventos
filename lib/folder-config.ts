@@ -4,8 +4,10 @@
  * O folder é GERAL: não pede nome de aluno, porque também atende família nova.
  * A única personalização é a etapa, escolhida pelo próprio pai.
  *
- * Tudo que ainda não temos fica como `null` e a tela mostra um espaço
- * reservado. Nada de texto inventado aqui: o que falta, falta à vista.
+ * Os textos dos programas e dos esportes são os mesmos dos cards que a escola
+ * publicou no Instagram (docs/EventoRematricula/pogramas). As fotos saíram
+ * desses cards, recortadas por scripts/recortar-fotos-folder.mjs para tirar o
+ * texto gravado na imagem.
  */
 
 export type SegmentoId = "infantil" | "f1" | "f2";
@@ -18,7 +20,6 @@ export interface Segmento {
   series: string | null;
   /** URL do vídeo do segmento. Null enquanto não estiver gravado. */
   video: string | null;
-  duracao: string | null;
 }
 
 export const SEGMENTOS: Segmento[] = [
@@ -29,7 +30,6 @@ export const SEGMENTOS: Segmento[] = [
     idade: "2 a 5 anos",
     series: null,
     video: null,
-    duracao: null,
   },
   {
     id: "f1",
@@ -38,7 +38,6 @@ export const SEGMENTOS: Segmento[] = [
     idade: "6 a 10 anos",
     series: "do 1º ao 5º ano",
     video: null,
-    duracao: null,
   },
   {
     id: "f2",
@@ -47,7 +46,6 @@ export const SEGMENTOS: Segmento[] = [
     idade: "11 a 14 anos",
     series: "do 6º ao 9º ano",
     video: null,
-    duracao: null,
   },
 ];
 
@@ -57,32 +55,81 @@ export function acharSegmento(id: SegmentoId): Segmento {
   return s;
 }
 
-/** Item que abre ao toque. `resumo` null = ainda esperando o texto do Pedro. */
-export interface Item {
-  nome: string;
-  resumo: string | null;
-  /** Etapa a que se destina, quando não for da escola toda. */
-  nota?: string;
+export function indiceSegmento(id: SegmentoId): number {
+  return SEGMENTOS.findIndex((s) => s.id === id);
 }
 
-export const PROGRAMAS: Item[] = [
-  { nome: "Projeto Arbória", resumo: null },
-  { nome: "Socioemocional", resumo: null },
-  { nome: "Robótica", resumo: null },
-  { nome: "Educação Financeira", resumo: null },
-  { nome: "Bilíngue", resumo: null },
-  { nome: "Inglês", resumo: null },
+/**
+ * Peça do mosaico. `largo` e `alto` dão ao bloco o tamanho de duas colunas ou
+ * de duas linhas, pra grade não ficar com todo mundo do mesmo tamanho.
+ */
+export interface Peca {
+  nome: string;
+  resumo: string | null;
+  nota?: string;
+  foto?: string;
+  largo?: boolean;
+  alto?: boolean;
+}
+
+export const PROGRAMAS: Peca[] = [
+  {
+    nome: "Projeto Arbória",
+    resumo:
+      "Entender na individualidade de cada aluno seus potenciais e habilidades para que ele se descubra em sua própria luz.",
+    nota: "Infantil, Fundamental 1 e 2",
+    foto: "/folder/programas/arboria.webp",
+    largo: true,
+  },
+  {
+    nome: "Educação Socioemocional",
+    resumo:
+      "Desenvolver habilidades como empatia, autonomia, liderança e equilíbrio emocional.",
+    nota: "Infantil, Fundamental 1 e 2",
+    foto: "/folder/programas/socioemocional.webp",
+    alto: true,
+  },
+  {
+    nome: "Sala Maker e Robótica",
+    resumo:
+      "Tecnologia, lógica e criatividade aplicadas na prática, estimulando inovação e pensamento crítico.",
+    nota: "Fundamental 1 e 2",
+    foto: "/folder/programas/robotica.webp",
+  },
+  {
+    nome: "Educação Financeira",
+    resumo:
+      "Compreender através da lógica, pensamento crítico e comportamental como realizar organização financeira para atingir seus próprios objetivos.",
+    nota: "Infantil, Fundamental 1 e 2",
+    foto: "/folder/programas/financeira.webp",
+  },
+  {
+    nome: "Educação Bilíngue",
+    resumo:
+      "Aprendizado em duas línguas desde cedo, preparando para um mundo cada vez mais conectado.",
+    nota: "Infantil, Fundamental 1 e 2",
+    foto: "/folder/programas/bilingue.webp",
+    largo: true,
+  },
 ];
 
-export const ESPORTES: Item[] = [
-  { nome: "Karatê", resumo: null },
+export const FRASE_ESPORTES =
+  "Mais do que competição. Cada treino é uma oportunidade de aprender sobre respeito, superação e responsabilidade.";
+
+export const ESPORTES: Peca[] = [
+  {
+    nome: "Karatê",
+    resumo: null,
+    foto: "/folder/programas/esportes.webp",
+    largo: true,
+  },
   { nome: "Futsal", resumo: null },
   { nome: "Vôlei", resumo: null },
 ];
 
-/** O auditório abre a seção, com mais peso que os outros. */
-export const ESPACOS: Item[] = [
+export const ESPACOS: Peca[] = [
   { nome: "Auditório", resumo: null },
+  { nome: "Salas climatizadas", resumo: null, nota: "com projetor ou TV", largo: true },
   { nome: "Quadra", resumo: null },
   { nome: "Parquinho", resumo: null },
   { nome: "Espaço do lanchinho", resumo: null, nota: "Educação Infantil" },
@@ -90,73 +137,85 @@ export const ESPACOS: Item[] = [
 ];
 
 /**
- * Os cartões da aba "O Livro", que o pai arrasta pro lado.
- * O conteúdo é o mesmo da página /geekie, trazido pra cá pra ele não
- * precisar sair do folder.
+ * Os cartões da aba "O Livro", que o pai arrasta pro lado. Cada um tem um
+ * formato diferente de propósito: número grande, relatório, metades, chips.
+ * A ideia é ele entender de olhada, sem parar pra ler.
  */
-export interface CartaoLivro {
-  etiqueta: string;
-  titulo: string;
-  pontos: string[];
-  nota?: string;
-}
+export type CartaoLivro =
+  | { tipo: "metades"; etiqueta: string; impresso: string; digital: string }
+  | {
+      tipo: "relatorio";
+      etiqueta: string;
+      titulo: string;
+      materias: { nome: string; valor: number; alerta?: boolean }[];
+      frase: string;
+    }
+  | {
+      tipo: "numero";
+      etiqueta: string;
+      numero: string;
+      unidade: string;
+      frase: string;
+      nota?: string;
+    }
+  | {
+      tipo: "chips";
+      etiqueta: string;
+      titulo: string;
+      destaque: string;
+      chips: string[];
+    };
 
 export const CARTOES_LIVRO: CartaoLivro[] = [
   {
+    tipo: "metades",
     etiqueta: "O que é",
-    titulo: "Metade impressa, metade digital",
-    pontos: [
-      "O livro continua na mochila. É nele que ele escreve, resolve e registra o que aprendeu.",
-      "E uma plataforma que conversa com o livro e faz o que o papel sozinho não consegue.",
-    ],
+    impresso: "O livro continua na mochila. É nele que ele escreve e resolve.",
+    digital: "Uma plataforma que faz o que o papel sozinho não consegue.",
   },
   {
-    etiqueta: "O que muda para o seu filho",
-    titulo: "Se ele travar, o material percebe",
-    pontos: [
-      "Travou num assunto? O material volta nesse ponto, em vez de empurrar ele pra frente.",
-      "Cada capítulo vem com vídeo e exercício. São 150 mil questões no total.",
-      "Do 6º ao 9º, a coleção é nova em folha: projetos, projeto de vida e olimpíada de matemática.",
-    ],
-  },
-  {
+    tipo: "relatorio",
     etiqueta: "O que muda para você",
-    titulo: "Você não vai mais ser o último a saber",
-    pontos: [
-      "Toda semana chega um resumo: como ele foi em cada matéria e onde a barra baixou.",
-      "Vem pelo WhatsApp. Não tem aplicativo para baixar, nem senha para decorar.",
-      "Se português cair em março, você sabe em março. Não em maio.",
+    titulo: "Toda semana, no seu WhatsApp",
+    materias: [
+      { nome: "Matemática", valor: 88 },
+      { nome: "Ciências", valor: 81 },
+      { nome: "Português", valor: 54, alerta: true },
     ],
+    frase: "Se português cair em março, você sabe em março. Não em maio.",
   },
   {
-    etiqueta: "E tem mais uma novidade",
-    titulo: "Os tablets chegam à sala de aula",
-    pontos: [
-      "Do 4º ao 9º ano, algumas aulas passam a acontecer com eles.",
-      "Os tablets são da escola. Você não precisa comprar tablet nenhum.",
-      "Ficam na escola, usados dentro da aula, com o professor junto.",
-      "Não é todo dia. O livro continua sendo a base do estudo.",
-    ],
+    tipo: "numero",
+    etiqueta: "O que muda para o seu filho",
+    numero: "150",
+    unidade: "mil questões",
+    frase: "Se ele travar num assunto, o material volta nesse ponto.",
   },
   {
+    tipo: "chips",
+    etiqueta: "Novidade em 2027",
+    titulo: "Tablets na sala",
+    destaque: "4º ao 9º",
+    chips: ["Você não compra nada", "Ficam na escola", "Não é todo dia"],
+  },
+  {
+    tipo: "numero",
     etiqueta: "Por que escolhemos esse",
-    titulo: "130 mil famílias avaliaram",
-    pontos: [
-      "Entre todos os materiais didáticos do país, o Geekie foi o mais bem avaliado pelas famílias.",
-    ],
-    nota: "Diagnóstico Nacional da Educação, do Escolas Exponenciais, com 130 mil famílias, 14 mil professores e 400 instituições. Noticiado pela Folha de S.Paulo em agosto de 2021.",
+    numero: "130",
+    unidade: "mil famílias avaliaram",
+    frase: "Entre todos os materiais do país, o Geekie foi o mais bem avaliado.",
+    nota: "Diagnóstico Nacional da Educação, do Escolas Exponenciais. Noticiado pela Folha de S.Paulo em agosto de 2021.",
   },
 ];
 
-/**
- * A aba Comunicação. CONFIRMAR COM A ESCOLA quais módulos do AgendaEdu
- * entram de fato antes da reunião.
- */
-export const COMUNICACAO: Item[] = [
-  { nome: "Comunicados", resumo: null },
-  { nome: "Agenda do dia", resumo: null },
-  { nome: "Financeiro", resumo: null },
-  { nome: "Autorizações", resumo: null },
+/** A aba Comunicação. O AgendaEdu NÃO trata de financeiro. */
+export type IconeComunicacao = "agenda" | "evento" | "recado" | "direcao";
+
+export const COMUNICACAO: { nome: string; icone: IconeComunicacao }[] = [
+  { nome: "Agenda do dia", icone: "agenda" },
+  { nome: "Eventos", icone: "evento" },
+  { nome: "Recados da escola", icone: "recado" },
+  { nome: "Direção e coordenação", icone: "direcao" },
 ];
 
 /** Até quando vale a tabela promocional de 2027. */
@@ -164,9 +223,7 @@ export const PRAZO_PROMOCAO = "30 de outubro de 2026";
 export const INICIO_TABELA_CHEIA = "2 de novembro";
 
 export interface Faixa {
-  /** Valor da mensalidade. */
   cheio: string;
-  /** Valor pagando até o dia 5. */
   ateODia5: string;
 }
 
@@ -174,12 +231,13 @@ export interface Valores {
   promocional: Faixa;
   depois: Faixa;
   /** O material é comprado à parte. Nunca apresentar como incluso. */
-  material: { rotulo: string; valor: string }[];
+  material: { rotulo: string; parcela: string; total: string }[];
 }
 
 /**
  * Tabela 2027, transcrita das fotos que o Pedro mandou em 22/09/2026
  * (docs/EventoRematricula/preçomensalidade.jpeg e preçolivros.jpeg).
+ * O material aparece parcelado em até 12x, que é como a família pensa.
  *
  * Lembrar: esta página é pública, então o que está aqui o concorrente lê.
  */
@@ -188,19 +246,19 @@ export const VALORES: Record<SegmentoId, Valores | null> = {
     promocional: { cheio: "R$ 570,00", ateODia5: "R$ 550,00" },
     depois: { cheio: "R$ 580,00", ateODia5: "R$ 560,00" },
     material: [
-      { rotulo: "Grupo 2 e 3", valor: "R$ 887,00" },
-      { rotulo: "Grupo 4 e 5", valor: "R$ 1.102,08" },
+      { rotulo: "Grupo 2 e 3", parcela: "R$ 73,92", total: "R$ 887,00" },
+      { rotulo: "Grupo 4 e 5", parcela: "R$ 91,84", total: "R$ 1.102,08" },
     ],
   },
   f1: {
     promocional: { cheio: "R$ 540,00", ateODia5: "R$ 520,00" },
     depois: { cheio: "R$ 550,00", ateODia5: "R$ 530,00" },
-    material: [{ rotulo: "1º ao 5º ano", valor: "R$ 1.908,48" }],
+    material: [{ rotulo: "1º ao 5º ano", parcela: "R$ 159,04", total: "R$ 1.908,48" }],
   },
   f2: {
     promocional: { cheio: "R$ 560,00", ateODia5: "R$ 540,00" },
     depois: { cheio: "R$ 570,00", ateODia5: "R$ 550,00" },
-    material: [{ rotulo: "6º ao 9º ano", valor: "R$ 2.177,28" }],
+    material: [{ rotulo: "6º ao 9º ano", parcela: "R$ 181,44", total: "R$ 2.177,28" }],
   },
 };
 
@@ -215,12 +273,8 @@ export const CONTATO = {
 export interface Bolha {
   rotulo: string;
   alvo: string;
-  /** Preenchida quando a bolha também escolhe a etapa. */
   segmento?: SegmentoId;
-  /**
-   * Onde o nome deve quebrar dentro do círculo. Sem isso o navegador parte no
-   * meio da palavra e sai "AgendaE / du".
-   */
+  /** Onde o nome quebra dentro do círculo. */
   linhas?: string[];
 }
 
@@ -246,7 +300,6 @@ export const BOLHAS_FORA: Bolha[] = [
   { rotulo: "Auditório", alvo: "espacos" },
 ];
 
-/** As etapas do percurso, na ordem, pra barra de progresso. */
 export const PERCURSO = [
   "segmento",
   "video",
