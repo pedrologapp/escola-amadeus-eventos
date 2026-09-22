@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { GraduationCap, Heart, MessageSquareHeart, Shirt } from "lucide-react";
+import {
+  ClipboardList,
+  GraduationCap,
+  Heart,
+  MessageSquareHeart,
+  Shirt,
+} from "lucide-react";
 
 /**
  * Hub dos módulos pontuais.
@@ -25,6 +31,13 @@ const MODULOS = [
     icone: MessageSquareHeart,
     titulo: "Enquete",
     descricao: "Respostas da pesquisa de clima e satisfação das famílias.",
+  },
+  {
+    href: "/admin/reuniao",
+    icone: ClipboardList,
+    titulo: "Reunião de Rematrículas",
+    descricao:
+      "Cronograma do dia, materiais e o que ainda falta ficar pronto.",
   },
   {
     href: "/admin/matriculas2027",
