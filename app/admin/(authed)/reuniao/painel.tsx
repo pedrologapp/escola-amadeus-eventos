@@ -1,16 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import {
-  Check,
-  ExternalLink,
-  Link2,
-  Loader2,
-  Pencil,
-  Plus,
-  Trash2,
-  X,
-} from "lucide-react";
+import { Link2, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
 import {
   CICLO_STATUS,
   CLASSE_STATUS,
@@ -93,12 +84,12 @@ function Secao({
         />
       )}
 
-      <ul className="mt-4 space-y-2">
+      <ul className="mt-4 divide-y divide-border/60 rounded-xl border border-border/60 bg-white">
         {itens.map((item) => (
           <Linha key={item.id} item={item} />
         ))}
         {itens.length === 0 && !adicionando && (
-          <li className="rounded-xl border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground">
+          <li className="p-6 text-center text-sm text-muted-foreground">
             Nada por aqui ainda.
           </li>
         )}
@@ -113,7 +104,7 @@ function Linha({ item }: { item: ItemReuniao }) {
 
   if (editando) {
     return (
-      <li>
+      <li className="p-2">
         <Formulario
           categoria={item.categoria}
           item={item}
@@ -123,12 +114,6 @@ function Linha({ item }: { item: ItemReuniao }) {
     );
   }
 
-  function trocar(status: Status) {
-    iniciar(async () => {
-      await mudarStatus(item.id, status);
-    });
-  }
-
   function remover() {
     iniciar(async () => {
       await excluirItem(item.id);
@@ -136,90 +121,82 @@ function Linha({ item }: { item: ItemReuniao }) {
   }
 
   return (
-    <li className="group rounded-xl border border-border/60 bg-white p-3.5">
-      <div className="flex items-start gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            {item.horario && (
-              <span className="rounded-md bg-amadeus-blue-50 px-1.5 py-0.5 text-xs font-bold text-amadeus-blue">
-                {item.horario}
-              </span>
-            )}
-            <span className="font-semibold text-amadeus-blue">
-              {item.titulo}
-            </span>
-            {item.responsavel && (
-              <span className="text-xs text-muted-foreground">
-                · {item.responsavel}
-              </span>
-            )}
-          </div>
-
-          {item.detalhe && (
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              {item.detalhe}
-            </p>
-          )}
-
-          {item.link && (
-            <a
-              href={item.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-1.5 inline-flex max-w-full items-center gap-1.5 text-sm font-medium text-amadeus-blue hover:underline"
-            >
-              <Link2 className="size-3.5 shrink-0" />
-              <span className="truncate">{item.link}</span>
-              <ExternalLink className="size-3 shrink-0 opacity-60" />
-            </a>
-          )}
-        </div>
-
-        <div className="flex shrink-0 items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setEditando(true)}
-            aria-label="Editar"
-            className="rounded-lg p-1.5 text-muted-foreground opacity-0 transition-opacity hover:bg-muted hover:text-amadeus-blue focus-visible:opacity-100 group-hover:opacity-100"
-          >
-            <Pencil className="size-4" />
-          </button>
-          <button
-            type="button"
-            onClick={remover}
-            aria-label="Excluir"
-            className="rounded-lg p-1.5 text-muted-foreground opacity-0 transition-opacity hover:bg-red-50 hover:text-red-600 focus-visible:opacity-100 group-hover:opacity-100"
-          >
-            <Trash2 className="size-4" />
-          </button>
-        </div>
-      </div>
-
-      <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-        {salvando && (
-          <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
+    <li className="group flex items-center gap-2 px-3 py-2">
+      {/* Status como seletor: cabe numa linha e troca com um clique. */}
+      <select
+        value={item.status}
+        disabled={salvando}
+        onChange={(e) =>
+          iniciar(async () => {
+            await mudarStatus(item.id, e.target.value as Status);
+          })
+        }
+        aria-label={`Status de ${item.titulo}`}
+        className={cn(
+          "shrink-0 cursor-pointer appearance-none rounded-full border px-2.5 py-1 text-xs font-semibold outline-none",
+          CLASSE_STATUS[item.status],
         )}
-        {CICLO_STATUS.map((s) => {
-          const ativo = item.status === s;
-          return (
-            <button
-              key={s}
-              type="button"
-              onClick={() => !ativo && trocar(s)}
-              aria-pressed={ativo}
-              className={cn(
-                "rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors",
-                ativo
-                  ? CLASSE_STATUS[s]
-                  : "border-transparent text-muted-foreground hover:bg-muted",
-              )}
-            >
-              {ativo && <Check className="mr-1 inline size-3" />}
-              {ROTULO_STATUS[s]}
-            </button>
-          );
-        })}
-      </div>
+      >
+        {CICLO_STATUS.map((s) => (
+          <option key={s} value={s}>
+            {ROTULO_STATUS[s]}
+          </option>
+        ))}
+      </select>
+
+      {item.horario && (
+        <span className="shrink-0 text-xs font-bold tabular-nums text-amadeus-blue">
+          {item.horario}
+        </span>
+      )}
+
+      {/* O detalhe vira dica no hover pra não ocupar uma segunda linha. */}
+      <span
+        title={item.detalhe ?? undefined}
+        className="min-w-0 flex-1 truncate text-sm font-semibold text-amadeus-blue"
+      >
+        {item.titulo}
+      </span>
+
+      {item.responsavel && (
+        <span className="hidden shrink-0 text-xs text-muted-foreground sm:inline">
+          {item.responsavel}
+        </span>
+      )}
+
+      {salvando && (
+        <Loader2 className="size-3.5 shrink-0 animate-spin text-muted-foreground" />
+      )}
+
+      {item.link && (
+        <a
+          href={item.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={item.link}
+          aria-label="Abrir material"
+          className="shrink-0 rounded-lg p-1.5 text-amadeus-blue hover:bg-amadeus-blue-50"
+        >
+          <Link2 className="size-4" />
+        </a>
+      )}
+
+      <button
+        type="button"
+        onClick={() => setEditando(true)}
+        aria-label="Editar"
+        className="shrink-0 rounded-lg p-1.5 text-muted-foreground transition-opacity hover:bg-muted hover:text-amadeus-blue sm:opacity-0 sm:focus-visible:opacity-100 sm:group-hover:opacity-100"
+      >
+        <Pencil className="size-4" />
+      </button>
+      <button
+        type="button"
+        onClick={remover}
+        aria-label="Excluir"
+        className="shrink-0 rounded-lg p-1.5 text-muted-foreground transition-opacity hover:bg-red-50 hover:text-red-600 sm:opacity-0 sm:focus-visible:opacity-100 sm:group-hover:opacity-100"
+      >
+        <Trash2 className="size-4" />
+      </button>
     </li>
   );
 }
