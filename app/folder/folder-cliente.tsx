@@ -7,11 +7,12 @@ import { useCallback, useEffect, useState } from "react";
 import {
   BOLHAS_DENTRO,
   BOLHAS_FORA,
+  CARTOES_LIVRO,
+  COMUNICACAO,
   CONTATO,
   ESPACOS,
   ESPORTES,
   INICIO_TABELA_CHEIA,
-  MATERIAL,
   PERCURSO,
   PRAZO_PROMOCAO,
   PROGRAMAS,
@@ -25,12 +26,12 @@ import {
 /* As bolhas são posicionadas em cima de uma medida só, --d, que é o lado do
    palco. Assim a constelação inteira acompanha a largura do celular sem
    precisar de breakpoint. */
-const RAIO_DENTRO = 0.25;
-const RAIO_FORA = 0.425;
-const TAM_DENTRO = 0.145;
-const TAM_FORA = 0.145;
+const RAIO_DENTRO = 0.215;
+const RAIO_FORA = 0.41;
+const TAM_DENTRO = 0.135;
+const TAM_FORA = 0.175;
 /** O miolo é um disco creme: a logo tem tipografia azul e sumiria no preto. */
-const MEDALHA = 0.26;
+const MEDALHA = 0.2;
 
 function angulos(quantidade: number, deslocamento: number): number[] {
   const passo = 360 / quantidade;
@@ -102,11 +103,12 @@ export default function FolderCliente() {
 
       <SecaoVideo escolhido={escolhido} aoTocar={irPara} />
 
-      <SecaoMaterial />
+      <SecaoLivro />
+
+      <SecaoComunicacao />
 
       <SecaoLista
         id="programas"
-        escuro
         etiqueta="Programas e projetos"
         titulo="O que ele vive além da aula."
         itens={PROGRAMAS}
@@ -114,6 +116,7 @@ export default function FolderCliente() {
 
       <SecaoLista
         id="esportes"
+        escuro
         etiqueta="Esportes"
         titulo="Karatê, futsal e vôlei."
         itens={ESPORTES}
@@ -161,7 +164,7 @@ function Capa({
           className="relative aspect-square"
           style={
             {
-              "--d": "min(88vw, 400px)",
+              "--d": "min(90vw, 420px)",
               width: "var(--d)",
             } as React.CSSProperties
           }
@@ -233,9 +236,6 @@ function Capa({
           <br />
           <span className="text-[#E8B44C]">somos!</span>
         </h1>
-        <p className="max-w-[18rem] text-center text-sm leading-relaxed text-[#FAF7F0]/60">
-          Toque em qualquer bolha para ir direto, ou siga o caminho completo.
-        </p>
         <button
           type="button"
           onClick={() => aoTocar("segmento")}
@@ -303,11 +303,11 @@ function Bolha({
         type="button"
         onClick={aoTocar}
         aria-label={rotulo}
-        className={`${classeContra} flex size-full items-center justify-center rounded-full px-1 text-center leading-[1.12] transition-colors ${
+        className={`${classeContra} flex size-full items-center justify-center rounded-full px-1.5 text-center leading-[1.15] transition-colors ${
           solida
-            ? "bg-[#FAF7F0] text-[0.7rem] font-bold text-[#0B1733]"
+            ? "bg-[#FAF7F0] text-[0.68rem] font-bold text-[#0B1733]"
             : `border border-[#FAF7F0]/12 bg-[#FAF7F0]/[0.05] font-semibold text-[#FAF7F0]/90 ${
-                maiorParte > 8 ? "text-[0.56rem]" : "text-[0.62rem]"
+                maiorParte > 9 ? "text-[0.62rem]" : "text-[0.7rem]"
               }`
         } ${ativa ? "ring-2 ring-[#E8B44C] ring-offset-2 ring-offset-[#0A0D18]" : ""}`}
       >
@@ -539,48 +539,100 @@ function SecaoVideo({
   );
 }
 
-function SecaoMaterial() {
+function SecaoLivro() {
   return (
-    <Secao id="material">
-      <Etiqueta>O material</Etiqueta>
-      <Titulo>Em 2027 o material do seu filho muda.</Titulo>
+    <Secao id="livro">
+      <Etiqueta>O Livro</Etiqueta>
+      <h2 className="mt-2 font-serif text-[1.65rem] font-semibold leading-tight text-[#17223D]">
+        Em 2027 o livro do seu filho é
+      </h2>
+      <p className="-mt-1 font-serif text-[3.4rem] font-semibold leading-[0.95] tracking-tight text-[#B9862F]">
+        Geekie
+      </p>
       <p className="mt-3 text-[0.95rem] leading-relaxed text-[#5A657F]">
-        A escola adota o Geekie One, e junto vem uma coisa que não existia aqui.
+        Arraste para o lado e entenda o que isso muda, sem sair daqui.
       </p>
 
-      <div className="mt-7 flex flex-1 flex-col gap-5">
-        {MATERIAL.map((bloco) => (
-          <div key={bloco.titulo} className="flex gap-3.5">
-            <span className="w-[3px] shrink-0 rounded-sm bg-[#E8B44C]" />
-            <span className="flex-1">
-              <span className="block text-base font-bold text-[#17223D]">{bloco.titulo}</span>
-              <span className="mt-0.5 block text-sm leading-relaxed text-[#5A657F]">
-                {bloco.texto}
+      {/* O conteúdo da página /geekie vive aqui dentro, em cartões que o pai
+          empurra com o dedo. Ninguém precisa abrir outro site. */}
+      <div className="-mx-6 mt-6 flex-1 overflow-x-auto px-6 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex h-full snap-x snap-mandatory gap-3">
+          {CARTOES_LIVRO.map((cartao, i) => (
+            <article
+              key={cartao.titulo}
+              className={`flex w-[17rem] shrink-0 snap-start flex-col rounded-[20px] p-5 ${
+                i % 2 === 0
+                  ? "border border-[#17223D]/10 bg-[#17223D]/[0.055] text-[#17223D]"
+                  : "bg-[#0B1733] text-[#FAF7F0]"
+              }`}
+            >
+              <span
+                className={`text-[0.62rem] font-bold uppercase tracking-[0.18em] ${
+                  i % 2 === 0 ? "text-[#B9862F]" : "text-[#E8B44C]"
+                }`}
+              >
+                {cartao.etiqueta}
               </span>
-            </span>
-          </div>
-        ))}
+              <span className="mt-2 text-[1.15rem] font-bold leading-snug">
+                {cartao.titulo}
+              </span>
+              <ul className="mt-3 flex flex-col gap-2.5">
+                {cartao.pontos.map((ponto) => (
+                  <li key={ponto} className="flex gap-2.5">
+                    <span
+                      className={`mt-[0.45rem] size-[5px] shrink-0 rounded-full ${
+                        i % 2 === 0 ? "bg-[#B9862F]" : "bg-[#E8B44C]"
+                      }`}
+                    />
+                    <span
+                      className={`flex-1 text-[0.85rem] leading-relaxed ${
+                        i % 2 === 0 ? "text-[#5A657F]" : "text-[#FAF7F0]/75"
+                      }`}
+                    >
+                      {ponto}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {cartao.nota ? (
+                <span
+                  className={`mt-4 text-[0.68rem] leading-relaxed ${
+                    i % 2 === 0 ? "text-[#5A657F]" : "text-[#FAF7F0]/55"
+                  }`}
+                >
+                  {cartao.nota}
+                </span>
+              ) : null}
+            </article>
+          ))}
 
-        <div className="mt-1 flex flex-col gap-3 rounded-[18px] bg-[#0B1733] p-5">
-          <span className="text-sm leading-relaxed text-[#FAF7F0]/78">
-            Tem um site inteiro só sobre isso, com o relatório semanal explicado.
-          </span>
           <Link
             href={CONTATO.linkGeekie}
-            className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#FAF7F0] text-[0.95rem] font-bold text-[#0B1733]"
+            className="flex w-[11rem] shrink-0 snap-start flex-col items-center justify-center gap-2 rounded-[20px] border border-dashed border-[#17223D]/25 p-5 text-center"
           >
-            Entenda o Geekie
-            <Seta cor="#0B1733" />
+            <span className="text-[0.95rem] font-bold text-[#17223D]">
+              Ver a página inteira
+            </span>
+            <Seta cor="#B9862F" />
           </Link>
         </div>
+      </div>
+    </Secao>
+  );
+}
 
-        <div className="rounded-[18px] border border-[#17223D]/12 bg-[#17223D]/[0.04] p-5">
-          <span className="block text-base font-bold text-[#17223D]">AgendaEdu</span>
-          <span className="mt-0.5 block text-sm leading-relaxed text-[#5A657F]">
-            O aplicativo por onde a escola fala com você: recados, agenda e financeiro no
-            mesmo lugar.
-          </span>
-        </div>
+function SecaoComunicacao() {
+  return (
+    <Secao id="comunicacao" escuro>
+      <Etiqueta escuro>Comunicação</Etiqueta>
+      <Titulo escuro>A escola cabe no seu bolso.</Titulo>
+      <p className="mt-3 text-[0.95rem] leading-relaxed text-[#FAF7F0]/68">
+        O <span className="font-bold text-[#E8B44C]">AgendaEdu</span> é o aplicativo por
+        onde a escola fala com a sua família.
+      </p>
+
+      <div className="mt-7 flex-1">
+        <GradeItens itens={COMUNICACAO} escuro />
       </div>
     </Secao>
   );
@@ -604,50 +656,75 @@ function SecaoLista({
       <Etiqueta escuro={escuro}>{etiqueta}</Etiqueta>
       <Titulo escuro={escuro}>{titulo}</Titulo>
 
-      <ul className="mt-7 flex flex-1 flex-col">
-        {itens.map((item) => (
-          <li key={item.nome}>
-            <LinhaItem item={item} escuro={escuro} />
-          </li>
-        ))}
-      </ul>
+      <div className="mt-7 flex-1">
+        <GradeItens itens={itens} escuro={escuro} />
+      </div>
     </Secao>
   );
 }
 
-/* Sem resumo, o item é só uma linha. Quando o texto chegar, a mesma linha
-   passa a abrir sozinha, sem mudar o desenho da tela. */
-function LinhaItem({ item, escuro }: { item: Item; escuro?: boolean }) {
-  const borda = escuro ? "border-[#FAF7F0]/12" : "border-[#17223D]/12";
-  const nome = escuro ? "text-[#FAF7F0]" : "text-[#17223D]";
+function GradeItens({ itens, escuro }: { itens: Item[]; escuro?: boolean }) {
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      {itens.map((item) => (
+        <CaixaItem key={item.nome} item={item} escuro={escuro} />
+      ))}
+    </div>
+  );
+}
+
+/* Sem resumo, a caixa é só um nome. Quando o texto chegar, a mesma caixa
+   passa a abrir, ocupando a largura toda, sem mudar o desenho da tela. */
+function CaixaItem({
+  item,
+  escuro,
+  largo = false,
+}: {
+  item: Item;
+  escuro?: boolean;
+  largo?: boolean;
+}) {
+  const pele = escuro
+    ? "border-[#FAF7F0]/12 bg-[#FAF7F0]/[0.05] text-[#FAF7F0]"
+    : "border-[#17223D]/10 bg-[#17223D]/[0.045] text-[#17223D]";
   const apoio = escuro ? "text-[#FAF7F0]/55" : "text-[#5A657F]";
 
   const cabeca = (
     <>
-      <span className={`flex-1 text-[1.05rem] font-semibold ${nome}`}>{item.nome}</span>
-      {item.nota ? <span className={`text-xs ${apoio}`}>{item.nota}</span> : null}
+      <span className="block text-[1rem] font-bold leading-snug">{item.nome}</span>
+      {item.nota ? (
+        <span className={`mt-1 block text-[0.7rem] ${apoio}`}>{item.nota}</span>
+      ) : null}
     </>
   );
 
   if (!item.resumo) {
     return (
-      <div className={`flex min-h-[3.5rem] items-center gap-3 border-b py-4 ${borda}`}>
+      <div
+        className={`flex min-h-[5.25rem] flex-col justify-end rounded-[18px] border p-4 ${pele} ${
+          largo ? "col-span-2" : ""
+        }`}
+      >
         {cabeca}
       </div>
     );
   }
 
   return (
-    <details className={`group border-b ${borda}`}>
-      <summary className="flex min-h-[3.5rem] cursor-pointer list-none items-center gap-3 py-4 [&::-webkit-details-marker]:hidden">
+    <details
+      className={`group rounded-[18px] border p-4 ${pele} ${
+        largo ? "col-span-2" : "[&[open]]:col-span-2"
+      }`}
+    >
+      <summary className="flex min-h-[3.75rem] cursor-pointer list-none flex-col justify-end [&::-webkit-details-marker]:hidden">
         {cabeca}
         <svg
-          className="shrink-0 transition-transform duration-200 group-open:rotate-45"
-          width="18"
-          height="18"
+          className="mt-2 transition-transform duration-200 group-open:rotate-45"
+          width="17"
+          height="17"
           viewBox="0 0 24 24"
           fill="none"
-          stroke={escuro ? "#E8B44C" : "#7A5310"}
+          stroke={escuro ? "#E8B44C" : "#B9862F"}
           strokeWidth="2"
           strokeLinecap="round"
           aria-hidden
@@ -656,7 +733,7 @@ function LinhaItem({ item, escuro }: { item: Item; escuro?: boolean }) {
           <path d="M5 12h14" />
         </svg>
       </summary>
-      <p className={`pb-5 text-sm leading-relaxed ${apoio}`}>{item.resumo}</p>
+      <p className={`mt-2 text-[0.85rem] leading-relaxed ${apoio}`}>{item.resumo}</p>
     </details>
   );
 }
@@ -665,31 +742,26 @@ function SecaoEspacos() {
   const [auditorio, ...resto] = ESPACOS;
 
   return (
-    <Secao id="espacos" escuro>
-      <Etiqueta escuro>Espaços</Etiqueta>
-      <Titulo escuro>Onde tudo isso acontece.</Titulo>
+    <Secao id="espacos">
+      <Etiqueta>Espaços</Etiqueta>
+      <Titulo>Onde tudo isso acontece.</Titulo>
 
-      <div className="mt-7 flex flex-1 flex-col gap-6">
-        <div className="overflow-hidden rounded-[20px] border border-[#FAF7F0]/12 bg-[#FAF7F0]/[0.05]">
-          <div className="flex aspect-[4/3] items-end p-5">
-            <span className="font-serif text-[1.75rem] font-semibold text-[#FAF7F0]">
-              {auditorio.nome}
-            </span>
-          </div>
+      {/* O auditório abre a grade ocupando a largura toda. */}
+      <div className="mt-7 grid flex-1 grid-cols-2 content-start gap-3">
+        <div className="col-span-2 flex aspect-[16/9] flex-col justify-end rounded-[20px] border border-[#17223D]/10 bg-[#17223D]/[0.045] p-5">
+          <span className="font-serif text-[1.85rem] font-semibold text-[#17223D]">
+            {auditorio.nome}
+          </span>
           {auditorio.resumo ? (
-            <p className="px-5 pb-5 text-sm leading-relaxed text-[#FAF7F0]/62">
+            <span className="mt-1 text-sm leading-relaxed text-[#5A657F]">
               {auditorio.resumo}
-            </p>
+            </span>
           ) : null}
         </div>
 
-        <ul className="flex flex-col">
-          {resto.map((item) => (
-            <li key={item.nome}>
-              <LinhaItem item={item} escuro />
-            </li>
-          ))}
-        </ul>
+        {resto.map((item) => (
+          <CaixaItem key={item.nome} item={item} />
+        ))}
       </div>
     </Secao>
   );
@@ -705,42 +777,42 @@ function SecaoValores({
   const valores = escolhido ? VALORES[escolhido.id] : null;
 
   return (
-    <Secao id="valores">
-      <Etiqueta>Investimento 2027</Etiqueta>
-      <Titulo>{escolhido ? escolhido.nome : "Os valores de 2027"}</Titulo>
+    <Secao id="valores" escuro>
+      <Etiqueta escuro>Investimento 2027</Etiqueta>
+      <Titulo escuro>{escolhido ? escolhido.nome : "Os valores de 2027"}</Titulo>
 
       <div className="mt-7 flex flex-1 flex-col gap-4">
         {valores ? (
           <>
-            <div className="rounded-[22px] bg-[#0B1733] p-6">
-              <span className="block text-xs uppercase tracking-[0.1em] text-[#FAF7F0]/60">
+            <div className="rounded-[22px] bg-[#FAF7F0] p-6">
+              <span className="block text-xs uppercase tracking-[0.1em] text-[#5A657F]">
                 Mensalidade
               </span>
-              <span className="mt-1.5 block font-serif text-[2.75rem] font-semibold leading-none text-[#E8B44C]">
+              <span className="mt-1.5 block font-serif text-[2.75rem] font-semibold leading-none text-[#B9862F]">
                 {valores.promocional.cheio}
               </span>
-              <span className="mt-2 block text-sm leading-relaxed text-[#FAF7F0]/72">
+              <span className="mt-2 block text-sm leading-relaxed text-[#454F6B]">
                 {valores.promocional.ateODia5} pagando até o dia 5.
               </span>
-              <span className="mt-3.5 block border-t border-[#FAF7F0]/14 pt-3.5 text-[0.8rem] leading-relaxed text-[#FAF7F0]/66">
+              <span className="mt-3.5 block border-t border-[#17223D]/14 pt-3.5 text-[0.8rem] leading-relaxed text-[#5A657F]">
                 Esta é a tabela promocional, válida para matrículas até {PRAZO_PROMOCAO}. A
                 partir de {INICIO_TABELA_CHEIA}, {valores.depois.cheio} por mês, ou{" "}
                 {valores.depois.ateODia5} até o dia 5.
               </span>
             </div>
 
-            <div className="rounded-[18px] border border-[#17223D]/12 bg-[#17223D]/[0.04] p-5">
-              <span className="block text-[0.95rem] font-bold text-[#17223D]">
+            <div className="rounded-[18px] border border-[#FAF7F0]/12 bg-[#FAF7F0]/[0.05] p-5">
+              <span className="block text-[0.95rem] font-bold text-[#FAF7F0]">
                 Material didático
               </span>
-              <span className="mt-1 block text-sm leading-relaxed text-[#5A657F]">
+              <span className="mt-1 block text-sm leading-relaxed text-[#FAF7F0]/68">
                 O material Geekie One é comprado à parte, uma vez no ano.
               </span>
               <div className="mt-3.5 flex flex-col gap-2">
                 {valores.material.map((linha) => (
                   <span key={linha.rotulo} className="flex items-baseline gap-3">
-                    <span className="flex-1 text-sm text-[#454F6B]">{linha.rotulo}</span>
-                    <span className="text-[0.95rem] font-bold text-[#17223D]">
+                    <span className="flex-1 text-sm text-[#FAF7F0]/72">{linha.rotulo}</span>
+                    <span className="text-[0.95rem] font-bold text-[#FAF7F0]">
                       {linha.valor}
                     </span>
                   </span>
@@ -750,14 +822,14 @@ function SecaoValores({
 
             <div className="flex items-start gap-2.5">
               <Confere />
-              <span className="flex-1 text-sm leading-relaxed text-[#454F6B]">
+              <span className="flex-1 text-sm leading-relaxed text-[#FAF7F0]/72">
                 Os tablets são adquiridos pela escola. Você não paga por eles.
               </span>
             </div>
           </>
         ) : (
           <div className="flex flex-1 flex-col justify-center">
-            <p className="text-[0.95rem] leading-relaxed text-[#5A657F]">
+            <p className="text-[0.95rem] leading-relaxed text-[#FAF7F0]/68">
               {escolhido
                 ? `Os valores do ${escolhido.nome} para 2027 serão apresentados na reunião de abertura das matrículas.`
                 : "Os valores de 2027 serão apresentados na reunião de abertura das matrículas."}
@@ -766,7 +838,7 @@ function SecaoValores({
               <button
                 type="button"
                 onClick={() => aoTocar("segmento")}
-                className="mt-5 self-start text-sm font-semibold text-[#7A5310] underline"
+                className="mt-5 self-start text-sm font-semibold text-[#E8B44C] underline"
               >
                 Escolher a etapa do meu filho
               </button>
@@ -775,14 +847,14 @@ function SecaoValores({
         )}
       </div>
 
-      <Continuar alvo="proximo" aoTocar={aoTocar} />
+      <Continuar alvo="proximo" escuro aoTocar={aoTocar} />
     </Secao>
   );
 }
 
 function SecaoProximo({ aoTocar }: { aoTocar: (alvo: string) => void }) {
   return (
-    <Secao id="proximo" escuro>
+    <Secao id="proximo">
       <div className="relative size-[5.5rem]">
         <Image
           src="/folder/logo-30-anos.png"
@@ -793,12 +865,12 @@ function SecaoProximo({ aoTocar }: { aoTocar: (alvo: string) => void }) {
         />
       </div>
 
-      <h2 className="mt-6 font-serif text-[2.5rem] font-semibold leading-[1.04] text-[#FAF7F0]">
+      <h2 className="mt-6 font-serif text-[2.5rem] font-semibold leading-[1.04] text-[#17223D]">
         Venha ver
         <br />
         de perto.
       </h2>
-      <p className="mt-2.5 max-w-[18rem] text-[0.95rem] leading-relaxed text-[#FAF7F0]/70">
+      <p className="mt-2.5 max-w-[18rem] text-[0.95rem] leading-relaxed text-[#5A657F]">
         Folder nenhum substitui entrar na escola e sentir o barulho do recreio.
       </p>
 
@@ -807,22 +879,22 @@ function SecaoProximo({ aoTocar }: { aoTocar: (alvo: string) => void }) {
       <div className="flex flex-col gap-2.5">
         <Link
           href={CONTATO.linkReuniao}
-          className="flex min-h-[3.625rem] items-center justify-center rounded-full bg-[#FAF7F0] px-6 text-center text-base font-bold text-[#0B1733]"
+          className="flex min-h-[3.625rem] items-center justify-center rounded-full bg-[#17223D] px-6 text-center text-base font-bold text-[#FAF7F0]"
         >
           Confirmar presença na reunião
         </Link>
         {CONTATO.whatsapp ? (
           <a
             href={`https://wa.me/${CONTATO.whatsapp}`}
-            className="flex min-h-14 items-center justify-center rounded-full border border-[#FAF7F0]/24 text-[0.95rem] font-semibold text-[#FAF7F0]"
+            className="flex min-h-14 items-center justify-center rounded-full border border-[#17223D]/24 text-[0.95rem] font-semibold text-[#17223D]"
           >
             Falar com a secretaria
           </a>
         ) : null}
       </div>
 
-      <div className="mt-7 flex items-end gap-3 border-t border-[#FAF7F0]/14 pt-5">
-        <span className="flex-1 text-xs leading-relaxed text-[#FAF7F0]/55">
+      <div className="mt-7 flex items-end gap-3 border-t border-[#17223D]/14 pt-5">
+        <span className="flex-1 text-xs leading-relaxed text-[#5A657F]">
           Centro Educacional Amadeus
           <br />
           São Gonçalo do Amarante, RN
@@ -830,7 +902,7 @@ function SecaoProximo({ aoTocar }: { aoTocar: (alvo: string) => void }) {
         <button
           type="button"
           onClick={() => aoTocar("capa")}
-          className="min-h-11 text-xs font-semibold text-[#FAF7F0]/65 underline"
+          className="min-h-11 text-xs font-semibold text-[#5A657F] underline"
         >
           voltar ao início
         </button>

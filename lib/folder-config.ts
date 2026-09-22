@@ -89,20 +89,74 @@ export const ESPACOS: Item[] = [
   { nome: "Sala invertida", resumo: null, nota: "Fundamental 2" },
 ];
 
-/** O que muda no material em 2027. */
-export const MATERIAL = [
+/**
+ * Os cartões da aba "O Livro", que o pai arrasta pro lado.
+ * O conteúdo é o mesmo da página /geekie, trazido pra cá pra ele não
+ * precisar sair do folder.
+ */
+export interface CartaoLivro {
+  etiqueta: string;
+  titulo: string;
+  pontos: string[];
+  nota?: string;
+}
+
+export const CARTOES_LIVRO: CartaoLivro[] = [
   {
-    titulo: "Você vê a semana do seu filho",
-    texto: "Sem precisar perguntar, sem esperar a reunião.",
+    etiqueta: "O que é",
+    titulo: "Metade impressa, metade digital",
+    pontos: [
+      "O livro continua na mochila. É nele que ele escreve, resolve e registra o que aprendeu.",
+      "E uma plataforma que conversa com o livro e faz o que o papel sozinho não consegue.",
+    ],
   },
   {
-    titulo: "Tablets, pela primeira vez",
-    texto: "Do 4º ao 9º ano. A escola adquire, você não compra nada.",
+    etiqueta: "O que muda para o seu filho",
+    titulo: "Se ele travar, o material percebe",
+    pontos: [
+      "Travou num assunto? O material volta nesse ponto, em vez de empurrar ele pra frente.",
+      "Cada capítulo vem com vídeo e exercício. São 150 mil questões no total.",
+      "Do 6º ao 9º, a coleção é nova em folha: projetos, projeto de vida e olimpíada de matemática.",
+    ],
   },
   {
-    titulo: "Duas matérias novas",
-    texto: "STEAM e Educação Digital entram no Fundamental 2.",
+    etiqueta: "O que muda para você",
+    titulo: "Você não vai mais ser o último a saber",
+    pontos: [
+      "Toda semana chega um resumo: como ele foi em cada matéria e onde a barra baixou.",
+      "Vem pelo WhatsApp. Não tem aplicativo para baixar, nem senha para decorar.",
+      "Se português cair em março, você sabe em março. Não em maio.",
+    ],
   },
+  {
+    etiqueta: "E tem mais uma novidade",
+    titulo: "Os tablets chegam à sala de aula",
+    pontos: [
+      "Do 4º ao 9º ano, algumas aulas passam a acontecer com eles.",
+      "Os tablets são da escola. Você não precisa comprar tablet nenhum.",
+      "Ficam na escola, usados dentro da aula, com o professor junto.",
+      "Não é todo dia. O livro continua sendo a base do estudo.",
+    ],
+  },
+  {
+    etiqueta: "Por que escolhemos esse",
+    titulo: "130 mil famílias avaliaram",
+    pontos: [
+      "Entre todos os materiais didáticos do país, o Geekie foi o mais bem avaliado pelas famílias.",
+    ],
+    nota: "Diagnóstico Nacional da Educação, do Escolas Exponenciais, com 130 mil famílias, 14 mil professores e 400 instituições. Noticiado pela Folha de S.Paulo em agosto de 2021.",
+  },
+];
+
+/**
+ * A aba Comunicação. CONFIRMAR COM A ESCOLA quais módulos do AgendaEdu
+ * entram de fato antes da reunião.
+ */
+export const COMUNICACAO: Item[] = [
+  { nome: "Comunicados", resumo: null },
+  { nome: "Agenda do dia", resumo: null },
+  { nome: "Financeiro", resumo: null },
+  { nome: "Autorizações", resumo: null },
 ];
 
 /** Até quando vale a tabela promocional de 2027. */
@@ -177,9 +231,9 @@ export const BOLHAS_DENTRO: Bolha[] = [
 ];
 
 export const BOLHAS_FORA: Bolha[] = [
-  { rotulo: "Geekie", alvo: "material" },
-  { rotulo: "Tablets", alvo: "material" },
-  { rotulo: "AgendaEdu", alvo: "material", linhas: ["Agenda", "Edu"] },
+  { rotulo: "Geekie", alvo: "livro" },
+  { rotulo: "Tablets", alvo: "livro" },
+  { rotulo: "AgendaEdu", alvo: "comunicacao", linhas: ["Agenda", "Edu"] },
   { rotulo: "Projeto Arbória", alvo: "programas", linhas: ["Projeto", "Arbória"] },
   { rotulo: "Socioemocional", alvo: "programas", linhas: ["Socio", "emocional"] },
   { rotulo: "Robótica", alvo: "programas" },
@@ -196,7 +250,8 @@ export const BOLHAS_FORA: Bolha[] = [
 export const PERCURSO = [
   "segmento",
   "video",
-  "material",
+  "livro",
+  "comunicacao",
   "programas",
   "esportes",
   "espacos",
