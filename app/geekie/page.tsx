@@ -43,6 +43,8 @@ export default function GeekiePage() {
           @keyframes gSobe{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
           .g-cresce{animation:gCresce .9s .55s cubic-bezier(.2,.95,.3,1) both;transform-origin:left}
           @keyframes gCresce{from{transform:scaleX(.03)}to{transform:scaleX(1)}}
+          .g-pisca{animation:gPisca 2.4s 1.4s ease-in-out infinite}
+          @keyframes gPisca{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
         }
       `}</style>
 
@@ -55,10 +57,6 @@ export default function GeekiePage() {
         }}
       >
         <div className="mx-auto w-full max-w-[470px] px-6">
-          <p className="g-sobe mb-5 text-center text-[0.66rem] font-extrabold uppercase tracking-[0.26em] text-[#FAF7F0]/40">
-            Segunda-feira · 7h12
-          </p>
-
           <h1
             className="g-sobe text-center text-[clamp(1.7rem,7.6vw,2.35rem)] font-extrabold leading-[1.12] tracking-[-0.035em] text-balance"
             style={{ animationDelay: ".12s" }}
@@ -117,11 +115,13 @@ export default function GeekiePage() {
           >
             Exemplo ilustrativo
           </p>
-          <p
-            className="g-sobe mt-6 text-center text-[0.76rem] font-semibold text-[#FAF7F0]/50"
-            style={{ animationDelay: ".66s" }}
-          >
-            ▾ entenda o que torna isso possível
+          {/* É o convite para rolar a página. Se passar despercebido,
+              o pai para na primeira tela e não vê o resto. */}
+          <p className="g-sobe mt-8 text-center" style={{ animationDelay: ".66s" }}>
+            <span className="g-pisca inline-flex items-center gap-2 rounded-full border border-[#E8B44C]/60 bg-[#E8B44C]/10 px-5 py-2.5 text-[0.95rem] font-bold text-[#E8B44C]">
+              Entenda o que torna isso possível
+              <span aria-hidden="true">▾</span>
+            </span>
           </p>
         </div>
       </section>
@@ -257,23 +257,25 @@ export default function GeekiePage() {
         </div>
       </section>
 
-      {/* ---------- a prova ---------- */}
-      <section className="bg-[#05060C] pb-11">
+      {/* ---------- a prova ----------
+          Fundo claro de propósito: vinha logo depois dos tablets, que também
+          é escuro, e as duas seções se fundiam numa só. */}
+      <section className="bg-[#FAF7F0] py-11 text-[#17223D]">
         <div className="mx-auto max-w-[470px] px-6">
-          <p className="mb-3 text-[0.64rem] font-extrabold uppercase tracking-[0.22em] text-[#E8B44C]">
+          <p className="mb-3 text-[0.64rem] font-extrabold uppercase tracking-[0.22em] text-[#B9862F]">
             Por que escolhemos esse
           </p>
           <p className="text-[clamp(3rem,14vw,4rem)] font-extrabold leading-[.92] tracking-[-0.05em] tabular-nums">
             130 mil
-            <span className="mt-2 block text-[0.25em] font-extrabold uppercase tracking-[0.14em] text-[#E8B44C]">
+            <span className="mt-2 block text-[0.25em] font-extrabold uppercase tracking-[0.14em] text-[#B9862F]">
               famílias avaliaram
             </span>
           </p>
-          <p className="mt-3.5 text-[#FAF7F0]/70">
+          <p className="mt-3.5 text-[#5A657F]">
             Entre todos os materiais didáticos do país, o Geekie foi o mais bem
             avaliado pelas famílias.
           </p>
-          <p className="mt-3.5 text-[0.72rem] leading-relaxed text-[#FAF7F0]/40">
+          <p className="mt-3.5 text-[0.72rem] leading-relaxed text-[#5A657F]">
             Diagnóstico Nacional da Educação, do Escolas Exponenciais, com 130 mil
             famílias, 14 mil professores e 400 instituições. Noticiado pela Folha
             de S.Paulo em agosto de 2021.
