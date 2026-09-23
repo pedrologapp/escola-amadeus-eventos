@@ -299,8 +299,11 @@ export const VALORES: Record<SegmentoId, Valores | null> = {
 };
 
 export const CONTATO = {
-  /** TODO: trocar pelo número real da secretaria, com 55 na frente. */
-  whatsapp: null as string | null,
+  /**
+   * O mesmo número que a página pública de eventos já mostra como
+   * "Fale com a secretaria pelo WhatsApp": (84) 9 8145-0229.
+   */
+  whatsapp: "5584981450229",
   linkReuniao: "/matriculas2027",
   linkGeekie: "/geekie",
 };

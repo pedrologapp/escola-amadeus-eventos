@@ -1157,24 +1157,17 @@ function SecaoValores({
           A gente tira suas dúvidas e guarda a vaga do seu filho.
         </p>
 
-        {CONTATO.whatsapp ? (
-          <a
-            href={`https://wa.me/${CONTATO.whatsapp}?text=${encodeURIComponent(
-              mensagemWhatsapp(escolhido ? escolhido.nome : null),
-            )}`}
-            className="mt-5 flex min-h-[3.5rem] items-center justify-center gap-2 rounded-full bg-[#FAF7F0] px-6 text-[0.95rem] font-bold text-[#0B1733]"
-          >
-            <IconeWhatsapp />
-            Falar com a escola
-          </a>
-        ) : (
-          <Link
-            href={CONTATO.linkReuniao}
-            className="mt-5 flex min-h-[3.5rem] items-center justify-center gap-2 rounded-full bg-[#FAF7F0] px-6 text-[0.95rem] font-bold text-[#0B1733]"
-          >
-            Confirmar presença na reunião
-          </Link>
-        )}
+        <a
+          href={`https://wa.me/${CONTATO.whatsapp}?text=${encodeURIComponent(
+            mensagemWhatsapp(escolhido ? escolhido.nome : null),
+          )}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-5 flex min-h-[3.5rem] items-center justify-center gap-2 rounded-full bg-[#FAF7F0] px-6 text-[0.95rem] font-bold text-[#0B1733]"
+        >
+          <IconeWhatsapp />
+          Mandar mensagem no WhatsApp
+        </a>
       </div>
 
       <div className="mt-7 flex items-end gap-3 border-t border-[#FAF7F0]/14 pt-5">
