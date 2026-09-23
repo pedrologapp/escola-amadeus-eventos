@@ -299,11 +299,17 @@ export const VALORES: Record<SegmentoId, Valores | null> = {
 };
 
 export const CONTATO = {
-  /** TODO: trocar pelo número real da secretaria. */
+  /** TODO: trocar pelo número real da secretaria, com 55 na frente. */
   whatsapp: null as string | null,
   linkReuniao: "/matriculas2027",
   linkGeekie: "/geekie",
 };
+
+/** Mensagem que já vai escrita quando o pai abre o WhatsApp. */
+export function mensagemWhatsapp(segmento: string | null): string {
+  const base = "Olá! Vi o folder do Amadeus e quero saber mais sobre as matrículas 2027";
+  return segmento ? `${base}, para ${segmento}.` : `${base}.`;
+}
 
 /** As bolhas da capa. `alvo` é o id da seção pra onde o toque leva. */
 export interface Bolha {
@@ -344,6 +350,6 @@ export const PERCURSO = [
   "programas",
   "esportes",
   "espacos",
+  "somos",
   "valores",
-  "proximo",
 ] as const;

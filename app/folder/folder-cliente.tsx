@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   BOLHAS_DENTRO,
@@ -20,6 +20,7 @@ import {
   SEGMENTOS,
   VALORES,
   acharSegmento,
+  mensagemWhatsapp,
   indiceSegmento,
   type CartaoLivro,
   type IconeComunicacao,
@@ -101,15 +102,17 @@ export default function FolderCliente() {
       </div>
 
       <Capa aoTocar={irPara} escolhido={segmento} />
-      <SecaoSegmento escolhido={segmento} aoEscolher={irPara} />
+      <SecaoSegmento escolhido={segmento} aoEscolher={irPara} aoTocar={irPara} />
       <SecaoVideo segmento={segmento} aoEscolher={setSegmento} aoTocar={irPara} />
-      <SecaoLivro />
-      <SecaoComunicacao />
+      <SecaoLivro aoTocar={irPara} />
+      <SecaoComunicacao aoTocar={irPara} />
       <SecaoMosaico
         id="programas"
         etiqueta="Programas e projetos"
         titulo="O que ele vive além da aula."
         pecas={PROGRAMAS}
+        alvoContinuar="esportes"
+        aoTocar={irPara}
       />
       <SecaoMosaico
         id="esportes"
@@ -118,15 +121,19 @@ export default function FolderCliente() {
         titulo="Karatê, futsal e vôlei."
         apoio={FRASE_ESPORTES}
         pecas={ESPORTES}
+        alvoContinuar="espacos"
+        aoTocar={irPara}
       />
       <SecaoMosaico
         id="espacos"
         etiqueta="Espaços"
         titulo="Onde tudo isso acontece."
         pecas={ESPACOS}
+        alvoContinuar="somos"
+        aoTocar={irPara}
       />
+      <SecaoSomos aoTocar={irPara} />
       <SecaoValores escolhido={escolhido} aoTocar={irPara} />
-      <SecaoProximo aoTocar={irPara} />
     </div>
   );
 }
@@ -187,7 +194,6 @@ function Capa({
                   raio={RAIO_FORA}
                   tamanho={TAM_FORA}
                   classeContra="fd-contra-fora"
-                  aoTocar={() => aoTocar(bolha.alvo)}
                   rotulo={bolha.rotulo}
                   linhas={bolha.linhas}
                 />
@@ -202,7 +208,6 @@ function Capa({
                   raio={RAIO_DENTRO}
                   tamanho={TAM_DENTRO}
                   classeContra="fd-contra-dentro"
-                  aoTocar={() => aoTocar(bolha.alvo, bolha.segmento)}
                   rotulo={bolha.rotulo}
                   solida
                   ativa={escolhido === bolha.segmento}
@@ -270,7 +275,6 @@ function Bolha({
   raio,
   tamanho,
   classeContra,
-  aoTocar,
   rotulo,
   linhas,
   solida = false,
@@ -280,7 +284,6 @@ function Bolha({
   raio: number;
   tamanho: number;
   classeContra: string;
-  aoTocar: () => void;
   rotulo: string;
   linhas?: string[];
   solida?: boolean;
@@ -300,11 +303,8 @@ function Bolha({
         transform: `rotate(${angulo}deg) translate(calc(var(--d) * ${raio})) rotate(${-angulo}deg)`,
       }}
     >
-      <button
-        type="button"
-        onClick={aoTocar}
-        aria-label={rotulo}
-        className={`${classeContra} flex size-full items-center justify-center rounded-full px-1.5 text-center leading-[1.15] transition-colors ${
+      <span
+        className={`${classeContra} flex size-full items-center justify-center rounded-full px-1.5 text-center leading-[1.15] ${
           solida
             ? "bg-[#FAF7F0] text-[0.68rem] font-bold text-[#0B1733]"
             : `border border-[#FAF7F0]/12 bg-[#FAF7F0]/[0.05] font-semibold text-[#FAF7F0]/90 ${
@@ -320,7 +320,7 @@ function Bolha({
             </span>
           ))}
         </span>
-      </button>
+      </span>
     </span>
   );
 }
@@ -400,9 +400,11 @@ function Continuar({
 function SecaoSegmento({
   escolhido,
   aoEscolher,
+  aoTocar,
 }: {
   escolhido: SegmentoId | null;
   aoEscolher: (alvo: string, seg?: SegmentoId) => void;
+  aoTocar: (alvo: string) => void;
 }) {
   return (
     <Secao id="segmento" escuro>
@@ -459,12 +461,15 @@ function SecaoSegmento({
         <br />
         Também é por aqui.
       </p>
+
+      <Continuar alvo="video" escuro aoTocar={aoTocar} />
     </Secao>
   );
 }
 
-/* O vídeo de cada etapa fica lado a lado: as setas trocam de etapa sem tirar
-   o pai da tela, em vez de mandar ele voltar pra pergunta. */
+/* Os três vídeos ficam lado a lado num carrossel: o do meio ocupa quase a
+   tela e os vizinhos espiam nas bordas, então o pai entende sozinho que dá
+   pra arrastar. Quem parar no card manda na etapa do resto do folder. */
 function SecaoVideo({
   segmento,
   aoEscolher,
@@ -474,71 +479,96 @@ function SecaoVideo({
   aoEscolher: (seg: SegmentoId) => void;
   aoTocar: (alvo: string) => void;
 }) {
-  const atual = acharSegmento(segmento ?? "infantil");
-  const i = indiceSegmento(atual.id);
-  const anterior = SEGMENTOS[(i - 1 + SEGMENTOS.length) % SEGMENTOS.length];
-  const proximo = SEGMENTOS[(i + 1) % SEGMENTOS.length];
+  const trilho = useRef<HTMLDivElement>(null);
+  const atual = segmento ?? "infantil";
+
+  /* Quando a etapa é escolhida em outro lugar (na pergunta, por exemplo),
+     o carrossel vai até ela. */
+  useEffect(() => {
+    const caixa = trilho.current;
+    if (!caixa) return;
+    const alvo = caixa.children[indiceSegmento(atual)] as HTMLElement | undefined;
+    if (!alvo) return;
+    caixa.scrollTo({
+      left: alvo.offsetLeft - (caixa.clientWidth - alvo.clientWidth) / 2,
+      behavior: "smooth",
+    });
+  }, [atual]);
+
+  function aoRolar() {
+    const caixa = trilho.current;
+    if (!caixa) return;
+    const meio = caixa.scrollLeft + caixa.clientWidth / 2;
+    let maisPerto = 0;
+    let menorDistancia = Infinity;
+    [...caixa.children].forEach((filho, i) => {
+      const el = filho as HTMLElement;
+      const centro = el.offsetLeft + el.clientWidth / 2;
+      const distancia = Math.abs(centro - meio);
+      if (distancia < menorDistancia) {
+        menorDistancia = distancia;
+        maisPerto = i;
+      }
+    });
+    const novo = SEGMENTOS[maisPerto];
+    if (novo && novo.id !== atual) aoEscolher(novo.id);
+  }
 
   return (
     <Secao id="video" escuro>
       <Etiqueta escuro>O que nós somos</Etiqueta>
       <Titulo escuro>A gente prefere mostrar.</Titulo>
+      <p className="mt-3 text-[0.95rem] leading-relaxed text-[#FAF7F0]/68">
+        Arraste para o lado e veja a etapa do seu filho.
+      </p>
 
-      <div className="relative mt-6 flex flex-1 flex-col">
-        <div className="flex flex-1 flex-col overflow-hidden rounded-[22px] border border-[#FAF7F0]/12 bg-[#0B1733]">
-          {atual.video ? (
-            <video
-              src={atual.video}
-              controls
-              playsInline
-              className="size-full flex-1 object-cover"
-            />
-          ) : (
-            <div className="flex flex-1 flex-col items-center justify-center gap-4 px-8 text-center">
-              <span className="grid size-[4.5rem] place-items-center rounded-full bg-[#FAF7F0]">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="#0B1733" aria-hidden>
-                  <path d="M8 5.5v13l11-6.5z" />
-                </svg>
-              </span>
-              <span className="text-sm leading-relaxed text-[#FAF7F0]/70">
-                O vídeo do {atual.nome} estreia na reunião de sábado.
-              </span>
+      <div
+        ref={trilho}
+        onScroll={aoRolar}
+        className="-mx-6 mt-6 flex flex-1 snap-x snap-mandatory gap-3 overflow-x-auto px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {SEGMENTOS.map((s) => (
+          <article
+            key={s.id}
+            className={`flex w-[84%] shrink-0 snap-center flex-col overflow-hidden rounded-[22px] border transition-opacity ${
+              s.id === atual
+                ? "border-[#FAF7F0]/20 opacity-100"
+                : "border-[#FAF7F0]/10 opacity-60"
+            } bg-[#0B1733]`}
+          >
+            {s.video ? (
+              <video src={s.video} controls playsInline className="w-full flex-1 object-cover" />
+            ) : (
+              <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
+                <span className="grid size-[4.5rem] place-items-center rounded-full bg-[#FAF7F0]">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="#0B1733" aria-hidden>
+                    <path d="M8 5.5v13l11-6.5z" />
+                  </svg>
+                </span>
+                <span className="text-sm leading-relaxed text-[#FAF7F0]/70">
+                  O vídeo estreia na reunião de sábado.
+                </span>
+              </div>
+            )}
+
+            <div className="border-t border-[#FAF7F0]/10 px-4 py-3 text-center">
+              <span className="block text-[0.95rem] font-bold text-[#FAF7F0]">{s.nome}</span>
+              <span className="block text-xs text-[#FAF7F0]/55">{s.series ?? s.idade}</span>
             </div>
-          )}
+          </article>
+        ))}
+      </div>
 
-          <div className="border-t border-[#FAF7F0]/10 px-4 py-3 text-center">
-            <span className="block text-[0.95rem] font-bold text-[#FAF7F0]">
-              {atual.nome}
-            </span>
-            <span className="block text-xs text-[#FAF7F0]/55">
-              {atual.series ?? atual.idade}
-            </span>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => aoEscolher(anterior.id)}
-          aria-label={`Ver o vídeo do ${anterior.nome}`}
-          className="absolute -left-1 top-1/2 flex -translate-y-1/2 items-center gap-1 rounded-full border border-[#FAF7F0]/20 bg-[#05060C]/85 py-2 pl-1.5 pr-3 backdrop-blur"
-        >
-          <SetaLado cor="#E8B44C" />
-          <span className="text-[0.7rem] font-semibold text-[#FAF7F0]/80">
-            {anterior.curto}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => aoEscolher(proximo.id)}
-          aria-label={`Ver o vídeo do ${proximo.nome}`}
-          className="absolute -right-1 top-1/2 flex -translate-y-1/2 items-center gap-1 rounded-full border border-[#FAF7F0]/20 bg-[#05060C]/85 py-2 pl-3 pr-1.5 backdrop-blur"
-        >
-          <span className="text-[0.7rem] font-semibold text-[#FAF7F0]/80">
-            {proximo.curto}
-          </span>
-          <SetaLado cor="#E8B44C" direita />
-        </button>
+      <div className="mt-4 flex justify-center gap-2">
+        {SEGMENTOS.map((s) => (
+          <span
+            key={s.id}
+            aria-hidden
+            className={`h-1.5 rounded-full transition-all ${
+              s.id === atual ? "w-5 bg-[#E8B44C]" : "w-1.5 bg-[#FAF7F0]/25"
+            }`}
+          />
+        ))}
       </div>
 
       <Continuar alvo="livro" escuro aoTocar={aoTocar} />
@@ -546,7 +576,7 @@ function SecaoVideo({
   );
 }
 
-function SecaoLivro() {
+function SecaoLivro({ aoTocar }: { aoTocar: (alvo: string) => void }) {
   return (
     <Secao id="livro">
       <Etiqueta>O Livro</Etiqueta>
@@ -581,6 +611,8 @@ function SecaoLivro() {
           </Link>
         </div>
       </div>
+
+      <Continuar alvo="comunicacao" aoTocar={aoTocar} />
     </Secao>
   );
 }
@@ -696,7 +728,7 @@ function CartaoDoLivro({ cartao, escuro }: { cartao: CartaoLivro; escuro: boolea
   );
 }
 
-function SecaoComunicacao() {
+function SecaoComunicacao({ aoTocar }: { aoTocar: (alvo: string) => void }) {
   return (
     <Secao id="comunicacao" escuro>
       <Etiqueta escuro>Comunicação</Etiqueta>
@@ -719,6 +751,8 @@ function SecaoComunicacao() {
           </div>
         ))}
       </div>
+
+      <Continuar alvo="programas" escuro aoTocar={aoTocar} />
     </Secao>
   );
 }
@@ -732,6 +766,8 @@ function SecaoMosaico({
   titulo,
   apoio,
   pecas,
+  alvoContinuar,
+  aoTocar,
 }: {
   id: string;
   escuro?: boolean;
@@ -739,6 +775,8 @@ function SecaoMosaico({
   titulo: string;
   apoio?: string;
   pecas: Peca[];
+  alvoContinuar: string;
+  aoTocar: (alvo: string) => void;
 }) {
   return (
     <Secao id={id} escuro={escuro}>
@@ -753,14 +791,24 @@ function SecaoMosaico({
           {apoio}
         </p>
       ) : null}
-      <Mosaico pecas={pecas} escuro={escuro} />
+      <Mosaico pecas={pecas} escuro={escuro} alvoContinuar={alvoContinuar} aoTocar={aoTocar} />
     </Secao>
   );
 }
 
 /* As peças têm tamanhos diferentes de propósito. Tocar numa abre a foto
    inteira, sem corte, com o texto embaixo. */
-function Mosaico({ pecas, escuro }: { pecas: Peca[]; escuro?: boolean }) {
+function Mosaico({
+  pecas,
+  escuro,
+  alvoContinuar,
+  aoTocar,
+}: {
+  pecas: Peca[];
+  escuro?: boolean;
+  alvoContinuar: string;
+  aoTocar: (alvo: string) => void;
+}) {
   const [aberta, setAberta] = useState<string | null>(null);
   const escolhida = pecas.find((p) => p.nome === aberta) ?? null;
 
@@ -913,6 +961,8 @@ function Mosaico({ pecas, escuro }: { pecas: Peca[]; escuro?: boolean }) {
           );
         })}
       </div>
+
+      <Continuar alvo={alvoContinuar} escuro={escuro} aoTocar={aoTocar} />
     </div>
   );
 }
@@ -981,6 +1031,33 @@ function IconeEspacoSvg({ qual, escuro }: { qual: IconeEspaco; escuro?: boolean 
       <path d="M4 8h12l-3-3M20 16H8l3 3" />
       <path d="M4 8v3M20 16v-3" />
     </svg>
+  );
+}
+
+/* A tela de identidade vem logo antes do preço: o pai lê quem somos e só
+   então vê o valor. */
+function SecaoSomos({ aoTocar }: { aoTocar: (alvo: string) => void }) {
+  return (
+    <Secao id="somos">
+      <div className="flex flex-1 flex-col items-center justify-center gap-7 text-center">
+        <h2 className="font-serif text-[2.6rem] font-semibold leading-[1.05] text-[#17223D]">
+          Isso é o que nós
+          <br />
+          <span className="text-[#B9862F]">somos!</span>
+        </h2>
+        <div className="relative h-[15rem] w-full max-w-[17rem]">
+          <Image
+            src="/folder/marca-30-anos.png"
+            alt="Centro Educacional Amadeus, 30 anos"
+            fill
+            sizes="272px"
+            className="object-contain"
+          />
+        </div>
+      </div>
+
+      <Continuar alvo="valores" aoTocar={aoTocar} />
+    </Secao>
   );
 }
 
@@ -1070,50 +1147,38 @@ function SecaoValores({
         )}
       </div>
 
-      <Continuar alvo="proximo" escuro aoTocar={aoTocar} />
-    </Secao>
-  );
-}
+      {/* O folder termina aqui, então em vez de "Continuar" o pai encontra
+          um caminho pra falar com a escola. */}
+      <div className="mt-8 rounded-[22px] border border-[#E8B44C]/35 bg-[#E8B44C]/[0.08] p-6 text-center">
+        <p className="text-[1.05rem] font-bold leading-snug text-[#FAF7F0]">
+          Chegou até aqui? Então vamos conversar.
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-[#FAF7F0]/68">
+          A gente tira suas dúvidas e guarda a vaga do seu filho.
+        </p>
 
-function SecaoProximo({ aoTocar }: { aoTocar: (alvo: string) => void }) {
-  return (
-    <Secao id="proximo">
-      <div className="flex flex-1 flex-col items-center justify-center gap-7 text-center">
-        <h2 className="font-serif text-[2.6rem] font-semibold leading-[1.05] text-[#17223D]">
-          Isso é o que nós
-          <br />
-          <span className="text-[#B9862F]">somos!</span>
-        </h2>
-        <div className="relative h-[15rem] w-full max-w-[17rem]">
-          <Image
-            src="/folder/marca-30-anos.png"
-            alt="Centro Educacional Amadeus, 30 anos"
-            fill
-            sizes="272px"
-            className="object-contain"
-          />
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-2.5">
-        <Link
-          href={CONTATO.linkReuniao}
-          className="flex min-h-[3.625rem] items-center justify-center rounded-full bg-[#17223D] px-6 text-center text-base font-bold text-[#FAF7F0]"
-        >
-          Confirmar presença na reunião
-        </Link>
         {CONTATO.whatsapp ? (
           <a
-            href={`https://wa.me/${CONTATO.whatsapp}`}
-            className="flex min-h-14 items-center justify-center rounded-full border border-[#17223D]/24 text-[0.95rem] font-semibold text-[#17223D]"
+            href={`https://wa.me/${CONTATO.whatsapp}?text=${encodeURIComponent(
+              mensagemWhatsapp(escolhido ? escolhido.nome : null),
+            )}`}
+            className="mt-5 flex min-h-[3.5rem] items-center justify-center gap-2 rounded-full bg-[#FAF7F0] px-6 text-[0.95rem] font-bold text-[#0B1733]"
           >
-            Falar com a secretaria
+            <IconeWhatsapp />
+            Falar com a escola
           </a>
-        ) : null}
+        ) : (
+          <Link
+            href={CONTATO.linkReuniao}
+            className="mt-5 flex min-h-[3.5rem] items-center justify-center gap-2 rounded-full bg-[#FAF7F0] px-6 text-[0.95rem] font-bold text-[#0B1733]"
+          >
+            Confirmar presença na reunião
+          </Link>
+        )}
       </div>
 
-      <div className="mt-7 flex items-end gap-3 border-t border-[#17223D]/14 pt-5">
-        <span className="flex-1 text-xs leading-relaxed text-[#5A657F]">
+      <div className="mt-7 flex items-end gap-3 border-t border-[#FAF7F0]/14 pt-5">
+        <span className="flex-1 text-xs leading-relaxed text-[#FAF7F0]/55">
           Centro Educacional Amadeus
           <br />
           São Gonçalo do Amarante, RN
@@ -1121,12 +1186,20 @@ function SecaoProximo({ aoTocar }: { aoTocar: (alvo: string) => void }) {
         <button
           type="button"
           onClick={() => aoTocar("capa")}
-          className="min-h-11 text-xs font-semibold text-[#5A657F] underline"
+          className="min-h-11 text-xs font-semibold text-[#FAF7F0]/65 underline"
         >
           voltar ao início
         </button>
       </div>
     </Secao>
+  );
+}
+
+function IconeWhatsapp() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="#0B1733" aria-hidden className="shrink-0">
+      <path d="M12.04 2c-5.46 0-9.9 4.44-9.9 9.9 0 1.75.46 3.45 1.32 4.95L2 22l5.3-1.39a9.86 9.86 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.44 9.9-9.9 0-2.64-1.03-5.13-2.9-7A9.82 9.82 0 0 0 12.04 2zm0 18.15h-.01a8.2 8.2 0 0 1-4.18-1.15l-.3-.18-3.11.82.83-3.04-.2-.31a8.18 8.18 0 0 1-1.25-4.39c0-4.54 3.7-8.23 8.23-8.23 2.2 0 4.26.86 5.81 2.42a8.16 8.16 0 0 1 2.41 5.82c0 4.54-3.69 8.24-8.23 8.24zm4.52-6.17c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.24-.64.8-.78.97-.15.16-.29.18-.53.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.71-.14-.25-.02-.38.11-.5.11-.11.25-.29.37-.43.13-.15.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.16 0-.43.06-.65.31-.23.25-.86.84-.86 2.05s.88 2.38 1 2.54c.12.17 1.73 2.64 4.19 3.7.59.26 1.04.4 1.4.52.59.19 1.12.16 1.54.1.47-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.11-.22-.17-.47-.29z" />
+    </svg>
   );
 }
 
