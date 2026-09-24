@@ -79,6 +79,7 @@ export default function FolderCliente() {
     <div className="bg-[#05060C]">
       <style>{`
         @keyframes fdGira { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
+        .fd-anel-fora, .fd-contra-fora, .fd-anel-dentro, .fd-contra-dentro { will-change: transform; backface-visibility: hidden }
         .fd-anel-fora { animation: fdGira 58s linear infinite }
         .fd-contra-fora { animation: fdGira 58s linear infinite reverse }
         .fd-anel-dentro { animation: fdGira 44s linear infinite reverse }
@@ -95,10 +96,12 @@ export default function FolderCliente() {
         style={{ opacity: etapa < 0 ? 0 : 1 }}
         aria-hidden={etapa < 0}
       >
+        {/* Anima escala, não largura: largura força o navegador a recalcular
+            o layout a cada quadro, e isso trava a rolagem no celular. */}
         <div className="h-[3px] bg-[#FAF7F0]/12">
           <div
-            className="h-[3px] bg-[#E8B44C] transition-[width] duration-500"
-            style={{ width: `${progresso}%` }}
+            className="h-[3px] w-full origin-left bg-[#E8B44C] transition-transform duration-500"
+            style={{ transform: `scaleX(${progresso / 100})` }}
           />
         </div>
       </div>
@@ -155,7 +158,7 @@ function Capa({
   return (
     <section
       id="capa"
-      className="relative flex h-[100dvh] min-h-[640px] justify-center overflow-hidden"
+      className="relative flex h-[100svh] min-h-[640px] justify-center overflow-hidden"
       style={{
         background:
           "radial-gradient(120% 70% at 50% 34%, #16224A 0%, #0A0D18 58%, #05060C 100%)",
@@ -341,7 +344,7 @@ function Secao({
   return (
     <section
       id={id}
-      className={`flex min-h-[100dvh] pb-12 pt-16 ${
+      className={`flex min-h-[100svh] pb-12 pt-16 ${
         escuro ? "bg-[#05060C] text-[#FAF7F0]" : "bg-[#FAF7F0] text-[#17223D]"
       }`}
     >
@@ -527,7 +530,7 @@ function SecaoVideo({
       <div
         ref={trilho}
         onScroll={aoRolar}
-        className="-mx-6 mt-6 flex flex-1 snap-x snap-mandatory gap-3 overflow-x-auto px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="-mx-6 mt-6 flex flex-1 snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {SEGMENTOS.map((s) => (
           <article
@@ -602,7 +605,7 @@ function SecaoLivro({ aoTocar }: { aoTocar: (alvo: string) => void }) {
 
       {/* A página /geekie inteira vive aqui dentro, em cartões que o pai
           empurra com o dedo. Ninguém precisa abrir outro site. */}
-      <div className="-mx-6 mt-4 flex-1 overflow-x-auto px-6 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="-mx-6 mt-4 flex-1 overflow-x-auto overscroll-x-contain px-6 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex h-full snap-x snap-mandatory gap-3">
           {CARTOES_LIVRO.map((cartao, i) => (
             <CartaoDoLivro key={cartao.etiqueta + i} cartao={cartao} escuro={i % 2 === 1} />
@@ -1225,10 +1228,6 @@ function SecaoValores({
                         <span className="font-serif text-[1.65rem] font-semibold leading-none text-[#E8B44C]">
                           {destaque.parcela}
                         </span>
-                      </span>
-                      <span className="mt-1 block text-[0.72rem] leading-relaxed text-[#FAF7F0]/55">
-                        Ou {destaque.aVista} à vista, com 10% de desconto. Total{" "}
-                        {destaque.total}.
                       </span>
                       {linha.promo ? (
                         <span className="mt-1.5 block text-[0.72rem] leading-relaxed text-[#FAF7F0]/45">
