@@ -9,9 +9,10 @@
  * desses cards, recortadas por scripts/recortar-fotos-folder.mjs para tirar o
  * texto gravado na imagem.
  *
- * DUAS EXCEÇÕES: socioemocional e financeira são do Pexels (licença livre para
- * uso comercial, sem exigir crédito), porque os cards cobriam as pessoas com
- * caixa de texto. Trocar assim que a escola tiver foto própria.
+ * EXCEÇÕES do Pexels (licença livre para uso comercial, sem exigir crédito):
+ * socioemocional, financeira e aulas em inglês. Trocar assim que a escola
+ * tiver foto própria. A foto real dos professores do Evolutive continua em
+ * public/folder/programas/bilingue-evolutive.webp, caso se queira voltar.
  */
 
 export type SegmentoId = "infantil" | "f1" | "f2";
@@ -128,11 +129,11 @@ export const PROGRAMAS: Peca[] = [
     foto: { src: "/folder/programas/financeira.webp", w: 900, h: 633 },
   },
   {
-    nome: "Educação Bilíngue",
+    nome: "Aulas em inglês",
     resumo:
-      "Aprendizado em duas línguas desde cedo, preparando para um mundo cada vez mais conectado.",
+      "Pelo programa Bilíngue, algumas aulas acontecem inteiramente em inglês. A criança não estuda a língua, ela usa a língua, que é como se aprende de verdade.",
     nota: "Infantil, Fundamental 1 e 2",
-    foto: { src: "/folder/programas/bilingue.webp", w: 580, h: 634 },
+    foto: { src: "/folder/programas/bilingue.webp", w: 900, h: 583 },
     largo: true,
   },
 ];
