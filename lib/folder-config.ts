@@ -145,7 +145,7 @@ export const ESPORTES: Peca[] = [
     nome: "Karatê",
     resumo:
       "Disciplina e foco antes de qualquer medalha. O karatê ensina a criança a controlar o próprio corpo e a própria reação, e a respeitar quem está do outro lado.",
-    foto: { src: "/folder/programas/esportes.webp", w: 490, h: 490 },
+    foto: { src: "/folder/programas/esportes.webp", w: 1000, h: 683 },
     largo: true,
     alto: true,
   },
@@ -159,13 +159,13 @@ export const ESPORTES: Peca[] = [
     nome: "Vôlei",
     resumo:
       "Ninguém faz ponto sozinho. É o esporte que mais cobra confiança no colega, porque a bola sempre passa por outra mão antes de cair.",
-    foto: { src: "/folder/programas/volei.webp", w: 500, h: 500 },
+    foto: { src: "/folder/programas/volei.webp", w: 900, h: 581 },
   },
   {
     nome: "Ballet",
     resumo:
       "Postura, disciplina e expressão. O ballet ensina o corpo a obedecer à cabeça, e dá à criança um jeito de dizer o que sente sem precisar falar.",
-    foto: { src: "/folder/programas/ballet.webp", w: 900, h: 379 },
+    foto: { src: "/folder/programas/ballet.webp", w: 900, h: 542 },
     largo: true,
   },
 ];
