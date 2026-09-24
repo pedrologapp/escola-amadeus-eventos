@@ -414,21 +414,21 @@ export default function GeekiePage() {
       {/* ---------- para o folder ----------
           Quem chegou até aqui entendeu o material. O passo seguinte é
           conhecer a escola inteira, e é isso que o folder faz. */}
-      <section className="bg-[#FAF7F0] py-12 text-center text-[#17223D]">
+      <section className="bg-[#05060C] py-12 text-center">
         <div className="mx-auto max-w-[470px] px-6">
-          <p className="text-[0.64rem] font-extrabold uppercase tracking-[0.22em] text-[#B9862F]">
+          <p className="text-[0.64rem] font-extrabold uppercase tracking-[0.22em] text-[#E8B44C]">
             E o resto da escola?
           </p>
           <h2 className="mt-3 text-[clamp(1.5rem,6.2vw,1.95rem)] font-extrabold leading-tight tracking-[-0.03em] text-balance">
             O Geekie é só uma parte do que muda em 2027
           </h2>
-          <p className="mx-auto mt-3 max-w-[22rem] text-[0.95rem] leading-relaxed text-[#5A657F]">
+          <p className="mx-auto mt-3 max-w-[22rem] text-[0.95rem] leading-relaxed text-[#FAF7F0]/70">
             Os programas, os projetos, os esportes, os espaços e os valores do
             ano que vem estão todos reunidos em um lugar só.
           </p>
           <Link
             href="/folder"
-            className="mt-6 inline-flex min-h-[3.5rem] items-center justify-center gap-2 rounded-full bg-[#17223D] px-8 text-[1rem] font-bold text-[#FAF7F0]"
+            className="mt-6 inline-flex min-h-[3.5rem] items-center justify-center gap-2 rounded-full bg-[#FAF7F0] px-8 text-[1rem] font-bold text-[#0B1733]"
           >
             Conhecer o Amadeus inteiro
             <svg
@@ -436,7 +436,7 @@ export default function GeekiePage() {
               height="18"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#E8B44C"
+              stroke="#0B1733"
               strokeWidth="2.2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -449,8 +449,10 @@ export default function GeekiePage() {
         </div>
       </section>
 
-      {/* ---------- fecho ---------- */}
-      <footer className="bg-[#05060C] py-12 text-center">
+      {/* ---------- fecho ----------
+          O fio no topo existe porque a faixa acima também é preta: sem ele as
+          duas viram um bloco só. */}
+      <footer className="border-t border-[#FAF7F0]/10 bg-[#05060C] py-12 text-center">
         <div className="mx-auto max-w-[470px] px-6">
           <Image
             src="/logo-amadeus-negativa.png"
