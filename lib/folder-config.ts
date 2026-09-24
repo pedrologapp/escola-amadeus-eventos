@@ -80,6 +80,8 @@ export type IconeEspaco =
 
 export interface Peca {
   nome: string;
+  /** Em que etapas o programa existe. Vazio = vale para todas. */
+  etapas?: SegmentoId[];
   resumo: string | null;
   nota?: string;
   foto?: Foto;
@@ -90,7 +92,7 @@ export interface Peca {
 
 export const PROGRAMAS: Peca[] = [
   {
-    nome: "Projeto Arbória",
+    nome: "Projeto Arboria",
     resumo:
       "Entender na individualidade de cada aluno seus potenciais e habilidades para que ele se descubra em sua própria luz.",
     nota: "Infantil, Fundamental 1 e 2",
@@ -107,6 +109,7 @@ export const PROGRAMAS: Peca[] = [
   },
   {
     nome: "Sala Maker e Robótica",
+    etapas: ["f1", "f2"],
     resumo:
       "Tecnologia, lógica e criatividade aplicadas na prática, estimulando inovação e pensamento crítico.",
     nota: "Fundamental 1 e 2",
@@ -114,9 +117,10 @@ export const PROGRAMAS: Peca[] = [
   },
   {
     nome: "Educação Financeira",
+    etapas: ["f1", "f2"],
     resumo:
       "Compreender através da lógica, pensamento crítico e comportamental como realizar organização financeira para atingir seus próprios objetivos.",
-    nota: "Infantil, Fundamental 1 e 2",
+    nota: "Fundamental 1 e 2",
     foto: { src: "/folder/programas/financeira.webp", w: 510, h: 420 },
   },
   {
@@ -124,7 +128,7 @@ export const PROGRAMAS: Peca[] = [
     resumo:
       "Aprendizado em duas línguas desde cedo, preparando para um mundo cada vez mais conectado.",
     nota: "Infantil, Fundamental 1 e 2",
-    foto: { src: "/folder/programas/bilingue.webp", w: 600, h: 690 },
+    foto: { src: "/folder/programas/bilingue.webp", w: 580, h: 634 },
     largo: true,
   },
 ];
@@ -135,19 +139,22 @@ export const FRASE_ESPORTES =
 export const ESPORTES: Peca[] = [
   {
     nome: "Karatê",
-    resumo: null,
+    resumo:
+      "Disciplina e foco antes de qualquer medalha. O karatê ensina a criança a controlar o próprio corpo e a própria reação, e a respeitar quem está do outro lado.",
     foto: { src: "/folder/programas/esportes.webp", w: 490, h: 490 },
     largo: true,
     alto: true,
   },
   {
     nome: "Futsal",
-    resumo: null,
+    resumo:
+      "Trabalho em equipe na prática. Aprender a passar, a esperar a vez e a perder sem desistir vale tanto quanto o gol.",
     foto: { src: "/folder/programas/futsal.webp", w: 470, h: 530 },
   },
   {
     nome: "Vôlei",
-    resumo: null,
+    resumo:
+      "Ninguém faz ponto sozinho. É o esporte que mais cobra confiança no colega, porque a bola sempre passa por outra mão antes de cair.",
     foto: { src: "/folder/programas/volei.webp", w: 500, h: 500 },
   },
 ];
@@ -348,6 +355,13 @@ export interface Condicao {
   mensal: string;
 }
 
+export interface Economia {
+  /** Quanto o pai deixa de pagar no ano inteiro. */
+  total: string;
+  /** De onde esse valor vem. */
+  detalhe: string;
+}
+
 export interface Valores {
   /** Mensalidade 2027, sem nenhuma condição. */
   cheia: Condicao;
@@ -355,6 +369,8 @@ export interface Valores {
   antecipada: Condicao;
   /** Antecipada mais o desconto da fidelidade. É o melhor cenário possível. */
   melhor: Condicao;
+  /** O que ele economiza matriculando até 30/10. */
+  economia: Economia;
   /** O material é comprado à parte. Nunca apresentar como incluso. */
   material: {
     rotulo: string;
@@ -378,6 +394,11 @@ export const VALORES: Record<SegmentoId, Valores | null> = {
     cheia: { mensal: "R$ 580,00" },
     antecipada: { mensal: "R$ 570,00" },
     melhor: { mensal: "R$ 550,00" },
+    economia: {
+      total: "R$ 228,00 a R$ 240,00",
+      detalhe:
+        "R$ 120,00 na mensalidade do ano, mais R$ 108,00 ou R$ 120,00 no material, conforme o grupo.",
+    },
     material: [
       {
         rotulo: "Maternal II e III",
@@ -399,6 +420,10 @@ export const VALORES: Record<SegmentoId, Valores | null> = {
     cheia: { mensal: "R$ 550,00" },
     antecipada: { mensal: "R$ 540,00" },
     melhor: { mensal: "R$ 520,00" },
+    economia: {
+      total: "R$ 324,00",
+      detalhe: "R$ 120,00 na mensalidade do ano e R$ 204,00 no material.",
+    },
     material: [
       {
         rotulo: "1º ao 5º ano",
@@ -413,6 +438,10 @@ export const VALORES: Record<SegmentoId, Valores | null> = {
     cheia: { mensal: "R$ 570,00" },
     antecipada: { mensal: "R$ 560,00" },
     melhor: { mensal: "R$ 540,00" },
+    economia: {
+      total: "R$ 120,00",
+      detalhe: "na mensalidade do ano. O material também tem desconto até essa data.",
+    },
     material: [
       {
         rotulo: "6º ao 9º ano",
@@ -459,7 +488,7 @@ export const BOLHAS_FORA: Bolha[] = [
   { rotulo: "Geekie", alvo: "livro" },
   { rotulo: "Tablets", alvo: "livro" },
   { rotulo: "AgendaEdu", alvo: "comunicacao", linhas: ["Agenda", "Edu"] },
-  { rotulo: "Projeto Arbória", alvo: "programas", linhas: ["Projeto", "Arbória"] },
+  { rotulo: "Projeto Arboria", alvo: "programas", linhas: ["Projeto", "Arboria"] },
   { rotulo: "Socioemocional", alvo: "programas", linhas: ["Socio", "emocional"] },
   { rotulo: "Robótica", alvo: "programas" },
   { rotulo: "Ed. Financeira", alvo: "programas", linhas: ["Ed.", "Financeira"] },

@@ -42,7 +42,7 @@ const recortes = [
   {
     arquivo: "SaveClip.App_655347532_18454944781103095_712582896044254013_n.jpg",
     nome: "bilingue",
-    caixa: { left: 205, top: 115, width: 600, height: 690 },
+    caixa: { left: 208, top: 235, width: 430, height: 470 },
   },
 ];
 

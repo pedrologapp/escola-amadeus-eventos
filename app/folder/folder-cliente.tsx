@@ -116,6 +116,7 @@ export default function FolderCliente() {
         etiqueta="Programas e projetos"
         titulo="O que ele vive além da aula."
         pecas={PROGRAMAS}
+        segmento={segmento}
         alvoContinuar="esportes"
         aoTocar={irPara}
       />
@@ -138,7 +139,7 @@ export default function FolderCliente() {
         aoTocar={irPara}
       />
       <SecaoSomos aoTocar={irPara} />
-      <SecaoValores escolhido={escolhido} aoTocar={irPara} />
+      <SecaoValores escolhido={escolhido} aoEscolher={setSegmento} aoTocar={irPara} />
     </div>
   );
 }
@@ -843,6 +844,7 @@ function SecaoMosaico({
   titulo,
   apoio,
   pecas,
+  segmento,
   alvoContinuar,
   aoTocar,
 }: {
@@ -852,9 +854,14 @@ function SecaoMosaico({
   titulo: string;
   apoio?: string;
   pecas: Peca[];
+  /** Quando vem, some o que não existe na etapa do filho. */
+  segmento?: SegmentoId | null;
   alvoContinuar: string;
   aoTocar: (alvo: string) => void;
 }) {
+  const visiveis = segmento
+    ? pecas.filter((p) => !p.etapas || p.etapas.includes(segmento))
+    : pecas;
   return (
     <Secao id={id} escuro={escuro}>
       <Etiqueta escuro={escuro}>{etiqueta}</Etiqueta>
@@ -868,7 +875,7 @@ function SecaoMosaico({
           {apoio}
         </p>
       ) : null}
-      <Mosaico pecas={pecas} escuro={escuro} alvoContinuar={alvoContinuar} aoTocar={aoTocar} />
+      <Mosaico pecas={visiveis} escuro={escuro} alvoContinuar={alvoContinuar} aoTocar={aoTocar} />
     </Secao>
   );
 }
@@ -1142,9 +1149,11 @@ function SecaoSomos({ aoTocar }: { aoTocar: (alvo: string) => void }) {
 
 function SecaoValores({
   escolhido,
+  aoEscolher,
   aoTocar,
 }: {
   escolhido: ReturnType<typeof acharSegmento> | null;
+  aoEscolher: (seg: SegmentoId) => void;
   aoTocar: (alvo: string, seg?: SegmentoId) => void;
 }) {
   const valores = escolhido ? VALORES[escolhido.id] : null;
@@ -1153,6 +1162,30 @@ function SecaoValores({
     <Secao id="valores" escuro>
       <Etiqueta escuro>Investimento 2027</Etiqueta>
       <Titulo escuro>{escolhido ? escolhido.nome : "Os valores de 2027"}</Titulo>
+
+      {/* Aqui o pai pode olhar as outras etapas sem voltar lá pra cima. Quem
+          tem dois filhos precisa comparar. */}
+      {escolhido ? (
+        <div className="mt-4 flex gap-2">
+          {SEGMENTOS.map((s) => {
+            const ativo = s.id === escolhido.id;
+            return (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => aoEscolher(s.id)}
+                className={`min-h-10 flex-1 rounded-full px-2 text-[0.78rem] font-bold transition-colors ${
+                  ativo
+                    ? "bg-[#FAF7F0] text-[#0B1733]"
+                    : "border border-[#FAF7F0]/20 text-[#FAF7F0]/70"
+                }`}
+              >
+                {s.curto}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
 
       <div className="mt-7 flex flex-1 flex-col gap-4">
         {valores ? (
@@ -1198,6 +1231,23 @@ function SecaoValores({
                 Sem nenhuma das duas condições, a mensalidade 2027 é{" "}
                 {valores.cheia.mensal}. A Mensalidade Fidelidade vale sempre, em
                 qualquer condição.
+              </span>
+            </div>
+
+            {/* O único lugar da peça onde um total aparece, e de propósito:
+                aqui o número grande é o que ele deixa de pagar. */}
+            <div className="rounded-[22px] border border-[#E8B44C]/35 bg-[#E8B44C]/[0.08] p-6">
+              <span className="block text-[0.72rem] font-bold uppercase tracking-[0.14em] text-[#E8B44C]">
+                Matriculando até {PRAZO_ANTECIPADA}
+              </span>
+              <span className="mt-2 block text-[0.95rem] text-[#FAF7F0]/72">
+                Você economiza
+              </span>
+              <span className="mt-0.5 block font-serif text-[2.4rem] font-semibold leading-none text-[#E8B44C]">
+                {valores.economia.total}
+              </span>
+              <span className="mt-1.5 block text-[0.8rem] leading-relaxed text-[#FAF7F0]/60">
+                no ano. {valores.economia.detalhe}
               </span>
             </div>
 
