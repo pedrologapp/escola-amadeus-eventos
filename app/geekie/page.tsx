@@ -147,7 +147,7 @@ export default function GeekiePage() {
           <div className="mt-5 grid gap-2.5">
             <div className="rounded-2xl border border-[#17223D]/10 bg-[#17223D]/[0.055] p-4">
               <span className="mb-1 block text-[0.72rem] font-extrabold uppercase tracking-[0.18em] text-[#B9862F]">
-                Metade impressa
+                Livro físico
               </span>
               <span className="block text-[0.93rem] leading-relaxed text-[#5A657F]">
                 O livro continua na mochila. É nele que ele escreve, resolve e
@@ -156,7 +156,7 @@ export default function GeekiePage() {
             </div>
             <div className="rounded-2xl bg-[#0B1733] p-4 text-[#FAF7F0]">
               <span className="mb-1 block text-[0.72rem] font-extrabold uppercase tracking-[0.18em] text-[#E8B44C]">
-                Metade digital
+                Geekie Digital
               </span>
               <span className="block text-[0.93rem] leading-relaxed text-[#FAF7F0]/75">
                 Uma plataforma que conversa com o livro e faz o que o papel
@@ -248,7 +248,7 @@ export default function GeekiePage() {
             colecao="Coleção Rios"
             itens={[
               <>
-                Material <b>todo impresso</b>. Nessa idade a criança não usa tela.
+                Material <b>todo no papel</b>. Nessa idade a criança não usa tela.
               </>,
               <>
                 A cada mês, uma investigação nova. <b>O que dá pra descobrir dentro
@@ -271,7 +271,7 @@ export default function GeekiePage() {
             colecao="O livro continua sendo a base"
             itens={[
               <>
-                O <b>impresso é o centro do estudo</b>. O digital entra para
+                O <b>livro é o centro do estudo</b>. O digital entra para
                 enriquecer, não para substituir.
               </>,
               <>
