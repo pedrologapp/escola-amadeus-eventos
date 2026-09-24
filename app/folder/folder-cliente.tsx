@@ -653,16 +653,18 @@ function SecaoLivro({ aoTocar }: { aoTocar: (alvo: string) => void }) {
     <Secao id="livro">
       <Etiqueta>O Livro</Etiqueta>
       <h2 className="mt-2 font-serif text-[1.55rem] font-semibold leading-tight text-[#17223D]">
-        Em 2027 o material do seu filho muda. O nome dele é
+        Em 2027 o material do seu filho(a) é
       </h2>
       <p className="-mt-1 font-serif text-[3.6rem] font-semibold leading-[0.95] tracking-tight text-[#B9862F]">
         Geekie
       </p>
-      {/* O pai está vendo esse nome pela primeira vez. Antes de qualquer
-          detalhe, ele precisa saber que continua sendo livro. */}
+      {/* Aqui entra pai veterano e pai novato. Por isso a frase não fala em
+          mudança: apresenta o material como ele é hoje, e garante logo que
+          continua sendo livro, que é a primeira dúvida de todo mundo. */}
       <p className="mt-2 text-[0.95rem] leading-relaxed text-[#5A657F]">
-        Se você nunca ouviu falar, tudo bem. Em um minuto você entende o que é, e
-        por que a escola escolheu ele.
+        Se o nome é novo para você, tudo bem. Continua sendo livro, com uma
+        parte digital junto. Em um minuto você entende como funciona e por que a
+        escola escolheu ele.
       </p>
 
       <div className="mt-4 flex items-center gap-2 text-[0.8rem] font-semibold text-[#5A657F]">
