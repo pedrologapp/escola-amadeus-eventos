@@ -240,7 +240,7 @@ export const CARTOES_LIVRO: CartaoLivro[] = [
     etiqueta: "Comece por aqui",
     pergunta: "Você sabe como seu filho foi essa semana na escola?",
     resposta:
-      "Hoje a resposta chega no boletim. E quando ela chega, o bimestre já acabou.",
+      "O Geekie traz uma proposta diferente, e que você vai gostar. Passe para o lado e entenda agora!",
   },
   {
     tipo: "oquee",
