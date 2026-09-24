@@ -336,18 +336,16 @@ export const COMUNICACAO: { nome: string; icone: IconeComunicacao }[] = [
 export const PRAZO_ANTECIPADA = "30 de outubro";
 
 /**
- * A fidelidade não é uma tabela à parte: é um desconto fixo de R$ 20,00 na
- * mensalidade, para quem paga até o dia 10, valendo em qualquer condição.
+ * A Mensalidade Fidelidade não é uma tabela à parte: é um desconto fixo de
+ * R$ 20,00 para quem paga até o dia 05, valendo em qualquer condição.
  * Por isso o melhor cenário é a antecipada menos 20.
  */
 export const DESCONTO_FIDELIDADE = "R$ 20,00";
-export const DIA_FIDELIDADE = 10;
+export const DIA_FIDELIDADE = "05";
 
 export interface Condicao {
   /** Valor de cada uma das 12 parcelas. */
   mensal: string;
-  /** Total do ano. */
-  anual: string;
 }
 
 export interface Valores {
@@ -364,6 +362,8 @@ export interface Valores {
     parcela: string;
     aVista: string;
     total: string;
+    /** Tabela promocional de quem matricula até 30/10. */
+    promo?: { parcela: string; aVista: string; total: string };
   }[];
 }
 
@@ -375,41 +375,44 @@ export interface Valores {
  */
 export const VALORES: Record<SegmentoId, Valores | null> = {
   infantil: {
-    cheia: { mensal: "R$ 580,00", anual: "R$ 6.960,00" },
-    antecipada: { mensal: "R$ 570,00", anual: "R$ 6.840,00" },
-    melhor: { mensal: "R$ 550,00", anual: "R$ 6.600,00" },
+    cheia: { mensal: "R$ 580,00" },
+    antecipada: { mensal: "R$ 570,00" },
+    melhor: { mensal: "R$ 550,00" },
     material: [
       {
         rotulo: "Maternal II e III",
         parcela: "R$ 83,00",
         aVista: "R$ 896,40",
         total: "R$ 996,00",
+        promo: { parcela: "R$ 74,00", aVista: "R$ 799,20", total: "R$ 888,00" },
       },
       {
         rotulo: "Grupo IV e V",
         parcela: "R$ 92,00",
         aVista: "R$ 993,60",
         total: "R$ 1.104,00",
+        promo: { parcela: "R$ 82,00", aVista: "R$ 885,60", total: "R$ 984,00" },
       },
     ],
   },
   f1: {
-    cheia: { mensal: "R$ 550,00", anual: "R$ 6.600,00" },
-    antecipada: { mensal: "R$ 540,00", anual: "R$ 6.480,00" },
-    melhor: { mensal: "R$ 520,00", anual: "R$ 6.240,00" },
+    cheia: { mensal: "R$ 550,00" },
+    antecipada: { mensal: "R$ 540,00" },
+    melhor: { mensal: "R$ 520,00" },
     material: [
       {
         rotulo: "1º ao 5º ano",
         parcela: "R$ 159,00",
         aVista: "R$ 1.717,20",
         total: "R$ 1.908,00",
+        promo: { parcela: "R$ 142,00", aVista: "R$ 1.533,60", total: "R$ 1.704,00" },
       },
     ],
   },
   f2: {
-    cheia: { mensal: "R$ 570,00", anual: "R$ 6.840,00" },
-    antecipada: { mensal: "R$ 560,00", anual: "R$ 6.720,00" },
-    melhor: { mensal: "R$ 540,00", anual: "R$ 6.480,00" },
+    cheia: { mensal: "R$ 570,00" },
+    antecipada: { mensal: "R$ 560,00" },
+    melhor: { mensal: "R$ 540,00" },
     material: [
       {
         rotulo: "6º ao 9º ano",

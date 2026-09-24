@@ -1169,9 +1169,6 @@ function SecaoValores({
                   {valores.melhor.mensal}
                 </span>
               </span>
-              <span className="mt-1 block text-[0.8rem] text-[#5A657F]">
-                {valores.melhor.anual} no ano
-              </span>
 
               <span className="mt-5 block border-t border-[#17223D]/14 pt-4 text-[0.78rem] font-bold uppercase tracking-[0.12em] text-[#7A5310]">
                 Para chegar nesse valor
@@ -1189,14 +1186,15 @@ function SecaoValores({
                 <Confere />
                 <span className="flex-1 text-[0.88rem] leading-relaxed text-[#454F6B]">
                   Pague até o <b>dia {DIA_FIDELIDADE}</b> de cada mês, e são{" "}
-                  {DESCONTO_FIDELIDADE} a menos, todo mês.
+                  <b>{DESCONTO_FIDELIDADE} a menos, no mês</b>. É a Mensalidade
+                  Fidelidade.
                 </span>
               </span>
 
               <span className="mt-4 block border-t border-[#17223D]/14 pt-3.5 text-[0.76rem] leading-relaxed text-[#5A657F]">
                 Sem nenhuma das duas condições, a mensalidade 2027 é{" "}
-                {valores.cheia.mensal}. O desconto por pagar até o dia{" "}
-                {DIA_FIDELIDADE} vale sempre, em qualquer condição.
+                {valores.cheia.mensal}. A Mensalidade Fidelidade vale sempre, em
+                qualquer condição.
               </span>
             </div>
 
@@ -1207,24 +1205,39 @@ function SecaoValores({
               <span className="mt-1 block text-sm leading-relaxed text-[#FAF7F0]/68">
                 O material Geekie One é comprado à parte, uma vez no ano.
               </span>
-              <div className="mt-4 flex flex-col gap-4">
-                {valores.material.map((linha) => (
-                  <span key={linha.rotulo} className="block">
-                    <span className="block text-[0.72rem] uppercase tracking-[0.12em] text-[#FAF7F0]/55">
-                      {linha.rotulo}
-                    </span>
-                    <span className="mt-1 flex items-baseline gap-2">
-                      <span className="text-[0.8rem] text-[#FAF7F0]/72">12x de</span>
-                      <span className="font-serif text-[1.65rem] font-semibold leading-none text-[#E8B44C]">
-                        {linha.parcela}
+              {/* Quando existe tabela promocional, ela vem primeiro: é o valor
+                  de quem matricula até 30/10, e é o que a escola quer vender. */}
+              <div className="mt-4 flex flex-col gap-5">
+                {valores.material.map((linha) => {
+                  const destaque = linha.promo ?? linha;
+                  return (
+                    <span key={linha.rotulo} className="block">
+                      <span className="block text-[0.72rem] uppercase tracking-[0.12em] text-[#FAF7F0]/55">
+                        {linha.rotulo}
                       </span>
+                      {linha.promo ? (
+                        <span className="mt-0.5 block text-[0.72rem] font-semibold text-[#E8B44C]">
+                          Matriculando até {PRAZO_ANTECIPADA}
+                        </span>
+                      ) : null}
+                      <span className="mt-1 flex items-baseline gap-2">
+                        <span className="text-[0.8rem] text-[#FAF7F0]/72">12x de</span>
+                        <span className="font-serif text-[1.65rem] font-semibold leading-none text-[#E8B44C]">
+                          {destaque.parcela}
+                        </span>
+                      </span>
+                      <span className="mt-1 block text-[0.72rem] leading-relaxed text-[#FAF7F0]/55">
+                        Ou {destaque.aVista} à vista, com 10% de desconto. Total{" "}
+                        {destaque.total}.
+                      </span>
+                      {linha.promo ? (
+                        <span className="mt-1.5 block text-[0.72rem] leading-relaxed text-[#FAF7F0]/45">
+                          Depois dessa data, 12x de {linha.parcela}.
+                        </span>
+                      ) : null}
                     </span>
-                    <span className="mt-1 block text-[0.72rem] leading-relaxed text-[#FAF7F0]/55">
-                      Ou {linha.aVista} à vista, com 10% de desconto. Total{" "}
-                      {linha.total}.
-                    </span>
-                  </span>
-                ))}
+                  );
+                })}
               </div>
 
               <span className="mt-4 block border-t border-[#FAF7F0]/14 pt-3.5 text-[0.78rem] leading-relaxed text-[#E8B44C]">
