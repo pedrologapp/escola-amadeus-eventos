@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Gislene - Educação Infantil</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap">
+<style>
+  @page{ size:200mm 200mm; margin:0 }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"DM Sans","Segoe UI",Arial,sans-serif;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+    background:#05060C;
+  }
+  .slide{
+    width:200mm;height:200mm;position:relative;overflow:hidden;
+    page-break-after:always;
+    background:
+      radial-gradient(115% 70% at 50% 8%, #16224A 0%, #0A0D18 58%, #05060C 100%);
+    display:flex;flex-direction:column;
+    padding:22mm 20mm 18mm;color:#FAF7F0;
+  }
+  .slide:last-child{page-break-after:auto}
+
+  .etiqueta{
+    font-size:13pt;font-weight:800;letter-spacing:.24em;
+    text-transform:uppercase;color:#E8B44C;
+  }
+
+  .corpo{flex:1;display:flex;flex-direction:column;justify-content:center}
+
+  /* uma ideia por slide: o texto grande é sempre o que a última fileira lê */
+  .grande{font-size:40pt;font-weight:800;line-height:1.1;letter-spacing:-.03em}
+  .grande .ouro{color:#E8B44C;display:block}
+  .media{font-size:31pt;font-weight:800;line-height:1.16;letter-spacing:-.025em}
+
+  .nota{
+    margin-top:12mm;font-size:15pt;font-weight:500;line-height:1.45;
+    color:rgba(250,247,240,.6);max-width:145mm;
+  }
+
+  /* diálogo: a pergunta em branco, a resposta em dourado */
+  .fala{font-size:36pt;font-weight:800;line-height:1.14;letter-spacing:-.03em}
+  .fala + .fala{margin-top:9mm;color:#E8B44C}
+
+  /* lista de perguntas de investigação */
+  .itens{display:flex;flex-direction:column;gap:7mm}
+  .item{
+    border-left:1.4mm solid #E8B44C;padding-left:7mm;
+    font-size:25pt;font-weight:700;line-height:1.2;letter-spacing:-.02em;
+  }
+
+  /* dois blocos empilhados */
+  .blocos{display:flex;flex-direction:column;gap:9mm}
+  .bloco{
+    background:rgba(250,247,240,.06);border:.5mm solid rgba(250,247,240,.14);
+    border-radius:9mm;padding:10mm 11mm;
+  }
+  .bloco h3{font-size:24pt;font-weight:800;color:#E8B44C;letter-spacing:-.02em}
+  .bloco p{margin-top:4mm;font-size:19pt;font-weight:500;line-height:1.34;color:rgba(250,247,240,.84)}
+
+  /* duas colunas lado a lado */
+  .colunas{display:flex;gap:8mm;align-items:stretch}
+  .coluna{
+    flex:1;background:rgba(250,247,240,.06);border:.5mm solid rgba(250,247,240,.14);
+    border-radius:9mm;padding:10mm 9mm;
+  }
+  .coluna h3{
+    font-size:16pt;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+    color:#E8B44C;
+  }
+  .coluna p{margin-top:6mm;font-size:19pt;font-weight:600;line-height:1.3}
+
+  /* o relatório de sexta */
+  .chamada{font-size:38pt;font-weight:800;letter-spacing:-.03em;color:#E8B44C}
+  .sub{margin-top:5mm;font-size:26pt;font-weight:700;line-height:1.2;letter-spacing:-.02em}
+  .marcadores{margin-top:11mm;display:flex;flex-direction:column;gap:5mm}
+  .marcador{display:flex;align-items:center;gap:5mm;font-size:19pt;font-weight:600;color:rgba(250,247,240,.84)}
+  .ponto{width:3.5mm;height:3.5mm;border-radius:50%;background:#E8B44C;flex:0 0 auto}
+
+  .rodape{
+    display:flex;align-items:center;gap:5mm;
+    font-size:11pt;font-weight:800;letter-spacing:.2em;text-transform:uppercase;
+    color:rgba(232,180,76,.72);
+  }
+  .risco{flex:1;height:.4mm;background:rgba(232,180,76,.28)}
+</style>
+</head>
+<body>
+  <section class="slide">
+    <p class="etiqueta">Educação Infantil</p>
+    <div class="corpo">
+      <p class="fala">“O que você fez hoje na escola?”</p>
+<p class="fala">“Nada.”</p>
+      
+    </div>
+    <div class="rodape"><span>Amadeus 30 anos</span><span class="risco"></span><span>Matrículas 2027</span></div>
+  </section>
+  <section class="slide">
+    <p class="etiqueta">Por que mudamos</p>
+    <div class="corpo">
+      <p class="grande">Criança de 3 anos não precisa de mais tarefa.<span class="ouro">Precisa de mais pergunta.</span></p>
+      <p class="nota">Por isso a escolha foi a Coleção Rios. As rotinas de pensamento dela vêm das pesquisas do Project Zero, da Universidade Harvard.</p>
+    </div>
+    <div class="rodape"><span>Amadeus 30 anos</span><span class="risco"></span><span>Matrículas 2027</span></div>
+  </section>
+  <section class="slide">
+    <p class="etiqueta">Como isso vira aula</p>
+    <div class="corpo">
+      <div class="itens"><p class="item">“O que podemos explorar dentro de uma cozinha?”</p><p class="item">“O que um rosto pode comunicar?”</p><p class="item">“Como podemos cuidar dos animais?”</p></div>
+      <p class="nota">Cada uma dessas perguntas ocupa um mês inteiro de investigação.</p>
+    </div>
+    <div class="rodape"><span>Amadeus 30 anos</span><span class="risco"></span><span>Matrículas 2027</span></div>
+  </section>
+  <section class="slide">
+    <p class="etiqueta">O que você vai ver em casa</p>
+    <div class="corpo">
+      <div class="blocos"><div class="bloco"><h3>O Diário de Bordo</h3><p>O caderno em que só o seu filho escreve. No fim do ano, ele vai para casa.</p></div><div class="bloco"><h3>O Portfólio</h3><p>Fotos e registros do que ele fez, ao longo do ano inteiro.</p></div></div>
+      
+    </div>
+    <div class="rodape"><span>Amadeus 30 anos</span><span class="risco"></span><span>Matrículas 2027</span></div>
+  </section>
+  <section class="slide">
+    
+    <div class="corpo">
+      <p class="grande">A escola deixa de ser<span class="ouro">uma caixa fechada.</span></p>
+      
+    </div>
+    <div class="rodape"><span>Amadeus 30 anos</span><span class="risco"></span><span>Matrículas 2027</span></div>
+  </section>
+</body>
+</html>
