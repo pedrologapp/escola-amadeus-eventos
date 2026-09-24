@@ -419,12 +419,15 @@ function SecaoManifesto({ aoTocar }: { aoTocar: (alvo: string) => void }) {
       </h2>
 
       <div className="mt-6 flex flex-1 flex-col justify-center">
+        {/* poster evita o retângulo preto antes de o pai apertar play, e
+            preload="none" não baixa os 13 MB de quem só vai passar direto. */}
         <video
           src={MANIFESTO.src}
+          poster={MANIFESTO.capa}
           controls
           playsInline
-          preload="metadata"
-          className="w-full rounded-[22px] border border-[#FAF7F0]/12 bg-[#0B1733]"
+          preload="none"
+          className="aspect-video w-full rounded-[22px] border border-[#FAF7F0]/12 bg-[#0B1733] object-cover"
         />
         <span className="mt-3 text-center text-[0.78rem] text-[#FAF7F0]/50">
           {MANIFESTO.duracao}

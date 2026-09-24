@@ -357,7 +357,11 @@ export const COMUNICACAO: { nome: string; icone: IconeComunicacao }[] = [
  * Enquanto for null, a tela inteira não existe: nada de espaço reservado
  * numa página pública. Basta preencher para ela entrar no ar.
  */
-export const MANIFESTO: { src: string; duracao: string } | null = null;
+export const MANIFESTO: { src: string; capa: string; duracao: string } | null = {
+  src: "/folder/video/manifesto.mp4",
+  capa: "/folder/video/manifesto-capa.jpg",
+  duracao: "1 min 30",
+};
 
 /** Prazo da matrícula antecipada, que também dá desconto no material. */
 export const PRAZO_ANTECIPADA = "30 de outubro";
@@ -459,8 +463,8 @@ export const VALORES: Record<SegmentoId, Valores | null> = {
     antecipada: { mensal: "R$ 560,00" },
     melhor: { mensal: "R$ 540,00" },
     economia: {
-      total: "R$ 120,00",
-      detalhe: "na mensalidade do ano. O material também tem desconto até essa data.",
+      total: "R$ 348,00",
+      detalhe: "R$ 120,00 na mensalidade do ano e R$ 228,00 no material.",
     },
     material: [
       {
@@ -468,6 +472,7 @@ export const VALORES: Record<SegmentoId, Valores | null> = {
         parcela: "R$ 181,00",
         aVista: "R$ 1.954,80",
         total: "R$ 2.172,00",
+        promo: { parcela: "R$ 162,00", aVista: "R$ 1.749,60", total: "R$ 1.944,00" },
       },
     ],
   },
