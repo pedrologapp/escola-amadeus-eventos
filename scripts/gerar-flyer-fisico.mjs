@@ -100,6 +100,7 @@ const CSS = `
     margin-top:3.5mm;font-size:11pt;font-weight:500;line-height:1.45;
     color:#5A657F;max-width:150mm;
   }
+  .frente .linha-fina b{color:#17223D;font-weight:700}
 
   /* o compilado: seis quadros, foto com o nome por cima */
   .quadros{margin-top:6mm;display:grid;grid-template-columns:1fr 1fr;gap:3.5mm}
@@ -282,8 +283,8 @@ const html = `<!doctype html>
 
     <h1 class="serifa">Isso é o <em>Amadeus.</em></h1>
     <p class="linha-fina">
-      Não é atividade extra nem pacote à parte. É o que seu filho ou sua filha
-      vive na semana comum do Amadeus, já na mensalidade.
+      Em trinta anos, muita coisa mudou aqui dentro.
+      <b>O cuidado com cada aluno, não.</b>
     </p>
 
     <div class="quadros">
