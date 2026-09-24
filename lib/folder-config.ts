@@ -350,6 +350,15 @@ export const COMUNICACAO: { nome: string; icone: IconeComunicacao }[] = [
   { nome: "Direção e coordenação", icone: "direcao" },
 ];
 
+/**
+ * O vídeo do manifesto, que abre o folder logo depois da capa. É o poema
+ * "Cada aluno do Amadeus tem...", horizontal.
+ *
+ * Enquanto for null, a tela inteira não existe: nada de espaço reservado
+ * numa página pública. Basta preencher para ela entrar no ar.
+ */
+export const MANIFESTO: { src: string; duracao: string } | null = null;
+
 /** Prazo da matrícula antecipada, que também dá desconto no material. */
 export const PRAZO_ANTECIPADA = "30 de outubro";
 
@@ -512,7 +521,7 @@ export const BOLHAS_FORA: Bolha[] = [
   { rotulo: "Auditório", alvo: "espacos" },
 ];
 
-export const PERCURSO = [
+const ETAPAS_BASE = [
   "segmento",
   "video",
   "livro",
@@ -522,4 +531,8 @@ export const PERCURSO = [
   "espacos",
   "somos",
   "valores",
-] as const;
+];
+
+export const PERCURSO: string[] = MANIFESTO
+  ? ["manifesto", ...ETAPAS_BASE]
+  : ETAPAS_BASE;

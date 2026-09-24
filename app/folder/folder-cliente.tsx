@@ -13,6 +13,7 @@ import {
   ESPACOS,
   ESPORTES,
   FRASE_ESPORTES,
+  MANIFESTO,
   PERCURSO,
   PERGUNTAS,
   DESCONTO_FIDELIDADE,
@@ -107,6 +108,7 @@ export default function FolderCliente() {
       </div>
 
       <Capa aoTocar={irPara} escolhido={segmento} />
+      <SecaoManifesto aoTocar={irPara} />
       <SecaoSegmento escolhido={segmento} aoEscolher={irPara} aoTocar={irPara} />
       <SecaoVideo segmento={segmento} aoEscolher={setSegmento} aoTocar={irPara} />
       <SecaoLivro aoTocar={irPara} />
@@ -402,6 +404,37 @@ function Continuar({
 }
 
 /* ------------------------------------------------------------- etapas --- */
+
+/* O poema abre o folder, respondendo a pergunta que a capa deixou no ar.
+   O "Continuar" logo abaixo existe pra ninguém se sentir preso: um minuto e
+   meio é muito pra quem ainda não sabe o que é essa página. */
+function SecaoManifesto({ aoTocar }: { aoTocar: (alvo: string) => void }) {
+  if (!MANIFESTO) return null;
+
+  return (
+    <Secao id="manifesto" escuro>
+      <Etiqueta escuro>Antes de tudo</Etiqueta>
+      <h2 className="mt-2 font-serif text-[2.1rem] font-semibold leading-[1.06] text-[#FAF7F0]">
+        Cada aluno do Amadeus tem...
+      </h2>
+
+      <div className="mt-6 flex flex-1 flex-col justify-center">
+        <video
+          src={MANIFESTO.src}
+          controls
+          playsInline
+          preload="metadata"
+          className="w-full rounded-[22px] border border-[#FAF7F0]/12 bg-[#0B1733]"
+        />
+        <span className="mt-3 text-center text-[0.78rem] text-[#FAF7F0]/50">
+          {MANIFESTO.duracao}
+        </span>
+      </div>
+
+      <Continuar alvo="segmento" escuro aoTocar={aoTocar} />
+    </Secao>
+  );
+}
 
 function SecaoSegmento({
   escolhido,
