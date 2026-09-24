@@ -45,13 +45,19 @@ function acharFoto(nome, lista) {
   return peca.foto.src;
 }
 
+/**
+ * O quadro é deitado e quase toda foto nossa é em pé, então o corte come a
+ * altura. Com o corte no meio, sobra chão e some rosto. O "foco" puxa a
+ * janela para cima da foto, que é onde estão os rostos. A porcentagem é
+ * object-position: 0% encosta no topo da imagem, 50% é o meio.
+ */
 const QUADROS = [
-  { nome: "Projeto Arboria", legenda: "As oito inteligências de Howard Gardner", foto: acharFoto("Projeto Arboria", PROGRAMAS) },
-  { nome: "Bilíngue", legenda: "Aulas inteiramente em inglês, com o Evolutive", foto: acharFoto("Bilíngue - Evolutive English at School", PROGRAMAS) },
-  { nome: "Socioemocional", legenda: "Aprender a lidar com o que se sente", foto: acharFoto("Educação Socioemocional", PROGRAMAS) },
-  { nome: "Sala Maker e Robótica", legenda: "Do 1º ao 9º ano, pondo a mão na massa", foto: acharFoto("Sala Maker e Robótica", PROGRAMAS) },
-  { nome: "Educação Financeira", legenda: "Criança que entende dinheiro cedo decide melhor depois", foto: acharFoto("Educação Financeira", PROGRAMAS) },
-  { nome: "Esportes", legenda: "Karatê, futsal, vôlei e ballet", foto: acharFoto("Ballet", ESPORTES) },
+  { nome: "Projeto Arboria", legenda: "As oito inteligências de Howard Gardner", foto: acharFoto("Projeto Arboria", PROGRAMAS), foco: "8%" },
+  { nome: "Bilíngue", legenda: "Aulas inteiramente em inglês, com o Evolutive", foto: acharFoto("Bilíngue - Evolutive English at School", PROGRAMAS), foco: "8%", perto: { escala: 1.35, origem: "62% 26%" } },
+  { nome: "Socioemocional", legenda: "Aprender a lidar com o que se sente", foto: acharFoto("Educação Socioemocional", PROGRAMAS), foco: "6%" },
+  { nome: "Sala Maker e Robótica", legenda: "Do 1º ao 9º ano, pondo a mão na massa", foto: acharFoto("Sala Maker e Robótica", PROGRAMAS), foco: "14%" },
+  { nome: "Educação Financeira", legenda: "Criança que entende dinheiro cedo decide melhor depois", foto: acharFoto("Educação Financeira", PROGRAMAS), foco: "30%" },
+  { nome: "Esportes", legenda: "Karatê, futsal, vôlei e ballet", foto: acharFoto("Ballet", ESPORTES), foco: "30%" },
 ];
 
 const URL_FOLDER = "eventos.escolaamadeus.com/folder";
@@ -241,7 +247,9 @@ function quadro(q) {
   const dados = embutir(path.join("public", q.foto), "webp");
   return `
         <div class="quadro">
-          <img src="${dados}" alt="${esc(q.nome)}">
+          <img src="${dados}" alt="${esc(q.nome)}" style="object-position:50% ${q.foco}${
+            q.perto ? `;transform:scale(${q.perto.escala});transform-origin:${q.perto.origem}` : ""
+          }">
           <span class="veu"></span>
           <span class="texto">
             <span class="nome">${esc(q.nome)}</span>
