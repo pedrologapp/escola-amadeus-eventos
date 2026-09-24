@@ -537,6 +537,7 @@ const ETAPAS_BASE = [
   "espacos",
   "somos",
   "valores",
+  "conversa",
 ];
 
 export const PERCURSO: string[] = MANIFESTO

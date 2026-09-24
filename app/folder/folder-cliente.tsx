@@ -142,6 +142,7 @@ export default function FolderCliente() {
       />
       <SecaoSomos aoTocar={irPara} />
       <SecaoValores escolhido={escolhido} aoEscolher={setSegmento} aoTocar={irPara} />
+      <SecaoConversa escolhido={escolhido} aoTocar={irPara} />
     </div>
   );
 }
@@ -427,13 +428,14 @@ function SecaoManifesto({ aoTocar }: { aoTocar: (alvo: string) => void }) {
           esticasse pra ocupar a altura toda, sobraria um vão preto enorme
           em cima e embaixo dele. */}
       <div className="flex flex-1 flex-col justify-center">
-        <Etiqueta escuro>Nosso manifesto</Etiqueta>
+        <Etiqueta escuro>Esse é o nosso folder digital</Etiqueta>
         <h2 className="mt-2 font-serif text-[2.1rem] font-semibold leading-[1.06] text-[#FAF7F0]">
-          Cada aluno do Amadeus tem...
+          Seja bem-vindo(a) ao Amadeus!
         </h2>
         <p className="mt-3 text-[0.95rem] leading-relaxed text-[#FAF7F0]/68">
-          Um minuto e meio para você sentir a escola antes de ver qualquer
-          número.
+          É aqui que você vê a escola inteira: como a gente ensina, o que seu
+          filho ou filha vive além da aula, os espaços, os esportes e os valores
+          de 2027. Comece pelo vídeo.
         </p>
 
         {/* poster evita o retângulo preto antes de o pai apertar play, e
@@ -1368,15 +1370,33 @@ function SecaoValores({
         ) : null}
       </div>
 
-      {/* O folder termina aqui, então em vez de "Continuar" o pai encontra
-          um caminho pra falar com a escola. */}
-      <div className="mt-8 rounded-[22px] border border-[#E8B44C]/35 bg-[#E8B44C]/[0.08] p-6 text-center">
-        <p className="text-[1.05rem] font-bold leading-snug text-[#FAF7F0]">
-          Chegou até aqui? Então vamos conversar.
-        </p>
-        <p className="mt-2 text-sm leading-relaxed text-[#FAF7F0]/68">
-          A gente tira suas dúvidas e guarda a vaga do seu filho.
-        </p>
+      {/* Aqui o pai já viu tudo e já viu o preço. O único caminho que
+          sobra é falar com gente de verdade, então só existe um botão. */}
+      <Continuar alvo="conversa" escuro aoTocar={aoTocar} rotulo="Vamos conversar?" />
+    </Secao>
+  );
+}
+
+/* Última tela. O folder inteiro serviu pra informar; aqui a informação
+   sai de cena e fica só o convite de se conhecerem pessoalmente. */
+function SecaoConversa({
+  escolhido,
+  aoTocar,
+}: {
+  escolhido: ReturnType<typeof acharSegmento> | null;
+  aoTocar: (alvo: string) => void;
+}) {
+  return (
+    <Secao
+      id="conversa"
+      escuro
+      fundo="radial-gradient(130% 80% at 50% 30%, #16224A 0%, #0A0D18 58%, #05060C 100%)"
+    >
+      <div className="flex flex-1 flex-col justify-center">
+        <h2 className="font-serif text-[2rem] font-semibold leading-[1.12] text-[#FAF7F0]">
+          É bom ter as informações digitalmente, mas nada pode se comparar a
+          conhecer <span className="text-[#E8B44C]">pessoalmente!</span>
+        </h2>
 
         <a
           href={`https://wa.me/${CONTATO.whatsapp}?text=${encodeURIComponent(
@@ -1384,26 +1404,26 @@ function SecaoValores({
           )}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-5 flex min-h-[3.5rem] items-center justify-center gap-2 rounded-full bg-[#FAF7F0] px-6 text-[0.95rem] font-bold text-[#0B1733]"
+          className="mt-8 flex min-h-[3.5rem] items-center justify-center gap-2 rounded-full bg-[#FAF7F0] px-6 text-[0.95rem] font-bold text-[#0B1733]"
         >
           <IconeWhatsapp />
-          Mandar mensagem no WhatsApp
+          Falar com a escola no WhatsApp
         </a>
-      </div>
 
-      <div className="mt-7 flex items-end gap-3 border-t border-[#FAF7F0]/14 pt-5">
-        <span className="flex-1 text-xs leading-relaxed text-[#FAF7F0]/55">
-          Centro Educacional Amadeus
-          <br />
-          São Gonçalo do Amarante, RN
-        </span>
-        <button
-          type="button"
-          onClick={() => aoTocar("capa")}
-          className="min-h-11 text-xs font-semibold text-[#FAF7F0]/65 underline"
-        >
-          voltar ao início
-        </button>
+        <div className="mt-8 flex items-end gap-3 border-t border-[#FAF7F0]/14 pt-5">
+          <span className="flex-1 text-xs leading-relaxed text-[#FAF7F0]/55">
+            Centro Educacional Amadeus
+            <br />
+            São Gonçalo do Amarante, RN
+          </span>
+          <button
+            type="button"
+            onClick={() => aoTocar("capa")}
+            className="min-h-11 text-xs font-semibold text-[#FAF7F0]/65 underline"
+          >
+            voltar ao início
+          </button>
+        </div>
       </div>
     </Secao>
   );
