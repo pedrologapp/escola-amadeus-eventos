@@ -7,6 +7,7 @@ import {
   PROGRAMAS,
   ESPORTES,
   ESPACOS,
+  COMUNICACAO,
   PRAZO_ANTECIPADA,
   DESCONTO_FIDELIDADE,
   DIA_FIDELIDADE,
@@ -19,8 +20,8 @@ import {
  * eventos.escolaamadeus.com/folder. É de propósito: o encarte e o site não
  * podem divergir de preço, e o QR leva de um para o outro.
  *
- * A frente é o convite e o poema da escola. O verso é o investimento e a
- * lista do que tem. Quem quiser mais que isso aponta a câmera.
+ * A frente é o compilado do que a escola tem, em fotos. O verso é o
+ * investimento. Quem quiser mais que isso aponta a câmera do celular.
  *
  * Uso: node scripts/gerar-flyer-fisico.mjs <pasta-de-saida>
  */
@@ -36,20 +37,21 @@ function embutir(relativo, tipo = "png") {
 const LOGO = embutir("public/folder/logo-horizontal.png");
 const QR = embutir("public/materiais/qr-folder.png");
 
-/* O poema é da escola: está no encarte do ano passado e dá nome ao vídeo do
-   manifesto ("Cada aluno do Amadeus tem..."). */
-const POEMA = [
-  ["Mil maneiras de ", "sorrir", ","],
-  ["Mil formas de ", "perguntar", " “por quê?”,"],
-  ["Mil jeitos de ", "descobrir", " o mundo,"],
-  ["Mil ritmos para ", "crescer", "."],
-];
+/* Os seis quadros da frente. A foto vem do mesmo arquivo que o folder
+   digital usa, então o papel e a tela mostram a mesma escola. */
+function acharFoto(nome, lista) {
+  const peca = lista.find((p) => p.nome === nome);
+  if (!peca || !peca.foto) throw new Error("sem foto: " + nome);
+  return peca.foto.src;
+}
 
-const POEMA2 = [
-  ["Temos mil ouvidos para ", "escutar", ","],
-  ["Mil olhos para ", "observar", ","],
-  ["Mil corações para ", "acolher", ","],
-  ["Mil modos de ", "cuidar", "."],
+const QUADROS = [
+  { nome: "Projeto Arboria", legenda: "As oito inteligências de Howard Gardner", foto: acharFoto("Projeto Arboria", PROGRAMAS) },
+  { nome: "Bilíngue", legenda: "Aulas inteiramente em inglês, com o Evolutive", foto: acharFoto("Bilíngue - Evolutive English at School", PROGRAMAS) },
+  { nome: "Socioemocional", legenda: "Aprender a lidar com o que se sente", foto: acharFoto("Educação Socioemocional", PROGRAMAS) },
+  { nome: "Sala Maker e Robótica", legenda: "Do 1º ao 9º ano, pondo a mão na massa", foto: acharFoto("Sala Maker e Robótica", PROGRAMAS) },
+  { nome: "Educação Financeira", legenda: "Criança que entende dinheiro cedo decide melhor depois", foto: acharFoto("Educação Financeira", PROGRAMAS) },
+  { nome: "Esportes", legenda: "Karatê, futsal, vôlei e ballet", foto: acharFoto("Ballet", ESPORTES) },
 ];
 
 const URL_FOLDER = "eventos.escolaamadeus.com/folder";
@@ -74,45 +76,70 @@ const CSS = `
   /* --------------------------------------------------------------- frente */
   .frente{
     background:
-      radial-gradient(95% 55% at 50% 0%, #1B2A58 0%, rgba(27,42,88,0) 62%),
-      radial-gradient(130% 90% at 50% 112%, #0E1B3E 0%, rgba(14,27,62,0) 55%),
+      radial-gradient(95% 50% at 50% 0%, #1B2A58 0%, rgba(27,42,88,0) 60%),
       #070B18;
-    color:#FAF7F0;padding:16mm 17mm 14mm;align-items:center;text-align:center;
+    color:#FAF7F0;padding:13mm 14mm 11mm;
   }
-  .frente .logo{width:104mm;height:auto}
-  .frente .chamada{
-    margin-top:13mm;font-size:9.4pt;font-weight:700;letter-spacing:.3em;
-    text-transform:uppercase;color:#E8B44C;
+  .topo-frente{display:flex;align-items:center;justify-content:space-between;gap:6mm}
+  .topo-frente .logo{width:76mm;height:auto}
+  .topo-frente .selo{
+    text-align:right;font-size:8.2pt;font-weight:800;letter-spacing:.2em;
+    text-transform:uppercase;color:#E8B44C;line-height:1.7;
   }
-  .frente h1{margin-top:5mm;font-size:30pt;line-height:1.06;color:#FAF7F0}
-  .frente h1 em{font-style:normal;color:#E8B44C;display:block}
+  .topo-frente .selo span{display:block;color:rgba(250,247,240,.5)}
 
-  .poema{
-    margin-top:11mm;font-size:13.5pt;font-weight:500;line-height:1.82;
-    color:rgba(250,247,240,.82);
+  .frente h1{margin-top:9mm;font-size:32pt;line-height:1.04;color:#FAF7F0}
+  .frente h1 em{font-style:normal;color:#E8B44C}
+  .frente .linha-fina{
+    margin-top:3.5mm;font-size:11pt;font-weight:500;line-height:1.45;
+    color:rgba(250,247,240,.62);max-width:150mm;
   }
-  .poema b{color:#E8B44C;font-weight:700}
-  .virada{
-    margin:9mm 0 8mm;font-family:Fraunces,Georgia,serif;font-weight:600;
-    font-size:21pt;color:#FAF7F0;letter-spacing:-.02em;
+
+  /* o compilado: seis quadros, foto com o nome por cima */
+  .quadros{margin-top:7mm;display:grid;grid-template-columns:1fr 1fr;gap:3.5mm}
+  .quadro{
+    position:relative;height:41mm;border-radius:5mm;overflow:hidden;
+    background:#0B1733;
   }
-  .fecho-poema{
-    margin-top:9mm;font-family:Fraunces,Georgia,serif;font-weight:600;
-    font-size:18pt;line-height:1.3;letter-spacing:-.02em;color:#FAF7F0;
+  .quadro img{width:100%;height:100%;object-fit:cover;display:block}
+  .quadro .veu{
+    position:absolute;inset:0;
+    background:linear-gradient(180deg, rgba(7,11,24,.15) 0%, rgba(7,11,24,.55) 48%, rgba(7,11,24,.92) 100%);
   }
-  .fecho-poema span{color:#E8B44C}
+  .quadro .texto{position:absolute;left:6mm;right:6mm;bottom:5mm}
+  .quadro .nome{display:block;font-size:13pt;font-weight:800;line-height:1.1;color:#FAF7F0}
+  .quadro .legenda{display:block;margin-top:1.6mm;font-size:8.6pt;font-weight:500;line-height:1.3;color:rgba(250,247,240,.72)}
+
+  /* a novidade do ano tem faixa própria */
+  .faixa-geekie{
+    margin-top:3.5mm;display:flex;align-items:center;gap:6mm;
+    background:rgba(232,180,76,.12);border:.4mm solid rgba(232,180,76,.4);
+    border-radius:5mm;padding:5.5mm 7mm;
+  }
+  .faixa-geekie .rot{
+    font-size:7.6pt;font-weight:800;letter-spacing:.2em;text-transform:uppercase;
+    color:#E8B44C;white-space:nowrap;
+  }
+  .faixa-geekie .txt{flex:1;font-size:10.5pt;font-weight:600;line-height:1.35;color:rgba(250,247,240,.9)}
+  .faixa-geekie .txt b{color:#E8B44C}
+
+  .lista-espacos{
+    margin-top:5mm;font-size:9.6pt;font-weight:600;line-height:1.7;
+    color:rgba(250,247,240,.62);
+  }
+  .lista-espacos b{color:#E8B44C;font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:8pt}
 
   /* o QR é o motivo de o papel existir: ele abre o folder inteiro */
   .qr-bloco{
-    margin-top:auto;display:flex;align-items:center;gap:8mm;
+    margin-top:auto;display:flex;align-items:center;gap:7mm;
     background:rgba(250,247,240,.06);border:.4mm solid rgba(232,180,76,.35);
-    border-radius:8mm;padding:7mm 8mm;text-align:left;width:100%;
+    border-radius:6mm;padding:6mm 7mm;width:100%;
   }
-  .qr-bloco img{width:32mm;height:32mm;border-radius:3mm;background:#fff;padding:2mm;flex:0 0 auto}
+  .qr-bloco img{width:28mm;height:28mm;border-radius:2.5mm;background:#fff;padding:1.8mm;flex:0 0 auto}
   .qr-bloco > span{flex:1}
-  .qr-bloco .titulo{display:block;font-size:15pt;font-weight:800;line-height:1.2;color:#FAF7F0}
-  .qr-bloco .texto{display:block;margin-top:2.5mm;font-size:10.5pt;line-height:1.45;color:rgba(250,247,240,.68)}
-  .qr-bloco .url{display:block;margin-top:3mm;font-size:10pt;font-weight:700;color:#E8B44C}
+  .qr-bloco .titulo{display:block;font-size:13.5pt;font-weight:800;line-height:1.2;color:#FAF7F0}
+  .qr-bloco .texto{display:block;margin-top:2mm;font-size:9.8pt;line-height:1.42;color:rgba(250,247,240,.68)}
+  .qr-bloco .url{display:block;margin-top:2.5mm;font-size:9.6pt;font-weight:700;color:#E8B44C}
 
   /* ---------------------------------------------------------------- verso */
   .verso{background:#FAF7F0;color:#17223D;padding:13mm 15mm 11mm}
@@ -180,11 +207,6 @@ const CSS = `
 
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-const verso = (linhas) =>
-  linhas
-    .map(([antes, forte, depois]) => `${esc(antes)}<b>${esc(forte)}</b>${esc(depois)}`)
-    .join("<br>");
-
 function linhaValores(seg) {
   const v = VALORES[seg.id];
   if (!v) return "";
@@ -214,6 +236,20 @@ function itemMaterial(seg) {
 
 /* Os quatro canais da agenda entram como um chip só: listados um a um eles
    ocupam uma linha inteira do papel para dizer a mesma coisa. */
+/* A foto do quadro entra embutida: o HTML precisa abrir sozinho na gráfica. */
+function quadro(q) {
+  const dados = embutir(path.join("public", q.foto), "webp");
+  return `
+        <div class="quadro">
+          <img src="${dados}" alt="${esc(q.nome)}">
+          <span class="veu"></span>
+          <span class="texto">
+            <span class="nome">${esc(q.nome)}</span>
+            <span class="legenda">${esc(q.legenda)}</span>
+          </span>
+        </div>`;
+}
+
 const chips = [
   ...PROGRAMAS.map((p) => ({ nome: p.nome, ouro: true })),
   ...ESPORTES.map((p) => ({ nome: p.nome })),
@@ -232,26 +268,33 @@ const html = `<!doctype html>
 <body>
 
   <section class="folha frente">
-    <img class="logo" src="${LOGO}" alt="Centro Educacional Amadeus">
+    <div class="topo-frente">
+      <img class="logo" src="${LOGO}" alt="Centro Educacional Amadeus">
+      <span class="selo">Matrículas 2027<span>30 anos</span></span>
+    </div>
 
-    <p class="chamada">Matrículas 2027 &middot; 30 anos</p>
-    <h1 class="serifa">Cada aluno do Amadeus<em>tem...</em></h1>
-
-    <p class="poema">${verso(POEMA)}</p>
-    <p class="virada">E nós?</p>
-    <p class="poema">${verso(POEMA2)}</p>
-
-    <p class="fecho-poema">
-      Porque aqui, cada aluno importa.<br>
-      Não um pouco. Não às vezes.<br>
-      <span>Sempre. Completamente. Para sempre.</span>
+    <h1 class="serifa">Isso é o <em>Amadeus.</em></h1>
+    <p class="linha-fina">
+      Não é atividade extra nem pacote à parte. É o que seu filho ou sua filha
+      vive na semana comum do Amadeus, já na mensalidade.
     </p>
+
+    <div class="quadros">
+      ${QUADROS.map(quadro).join("")}
+    </div>
+
+    <div class="faixa-geekie">
+      <span class="rot">Novidade 2027</span>
+      <span class="txt">O material didático passa a ser o <b>Geekie</b>. Continua sendo livro, com uma parte digital junto, e toda semana a família recebe um retorno de como a criança foi.</span>
+    </div>
+
+    <p class="lista-espacos"><b>Nossos espaços</b><br>${ESPACOS.map((e) => esc(e.nome)).join(" &middot; ")}</p>
 
     <div class="qr-bloco">
       <img src="${QR}" alt="QR do folder digital">
       <span>
         <span class="titulo">A escola inteira, no seu celular.</span>
-        <span class="texto">Aponte a câmera para o código e veja os programas, os esportes, os espaços e os valores de cada etapa.</span>
+        <span class="texto">Aponte a câmera para o código: cada programa com foto e explicação, os vídeos das etapas e os valores por segmento.</span>
         <span class="url">${esc(URL_FOLDER)}</span>
       </span>
     </div>
