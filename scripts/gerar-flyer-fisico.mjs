@@ -34,7 +34,9 @@ function embutir(relativo, tipo = "png") {
   return `data:image/${tipo};base64,${dados}`;
 }
 
-const LOGO = embutir("public/folder/logo-horizontal.png");
+/* A marca dos 30 anos é a versão para fundo claro. O logo horizontal tem o
+   "AMADEUS" em creme e sumiria no bege. */
+const LOGO = embutir("public/folder/marca-30-anos.png");
 const QR = embutir("public/materiais/qr-folder.png");
 
 /* Os seis quadros da frente. A foto vem do mesmo arquivo que o folder
@@ -79,73 +81,70 @@ const CSS = `
 
   .serifa{font-family:Fraunces,Georgia,serif;font-optical-sizing:auto;font-weight:600;letter-spacing:-.02em}
 
-  /* --------------------------------------------------------------- frente */
-  .frente{
-    background:
-      radial-gradient(95% 50% at 50% 0%, #1B2A58 0%, rgba(27,42,88,0) 60%),
-      #070B18;
-    color:#FAF7F0;padding:13mm 14mm 11mm;
-  }
+  /* --------------------------------------------------------------- frente
+     Bege dos dois lados: o papel inteiro na mesma cor, e os quadros de foto
+     é que fazem o contraste. */
+  .frente{background:#FAF7F0;color:#17223D;padding:13mm 14mm 11mm}
   .topo-frente{display:flex;align-items:center;justify-content:space-between;gap:6mm}
-  .topo-frente .logo{width:76mm;height:auto}
+  /* aqui vai a marca dos 30 anos, que é a versão feita para fundo claro */
+  .topo-frente .logo{width:26mm;height:auto}
   .topo-frente .selo{
     text-align:right;font-size:8.2pt;font-weight:800;letter-spacing:.2em;
-    text-transform:uppercase;color:#E8B44C;line-height:1.7;
+    text-transform:uppercase;color:#B9862F;line-height:1.7;
   }
-  .topo-frente .selo span{display:block;color:rgba(250,247,240,.5)}
+  .topo-frente .selo span{display:block;color:#9AA3B4}
 
-  .frente h1{margin-top:9mm;font-size:32pt;line-height:1.04;color:#FAF7F0}
-  .frente h1 em{font-style:normal;color:#E8B44C}
+  .frente h1{margin-top:6mm;font-size:29pt;line-height:1.04;color:#17223D}
+  .frente h1 em{font-style:normal;color:#B9862F}
   .frente .linha-fina{
     margin-top:3.5mm;font-size:11pt;font-weight:500;line-height:1.45;
-    color:rgba(250,247,240,.62);max-width:150mm;
+    color:#5A657F;max-width:150mm;
   }
 
   /* o compilado: seis quadros, foto com o nome por cima */
-  .quadros{margin-top:7mm;display:grid;grid-template-columns:1fr 1fr;gap:3.5mm}
+  .quadros{margin-top:6mm;display:grid;grid-template-columns:1fr 1fr;gap:3.5mm}
   .quadro{
-    position:relative;height:41mm;border-radius:5mm;overflow:hidden;
+    position:relative;height:38.5mm;border-radius:5mm;overflow:hidden;
     background:#0B1733;
   }
   .quadro img{width:100%;height:100%;object-fit:cover;display:block}
   .quadro .veu{
     position:absolute;inset:0;
-    background:linear-gradient(180deg, rgba(7,11,24,.15) 0%, rgba(7,11,24,.55) 48%, rgba(7,11,24,.92) 100%);
+    background:linear-gradient(180deg, rgba(7,11,24,.12) 0%, rgba(7,11,24,.52) 48%, rgba(7,11,24,.9) 100%);
   }
   .quadro .texto{position:absolute;left:6mm;right:6mm;bottom:5mm}
   .quadro .nome{display:block;font-size:13pt;font-weight:800;line-height:1.1;color:#FAF7F0}
-  .quadro .legenda{display:block;margin-top:1.6mm;font-size:8.6pt;font-weight:500;line-height:1.3;color:rgba(250,247,240,.72)}
+  .quadro .legenda{display:block;margin-top:1.6mm;font-size:8.6pt;font-weight:500;line-height:1.3;color:rgba(250,247,240,.78)}
 
   /* a novidade do ano tem faixa própria */
   .faixa-geekie{
     margin-top:3.5mm;display:flex;align-items:center;gap:6mm;
-    background:rgba(232,180,76,.12);border:.4mm solid rgba(232,180,76,.4);
+    background:rgba(232,180,76,.16);border:.4mm solid rgba(185,134,47,.42);
     border-radius:5mm;padding:5.5mm 7mm;
   }
   .faixa-geekie .rot{
     font-size:7.6pt;font-weight:800;letter-spacing:.2em;text-transform:uppercase;
-    color:#E8B44C;white-space:nowrap;
+    color:#B9862F;white-space:nowrap;
   }
-  .faixa-geekie .txt{flex:1;font-size:10.5pt;font-weight:600;line-height:1.35;color:rgba(250,247,240,.9)}
-  .faixa-geekie .txt b{color:#E8B44C}
+  .faixa-geekie .txt{flex:1;font-size:10.5pt;font-weight:600;line-height:1.35;color:#17223D}
+  .faixa-geekie .txt b{color:#8A6420}
 
   .lista-espacos{
-    margin-top:5mm;font-size:9.6pt;font-weight:600;line-height:1.7;
-    color:rgba(250,247,240,.62);
+    margin-top:4mm;font-size:9.6pt;font-weight:600;line-height:1.7;color:#5A657F;
   }
-  .lista-espacos b{color:#E8B44C;font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:8pt}
+  .lista-espacos b{color:#B9862F;font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:8pt}
 
-  /* o QR é o motivo de o papel existir: ele abre o folder inteiro */
+  /* Sem caixa: o QR já tem o fundo bege da página, então ele e o texto ficam
+     soltos, apoiados só num fio. */
   .qr-bloco{
-    margin-top:auto;display:flex;align-items:center;gap:7mm;
-    background:rgba(250,247,240,.06);border:.4mm solid rgba(232,180,76,.35);
-    border-radius:6mm;padding:6mm 7mm;width:100%;
+    margin-top:auto;display:flex;align-items:center;gap:7mm;width:100%;
+    padding-top:6mm;border-top:.4mm solid rgba(23,34,61,.16);
   }
-  .qr-bloco img{width:28mm;height:28mm;border-radius:2.5mm;background:#fff;padding:1.8mm;flex:0 0 auto}
+  .qr-bloco img{width:30mm;height:30mm;flex:0 0 auto}
   .qr-bloco > span{flex:1}
-  .qr-bloco .titulo{display:block;font-size:13.5pt;font-weight:800;line-height:1.2;color:#FAF7F0}
-  .qr-bloco .texto{display:block;margin-top:2mm;font-size:9.8pt;line-height:1.42;color:rgba(250,247,240,.68)}
-  .qr-bloco .url{display:block;margin-top:2.5mm;font-size:9.6pt;font-weight:700;color:#E8B44C}
+  .qr-bloco .titulo{display:block;font-size:13.5pt;font-weight:800;line-height:1.2;color:#17223D}
+  .qr-bloco .texto{display:block;margin-top:2mm;font-size:9.8pt;line-height:1.42;color:#5A657F}
+  .qr-bloco .url{display:block;margin-top:2.5mm;font-size:9.6pt;font-weight:700;color:#B9862F}
 
   /* ---------------------------------------------------------------- verso */
   .verso{background:#FAF7F0;color:#17223D;padding:13mm 15mm 11mm}
@@ -278,7 +277,7 @@ const html = `<!doctype html>
   <section class="folha frente">
     <div class="topo-frente">
       <img class="logo" src="${LOGO}" alt="Centro Educacional Amadeus">
-      <span class="selo">Matrículas 2027<span>30 anos</span></span>
+      <span class="selo">Matrículas<span>2027</span></span>
     </div>
 
     <h1 class="serifa">Isso é o <em>Amadeus.</em></h1>
