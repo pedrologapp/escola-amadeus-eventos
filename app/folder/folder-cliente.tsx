@@ -1281,7 +1281,7 @@ function SecaoValores({
                 O valor sem condição nenhuma fica na nota do rodapé. */}
             <div className="rounded-[22px] bg-[#FAF7F0] p-6">
               <span className="block text-xs uppercase tracking-[0.1em] text-[#5A657F]">
-                Mensalidade a partir de
+                Mensalidade de
               </span>
               <span className="mt-1.5 flex items-baseline gap-2">
                 <span className="text-[0.95rem] text-[#5A657F]">12x de</span>
