@@ -200,6 +200,12 @@ export type CartaoLivro =
       titulo: string;
       destaque: string;
       chips: string[];
+    }
+  | {
+      tipo: "segmentos";
+      etiqueta: string;
+      titulo: string;
+      linhas: { etapa: string; texto: string }[];
     };
 
 export const CARTOES_LIVRO: CartaoLivro[] = [
@@ -210,15 +216,29 @@ export const CARTOES_LIVRO: CartaoLivro[] = [
     digital: "Uma plataforma que faz o que o papel sozinho não consegue.",
   },
   {
+    tipo: "segmentos",
+    etiqueta: "Não é igual para todo mundo",
+    titulo: "Muda conforme a idade",
+    linhas: [
+      { etapa: "Infantil", texto: "Tudo impresso. Nessa idade não tem tela." },
+      { etapa: "Fund. 1", texto: "O livro é a base. Quem usa a plataforma é o professor." },
+      { etapa: "Fund. 2", texto: "Ele entra sozinho e tem plano de estudos toda semana." },
+    ],
+  },
+  {
     tipo: "relatorio",
+    /* O canal é e-mail, toda sexta. Conferido na central de ajuda da Geekie
+       em 24/09/2026: o relatório chama Família Conectada e não vai por
+       WhatsApp. Ver docs/EventoRematricula/Geekie_Pesquisa_Densa.md */
     etiqueta: "O que muda para você",
-    titulo: "Toda semana, no seu WhatsApp",
+    titulo: "Toda sexta, no seu e-mail",
     materias: [
       { nome: "Matemática", valor: 88 },
       { nome: "Ciências", valor: 81 },
       { nome: "Português", valor: 54, alerta: true },
     ],
-    frase: "Se português cair em março, você sabe em março. Não em maio.",
+    frase:
+      "É o Relatório Família Conectada. Chega sozinho, e dá pra cadastrar até quatro responsáveis.",
   },
   {
     tipo: "numero",

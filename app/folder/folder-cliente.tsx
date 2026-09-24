@@ -706,6 +706,26 @@ function CartaoDoLivro({ cartao, escuro }: { cartao: CartaoLivro; escuro: boolea
         </div>
       ) : null}
 
+      {cartao.tipo === "segmentos" ? (
+        <div className="mt-3 flex flex-1 flex-col">
+          <span className="text-[1.15rem] font-bold leading-snug">{cartao.titulo}</span>
+          <div className="mt-4 flex flex-col gap-3">
+            {cartao.linhas.map((linha) => (
+              <span key={linha.etapa} className="block">
+                <span
+                  className={`block text-[0.68rem] font-bold uppercase tracking-[0.14em] ${etiqueta}`}
+                >
+                  {linha.etapa}
+                </span>
+                <span className={`mt-0.5 block text-[0.85rem] leading-relaxed ${apoio}`}>
+                  {linha.texto}
+                </span>
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       {cartao.tipo === "chips" ? (
         <div className="mt-3 flex flex-1 flex-col">
           <span className="text-[1.15rem] font-bold leading-snug">{cartao.titulo}</span>

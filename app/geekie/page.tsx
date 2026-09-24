@@ -204,18 +204,108 @@ export default function GeekiePage() {
           <h2 className="mb-3 text-[clamp(1.5rem,6.2vw,1.95rem)] font-extrabold leading-tight tracking-[-0.03em] text-balance">
             Você não vai mais ser o último a saber
           </h2>
+          {/* O canal é e-mail, toda sexta. O nome do relatório é da Geekie e
+              não deve ser trocado por outro: é assim que ele chega escrito. */}
           <Lista
             itens={[
               <>
-                Toda semana chega um resumo: <b>como ele foi em cada matéria</b> e
-                onde a barra baixou.
+                <b>Toda sexta-feira</b> chega o Relatório Família Conectada: como
+                ele foi em cada matéria e o que ficou sem entregar.
               </>,
               <>
-                Vem pelo WhatsApp. <b>Não tem aplicativo para baixar</b>, nem senha
-                para decorar.
+                Chega <b>no seu e-mail</b>, sozinho. Você só cadastra o e-mail uma
+                vez, e pode cadastrar até <b>quatro responsáveis</b>.
               </>,
               <>
                 Se português cair em março, <b>você sabe em março</b>. Não em maio.
+              </>,
+            ]}
+          />
+        </div>
+      </section>
+
+      {/* ---------- os segmentos ----------
+          Fundo azul, entre dois blocos quase pretos, pra faixa não se fundir
+          com a de cima nem com a de baixo. */}
+      <section className="bg-[#0B1733] py-11">
+        <div className="mx-auto max-w-[470px] px-6">
+          <p className="mb-3 text-[0.64rem] font-extrabold uppercase tracking-[0.22em] text-[#E8B44C]">
+            Não é igual para todo mundo
+          </p>
+          <h2 className="text-[clamp(1.5rem,6.2vw,1.95rem)] font-extrabold leading-tight tracking-[-0.03em] text-balance">
+            O Geekie muda conforme a idade
+          </h2>
+          <p className="mt-3 text-[0.95rem] leading-relaxed text-[#FAF7F0]/70">
+            Arraste para o lado e veja como é na etapa do seu filho.
+          </p>
+        </div>
+
+        <div className="mt-6 flex snap-x snap-mandatory gap-3 overflow-x-auto px-6 pb-3 [scrollbar-width:none] lg:justify-center [&::-webkit-scrollbar]:hidden">
+          <CartaoSegmento
+            faixa="2 a 5 anos"
+            nome="Educação Infantil"
+            colecao="Coleção Rios"
+            itens={[
+              <>
+                Material <b>todo impresso</b>. Nessa idade a criança não usa tela.
+              </>,
+              <>
+                A cada mês, uma investigação nova. <b>O que dá pra descobrir dentro
+                de uma cozinha?</b>
+              </>,
+              <>
+                O <b>Diário de Bordo</b> é dela. No fim do ano vai pra casa com o
+                ano inteiro registrado à mão.
+              </>,
+              <>
+                Você acompanha pelo <b>portfólio</b>: fotos e registros do que ela
+                fez, não nota.
+              </>,
+            ]}
+          />
+
+          <CartaoSegmento
+            faixa="1º ao 5º ano"
+            nome="Fundamental 1"
+            colecao="O livro continua sendo a base"
+            itens={[
+              <>
+                O <b>impresso é o centro do estudo</b>. O digital entra para
+                enriquecer, não para substituir.
+              </>,
+              <>
+                Quem opera a plataforma em aula é <b>o professor</b>.
+              </>,
+              <>
+                Do 1º ao 3º vem material de recorte, <b>cartas para jogos,
+                quebra-cabeças e fichas de leitura</b>.
+              </>,
+              <>
+                O relatório de sexta-feira <b>já vale aqui</b>.
+              </>,
+            ]}
+          />
+
+          <CartaoSegmento
+            faixa="6º ao 9º ano"
+            nome="Fundamental 2"
+            colecao="Aqui ele assume o volante"
+            itens={[
+              <>
+                Um livro por matéria, com <b>STEAM e Educação Digital</b>{" "}
+                estreando em 2027.
+              </>,
+              <>
+                No 9º ano, Ciências vira <b>três livros</b>: Física, Química e
+                Biologia.
+              </>,
+              <>
+                Toda semana a plataforma monta um <b>plano de estudos</b> a partir
+                dos erros dele.
+              </>,
+              <>
+                Travou numa questão? Ele aciona o <b>Enroscou</b> e a resolução
+                aparece.
               </>,
             ]}
           />
@@ -372,5 +462,43 @@ function Bloco({
         {texto}
       </span>
     </div>
+  );
+}
+
+/** Um cartão do carrossel dos segmentos. Creme sobre o azul, pra saltar. */
+function CartaoSegmento({
+  faixa,
+  nome,
+  colecao,
+  itens,
+}: {
+  faixa: string;
+  nome: string;
+  colecao: string;
+  itens: React.ReactNode[];
+}) {
+  return (
+    <article className="flex w-[17.5rem] shrink-0 snap-start flex-col rounded-[22px] bg-[#FAF7F0] p-5 text-[#17223D]">
+      <span className="text-[0.62rem] font-extrabold uppercase tracking-[0.18em] text-[#B9862F]">
+        {faixa}
+      </span>
+      <span className="mt-1 text-[1.35rem] font-extrabold leading-tight tracking-[-0.02em]">
+        {nome}
+      </span>
+      <span className="mt-1 text-[0.86rem] font-bold leading-snug text-[#B9862F]">
+        {colecao}
+      </span>
+
+      <ul className="mt-4 flex flex-col gap-3">
+        {itens.map((item, i) => (
+          <li key={i} className="flex gap-2.5">
+            <span className="mt-[0.45rem] size-[5px] shrink-0 rounded-full bg-[#B9862F]" />
+            <span className="flex-1 text-[0.85rem] leading-relaxed text-[#5A657F]">
+              {item}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </article>
   );
 }
