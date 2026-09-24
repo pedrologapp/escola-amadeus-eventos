@@ -384,10 +384,12 @@ function Continuar({
   alvo,
   escuro,
   aoTocar,
+  rotulo = "Continuar",
 }: {
   alvo: string;
   escuro?: boolean;
   aoTocar: (alvo: string) => void;
+  rotulo?: string;
 }) {
   return (
     <button
@@ -397,7 +399,7 @@ function Continuar({
         escuro ? "border-[#FAF7F0]/22 text-[#FAF7F0]" : "border-[#17223D]/22 text-[#17223D]"
       }`}
     >
-      Continuar
+      {rotulo}
       <SetaBaixo cor={escuro ? "#E8B44C" : "#17223D"} />
     </button>
   );
@@ -413,12 +415,15 @@ function SecaoManifesto({ aoTocar }: { aoTocar: (alvo: string) => void }) {
 
   return (
     <Secao id="manifesto" escuro>
-      <Etiqueta escuro>Antes de tudo</Etiqueta>
-      <h2 className="mt-2 font-serif text-[2.1rem] font-semibold leading-[1.06] text-[#FAF7F0]">
-        Cada aluno do Amadeus tem...
-      </h2>
+      {/* Título, vídeo e botão andam juntos no meio da tela. Se o vídeo
+          esticasse pra ocupar a altura toda, sobraria um vão preto enorme
+          em cima e embaixo dele. */}
+      <div className="flex flex-1 flex-col justify-center">
+        <Etiqueta escuro>Antes de tudo</Etiqueta>
+        <h2 className="mt-2 font-serif text-[2.1rem] font-semibold leading-[1.06] text-[#FAF7F0]">
+          Cada aluno do Amadeus tem...
+        </h2>
 
-      <div className="mt-6 flex flex-1 flex-col justify-center">
         {/* poster evita o retângulo preto antes de o pai apertar play, e
             preload="none" não baixa os 13 MB de quem só vai passar direto. */}
         <video
@@ -427,14 +432,11 @@ function SecaoManifesto({ aoTocar }: { aoTocar: (alvo: string) => void }) {
           controls
           playsInline
           preload="none"
-          className="aspect-video w-full rounded-[22px] border border-[#FAF7F0]/12 bg-[#0B1733] object-cover"
+          className="mt-5 aspect-video w-full rounded-[22px] border border-[#FAF7F0]/12 bg-[#0B1733] object-cover"
         />
-        <span className="mt-3 text-center text-[0.78rem] text-[#FAF7F0]/50">
-          {MANIFESTO.duracao}
-        </span>
-      </div>
 
-      <Continuar alvo="segmento" escuro aoTocar={aoTocar} />
+        <Continuar alvo="segmento" escuro aoTocar={aoTocar} rotulo="Comece por aqui" />
+      </div>
     </Secao>
   );
 }
@@ -1192,36 +1194,39 @@ function SecaoValores({
   aoEscolher: (seg: SegmentoId) => void;
   aoTocar: (alvo: string, seg?: SegmentoId) => void;
 }) {
-  const valores = escolhido ? VALORES[escolhido.id] : null;
+  /* Quem não escolheu etapa nenhuma cai no Infantil em vez de ver uma tela
+     vazia. Os botões logo abaixo deixam claro que dá pra trocar. */
+  const mostrado = escolhido ?? acharSegmento("infantil");
+  const valores = VALORES[mostrado.id];
 
   return (
     <Secao id="valores" escuro>
       <Etiqueta escuro>Investimento 2027</Etiqueta>
-      <Titulo escuro>{escolhido ? escolhido.nome : "Os valores de 2027"}</Titulo>
+      <Titulo escuro>{mostrado.nome}</Titulo>
 
-      {/* Aqui o pai pode olhar as outras etapas sem voltar lá pra cima. Quem
-          tem dois filhos precisa comparar. */}
-      {escolhido ? (
-        <div className="mt-4 flex gap-2">
-          {SEGMENTOS.map((s) => {
-            const ativo = s.id === escolhido.id;
-            return (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => aoEscolher(s.id)}
-                className={`min-h-10 flex-1 rounded-full px-2 text-[0.78rem] font-bold transition-colors ${
-                  ativo
-                    ? "bg-[#FAF7F0] text-[#0B1733]"
-                    : "border border-[#FAF7F0]/20 text-[#FAF7F0]/70"
-                }`}
-              >
-                {s.curto}
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
+      {/* Aqui o pai olha as outras etapas sem voltar lá pra cima. Quem tem
+          dois filhos precisa comparar. */}
+      <div className="mt-4 flex items-center gap-2">
+        <SetaLado cor="#E8B44C" />
+        {SEGMENTOS.map((s) => {
+          const ativo = s.id === mostrado.id;
+          return (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => aoEscolher(s.id)}
+              className={`min-h-10 flex-1 rounded-full px-2 text-[0.78rem] font-bold transition-colors ${
+                ativo
+                  ? "bg-[#FAF7F0] text-[#0B1733]"
+                  : "border border-[#FAF7F0]/20 text-[#FAF7F0]/70"
+              }`}
+            >
+              {s.curto}
+            </button>
+          );
+        })}
+        <SetaLado cor="#E8B44C" direita />
+      </div>
 
       <div className="mt-7 flex flex-1 flex-col gap-4">
         {valores ? (
@@ -1338,20 +1343,7 @@ function SecaoValores({
               </span>
             </div>
           </>
-        ) : (
-          <div className="flex flex-1 flex-col justify-center">
-            <p className="text-[0.95rem] leading-relaxed text-[#FAF7F0]/68">
-              Escolha a etapa do seu filho para ver a mensalidade e o material dele.
-            </p>
-            <button
-              type="button"
-              onClick={() => aoTocar("segmento")}
-              className="mt-5 self-start text-sm font-semibold text-[#E8B44C] underline"
-            >
-              Escolher a etapa
-            </button>
-          </div>
-        )}
+        ) : null}
       </div>
 
       {/* O folder termina aqui, então em vez de "Continuar" o pai encontra
