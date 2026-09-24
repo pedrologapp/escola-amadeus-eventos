@@ -129,9 +129,9 @@ export const PROGRAMAS: Peca[] = [
     foto: { src: "/folder/programas/financeira.webp", w: 900, h: 633 },
   },
   {
-    nome: "Aulas em inglês",
+    nome: "Bilíngue - Evolutive English at School",
     resumo:
-      "Pelo programa Bilíngue, algumas aulas acontecem inteiramente em inglês. A criança não estuda a língua, ela usa a língua, que é como se aprende de verdade.",
+      "Algumas aulas acontecem inteiramente em inglês, com o programa Evolutive. A criança não estuda a língua, ela usa a língua, que é como se aprende de verdade.",
     nota: "Infantil, Fundamental 1 e 2",
     foto: { src: "/folder/programas/bilingue.webp", w: 900, h: 583 },
     largo: true,

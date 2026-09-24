@@ -451,7 +451,7 @@ function SecaoManifesto({ aoTocar }: { aoTocar: (alvo: string) => void }) {
           alvo="segmento"
           escuro
           aoTocar={aoTocar}
-          rotulo="Agora, a página do seu filho"
+          rotulo="Agora podemos começar!"
         />
       </div>
     </Secao>
@@ -471,7 +471,7 @@ function SecaoSegmento({
     <Secao id="segmento" escuro>
       <div className="flex flex-1 flex-col justify-center">
         <Etiqueta escuro>Antes de começar</Etiqueta>
-        <Titulo escuro>Qual a idade do seu filho?</Titulo>
+        <Titulo escuro>Qual a idade do seu filho ou filha?</Titulo>
         <p className="mt-3 text-[0.95rem] leading-relaxed text-[#FAF7F0]/68">
           Daqui pra frente o folder mostra só o que é dele. Sem tabela, sem procurar a sua
           linha.
@@ -926,6 +926,10 @@ function SecaoMosaico({
   const visiveis = segmento
     ? pecas.filter((p) => !p.etapas || p.etapas.includes(segmento))
     : pecas;
+  // Sem esse aviso, quem escolheu Infantil acha que a robótica e a educação
+  // financeira sumiram por erro, quando elas só não existem nessa etapa.
+  const escondeu = segmento ? visiveis.length < pecas.length : false;
+  const nomeEtapa = segmento ? acharSegmento(segmento).curto : null;
   return (
     <Secao id={id} escuro={escuro}>
       <Etiqueta escuro={escuro}>{etiqueta}</Etiqueta>
@@ -937,6 +941,15 @@ function SecaoMosaico({
           }`}
         >
           {apoio}
+        </p>
+      ) : null}
+      {escondeu ? (
+        <p
+          className={`mt-3 text-[0.8rem] leading-relaxed ${
+            escuro ? "text-[#E8B44C]" : "text-[#7A5310]"
+          }`}
+        >
+          Mostrando o que existe no {nomeEtapa}. As outras etapas têm mais.
         </p>
       ) : null}
       <Mosaico pecas={visiveis} escuro={escuro} alvoContinuar={alvoContinuar} aoTocar={aoTocar} />
@@ -1298,23 +1311,6 @@ function SecaoValores({
                 Sem nenhuma das duas condições, a mensalidade 2027 é{" "}
                 {valores.cheia.mensal}. A Mensalidade Fidelidade vale sempre, em
                 qualquer condição.
-              </span>
-            </div>
-
-            {/* O único lugar da peça onde um total aparece, e de propósito:
-                aqui o número grande é o que ele deixa de pagar. */}
-            <div className="rounded-[22px] border border-[#E8B44C]/35 bg-[#E8B44C]/[0.08] p-6">
-              <span className="block text-[0.72rem] font-bold uppercase tracking-[0.14em] text-[#E8B44C]">
-                Matriculando até {PRAZO_ANTECIPADA}
-              </span>
-              <span className="mt-2 block text-[0.95rem] text-[#FAF7F0]/72">
-                Você economiza
-              </span>
-              <span className="mt-0.5 block font-serif text-[2.4rem] font-semibold leading-none text-[#E8B44C]">
-                {valores.economia.total}
-              </span>
-              <span className="mt-1.5 block text-[0.8rem] leading-relaxed text-[#FAF7F0]/60">
-                no ano. {valores.economia.detalhe}
               </span>
             </div>
 

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "O que nós somos! · Centro Educacional Amadeus",
     description:
-      "Trinta anos de escola em um folder digital. Escolha a etapa do seu filho e veja só o que é dele.",
+      "Trinta anos de escola em um folder digital. O Amadeus por dentro, etapa por etapa.",
     type: "website",
   },
 };
