@@ -36,7 +36,7 @@ import {
 const RAIO_DENTRO = 0.215;
 const RAIO_FORA = 0.41;
 const TAM_DENTRO = 0.135;
-const TAM_FORA = 0.175;
+const TAM_FORA = 0.165;
 const MARCA = 0.19;
 
 function angulos(quantidade: number, deslocamento: number): number[] {
@@ -124,7 +124,7 @@ export default function FolderCliente() {
         id="esportes"
         escuro
         etiqueta="Esportes"
-        titulo="Karatê, futsal e vôlei."
+        titulo="Karatê, futsal, vôlei e ballet."
         apoio={FRASE_ESPORTES}
         pecas={ESPORTES}
         alvoContinuar="espacos"

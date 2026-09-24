@@ -161,6 +161,13 @@ export const ESPORTES: Peca[] = [
       "Ninguém faz ponto sozinho. É o esporte que mais cobra confiança no colega, porque a bola sempre passa por outra mão antes de cair.",
     foto: { src: "/folder/programas/volei.webp", w: 500, h: 500 },
   },
+  {
+    nome: "Ballet",
+    resumo:
+      "Postura, disciplina e expressão. O ballet ensina o corpo a obedecer à cabeça, e dá à criança um jeito de dizer o que sente sem precisar falar.",
+    foto: { src: "/folder/programas/ballet.webp", w: 900, h: 379 },
+    largo: true,
+  },
 ];
 
 export const ESPACOS: Peca[] = [
@@ -501,6 +508,7 @@ export const BOLHAS_FORA: Bolha[] = [
   { rotulo: "Karatê", alvo: "esportes" },
   { rotulo: "Futsal", alvo: "esportes" },
   { rotulo: "Vôlei", alvo: "esportes" },
+  { rotulo: "Ballet", alvo: "esportes" },
   { rotulo: "Auditório", alvo: "espacos" },
 ];
 
