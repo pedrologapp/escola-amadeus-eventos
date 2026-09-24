@@ -15,6 +15,8 @@ import {
   FRASE_ESPORTES,
   PERCURSO,
   PERGUNTAS,
+  DESCONTO_FIDELIDADE,
+  DIA_FIDELIDADE,
   PRAZO_ANTECIPADA,
   PROGRAMAS,
   SEGMENTOS,
@@ -1154,46 +1156,47 @@ function SecaoValores({
           <>
             {/* O valor cheio abre a tela e as duas condições aparecem como
                 desconto. Assim o pai lê ganho, não letra miúda. */}
+            {/* Abre no melhor cenário, que é o que a maioria das famílias da
+                reunião vai pagar, com as duas condições à vista logo abaixo.
+                O valor sem condição nenhuma fica na nota do rodapé. */}
             <div className="rounded-[22px] bg-[#FAF7F0] p-6">
               <span className="block text-xs uppercase tracking-[0.1em] text-[#5A657F]">
-                Mensalidade 2027
+                Mensalidade a partir de
               </span>
               <span className="mt-1.5 flex items-baseline gap-2">
                 <span className="text-[0.95rem] text-[#5A657F]">12x de</span>
                 <span className="font-serif text-[2.75rem] font-semibold leading-none text-[#B9862F]">
-                  {valores.cheia.mensal}
+                  {valores.melhor.mensal}
                 </span>
               </span>
               <span className="mt-1 block text-[0.8rem] text-[#5A657F]">
-                {valores.cheia.anual} no ano
+                {valores.melhor.anual} no ano
               </span>
 
               <span className="mt-5 block border-t border-[#17223D]/14 pt-4 text-[0.78rem] font-bold uppercase tracking-[0.12em] text-[#7A5310]">
-                Dá para pagar menos
+                Para chegar nesse valor
               </span>
 
               <span className="mt-3 flex items-start gap-3">
                 <Confere />
-                <span className="flex-1">
-                  <span className="block text-[1.05rem] font-bold text-[#17223D]">
-                    {valores.antecipada.mensal}
-                  </span>
-                  <span className="block text-[0.82rem] leading-relaxed text-[#5A657F]">
-                    Matriculando ou renovando até {PRAZO_ANTECIPADA}.
-                  </span>
+                <span className="flex-1 text-[0.88rem] leading-relaxed text-[#454F6B]">
+                  Matricule ou renove até <b>{PRAZO_ANTECIPADA}</b>, e a mensalidade
+                  fica {valores.antecipada.mensal}.
                 </span>
               </span>
 
               <span className="mt-3 flex items-start gap-3">
                 <Confere />
-                <span className="flex-1">
-                  <span className="block text-[1.05rem] font-bold text-[#17223D]">
-                    {valores.fidelidade.mensal}
-                  </span>
-                  <span className="block text-[0.82rem] leading-relaxed text-[#5A657F]">
-                    Fidelidade, pagando até o dia 5 de cada mês.
-                  </span>
+                <span className="flex-1 text-[0.88rem] leading-relaxed text-[#454F6B]">
+                  Pague até o <b>dia {DIA_FIDELIDADE}</b> de cada mês, e são{" "}
+                  {DESCONTO_FIDELIDADE} a menos, todo mês.
                 </span>
+              </span>
+
+              <span className="mt-4 block border-t border-[#17223D]/14 pt-3.5 text-[0.76rem] leading-relaxed text-[#5A657F]">
+                Sem nenhuma das duas condições, a mensalidade 2027 é{" "}
+                {valores.cheia.mensal}. O desconto por pagar até o dia{" "}
+                {DIA_FIDELIDADE} vale sempre, em qualquer condição.
               </span>
             </div>
 

@@ -335,6 +335,14 @@ export const COMUNICACAO: { nome: string; icone: IconeComunicacao }[] = [
 /** Prazo da matrícula antecipada, que também dá desconto no material. */
 export const PRAZO_ANTECIPADA = "30 de outubro";
 
+/**
+ * A fidelidade não é uma tabela à parte: é um desconto fixo de R$ 20,00 na
+ * mensalidade, para quem paga até o dia 10, valendo em qualquer condição.
+ * Por isso o melhor cenário é a antecipada menos 20.
+ */
+export const DESCONTO_FIDELIDADE = "R$ 20,00";
+export const DIA_FIDELIDADE = 10;
+
 export interface Condicao {
   /** Valor de cada uma das 12 parcelas. */
   mensal: string;
@@ -343,12 +351,12 @@ export interface Condicao {
 }
 
 export interface Valores {
-  /** Mensalidade 2027, o valor de referência. */
+  /** Mensalidade 2027, sem nenhuma condição. */
   cheia: Condicao;
-  /** Fidelidade: pagando até o dia 5 de cada mês. */
-  fidelidade: Condicao;
   /** Matriculando ou renovando até 30/10/2026. */
   antecipada: Condicao;
+  /** Antecipada mais o desconto da fidelidade. É o melhor cenário possível. */
+  melhor: Condicao;
   /** O material é comprado à parte. Nunca apresentar como incluso. */
   material: {
     rotulo: string;
@@ -368,8 +376,8 @@ export interface Valores {
 export const VALORES: Record<SegmentoId, Valores | null> = {
   infantil: {
     cheia: { mensal: "R$ 580,00", anual: "R$ 6.960,00" },
-    fidelidade: { mensal: "R$ 560,00", anual: "R$ 6.720,00" },
     antecipada: { mensal: "R$ 570,00", anual: "R$ 6.840,00" },
+    melhor: { mensal: "R$ 550,00", anual: "R$ 6.600,00" },
     material: [
       {
         rotulo: "Maternal II e III",
@@ -387,8 +395,8 @@ export const VALORES: Record<SegmentoId, Valores | null> = {
   },
   f1: {
     cheia: { mensal: "R$ 550,00", anual: "R$ 6.600,00" },
-    fidelidade: { mensal: "R$ 530,00", anual: "R$ 6.360,00" },
     antecipada: { mensal: "R$ 540,00", anual: "R$ 6.480,00" },
+    melhor: { mensal: "R$ 520,00", anual: "R$ 6.240,00" },
     material: [
       {
         rotulo: "1º ao 5º ano",
@@ -400,8 +408,8 @@ export const VALORES: Record<SegmentoId, Valores | null> = {
   },
   f2: {
     cheia: { mensal: "R$ 570,00", anual: "R$ 6.840,00" },
-    fidelidade: { mensal: "R$ 550,00", anual: "R$ 6.600,00" },
     antecipada: { mensal: "R$ 560,00", anual: "R$ 6.720,00" },
+    melhor: { mensal: "R$ 540,00", anual: "R$ 6.480,00" },
     material: [
       {
         rotulo: "6º ao 9º ano",
