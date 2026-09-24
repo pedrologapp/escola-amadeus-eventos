@@ -10,28 +10,37 @@ import path from "node:path";
  * A tela do evento é 2x2, quadrada. Por isso cada slide é 1:1, e não 16:9:
  * num projetor quadrado, o 16:9 vira uma tarja com duas faixas pretas.
  *
+ * Duas decisões de desenho que valem ser ditas:
+ *
+ * 1. As frases grandes são em serifa (Fraunces), que é a mesma família de
+ *    títulos do folder digital. Sans em tudo ficava com cara de relatório.
+ * 2. O conteúdo vive em cartões CREME sobre o azul. Cartão escuro sobre fundo
+ *    escuro some no projetor; creme sobre azul tem o contraste de um impresso
+ *    e é o que a última fileira consegue ler.
+ *
  * Uso:  node scripts/gerar-slides-reuniao.mjs <pasta-de-saida>
- * Depois é só imprimir os HTML em PDF pelo Chrome headless.
  */
 
 const saida = process.argv[2] ?? ".";
-const LADO = "200mm"; // 200x200mm: projetado numa tela de 2m, cada mm vira 1cm
+const LADO = "200mm"; // 200x200mm: na tela de 2m, cada milímetro vira 1cm
 
-/* O símbolo vai embutido no HTML: assim o arquivo abre em qualquer máquina,
-   sem depender da pasta public do projeto estar do lado. */
-const MARCA =
-  "data:image/png;base64," +
-  fs
-    .readFileSync(
-      path.join(import.meta.dirname, "..", "public", "folder", "marca-globo.png"),
-    )
-    .toString("base64");
+const raiz = path.join(import.meta.dirname, "..");
+
+/* As imagens vão embutidas: o HTML abre em qualquer máquina, sem depender da
+   pasta public estar do lado. */
+function embutir(relativo) {
+  const dados = fs.readFileSync(path.join(raiz, relativo)).toString("base64");
+  return `data:image/png;base64,${dados}`;
+}
+
+const LOGO = embutir("public/folder/logo-horizontal.png"); // 1600px, feito para fundo escuro
+const GLOBO = embutir("public/folder/marca-globo.png"); // só a marca d'água, sai a 6% de opacidade
 
 /* -------------------------------------------------------------- conteúdo */
 
 const GISLENE = {
   arquivo: "Slides_Gislene_Infantil",
-  titulo: "Gislene - Educação Infantil",
+  titulo: "Gislene Sátiro - Educação Infantil",
   etiquetaPadrao: "Educação Infantil",
   slides: [
     {
@@ -42,7 +51,8 @@ const GISLENE = {
     {
       tipo: "dialogo",
       etiqueta: "Educação Infantil",
-      linhas: ["“O que você fez hoje na escola?”", "“Nada.”"],
+      pergunta: "“O que você fez hoje na escola?”",
+      resposta: "“Nada.”",
     },
     {
       tipo: "frase",
@@ -53,19 +63,19 @@ const GISLENE = {
         "Por isso a escolha foi a Coleção Rios. As rotinas de pensamento dela vêm das pesquisas do Project Zero, da Universidade Harvard.",
     },
     {
-      tipo: "lista",
+      tipo: "cartoes",
       etiqueta: "Como isso vira aula",
-      itens: [
-        "“O que podemos explorar dentro de uma cozinha?”",
-        "“O que um rosto pode comunicar?”",
-        "“Como podemos cuidar dos animais?”",
+      cartoes: [
+        { texto: "“O que podemos explorar dentro de uma cozinha?”" },
+        { texto: "“O que um rosto pode comunicar?”" },
+        { texto: "“Como podemos cuidar dos animais?”" },
       ],
       nota: "Cada uma dessas perguntas ocupa um mês inteiro de investigação.",
     },
     {
-      tipo: "blocos",
+      tipo: "cartoes",
       etiqueta: "O que você vai ver em casa",
-      blocos: [
+      cartoes: [
         {
           titulo: "O Diário de Bordo",
           texto:
@@ -73,8 +83,7 @@ const GISLENE = {
         },
         {
           titulo: "O Portfólio",
-          texto:
-            "Fotos e registros do que ele fez, ao longo do ano inteiro.",
+          texto: "Fotos e registros do que ele fez, ao longo do ano inteiro.",
         },
       ],
     },
@@ -88,7 +97,7 @@ const GISLENE = {
 
 const ADRIANA = {
   arquivo: "Slides_Adriana_Fundamental",
-  titulo: "Adriana - Fundamental 1 e 2",
+  titulo: "Adriana Alves - Fundamental 1 e 2",
   etiquetaPadrao: "Fundamental 1 e 2",
   slides: [
     {
@@ -100,10 +109,8 @@ const ADRIANA = {
     {
       tipo: "dialogo",
       etiqueta: "Fundamental 1 e 2",
-      linhas: [
-        "Quando você descobre que seu filho não entendeu?",
-        "No boletim. E aí o bimestre já acabou.",
-      ],
+      pergunta: "Quando você descobre que seu filho não entendeu?",
+      resposta: "No boletim. E aí o bimestre já acabou.",
     },
     {
       tipo: "frase",
@@ -149,7 +156,7 @@ const ADRIANA = {
   ],
 };
 
-/* ----------------------------------------------------------------- folha */
+/* ------------------------------------------------------------------ css */
 
 const CSS = `
   @page{ size:${LADO} ${LADO}; margin:0 }
@@ -159,160 +166,202 @@ const CSS = `
     -webkit-print-color-adjust:exact;print-color-adjust:exact;
     background:#05060C;
   }
+
   .slide{
     width:${LADO};height:${LADO};position:relative;overflow:hidden;
     page-break-after:always;
     background:
-      radial-gradient(115% 70% at 50% 8%, #16224A 0%, #0A0D18 58%, #05060C 100%);
+      radial-gradient(100% 62% at 50% 0%, #1B2A58 0%, rgba(27,42,88,0) 64%),
+      radial-gradient(140% 100% at 50% 118%, #0E1B3E 0%, rgba(14,27,62,0) 58%),
+      #070B18;
     display:flex;flex-direction:column;
-    padding:22mm 20mm 18mm;color:#FAF7F0;
+    padding:20mm 19mm 16mm;color:#FAF7F0;
   }
   .slide:last-child{page-break-after:auto}
 
+  /* marca d'água: dá profundidade sem competir com o texto */
+  .agua{
+    position:absolute;right:-42mm;bottom:-46mm;width:150mm;
+    opacity:.055;filter:grayscale(1) brightness(2.4);
+  }
+
+  /* ------------------------------------------------------------ cabeçalho */
+  .topo{
+    position:relative;z-index:1;
+    display:flex;align-items:baseline;justify-content:space-between;gap:8mm;
+  }
   .etiqueta{
-    font-size:13pt;font-weight:800;letter-spacing:.24em;
+    font-size:12.5pt;font-weight:700;letter-spacing:.26em;
     text-transform:uppercase;color:#E8B44C;
   }
+  .indice{
+    font-size:11pt;font-weight:700;letter-spacing:.18em;
+    color:rgba(250,247,240,.34);
+  }
 
-  .corpo{flex:1;display:flex;flex-direction:column;justify-content:center}
+  .corpo{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;justify-content:center}
 
-  /* uma ideia por slide: o texto grande é sempre o que a última fileira lê */
-  .grande{font-size:40pt;font-weight:800;line-height:1.1;letter-spacing:-.03em}
-  .grande .ouro{color:#E8B44C;display:block}
-  .media{font-size:31pt;font-weight:800;line-height:1.16;letter-spacing:-.025em}
+  /* ----------------------------------------------------------- tipografia */
+  .serifa{
+    font-family:Fraunces,Georgia,serif;font-optical-sizing:auto;
+    font-weight:600;letter-spacing:-.018em;
+  }
+  .declaracao{font-size:40pt;line-height:1.12}
+  .declaracao .ouro{color:#E8B44C;display:block}
+
+  .pergunta{font-size:35pt;line-height:1.14;color:#FAF7F0}
+  .resposta{
+    margin-top:11mm;padding-left:8mm;border-left:1.6mm solid #E8B44C;
+    font-size:35pt;line-height:1.14;color:#E8B44C;
+  }
 
   .nota{
-    margin-top:12mm;font-size:15pt;font-weight:500;line-height:1.45;
-    color:rgba(250,247,240,.6);max-width:145mm;
+    margin-top:10mm;font-size:13.5pt;font-weight:500;line-height:1.5;
+    color:rgba(250,247,240,.58);max-width:140mm;
   }
 
-  /* diálogo: a pergunta em branco, a resposta em dourado */
-  .fala{font-size:36pt;font-weight:800;line-height:1.14;letter-spacing:-.03em}
-  .fala + .fala{margin-top:9mm;color:#E8B44C}
-
-  /* lista de perguntas de investigação */
-  .itens{display:flex;flex-direction:column;gap:7mm}
-  .item{
-    border-left:1.4mm solid #E8B44C;padding-left:7mm;
-    font-size:25pt;font-weight:700;line-height:1.2;letter-spacing:-.02em;
+  /* --------------------------------------------------------------- cartões
+     Creme sobre azul: é o contraste que sobrevive a um projetor de escola. */
+  .pilha{display:flex;flex-direction:column;gap:6mm}
+  .cartao{
+    background:#FAF7F0;border-radius:8mm;padding:8mm 9mm;
+    border-top:1.4mm solid #E8B44C;
+  }
+  .cartao h3{
+    font-family:Fraunces,Georgia,serif;font-weight:600;letter-spacing:-.02em;
+    font-size:23pt;line-height:1.1;color:#17223D;
+  }
+  .cartao h3 + p{margin-top:4mm}
+  .cartao p{font-size:17.5pt;font-weight:500;line-height:1.36;color:#48546F}
+  .cartao .destaque{
+    font-family:Fraunces,Georgia,serif;font-weight:600;letter-spacing:-.02em;
+    font-size:21pt;line-height:1.18;color:#17223D;
   }
 
-  /* dois blocos empilhados */
-  .blocos{display:flex;flex-direction:column;gap:9mm}
-  .bloco{
-    background:rgba(250,247,240,.06);border:.5mm solid rgba(250,247,240,.14);
-    border-radius:9mm;padding:10mm 11mm;
+  .colunas{display:flex;gap:7mm;align-items:stretch}
+  .colunas .cartao{flex:1;display:flex;flex-direction:column}
+  .colunas h3{
+    font-family:"DM Sans",sans-serif;font-weight:800;font-size:14.5pt;
+    letter-spacing:.14em;text-transform:uppercase;color:#B9862F;
   }
-  .bloco h3{font-size:24pt;font-weight:800;color:#E8B44C;letter-spacing:-.02em}
-  .bloco p{margin-top:4mm;font-size:19pt;font-weight:500;line-height:1.34;color:rgba(250,247,240,.84)}
+  .colunas p{margin-top:6mm;font-size:18pt;font-weight:600;color:#17223D;line-height:1.3}
 
-  /* duas colunas lado a lado */
-  .colunas{display:flex;gap:8mm;align-items:stretch}
-  .coluna{
-    flex:1;background:rgba(250,247,240,.06);border:.5mm solid rgba(250,247,240,.14);
-    border-radius:9mm;padding:10mm 9mm;
+  /* ------------------------------------------------------------- relatório */
+  .selo{
+    display:inline-flex;align-self:flex-start;align-items:center;gap:4mm;
+    background:#E8B44C;color:#17223D;border-radius:99mm;
+    padding:4.5mm 9mm;font-size:15pt;font-weight:800;letter-spacing:.14em;
+    text-transform:uppercase;
   }
-  .coluna h3{
-    font-size:16pt;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
-    color:#E8B44C;
+  .frase-relatorio{
+    margin-top:9mm;font-family:Fraunces,Georgia,serif;font-weight:600;
+    font-size:33pt;line-height:1.14;letter-spacing:-.02em;
   }
-  .coluna p{margin-top:6mm;font-size:19pt;font-weight:600;line-height:1.3}
+  .marcadores{margin-top:12mm;display:flex;flex-direction:column;gap:5.5mm}
+  .marcador{
+    display:flex;align-items:center;gap:5mm;
+    font-size:18pt;font-weight:600;color:rgba(250,247,240,.86);
+  }
+  .ponto{width:3.2mm;height:3.2mm;border-radius:50%;background:#E8B44C;flex:0 0 auto}
 
-  /* o relatório de sexta */
-  .chamada{font-size:38pt;font-weight:800;letter-spacing:-.03em;color:#E8B44C}
-  .sub{margin-top:5mm;font-size:26pt;font-weight:700;line-height:1.2;letter-spacing:-.02em}
-  .marcadores{margin-top:11mm;display:flex;flex-direction:column;gap:5mm}
-  .marcador{display:flex;align-items:center;gap:5mm;font-size:19pt;font-weight:600;color:rgba(250,247,240,.84)}
-  .ponto{width:3.5mm;height:3.5mm;border-radius:50%;background:#E8B44C;flex:0 0 auto}
-
-  /* abertura: só o símbolo, o nome e o cargo. É a tela que fica no telão
-     enquanto ela sobe e enquanto a sala se acomoda, então respira mais. */
+  /* -------------------------------------------------------------- abertura */
   .abertura{align-items:center;text-align:center}
-  .abertura .marca{width:52mm;height:auto;display:block}
+  .abertura .logo{width:118mm;height:auto;display:block}
   .abertura .nome{
-    margin-top:16mm;font-size:46pt;font-weight:800;
-    letter-spacing:-.035em;line-height:1;color:#FAF7F0;
+    margin-top:19mm;font-family:Fraunces,Georgia,serif;font-weight:600;
+    font-size:49pt;line-height:1;letter-spacing:-.025em;color:#FAF7F0;
   }
   .abertura .fio{
-    margin-top:9mm;width:26mm;height:.9mm;border-radius:1mm;background:#E8B44C;
+    margin-top:10mm;width:24mm;height:.8mm;border-radius:1mm;background:#E8B44C;
   }
   .abertura .cargo{
-    margin-top:9mm;font-size:17pt;font-weight:800;letter-spacing:.2em;
-    text-transform:uppercase;color:#E8B44C;line-height:1.7;
+    margin-top:10mm;font-size:15.5pt;font-weight:700;letter-spacing:.2em;
+    text-transform:uppercase;color:#E8B44C;line-height:1.75;
   }
-  .abertura .cargo span{display:block;color:rgba(232,180,76,.78)}
+  .abertura .cargo span{display:block;color:rgba(232,180,76,.74)}
 
+  /* ---------------------------------------------------------------- rodapé */
   .rodape{
-    display:flex;align-items:center;gap:5mm;
-    font-size:11pt;font-weight:800;letter-spacing:.2em;text-transform:uppercase;
-    color:rgba(232,180,76,.72);
+    position:relative;z-index:1;
+    display:flex;align-items:center;gap:6mm;
+    font-size:10.5pt;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+    color:rgba(232,180,76,.6);
   }
-  .risco{flex:1;height:.4mm;background:rgba(232,180,76,.28)}
+  .risco{flex:1;height:.3mm;background:rgba(232,180,76,.22)}
 `;
 
+/* ---------------------------------------------------------------- montagem */
+
 function esc(s) {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function montarSlide(s, etiquetaPadrao) {
+function montarSlide(s, etiquetaPadrao, i, total) {
   const etiqueta = s.etiqueta ?? etiquetaPadrao;
   let corpo = "";
 
   if (s.tipo === "abertura") {
     const segunda = s.cargo2 ? `<span>${esc(s.cargo2)}</span>` : "";
     corpo = `
-      <img class="marca" src="${MARCA}" alt="Centro Educacional Amadeus">
-      <p class="nome">${esc(s.nome)}</p>
+      <img class="logo" src="${LOGO}" alt="Centro Educacional Amadeus">
+      <p class="nome serifa">${esc(s.nome)}</p>
       <span class="fio"></span>
       <p class="cargo">${esc(s.cargo)}${segunda}</p>`;
   }
 
   if (s.tipo === "dialogo") {
-    corpo = s.linhas.map((l) => `<p class="fala">${esc(l)}</p>`).join("\n");
+    corpo = `
+      <p class="pergunta serifa">${esc(s.pergunta)}</p>
+      <p class="resposta serifa">${esc(s.resposta)}</p>`;
   }
 
   if (s.tipo === "frase" || s.tipo === "fecho") {
-    corpo = `<p class="grande">${esc(s.frase)}<span class="ouro">${esc(s.destaque)}</span></p>`;
+    corpo = `<p class="declaracao serifa">${esc(s.frase)}<span class="ouro">${esc(
+      s.destaque,
+    )}</span></p>`;
   }
 
-  if (s.tipo === "lista") {
-    corpo = `<div class="itens">${s.itens
-      .map((i) => `<p class="item">${esc(i)}</p>`)
-      .join("")}</div>`;
-  }
-
-  if (s.tipo === "blocos") {
-    corpo = `<div class="blocos">${s.blocos
-      .map((b) => `<div class="bloco"><h3>${esc(b.titulo)}</h3><p>${esc(b.texto)}</p></div>`)
+  if (s.tipo === "cartoes") {
+    corpo = `<div class="pilha">${s.cartoes
+      .map((c) =>
+        c.titulo
+          ? `<div class="cartao"><h3>${esc(c.titulo)}</h3><p>${esc(c.texto)}</p></div>`
+          : `<div class="cartao"><p class="destaque">${esc(c.texto)}</p></div>`,
+      )
       .join("")}</div>`;
   }
 
   if (s.tipo === "colunas") {
     corpo = `<div class="colunas">${s.colunas
-      .map((c) => `<div class="coluna"><h3>${esc(c.titulo)}</h3><p>${esc(c.texto)}</p></div>`)
+      .map(
+        (c) =>
+          `<div class="cartao"><h3>${esc(c.titulo)}</h3><p>${esc(c.texto)}</p></div>`,
+      )
       .join("")}</div>`;
   }
 
   if (s.tipo === "relatorio") {
     corpo = `
-      <p class="chamada">${esc(s.chamada)}</p>
-      <p class="sub">${esc(s.texto)}</p>
+      <span class="selo">${esc(s.chamada)}</span>
+      <p class="frase-relatorio">${esc(s.texto)}</p>
       <div class="marcadores">${s.itens
-        .map((i) => `<p class="marcador"><span class="ponto"></span>${esc(i)}</p>`)
+        .map((t) => `<p class="marcador"><span class="ponto"></span>${esc(t)}</p>`)
         .join("")}</div>`;
   }
 
   const nota = s.nota ? `<p class="nota">${esc(s.nota)}</p>` : "";
-  const semEtiqueta = s.tipo === "fecho" || s.tipo === "abertura";
-  const topo = semEtiqueta ? "" : `<p class="etiqueta">${esc(etiqueta)}</p>`;
-  const classe = s.tipo === "abertura" ? "corpo abertura" : "corpo";
+  const limpo = s.tipo === "abertura" || s.tipo === "fecho";
+  const topo = limpo
+    ? ""
+    : `<div class="topo">
+      <span class="etiqueta">${esc(etiqueta)}</span>
+      <span class="indice">${String(i).padStart(2, "0")} / ${String(total - 1).padStart(2, "0")}</span>
+    </div>`;
 
   return `  <section class="slide">
+    <img class="agua" src="${GLOBO}" alt="">
     ${topo}
-    <div class="${classe}">
+    <div class="corpo${s.tipo === "abertura" ? " abertura" : ""}">
       ${corpo}
       ${nota}
     </div>
@@ -321,22 +370,24 @@ function montarSlide(s, etiquetaPadrao) {
 }
 
 function montarDeck(deck) {
+  const total = deck.slides.length;
   return `<!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <title>${esc(deck.titulo)}</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,500;9..40,700;9..40,800&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap">
 <style>${CSS}</style>
 </head>
 <body>
-${deck.slides.map((s) => montarSlide(s, deck.etiquetaPadrao)).join("\n")}
+${deck.slides
+  .map((s, i) => montarSlide(s, deck.etiquetaPadrao, i, total))
+  .join("\n")}
 </body>
 </html>`;
 }
 
 for (const deck of [GISLENE, ADRIANA]) {
-  const arquivo = path.join(saida, deck.arquivo + ".html");
-  fs.writeFileSync(arquivo, montarDeck(deck));
+  fs.writeFileSync(path.join(saida, deck.arquivo + ".html"), montarDeck(deck));
   console.log(deck.arquivo + ".html", deck.slides.length, "slides");
 }
