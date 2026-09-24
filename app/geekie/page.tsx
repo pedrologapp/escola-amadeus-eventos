@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { PERGUNTAS } from "@/lib/folder-config";
 
 export const metadata: Metadata = {
@@ -407,6 +408,44 @@ export default function GeekiePage() {
             famílias, 14 mil professores e 400 instituições. Noticiado pela Folha
             de S.Paulo em agosto de 2021.
           </p>
+        </div>
+      </section>
+
+      {/* ---------- para o folder ----------
+          Quem chegou até aqui entendeu o material. O passo seguinte é
+          conhecer a escola inteira, e é isso que o folder faz. */}
+      <section className="bg-[#FAF7F0] py-12 text-center text-[#17223D]">
+        <div className="mx-auto max-w-[470px] px-6">
+          <p className="text-[0.64rem] font-extrabold uppercase tracking-[0.22em] text-[#B9862F]">
+            E o resto da escola?
+          </p>
+          <h2 className="mt-3 text-[clamp(1.5rem,6.2vw,1.95rem)] font-extrabold leading-tight tracking-[-0.03em] text-balance">
+            O Geekie é só uma parte do que muda em 2027
+          </h2>
+          <p className="mx-auto mt-3 max-w-[22rem] text-[0.95rem] leading-relaxed text-[#5A657F]">
+            Os programas, os projetos, os esportes, os espaços e os valores do
+            ano que vem estão todos reunidos em um lugar só.
+          </p>
+          <Link
+            href="/folder"
+            className="mt-6 inline-flex min-h-[3.5rem] items-center justify-center gap-2 rounded-full bg-[#17223D] px-8 text-[1rem] font-bold text-[#FAF7F0]"
+          >
+            Conhecer o Amadeus inteiro
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#E8B44C"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M5 12h14" />
+              <path d="m12 5 7 7-7 7" />
+            </svg>
+          </Link>
         </div>
       </section>
 

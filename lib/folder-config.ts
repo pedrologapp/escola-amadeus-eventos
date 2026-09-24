@@ -345,8 +345,17 @@ export interface Valores {
   promocional: Faixa;
   depois: Faixa;
   /** O material é comprado à parte. Nunca apresentar como incluso. */
-  material: { rotulo: string; parcela: string; total: string }[];
+  material: {
+    rotulo: string;
+    /** Parcela no cartão, como a escola publicou. Não é conta minha. */
+    parcela: string;
+    aVista: string;
+    total: string;
+  }[];
 }
+
+/** Quem matricula ou renova até esta data tem desconto no material. */
+export const PRAZO_DESCONTO_MATERIAL = "30 de outubro de 2026";
 
 /**
  * Tabela 2027, transcrita das fotos que o Pedro mandou em 22/09/2026
@@ -360,19 +369,43 @@ export const VALORES: Record<SegmentoId, Valores | null> = {
     promocional: { cheio: "R$ 570,00", ateODia5: "R$ 550,00" },
     depois: { cheio: "R$ 580,00", ateODia5: "R$ 560,00" },
     material: [
-      { rotulo: "Grupo 2 e 3", parcela: "R$ 73,92", total: "R$ 887,00" },
-      { rotulo: "Grupo 4 e 5", parcela: "R$ 91,84", total: "R$ 1.102,08" },
+      {
+        rotulo: "Maternal II e III",
+        parcela: "R$ 83,00",
+        aVista: "R$ 896,40",
+        total: "R$ 996,00",
+      },
+      {
+        rotulo: "Grupo IV e V",
+        parcela: "R$ 92,00",
+        aVista: "R$ 993,60",
+        total: "R$ 1.104,00",
+      },
     ],
   },
   f1: {
     promocional: { cheio: "R$ 540,00", ateODia5: "R$ 520,00" },
     depois: { cheio: "R$ 550,00", ateODia5: "R$ 530,00" },
-    material: [{ rotulo: "1º ao 5º ano", parcela: "R$ 159,04", total: "R$ 1.908,48" }],
+    material: [
+      {
+        rotulo: "1º ao 5º ano",
+        parcela: "R$ 159,00",
+        aVista: "R$ 1.717,20",
+        total: "R$ 1.908,00",
+      },
+    ],
   },
   f2: {
     promocional: { cheio: "R$ 560,00", ateODia5: "R$ 540,00" },
     depois: { cheio: "R$ 570,00", ateODia5: "R$ 550,00" },
-    material: [{ rotulo: "6º ao 9º ano", parcela: "R$ 181,44", total: "R$ 2.177,28" }],
+    material: [
+      {
+        rotulo: "6º ao 9º ano",
+        parcela: "R$ 181,00",
+        aVista: "R$ 1.954,80",
+        total: "R$ 2.172,00",
+      },
+    ],
   },
 };
 

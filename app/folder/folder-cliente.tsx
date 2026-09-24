@@ -16,6 +16,7 @@ import {
   INICIO_TABELA_CHEIA,
   PERCURSO,
   PERGUNTAS,
+  PRAZO_DESCONTO_MATERIAL,
   PRAZO_PROMOCAO,
   PROGRAMAS,
   SEGMENTOS,
@@ -1177,24 +1178,30 @@ function SecaoValores({
               <span className="mt-1 block text-sm leading-relaxed text-[#FAF7F0]/68">
                 O material Geekie One é comprado à parte, uma vez no ano.
               </span>
-              <div className="mt-4 flex flex-col gap-3.5">
+              <div className="mt-4 flex flex-col gap-4">
                 {valores.material.map((linha) => (
                   <span key={linha.rotulo} className="block">
                     <span className="block text-[0.72rem] uppercase tracking-[0.12em] text-[#FAF7F0]/55">
                       {linha.rotulo}
                     </span>
                     <span className="mt-1 flex items-baseline gap-2">
-                      <span className="text-[0.8rem] text-[#FAF7F0]/72">até 12x de</span>
+                      <span className="text-[0.8rem] text-[#FAF7F0]/72">12x de</span>
                       <span className="font-serif text-[1.65rem] font-semibold leading-none text-[#E8B44C]">
                         {linha.parcela}
                       </span>
                     </span>
-                    <span className="mt-0.5 block text-[0.72rem] text-[#FAF7F0]/50">
-                      à vista {linha.total}
+                    <span className="mt-1 block text-[0.72rem] leading-relaxed text-[#FAF7F0]/55">
+                      Ou {linha.aVista} à vista, com 10% de desconto. Total{" "}
+                      {linha.total}.
                     </span>
                   </span>
                 ))}
               </div>
+
+              <span className="mt-4 block border-t border-[#FAF7F0]/14 pt-3.5 text-[0.78rem] leading-relaxed text-[#E8B44C]">
+                Quem matricular ou renovar até {PRAZO_DESCONTO_MATERIAL} tem desconto
+                no material.
+              </span>
             </div>
 
             <div className="flex items-start gap-2.5">
