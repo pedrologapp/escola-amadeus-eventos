@@ -332,18 +332,23 @@ export const COMUNICACAO: { nome: string; icone: IconeComunicacao }[] = [
   { nome: "Direção e coordenação", icone: "direcao" },
 ];
 
-/** Até quando vale a tabela promocional de 2027. */
-export const PRAZO_PROMOCAO = "30 de outubro de 2026";
-export const INICIO_TABELA_CHEIA = "2 de novembro";
+/** Prazo da matrícula antecipada, que também dá desconto no material. */
+export const PRAZO_ANTECIPADA = "30 de outubro";
 
-export interface Faixa {
-  cheio: string;
-  ateODia5: string;
+export interface Condicao {
+  /** Valor de cada uma das 12 parcelas. */
+  mensal: string;
+  /** Total do ano. */
+  anual: string;
 }
 
 export interface Valores {
-  promocional: Faixa;
-  depois: Faixa;
+  /** Mensalidade 2027, o valor de referência. */
+  cheia: Condicao;
+  /** Fidelidade: pagando até o dia 5 de cada mês. */
+  fidelidade: Condicao;
+  /** Matriculando ou renovando até 30/10/2026. */
+  antecipada: Condicao;
   /** O material é comprado à parte. Nunca apresentar como incluso. */
   material: {
     rotulo: string;
@@ -354,20 +359,17 @@ export interface Valores {
   }[];
 }
 
-/** Quem matricula ou renova até esta data tem desconto no material. */
-export const PRAZO_DESCONTO_MATERIAL = "30 de outubro de 2026";
-
 /**
- * Tabela 2027, transcrita das fotos que o Pedro mandou em 22/09/2026
- * (docs/EventoRematricula/preçomensalidade.jpeg e preçolivros.jpeg).
- * O material aparece parcelado em até 12x, que é como a família pensa.
+ * Tabela 2027, transcrita da foto docs/EventoRematricula/valores.jpeg,
+ * recebida em 24/09/2026. São 12 parcelas em todas as condições.
  *
  * Lembrar: esta página é pública, então o que está aqui o concorrente lê.
  */
 export const VALORES: Record<SegmentoId, Valores | null> = {
   infantil: {
-    promocional: { cheio: "R$ 570,00", ateODia5: "R$ 550,00" },
-    depois: { cheio: "R$ 580,00", ateODia5: "R$ 560,00" },
+    cheia: { mensal: "R$ 580,00", anual: "R$ 6.960,00" },
+    fidelidade: { mensal: "R$ 560,00", anual: "R$ 6.720,00" },
+    antecipada: { mensal: "R$ 570,00", anual: "R$ 6.840,00" },
     material: [
       {
         rotulo: "Maternal II e III",
@@ -384,8 +386,9 @@ export const VALORES: Record<SegmentoId, Valores | null> = {
     ],
   },
   f1: {
-    promocional: { cheio: "R$ 540,00", ateODia5: "R$ 520,00" },
-    depois: { cheio: "R$ 550,00", ateODia5: "R$ 530,00" },
+    cheia: { mensal: "R$ 550,00", anual: "R$ 6.600,00" },
+    fidelidade: { mensal: "R$ 530,00", anual: "R$ 6.360,00" },
+    antecipada: { mensal: "R$ 540,00", anual: "R$ 6.480,00" },
     material: [
       {
         rotulo: "1º ao 5º ano",
@@ -396,8 +399,9 @@ export const VALORES: Record<SegmentoId, Valores | null> = {
     ],
   },
   f2: {
-    promocional: { cheio: "R$ 560,00", ateODia5: "R$ 540,00" },
-    depois: { cheio: "R$ 570,00", ateODia5: "R$ 550,00" },
+    cheia: { mensal: "R$ 570,00", anual: "R$ 6.840,00" },
+    fidelidade: { mensal: "R$ 550,00", anual: "R$ 6.600,00" },
+    antecipada: { mensal: "R$ 560,00", anual: "R$ 6.720,00" },
     material: [
       {
         rotulo: "6º ao 9º ano",

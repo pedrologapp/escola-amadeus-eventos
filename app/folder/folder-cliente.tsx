@@ -13,11 +13,9 @@ import {
   ESPACOS,
   ESPORTES,
   FRASE_ESPORTES,
-  INICIO_TABELA_CHEIA,
   PERCURSO,
   PERGUNTAS,
-  PRAZO_DESCONTO_MATERIAL,
-  PRAZO_PROMOCAO,
+  PRAZO_ANTECIPADA,
   PROGRAMAS,
   SEGMENTOS,
   VALORES,
@@ -1154,20 +1152,48 @@ function SecaoValores({
       <div className="mt-7 flex flex-1 flex-col gap-4">
         {valores ? (
           <>
+            {/* O valor cheio abre a tela e as duas condições aparecem como
+                desconto. Assim o pai lê ganho, não letra miúda. */}
             <div className="rounded-[22px] bg-[#FAF7F0] p-6">
               <span className="block text-xs uppercase tracking-[0.1em] text-[#5A657F]">
-                Mensalidade
+                Mensalidade 2027
               </span>
-              <span className="mt-1.5 block font-serif text-[2.75rem] font-semibold leading-none text-[#B9862F]">
-                {valores.promocional.cheio}
+              <span className="mt-1.5 flex items-baseline gap-2">
+                <span className="text-[0.95rem] text-[#5A657F]">12x de</span>
+                <span className="font-serif text-[2.75rem] font-semibold leading-none text-[#B9862F]">
+                  {valores.cheia.mensal}
+                </span>
               </span>
-              <span className="mt-2 block text-sm leading-relaxed text-[#454F6B]">
-                {valores.promocional.ateODia5} pagando até o dia 5.
+              <span className="mt-1 block text-[0.8rem] text-[#5A657F]">
+                {valores.cheia.anual} no ano
               </span>
-              <span className="mt-3.5 block border-t border-[#17223D]/14 pt-3.5 text-[0.8rem] leading-relaxed text-[#5A657F]">
-                Esta é a tabela promocional, válida para matrículas até {PRAZO_PROMOCAO}. A
-                partir de {INICIO_TABELA_CHEIA}, {valores.depois.cheio} por mês, ou{" "}
-                {valores.depois.ateODia5} até o dia 5.
+
+              <span className="mt-5 block border-t border-[#17223D]/14 pt-4 text-[0.78rem] font-bold uppercase tracking-[0.12em] text-[#7A5310]">
+                Dá para pagar menos
+              </span>
+
+              <span className="mt-3 flex items-start gap-3">
+                <Confere />
+                <span className="flex-1">
+                  <span className="block text-[1.05rem] font-bold text-[#17223D]">
+                    {valores.antecipada.mensal}
+                  </span>
+                  <span className="block text-[0.82rem] leading-relaxed text-[#5A657F]">
+                    Matriculando ou renovando até {PRAZO_ANTECIPADA}.
+                  </span>
+                </span>
+              </span>
+
+              <span className="mt-3 flex items-start gap-3">
+                <Confere />
+                <span className="flex-1">
+                  <span className="block text-[1.05rem] font-bold text-[#17223D]">
+                    {valores.fidelidade.mensal}
+                  </span>
+                  <span className="block text-[0.82rem] leading-relaxed text-[#5A657F]">
+                    Fidelidade, pagando até o dia 5 de cada mês.
+                  </span>
+                </span>
               </span>
             </div>
 
@@ -1199,7 +1225,7 @@ function SecaoValores({
               </div>
 
               <span className="mt-4 block border-t border-[#FAF7F0]/14 pt-3.5 text-[0.78rem] leading-relaxed text-[#E8B44C]">
-                Quem matricular ou renovar até {PRAZO_DESCONTO_MATERIAL} tem desconto
+                Quem matricular ou renovar até {PRAZO_ANTECIPADA} tem desconto
                 no material.
               </span>
             </div>
