@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { PERGUNTAS } from "@/lib/folder-config";
 
 export const metadata: Metadata = {
   title: "Geekie no Amadeus · O que muda em 2027",
@@ -344,6 +345,42 @@ export default function GeekiePage() {
               texto="São aulas escolhidas. O livro continua sendo a base do estudo."
             />
           </div>
+        </div>
+      </section>
+
+      {/* ---------- as perguntas ----------
+          São as três que os pais fizeram na reunião de 22/09. Ficam fechadas:
+          quem já entendeu passa direto, quem tem a dúvida acha sozinho. */}
+      <section className="bg-[#0B1733] py-11">
+        <div className="mx-auto max-w-[470px] px-6">
+          <p className="mb-3 text-[0.64rem] font-extrabold uppercase tracking-[0.22em] text-[#E8B44C]">
+            O que os pais perguntaram
+          </p>
+          <h2 className="mb-5 text-[clamp(1.5rem,6.2vw,1.95rem)] font-extrabold leading-tight tracking-[-0.03em] text-balance">
+            As três dúvidas que sempre aparecem
+          </h2>
+
+          {PERGUNTAS.map((p) => (
+            <details
+              key={p.pergunta}
+              className="group border-b border-[#FAF7F0]/12 last:border-b-0"
+            >
+              <summary className="flex min-h-[3.5rem] cursor-pointer list-none items-center gap-3 py-3.5 [&::-webkit-details-marker]:hidden">
+                <span className="flex-1 text-[1rem] font-bold text-[#FAF7F0]">
+                  {p.pergunta}
+                </span>
+                <span
+                  aria-hidden
+                  className="shrink-0 text-[1.3rem] font-extrabold leading-none text-[#E8B44C] transition-transform duration-200 group-open:rotate-45"
+                >
+                  +
+                </span>
+              </summary>
+              <p className="pb-4 text-[0.93rem] leading-relaxed text-[#FAF7F0]/72">
+                {p.resposta}
+              </p>
+            </details>
+          ))}
         </div>
       </section>
 

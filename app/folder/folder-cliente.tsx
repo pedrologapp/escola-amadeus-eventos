@@ -15,6 +15,7 @@ import {
   FRASE_ESPORTES,
   INICIO_TABELA_CHEIA,
   PERCURSO,
+  PERGUNTAS,
   PRAZO_PROMOCAO,
   PROGRAMAS,
   SEGMENTOS,
@@ -609,6 +610,42 @@ function SecaoLivro({ aoTocar }: { aoTocar: (alvo: string) => void }) {
             </span>
             <Seta cor="#B9862F" />
           </Link>
+        </div>
+      </div>
+
+      {/* As dúvidas que os pais trouxeram na reunião. Ficam fechadas pra não
+          ocupar a tela de quem já entendeu. */}
+      <div className="mt-6">
+        <p className="text-[0.68rem] font-semibold uppercase tracking-[0.17em] text-[#7A5310]">
+          As dúvidas mais comuns
+        </p>
+        <div className="mt-2">
+          {PERGUNTAS.map((p) => (
+            <details key={p.pergunta} className="group border-b border-[#17223D]/12">
+              <summary className="flex min-h-[3.25rem] cursor-pointer list-none items-center gap-3 py-3 [&::-webkit-details-marker]:hidden">
+                <span className="flex-1 text-[0.95rem] font-semibold text-[#17223D]">
+                  {p.pergunta}
+                </span>
+                <svg
+                  className="shrink-0 transition-transform duration-200 group-open:rotate-45"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#B9862F"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  aria-hidden
+                >
+                  <path d="M12 5v14" />
+                  <path d="M5 12h14" />
+                </svg>
+              </summary>
+              <p className="pb-4 text-[0.85rem] leading-relaxed text-[#5A657F]">
+                {p.resposta}
+              </p>
+            </details>
+          ))}
         </div>
       </div>
 

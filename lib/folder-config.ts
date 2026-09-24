@@ -264,6 +264,32 @@ export const CARTOES_LIVRO: CartaoLivro[] = [
   },
 ];
 
+/**
+ * As três perguntas que os pais fizeram na reunião de 22/09. Ficam recolhidas
+ * e abrem ao toque.
+ *
+ * A do tablet é respondida sem prometer que a plataforma roda nele, porque a
+ * documentação da Geekie diz que o aplicativo não funciona em tablet e o
+ * aparelho da escola ainda não foi confirmado. Ver Geekie_Pesquisa_Densa.md.
+ */
+export const PERGUNTAS: { pergunta: string; resposta: string }[] = [
+  {
+    pergunta: "Vai deixar de ser no livro?",
+    resposta:
+      "Não. O livro continua sendo a base em todas as etapas. No Infantil é tudo impresso. No Fundamental 1 o impresso é o centro do estudo e quem usa a plataforma em aula é o professor. No Fundamental 2 cada matéria tem o seu livro.",
+  },
+  {
+    pergunta: "Vou ter que deixar meu filho com o celular?",
+    resposta:
+      "Não. Do Infantil ao 5º ano o celular nem entra na conversa. A própria Geekie só libera o acesso por celular a partir do 6º ano, e mesmo lá a plataforma funciona no computador. Celular é opção da família, nunca exigência da escola.",
+  },
+  {
+    pergunta: "Vai ser tudo no tablet?",
+    resposta:
+      "Não. O tablet entra em aulas escolhidas, com o professor junto, e fica na escola. Em casa e na maior parte das aulas, o estudo continua sendo no livro.",
+  },
+];
+
 /** A aba Comunicação. O AgendaEdu NÃO trata de financeiro. */
 export type IconeComunicacao = "agenda" | "evento" | "recado" | "direcao";
 
