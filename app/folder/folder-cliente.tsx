@@ -252,7 +252,7 @@ function Capa({
           </h1>
           <button
             type="button"
-            onClick={() => aoTocar("segmento")}
+            onClick={() => aoTocar("manifesto")}
             className="flex min-h-[3.5rem] items-center gap-2 rounded-full bg-[#FAF7F0] px-8 text-base font-bold text-[#0B1733] transition-transform active:scale-[0.98]"
           >
             Descubra aqui
@@ -338,10 +338,13 @@ function Bolha({
 function Secao({
   id,
   escuro = false,
+  fundo,
   children,
 }: {
   id: string;
   escuro?: boolean;
+  /** Fundo próprio, pra uma tela poder continuar o visual da anterior. */
+  fundo?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -350,6 +353,7 @@ function Secao({
       className={`flex min-h-[100svh] pb-12 pt-16 ${
         escuro ? "bg-[#05060C] text-[#FAF7F0]" : "bg-[#FAF7F0] text-[#17223D]"
       }`}
+      style={fundo ? { background: fundo } : undefined}
     >
       <div className="mx-auto flex w-full max-w-[470px] flex-col px-6">{children}</div>
     </section>
@@ -414,15 +418,23 @@ function SecaoManifesto({ aoTocar }: { aoTocar: (alvo: string) => void }) {
   if (!MANIFESTO) return null;
 
   return (
-    <Secao id="manifesto" escuro>
+    <Secao
+      id="manifesto"
+      escuro
+      fundo="radial-gradient(130% 80% at 50% 8%, #16224A 0%, #0A0D18 55%, #05060C 100%)"
+    >
       {/* Título, vídeo e botão andam juntos no meio da tela. Se o vídeo
           esticasse pra ocupar a altura toda, sobraria um vão preto enorme
           em cima e embaixo dele. */}
       <div className="flex flex-1 flex-col justify-center">
-        <Etiqueta escuro>Antes de tudo</Etiqueta>
+        <Etiqueta escuro>Nosso manifesto</Etiqueta>
         <h2 className="mt-2 font-serif text-[2.1rem] font-semibold leading-[1.06] text-[#FAF7F0]">
           Cada aluno do Amadeus tem...
         </h2>
+        <p className="mt-3 text-[0.95rem] leading-relaxed text-[#FAF7F0]/68">
+          Um minuto e meio para você sentir a escola antes de ver qualquer
+          número.
+        </p>
 
         {/* poster evita o retângulo preto antes de o pai apertar play, e
             preload="none" não baixa os 13 MB de quem só vai passar direto. */}
@@ -435,7 +447,12 @@ function SecaoManifesto({ aoTocar }: { aoTocar: (alvo: string) => void }) {
           className="mt-5 aspect-video w-full rounded-[22px] border border-[#FAF7F0]/12 bg-[#0B1733] object-cover"
         />
 
-        <Continuar alvo="segmento" escuro aoTocar={aoTocar} rotulo="Comece por aqui" />
+        <Continuar
+          alvo="segmento"
+          escuro
+          aoTocar={aoTocar}
+          rotulo="Agora, a página do seu filho"
+        />
       </div>
     </Secao>
   );
@@ -524,6 +541,10 @@ function SecaoVideo({
   aoTocar: (alvo: string) => void;
 }) {
   const trilho = useRef<HTMLDivElement>(null);
+  /* Enquanto o carrossel desliza por ordem nossa, o detector de posição fica
+     mudo: senão ele lê a posição no meio do caminho e desfaz a escolha que
+     o pai acabou de fazer em outra tela. */
+  const rolandoSozinho = useRef(false);
   const atual = segmento ?? "infantil";
 
   /* Quando a etapa é escolhida em outro lugar (na pergunta, por exemplo),
@@ -533,15 +554,20 @@ function SecaoVideo({
     if (!caixa) return;
     const alvo = caixa.children[indiceSegmento(atual)] as HTMLElement | undefined;
     if (!alvo) return;
+    rolandoSozinho.current = true;
     caixa.scrollTo({
       left: alvo.offsetLeft - (caixa.clientWidth - alvo.clientWidth) / 2,
       behavior: "smooth",
     });
+    const solta = setTimeout(() => {
+      rolandoSozinho.current = false;
+    }, 800);
+    return () => clearTimeout(solta);
   }, [atual]);
 
   function aoRolar() {
     const caixa = trilho.current;
-    if (!caixa) return;
+    if (!caixa || rolandoSozinho.current) return;
     const meio = caixa.scrollLeft + caixa.clientWidth / 2;
     let maisPerto = 0;
     let menorDistancia = Infinity;
