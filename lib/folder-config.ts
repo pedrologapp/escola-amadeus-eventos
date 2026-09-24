@@ -173,12 +173,19 @@ export const ESPACOS: Peca[] = [
 ];
 
 /**
- * Os cartões da aba "O Livro", que o pai arrasta pro lado. Cada um tem um
- * formato diferente de propósito: número grande, relatório, metades, chips.
- * A ideia é ele entender de olhada, sem parar pra ler.
+ * Os cartões da aba "O Livro".
+ *
+ * A ordem é de venda, não de explicação: primeiro a dor que o pai já sente,
+ * depois o que a coisa é, depois como funciona, depois o que ELE ganha, e só
+ * no fim a prova. Quem parar no meio já saiu entendendo.
+ *
+ * A palavra "impresso" não aparece em lugar nenhum: para quem nunca ouviu
+ * falar de Geekie, ela sugere que existe uma versão que não é livro, e
+ * confunde mais do que esclarece.
  */
 export type CartaoLivro =
-  | { tipo: "metades"; etiqueta: string; impresso: string; digital: string }
+  | { tipo: "gancho"; etiqueta: string; pergunta: string; resposta: string }
+  | { tipo: "oquee"; etiqueta: string; titulo: string; pontos: string[] }
   | {
       tipo: "relatorio";
       etiqueta: string;
@@ -205,31 +212,37 @@ export type CartaoLivro =
       tipo: "segmentos";
       etiqueta: string;
       titulo: string;
-      linhas: { etapa: string; texto: string }[];
+      linhas: { etapa: string; idade: string; texto: string }[];
     };
 
 export const CARTOES_LIVRO: CartaoLivro[] = [
   {
-    tipo: "metades",
-    etiqueta: "O que é",
-    impresso: "O livro continua na mochila. É nele que ele escreve e resolve.",
-    digital: "Uma plataforma que faz o que o papel sozinho não consegue.",
+    tipo: "gancho",
+    etiqueta: "Comece por aqui",
+    pergunta: "Você sabe como seu filho foi essa semana na escola?",
+    resposta:
+      "Hoje a resposta chega no boletim. E quando ela chega, o bimestre já acabou.",
   },
   {
-    tipo: "segmentos",
-    etiqueta: "Não é igual para todo mundo",
-    titulo: "Muda conforme a idade",
-    linhas: [
-      { etapa: "Infantil", texto: "Tudo impresso. Nessa idade não tem tela." },
-      { etapa: "Fund. 1", texto: "O livro é a base. Quem usa a plataforma é o professor." },
-      { etapa: "Fund. 2", texto: "Ele entra sozinho e tem plano de estudos toda semana." },
+    tipo: "oquee",
+    etiqueta: "O que é, sem enrolação",
+    titulo: "Geekie é o material didático novo da escola",
+    pontos: [
+      "Um livro para cada matéria, que continua indo na mochila todo dia.",
+      "Junto com o livro vem um sistema, que a escola usa em sala.",
+      "É de uma empresa brasileira de educação, usada por escolas do país inteiro.",
     ],
   },
   {
+    tipo: "numero",
+    etiqueta: "O que muda para o seu filho",
+    numero: "150",
+    unidade: "mil questões",
+    frase:
+      "Ele responde, vê na hora se acertou, e quando erra muito num assunto o material volta nesse ponto em vez de empurrar ele pra frente.",
+  },
+  {
     tipo: "relatorio",
-    /* O canal é e-mail, toda sexta. Conferido na central de ajuda da Geekie
-       em 24/09/2026: o relatório chama Família Conectada e não vai por
-       WhatsApp. Ver docs/EventoRematricula/Geekie_Pesquisa_Densa.md */
     etiqueta: "O que muda para você",
     titulo: "Toda sexta, no seu e-mail",
     materias: [
@@ -241,25 +254,44 @@ export const CARTOES_LIVRO: CartaoLivro[] = [
       "É o Relatório Família Conectada. Chega sozinho, e dá pra cadastrar até quatro responsáveis.",
   },
   {
-    tipo: "numero",
-    etiqueta: "O que muda para o seu filho",
-    numero: "150",
-    unidade: "mil questões",
-    frase: "Se ele travar num assunto, o material volta nesse ponto.",
+    tipo: "segmentos",
+    etiqueta: "E na idade do seu filho?",
+    titulo: "Cada etapa ganha uma coisa diferente",
+    linhas: [
+      {
+        etapa: "Educação Infantil",
+        idade: "2 a 5 anos",
+        texto:
+          "Um mês inteiro investigando uma pergunta só, com rotinas de pensamento criadas em Harvard. E você recebe fotos do que ela fez, não nota.",
+      },
+      {
+        etapa: "Fundamental 1",
+        idade: "1º ao 5º ano",
+        texto:
+          "O livro é o centro da aula. A professora usa o sistema para enxergar quem ficou para trás antes da prova, não depois.",
+      },
+      {
+        etapa: "Fundamental 2",
+        idade: "6º ao 9º ano",
+        texto:
+          "Ele entra sozinho e recebe toda semana um plano de estudos montado a partir dos próprios erros.",
+      },
+    ],
   },
   {
     tipo: "chips",
-    etiqueta: "Novidade em 2027",
-    titulo: "Tablets na sala",
+    etiqueta: "E tem mais uma novidade",
+    titulo: "Tablets chegam à sala",
     destaque: "4º ao 9º",
     chips: ["Você não compra nada", "Ficam na escola", "Não é todo dia"],
   },
   {
     tipo: "numero",
-    etiqueta: "Por que escolhemos esse",
+    etiqueta: "Por que o Amadeus escolheu esse",
     numero: "130",
     unidade: "mil famílias avaliaram",
-    frase: "Entre todos os materiais do país, o Geekie foi o mais bem avaliado.",
+    frase:
+      "Entre todos os materiais didáticos do país, o Geekie foi o mais bem avaliado pelas famílias. Foi por isso que a escola escolheu ele.",
     nota: "Diagnóstico Nacional da Educação, do Escolas Exponenciais. Noticiado pela Folha de S.Paulo em agosto de 2021.",
   },
 ];

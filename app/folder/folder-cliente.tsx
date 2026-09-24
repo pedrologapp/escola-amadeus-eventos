@@ -581,14 +581,20 @@ function SecaoLivro({ aoTocar }: { aoTocar: (alvo: string) => void }) {
   return (
     <Secao id="livro">
       <Etiqueta>O Livro</Etiqueta>
-      <h2 className="mt-2 font-serif text-[1.6rem] font-semibold leading-tight text-[#17223D]">
-        Em 2027 o livro do seu filho é
+      <h2 className="mt-2 font-serif text-[1.55rem] font-semibold leading-tight text-[#17223D]">
+        Em 2027 o material do seu filho muda. O nome dele é
       </h2>
       <p className="-mt-1 font-serif text-[3.6rem] font-semibold leading-[0.95] tracking-tight text-[#B9862F]">
         Geekie
       </p>
+      {/* O pai está vendo esse nome pela primeira vez. Antes de qualquer
+          detalhe, ele precisa saber que continua sendo livro. */}
+      <p className="mt-2 text-[0.95rem] leading-relaxed text-[#5A657F]">
+        Se você nunca ouviu falar, tudo bem. Em um minuto você entende o que é, e
+        por que a escola escolheu ele.
+      </p>
 
-      <div className="mt-3 flex items-center gap-2 text-[0.8rem] font-semibold text-[#5A657F]">
+      <div className="mt-4 flex items-center gap-2 text-[0.8rem] font-semibold text-[#5A657F]">
         <span>Arraste para o lado</span>
         <SetaLado cor="#B9862F" direita />
       </div>
@@ -671,27 +677,36 @@ function CartaoDoLivro({ cartao, escuro }: { cartao: CartaoLivro; escuro: boolea
         {cartao.etiqueta}
       </span>
 
-      {cartao.tipo === "metades" ? (
-        <div className="mt-4 flex flex-1 flex-col justify-center gap-3">
-          <div className="rounded-2xl bg-[#17223D]/[0.07] p-4">
-            <span className="block text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#B9862F]">
-              Metade impressa
-            </span>
-            <span className="mt-1 block text-[0.85rem] leading-relaxed text-[#5A657F]">
-              {cartao.impresso}
-            </span>
-          </div>
-          <div className="rounded-2xl bg-[#0B1733] p-4">
-            <span className="block text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#E8B44C]">
-              Metade digital
-            </span>
-            <span className="mt-1 block text-[0.85rem] leading-relaxed text-[#FAF7F0]/75">
-              {cartao.digital}
-            </span>
-          </div>
+      {cartao.tipo === "gancho" ? (
+        <div className="flex flex-1 flex-col justify-center">
+          <span className="font-serif text-[1.75rem] font-semibold leading-[1.12]">
+            {cartao.pergunta}
+          </span>
+          <span className={`mt-4 text-[0.92rem] leading-relaxed ${apoio}`}>
+            {cartao.resposta}
+          </span>
         </div>
       ) : null}
 
+      {cartao.tipo === "oquee" ? (
+        <div className="mt-3 flex flex-1 flex-col">
+          <span className="text-[1.15rem] font-bold leading-snug">{cartao.titulo}</span>
+          <ul className="mt-4 flex flex-col gap-3">
+            {cartao.pontos.map((ponto) => (
+              <li key={ponto} className="flex gap-2.5">
+                <span
+                  className={`mt-[0.45rem] size-[5px] shrink-0 rounded-full ${
+                    escuro ? "bg-[#E8B44C]" : "bg-[#B9862F]"
+                  }`}
+                />
+                <span className={`flex-1 text-[0.85rem] leading-relaxed ${apoio}`}>
+                  {ponto}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       {cartao.tipo === "relatorio" ? (
         <div className="mt-3 flex flex-1 flex-col">
           <span className="text-[1.15rem] font-bold leading-snug">{cartao.titulo}</span>
@@ -746,15 +761,16 @@ function CartaoDoLivro({ cartao, escuro }: { cartao: CartaoLivro; escuro: boolea
       {cartao.tipo === "segmentos" ? (
         <div className="mt-3 flex flex-1 flex-col">
           <span className="text-[1.15rem] font-bold leading-snug">{cartao.titulo}</span>
-          <div className="mt-4 flex flex-col gap-3">
+          <div className="mt-4 flex flex-col gap-4">
             {cartao.linhas.map((linha) => (
               <span key={linha.etapa} className="block">
-                <span
-                  className={`block text-[0.68rem] font-bold uppercase tracking-[0.14em] ${etiqueta}`}
-                >
-                  {linha.etapa}
+                <span className="flex items-baseline gap-2">
+                  <span className={`text-[0.82rem] font-bold ${etiqueta}`}>
+                    {linha.etapa}
+                  </span>
+                  <span className={`text-[0.66rem] ${apoio}`}>{linha.idade}</span>
                 </span>
-                <span className={`mt-0.5 block text-[0.85rem] leading-relaxed ${apoio}`}>
+                <span className={`mt-1 block text-[0.82rem] leading-relaxed ${apoio}`}>
                   {linha.texto}
                 </span>
               </span>
