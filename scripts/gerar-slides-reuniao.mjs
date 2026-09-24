@@ -17,6 +17,16 @@ import path from "node:path";
 const saida = process.argv[2] ?? ".";
 const LADO = "200mm"; // 200x200mm: projetado numa tela de 2m, cada mm vira 1cm
 
+/* O símbolo vai embutido no HTML: assim o arquivo abre em qualquer máquina,
+   sem depender da pasta public do projeto estar do lado. */
+const MARCA =
+  "data:image/png;base64," +
+  fs
+    .readFileSync(
+      path.join(import.meta.dirname, "..", "public", "folder", "marca-globo.png"),
+    )
+    .toString("base64");
+
 /* -------------------------------------------------------------- conteúdo */
 
 const GISLENE = {
@@ -24,6 +34,11 @@ const GISLENE = {
   titulo: "Gislene - Educação Infantil",
   etiquetaPadrao: "Educação Infantil",
   slides: [
+    {
+      tipo: "abertura",
+      nome: "Gislene Sátiro",
+      cargo: "Coordenadora do Infantil",
+    },
     {
       tipo: "dialogo",
       etiqueta: "Educação Infantil",
@@ -76,6 +91,12 @@ const ADRIANA = {
   titulo: "Adriana - Fundamental 1 e 2",
   etiquetaPadrao: "Fundamental 1 e 2",
   slides: [
+    {
+      tipo: "abertura",
+      nome: "Adriana Alves",
+      cargo: "Coordenadora Pedagógica",
+      cargo2: "Fundamental 1 e Fundamental 2",
+    },
     {
       tipo: "dialogo",
       etiqueta: "Fundamental 1 e 2",
@@ -204,6 +225,23 @@ const CSS = `
   .marcador{display:flex;align-items:center;gap:5mm;font-size:19pt;font-weight:600;color:rgba(250,247,240,.84)}
   .ponto{width:3.5mm;height:3.5mm;border-radius:50%;background:#E8B44C;flex:0 0 auto}
 
+  /* abertura: só o símbolo, o nome e o cargo. É a tela que fica no telão
+     enquanto ela sobe e enquanto a sala se acomoda, então respira mais. */
+  .abertura{align-items:center;text-align:center}
+  .abertura .marca{width:52mm;height:auto;display:block}
+  .abertura .nome{
+    margin-top:16mm;font-size:46pt;font-weight:800;
+    letter-spacing:-.035em;line-height:1;color:#FAF7F0;
+  }
+  .abertura .fio{
+    margin-top:9mm;width:26mm;height:.9mm;border-radius:1mm;background:#E8B44C;
+  }
+  .abertura .cargo{
+    margin-top:9mm;font-size:17pt;font-weight:800;letter-spacing:.2em;
+    text-transform:uppercase;color:#E8B44C;line-height:1.7;
+  }
+  .abertura .cargo span{display:block;color:rgba(232,180,76,.78)}
+
   .rodape{
     display:flex;align-items:center;gap:5mm;
     font-size:11pt;font-weight:800;letter-spacing:.2em;text-transform:uppercase;
@@ -222,6 +260,15 @@ function esc(s) {
 function montarSlide(s, etiquetaPadrao) {
   const etiqueta = s.etiqueta ?? etiquetaPadrao;
   let corpo = "";
+
+  if (s.tipo === "abertura") {
+    const segunda = s.cargo2 ? `<span>${esc(s.cargo2)}</span>` : "";
+    corpo = `
+      <img class="marca" src="${MARCA}" alt="Centro Educacional Amadeus">
+      <p class="nome">${esc(s.nome)}</p>
+      <span class="fio"></span>
+      <p class="cargo">${esc(s.cargo)}${segunda}</p>`;
+  }
 
   if (s.tipo === "dialogo") {
     corpo = s.linhas.map((l) => `<p class="fala">${esc(l)}</p>`).join("\n");
@@ -259,12 +306,13 @@ function montarSlide(s, etiquetaPadrao) {
   }
 
   const nota = s.nota ? `<p class="nota">${esc(s.nota)}</p>` : "";
-  const topo =
-    s.tipo === "fecho" ? "" : `<p class="etiqueta">${esc(etiqueta)}</p>`;
+  const semEtiqueta = s.tipo === "fecho" || s.tipo === "abertura";
+  const topo = semEtiqueta ? "" : `<p class="etiqueta">${esc(etiqueta)}</p>`;
+  const classe = s.tipo === "abertura" ? "corpo abertura" : "corpo";
 
   return `  <section class="slide">
     ${topo}
-    <div class="corpo">
+    <div class="${classe}">
       ${corpo}
       ${nota}
     </div>
