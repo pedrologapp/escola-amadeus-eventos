@@ -8,6 +8,10 @@
  * publicou no Instagram (docs/EventoRematricula/pogramas). As fotos saíram
  * desses cards, recortadas por scripts/recortar-fotos-folder.mjs para tirar o
  * texto gravado na imagem.
+ *
+ * DUAS EXCEÇÕES: socioemocional e financeira são do Pexels (licença livre para
+ * uso comercial, sem exigir crédito), porque os cards cobriam as pessoas com
+ * caixa de texto. Trocar assim que a escola tiver foto própria.
  */
 
 export type SegmentoId = "infantil" | "f1" | "f2";
@@ -104,7 +108,7 @@ export const PROGRAMAS: Peca[] = [
     resumo:
       "Desenvolver habilidades como empatia, autonomia, liderança e equilíbrio emocional.",
     nota: "Infantil, Fundamental 1 e 2",
-    foto: { src: "/folder/programas/socioemocional.webp", w: 365, h: 720 },
+    foto: { src: "/folder/programas/socioemocional.webp", w: 600, h: 700 },
     alto: true,
   },
   {
@@ -121,7 +125,7 @@ export const PROGRAMAS: Peca[] = [
     resumo:
       "Compreender através da lógica, pensamento crítico e comportamental como realizar organização financeira para atingir seus próprios objetivos.",
     nota: "Fundamental 1 e 2",
-    foto: { src: "/folder/programas/financeira.webp", w: 510, h: 420 },
+    foto: { src: "/folder/programas/financeira.webp", w: 900, h: 633 },
   },
   {
     nome: "Educação Bilíngue",
