@@ -308,7 +308,7 @@ export const PERGUNTAS: { pergunta: string; resposta: string }[] = [
   {
     pergunta: "Vai deixar de ser no livro?",
     resposta:
-      "Não. O livro continua sendo a base em todas as etapas. No Infantil é tudo impresso. No Fundamental 1 o impresso é o centro do estudo e quem usa a plataforma em aula é o professor. No Fundamental 2 cada matéria tem o seu livro.",
+      "Não. O livro continua sendo a base em todas as etapas. No Infantil é tudo no papel. No Fundamental 1 o livro é o centro da aula e quem usa o sistema é o professor. No Fundamental 2 cada matéria tem o seu livro.",
   },
   {
     pergunta: "Vou ter que deixar meu filho com o celular?",
