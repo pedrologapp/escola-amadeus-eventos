@@ -105,7 +105,11 @@ const CSS = `
   }
   .topo-frente .selo span{display:block;color:#9AA3B4}
 
-  .frente h1{margin-top:6mm;font-size:29pt;line-height:1.04;color:#17223D}
+  .frente .etapas{
+    margin-top:7mm;font-size:8.6pt;font-weight:800;letter-spacing:.24em;
+    text-transform:uppercase;color:#B9862F;
+  }
+  .frente h1{margin-top:2.5mm;font-size:29pt;line-height:1.04;color:#17223D}
   .frente h1 em{font-style:normal;color:#B9862F}
   .frente .linha-fina{
     margin-top:3.5mm;font-size:11pt;font-weight:500;line-height:1.45;
@@ -337,6 +341,7 @@ function frenteFotos() {
       <span class="selo">Matrículas<span>2027</span></span>
     </div>
 
+    <p class="etapas">Da Educação Infantil ao Fundamental 2</p>
     <h1 class="serifa">Isso é o <em>Amadeus.</em></h1>
     <p class="linha-fina">
       Tem criança vivendo cada uma dessas coisas hoje, nesta escola.
