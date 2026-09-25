@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Marca da Experiência Amadeus - três opções</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --creme:#FAF7F0;
+    --azul:#083078;
+    --ouro:#FFB000;
+    --ouro-escuro:#8A5600;
+    --mut:#9BA4B8;
+  }
+  body{
+    font-family:"SF Pro Display","Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    background:var(--creme);width:900px;
+  }
+
+  .caso{padding:34px 40px 30px}
+  .etiqueta{
+    font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+    color:#6B7488;margin-bottom:4px;
+  }
+  .nota{font-size:12px;color:#6B7488;margin-top:10px}
+
+  /* a linha fina acima da marca, igual à .sobrenome da Arena */
+  .sobrenome{
+    font-size:12.5px;letter-spacing:.42em;text-transform:uppercase;font-weight:700;
+    color:#6B7488;text-align:center;
+  }
+
+  /* o tratamento da Arena: peso 800, aperto forte, linhas quase encostadas */
+  .wordmark{
+    font-weight:800;letter-spacing:-.055em;line-height:.82;
+    margin:16px 0 0;text-align:center;
+  }
+  .wordmark b{display:block;font-weight:800}
+  .wordmark .um{font-size:44px;letter-spacing:.01em;font-weight:600}
+  .wordmark .dois{font-size:112px}
+
+  /* ---- A: bloco escuro ---- */
+  .a{background:var(--azul);border-radius:14px;padding:30px 30px 34px}
+  .a .sobrenome{color:rgba(250,247,240,.62)}
+  .a .um{color:var(--creme)}
+  .a .dois{color:var(--ouro)}
+
+  /* ---- B: duas cores sobre o creme ---- */
+  .b .um{color:var(--azul)}
+  .b .dois{color:var(--ouro-escuro)}
+
+  /* ---- C: monocromática ---- */
+  .c .um{color:var(--azul);opacity:.72}
+  .c .dois{color:var(--azul)}
+  .fio{width:64px;height:4px;background:var(--ouro);border-radius:4px;margin:18px auto 0}
+
+  .divisa{height:1px;background:rgba(11,26,58,.12);margin:0 40px}
+</style>
+</head>
+<body>
+
+  <div class="caso">
+    <p class="etiqueta">Opção A &middot; bloco escuro</p>
+    <div class="a">
+      <div class="sobrenome">Você e sua família são nossos convidados</div>
+      <h1 class="wordmark"><b class="um">Experiência</b><b class="dois">AMADEUS</b></h1>
+    </div>
+    <p class="nota">Dourado #FFB000 sobre o azul: 6,73:1. É a única em que o dourado da marca aparece de verdade.</p>
+  </div>
+
+  <div class="divisa"></div>
+
+  <div class="caso b">
+    <p class="etiqueta">Opção B &middot; duas cores sobre o creme</p>
+    <div class="sobrenome">Você e sua família são nossos convidados</div>
+    <h1 class="wordmark"><b class="um">Experiência</b><b class="dois">AMADEUS</b></h1>
+    <p class="nota">Dourado escurecido #8A5600 sobre o creme: 5,75:1. Passa, mas vira âmbar queimado.</p>
+  </div>
+
+  <div class="divisa"></div>
+
+  <div class="caso c">
+    <p class="etiqueta">Opção C &middot; monocromática</p>
+    <div class="sobrenome">Você e sua família são nossos convidados</div>
+    <h1 class="wordmark"><b class="um">Experiência</b><b class="dois">AMADEUS</b></h1>
+    <span class="fio"></span>
+    <p class="nota">Azul #083078 nas duas palavras, separadas por peso e tamanho. O dourado fica só no filete.</p>
+  </div>
+
+</body>
+</html>
