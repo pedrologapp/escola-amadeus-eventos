@@ -174,24 +174,21 @@ const GRACA = {
       destaque: "nós somos.",
     },
     {
-      tipo: "dialogo",
+      // Une a sala em vez de separar em veteranos e novatos: o que todos
+      // ali têm em comum é maior do que há quanto tempo cada um está.
+      tipo: "frase",
       etiqueta: "Quem está aqui hoje",
-      pergunta: "Tem gente aqui há quinze anos.",
-      resposta: "E tem gente que entrou esse ano.",
+      frase: "Todo mundo nesta sala tomou a mesma decisão:",
+      destaque: "confiar um filho a outra pessoa.",
     },
     {
-      // O miolo da fala, cinco dos quinze minutos. As três linhas são
-      // memórias da escola e só a direção pode preenchê-las: cada uma
-      // precisa ser uma mudança que incomodou na época e que hoje ninguém
-      // imagina a escola sem.
-      tipo: "cartoes",
-      etiqueta: "Trinta anos, três mudanças",
-      cartoes: [
-        { texto: "1. a completar com a direção" },
-        { texto: "2. a completar com a direção" },
-        { texto: "3. a completar com a direção" },
-      ],
-      nota: "Cada uma precisa ter duas coisas ao mesmo tempo: ter incomodado na época, e hoje ninguém imaginar a escola sem ela.",
+      // Uma frase só, e a história vai na voz dela. Lista numerada na tela
+      // é pauta de reunião de trabalho, e ainda jogava dever de casa para a
+      // direção. Assim ela escolhe no dia a mudança que lembra melhor.
+      tipo: "frase",
+      etiqueta: "Não é a primeira vez",
+      frase: "A gente já trocou",
+      destaque: "de material antes.",
     },
     {
       tipo: "frase",
@@ -201,13 +198,14 @@ const GRACA = {
       nota: "Escola que não muda em trinta anos não é escola tradicional. É escola parada.",
     },
     {
-      tipo: "cartoes",
-      etiqueta: "As duas perguntas",
-      cartoes: [
-        { texto: "“Quanto isso vai custar?”" },
-        { texto: "“Meu filho vai ser cobaia?”" },
-      ],
-      nota: "As duas têm resposta, e as duas vão ser respondidas hoje, com o valor por escrito.",
+      // O medo do "meu filho vai ser cobaia" é o único dos dois que ela pode
+      // responder: o outro é do fechamento financeiro. E a resposta não vai
+      // projetada como pergunta, porque medo escrito na parede fica de pé
+      // por cinco minutos e ganha autoridade. Ela fala, a tela responde.
+      tipo: "frase",
+      etiqueta: "O que não muda",
+      frase: "A gente não muda nada",
+      destaque: "sem ter certeza.",
     },
     {
       tipo: "fecho",

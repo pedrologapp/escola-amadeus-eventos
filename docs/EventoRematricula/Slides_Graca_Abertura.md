@@ -54,10 +54,10 @@ O RELÓGIO DOS 15 MINUTOS
 
     0:00   slide 0    ela sobe, o telão mostra nome e cargo
     0:30   slide 1    recolhe o vídeo
-    2:00   slide 2    quem está na sala
-    4:00   slide 3    TRÊS MUDANÇAS EM TRINTA ANOS     <- o miolo, 5 min
+    2:00   slide 2    o que todo mundo aqui tem em comum
+    4:00   slide 3    NÃO É A PRIMEIRA VEZ             <- o miolo, 5 min
     9:00   slide 4    o motivo que nunca mudou
-   11:00   slide 5    as duas perguntas
+   11:00   slide 5    o que não muda
    13:30   slide 6    a entrega
    15:00   sai
 
@@ -102,60 +102,52 @@ clima em vez de desperdiçá-lo.
 
 
 --------------------------------------------------------------------
-SLIDE 2 - Quem está na sala                                  (2m)
+SLIDE 2 - O que todo mundo aqui tem em comum               (2m)
 --------------------------------------------------------------------
 
 Na tela:
 
-    Tem gente aqui
-    há quinze anos.
-    E tem gente que entrou
-    esse ano.
+    Todo mundo nesta sala
+    tomou a mesma decisão:
+    confiar um filho
+    a outra pessoa.
 
-Fala: reconhece os dois públicos em voz alta. Para o veterano é gratidão.
-Para o novato é pertencimento imediato, porque ele acabou de ser citado no
-palco. Esta é a única hora do dia em que a família nova é nomeada.
+Fala: ela nomeia o que une a sala. Não importa se a família está há quinze
+anos ou entrou esse ano: todas fizeram a mesma coisa, que é entregar um
+filho para outra pessoa cuidar por seis horas por dia. É a decisão mais
+pesada que um pai toma fora de casa.
 
-  >>> NÚMERO REAL: eu procurei no sistema e não dá para calcular. A tabela
-      de alunos não guarda data de matrícula, e só quatro alunos têm o campo
-      de matrícula preenchido, no formato 2330.2026. Se a secretaria ou o
-      Activesoft tiverem quantas famílias estão há mais de dez anos, vale
-      dizer o número. Número concreto vale muito mais que "muitos de vocês".
+  >>> A versão anterior separava veteranos de novatos. Isso criava dois
+      times numa hora em que a sala precisa ser uma coisa só. Unir é mais
+      forte, e o novato continua se sentindo incluído, sem ser apontado.
 
 
 --------------------------------------------------------------------
-SLIDE 3 - Três mudanças em trinta anos          (5m, o miolo da fala)
+SLIDE 3 - Não é a primeira vez              (5m, o miolo da fala)
 --------------------------------------------------------------------
 
-Na tela, três linhas curtas, uma para cada mudança:
+Na tela, uma frase só:
 
-    1. ______________________
-    2. ______________________
-    3. ______________________
+    A gente já trocou
+    de material antes.
 
-  >>> ESTE É O ÚNICO PEDAÇO QUE EU NÃO POSSO ESCREVER, e é de propósito:
-      são memórias da escola, e inventar história de trinta anos seria a
-      pior coisa que eu poderia fazer aqui.
+Fala: aqui ela conta UMA história. Uma vez em que a escola trocou de
+material didático, ou mudou alguma coisa grande, e que na época incomodou.
+Quem reclamou, o que deu trabalho, quanto custou. E onde isso foi parar.
 
-COMO ESCOLHER AS TRÊS. Não pode ser qualquer mudança. Cada uma precisa ter
-as duas características abaixo ao mesmo tempo:
+COMO ESCOLHER A HISTÓRIA. Ela precisa ter as duas coisas ao mesmo tempo:
 
-    a) Na época, incomodou alguém. Pai reclamou, professor duvidou, deu
-       trabalho, custou dinheiro.
-    b) Hoje, ninguém imagina a escola sem aquilo.
+    a) na época, incomodou alguém;
+    b) hoje, ninguém imagina a escola sem aquilo.
 
-É essa combinação que faz o argumento funcionar. Uma mudança que foi fácil
-não prova nada. Uma mudança que deu trabalho e hoje é óbvia prova tudo.
+Mudança que foi fácil não prova nada. Mudança que deu trabalho e hoje é
+óbvia prova tudo.
 
-Exemplos do TIPO de coisa que costuma servir, só para ilustrar o formato:
-a primeira vez que a escola mudou de material didático; quando entrou
-informática ou internet; quando mudou de prédio; quando criou o Fundamental
-2; quando começou o Arbória; quando climatizou as salas.
-
-Fala: ela conta as três como história, com nome de quem reclamou se for o
-caso, e rindo do incômodo de cada uma. É aqui que os quinze minutos passam
-sem ninguém olhar o relógio.
-
+  >>> A versão anterior era uma lista de três mudanças numeradas na tela.
+      Lista numerada é pauta de reunião de trabalho, não é fala de abertura,
+      e ainda obrigava a direção a fechar três histórias antes do dia.
+      Uma história bem contada vale mais que três resumidas, e essa ela
+      escolhe na hora, pela que lembrar melhor.
 
 --------------------------------------------------------------------
 SLIDE 4 - O motivo que nunca mudou                           (2m)
@@ -178,29 +170,30 @@ risco e vira consequência.
 
 
 --------------------------------------------------------------------
-SLIDE 5 - As duas perguntas                                  (2m30)
+SLIDE 5 - O que não muda                                     (2m30)
 --------------------------------------------------------------------
 
 Na tela:
 
-    "Quanto isso
-    vai custar?"
+    A gente não muda nada
+    sem ter certeza.
 
-    "Meu filho
-    vai ser cobaia?"
+Fala: é aqui que ela responde, sem nomear, o medo de que a criança vire
+teste. Ela conta que a escola estudou, comparou e decidiu, e que nenhuma
+mudança entra aqui antes disso. A autoridade para dizer isso vem dos trinta
+anos: ninguém mais na reunião consegue dizer essa frase.
 
-Fala:
+  >>> DUAS COISAS MUDARAM NESTA VERSÃO.
 
-    "Eu sei que, quando uma escola diz que tem novidade, passam duas
-     perguntas pela cabeça de todo pai. E eu não vou fingir que elas não
-     existem. As duas têm resposta, e as duas vão ser respondidas hoje,
-     aqui, com o valor por escrito."
+      1. Ela NÃO fala de valor. Preço é do fechamento da Sônia, e a
+         abertura não encosta nisso. A promessa que estava aqui antes, de
+         que o pai sairia sabendo quanto custa, saiu inteira.
 
-  >>> SÓ DIZER ISSO SE FOR VERDADE. O valor está previsto para o
-      fechamento da Sônia e está no encarte impresso. Se por algum motivo
-      o preço não for apresentado hoje, esta frase sai. Promessa não
-      cumprida na abertura estraga a reunião inteira.
-
+      2. As duas perguntas saíram da TELA. Nomear o medo funciona falado:
+         ela diz, a sala ri de nervoso, passa em cinco segundos e vira
+         confiança. Projetado, "meu filho vai ser cobaia?" fica cinco
+         minutos em letra gigante na parede, e aí para de desarmar o medo
+         e passa a dar autoridade a ele. Ela fala; a tela responde.
 
 --------------------------------------------------------------------
 SLIDE 6 - A entrega                                          (1m30)
@@ -227,8 +220,8 @@ O QUE ELA NÃO DEVE FAZER
 1. Explicar o que é o Geekie. É de quem vem depois, e vai ser uma hora
    inteira sobre isso. Se ela explicar, vira repetição e o Geekie começa
    com a sala já saturada.
-2. Falar de preço. É da Sônia, no fechamento. Ela só promete que a
-   resposta vem hoje.
+2. Falar de preço, em nenhum momento. É da Sônia, no fechamento. A
+   abertura não cita valor nem promete valor.
 3. Ler o slide em voz alta. O slide é apoio.
 
 
