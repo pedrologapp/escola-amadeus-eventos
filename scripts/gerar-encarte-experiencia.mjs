@@ -14,22 +14,28 @@ import {
  * O desenho segue a lógica da hero da Arena Arbória, com as duas trocas que
  * o Pedro pediu: fundo claro no lugar do escuro, e o azul do Amadeus no
  * lugar do turquesa. O que veio de lá não é a decoração, é a disciplina:
+ * uma cor de acento só, escala neutra com papel definido para cada tipo de
+ * texto, tipografia do sistema, nome grande e tracking apertado.
  *
- *   1. UMA cor de acento só. Na Arena é o turquesa; aqui é o azul #083078.
- *   2. Escala neutra com papel definido para cada tipo de texto.
- *   3. Tipografia do sistema, nome grande, tracking apertado.
+ * O título repete a forma do "ARENA ARBÓRIA": primeira palavra menor em
+ * cima, segunda bem maior embaixo. A diferença de largura desenha o triângulo.
  *
- * O título repete a forma do "ARENA ARBÓRIA": a primeira palavra menor em
- * cima e a segunda bem maior embaixo. A diferença de largura entre as duas
- * linhas é o que desenha o triângulo.
+ * DUAS VERSÕES DA MARCA, escolhidas pelo segundo argumento:
  *
- * A ordem da página foi definida pelo Pedro:
- *   nome · segmentos · fotos dos programas · espaços · convite · informações
+ *   "a"  bloco azul no topo, "Experiência" em creme e "AMADEUS" no dourado
+ *        #FFB000. É a única em que o dourado da marca aparece de verdade:
+ *        sobre o creme ele dá 1,71:1 e some; sobre o azul dá 6,73:1.
+ *        Nessa versão o convite do rodapé vira caixa de contorno, senão a
+ *        página fica com dois blocos azuis cheios disputando o mesmo peso.
  *
- * Uso: node scripts/gerar-encarte-experiencia.mjs <pasta-de-saida>
+ *   "c"  as duas palavras em azul #083078, separadas por peso e tamanho, e
+ *        o dourado só no filete. Mais segura, menos viva.
+ *
+ * Uso: node scripts/gerar-encarte-experiencia.mjs <pasta-de-saida> [a|c]
  */
 
 const saida = process.argv[2] ?? ".";
+const marca = (process.argv[3] ?? "c").toLowerCase() === "a" ? "a" : "c";
 const raiz = path.join(import.meta.dirname, "..");
 
 function embutir(relativo, tipo = "png") {
@@ -79,7 +85,7 @@ const CSS = `
     --ink2:#7C87A0;
     --mut:#9BA4B8;
     --acc:#083078;   /* o azul do Amadeus, a única cor de acento */
-    --ouro:#FFB000;
+    --ouro:#FFB000;  /* só sobre o azul: no creme ele dá 1,71:1 */
   }
 
   body{font-family:${FONTE};-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -98,19 +104,29 @@ const CSS = `
 
   .marca{width:25mm;height:auto}
 
-  .rotulo{
-    margin-top:7mm;font-size:8pt;font-weight:700;letter-spacing:.28em;
+  /* ------------------------------------------------------------ a marca */
+  .hero{width:100%;margin-top:6mm}
+  .sobrenome{
+    font-size:8pt;font-weight:700;letter-spacing:.28em;
     text-transform:uppercase;color:var(--mut);
   }
-
-  /* O triângulo: "Experiência" em cima, menor, e "AMADEUS" embaixo, bem
-     maior. A diferença de largura entre as duas linhas é o desenho. */
   .nome{margin-top:3mm;line-height:.88;color:var(--acc)}
   .nome .um{display:block;font-size:23pt;font-weight:600;letter-spacing:.03em}
   .nome .dois{display:block;font-size:60pt;font-weight:800;letter-spacing:-.045em}
 
-  .fio{width:16mm;height:1.1mm;background:var(--ouro);border-radius:1mm;margin-top:6mm}
+  /* opção A: a marca inteira dentro do bloco azul */
+  .hero.bloco{
+    background:var(--acc);border-radius:7mm;padding:8mm 8mm 9mm;margin-top:7mm;
+  }
+  .hero.bloco .sobrenome{color:rgba(250,247,240,.6)}
+  .hero.bloco .um{color:var(--bg)}
+  .hero.bloco .dois{color:var(--ouro)}
 
+  /* opção C: as duas em azul, separadas por peso, e o filete dourado */
+  .hero.mono .um{opacity:.72}
+  .fio{width:16mm;height:1.1mm;background:var(--ouro);border-radius:1mm;margin:6mm auto 0}
+
+  /* --------------------------------------------------------- o conteúdo */
   .segmentos{margin-top:6mm;display:flex;gap:2.5mm;justify-content:center;flex-wrap:wrap}
   .segmento{
     border:.35mm solid rgba(8,48,120,.28);border-radius:99mm;
@@ -143,20 +159,29 @@ const CSS = `
     margin-top:2.5mm;font-size:10.5pt;font-weight:600;line-height:1.6;color:var(--prosa);
   }
 
-  .convite{
-    margin-top:auto;width:100%;border-radius:6mm;
-    background:var(--acc);color:#FFFFFF;padding:8mm 8mm 7mm;
-  }
+  /* ---------------------------------------------------------- o convite */
+  .convite{margin-top:auto;width:100%;border-radius:6mm;padding:8mm 8mm 7mm}
   .convite .chamada{font-size:16pt;font-weight:700;letter-spacing:-.015em;line-height:1.3}
-  .convite .chamada b{color:var(--ouro);font-weight:800}
   .convite .quando{margin-top:6mm;display:flex;align-items:stretch;justify-content:center}
-  .convite .bloco{padding:0 9mm}
-  .convite .bloco + .bloco{border-left:.4mm solid rgba(255,255,255,.28)}
+  .convite .bloco-h{padding:0 9mm}
   .convite .valor{display:block;font-size:23pt;font-weight:800;letter-spacing:-.03em;line-height:1}
   .convite .rot{
     display:block;margin-top:2mm;font-size:8pt;font-weight:700;
-    letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.66);
+    letter-spacing:.16em;text-transform:uppercase;
   }
+
+  /* cheio, quando a marca não usa bloco */
+  .convite.cheio{background:var(--acc);color:#FFFFFF}
+  .convite.cheio .chamada b{color:var(--ouro);font-weight:800}
+  .convite.cheio .bloco-h + .bloco-h{border-left:.4mm solid rgba(255,255,255,.28)}
+  .convite.cheio .rot{color:rgba(255,255,255,.66)}
+
+  /* de contorno, quando o bloco azul já está no topo */
+  .convite.contorno{border:.5mm solid rgba(8,48,120,.4);color:var(--ink)}
+  .convite.contorno .chamada b{color:var(--acc);font-weight:800}
+  .convite.contorno .bloco-h + .bloco-h{border-left:.4mm solid rgba(11,26,58,.16)}
+  .convite.contorno .valor{color:var(--acc)}
+  .convite.contorno .rot{color:var(--mut)}
 
   .rodape{
     margin-top:6mm;width:100%;display:flex;align-items:flex-end;
@@ -182,6 +207,10 @@ const quadro = (q) => `
           <span class="nome-q">${esc(q.nome)}</span>
         </div>`;
 
+const heroClasse = marca === "a" ? "hero bloco" : "hero mono";
+const filete = marca === "a" ? "" : '\n    <span class="fio"></span>';
+const conviteClasse = marca === "a" ? "convite contorno" : "convite cheio";
+
 const html = `<!doctype html>
 <html lang="pt-BR">
 <head>
@@ -196,9 +225,10 @@ const html = `<!doctype html>
 
     <img class="marca" src="${MARCA}" alt="Centro Educacional Amadeus - 30 anos">
 
-    <p class="rotulo">Você e sua família são nossos convidados</p>
-    <h1 class="nome"><span class="um">Experiência</span><span class="dois">AMADEUS</span></h1>
-    <span class="fio"></span>
+    <div class="${heroClasse}">
+      <p class="sobrenome">Você e sua família são nossos convidados</p>
+      <h1 class="nome"><span class="um">Experiência</span><span class="dois">AMADEUS</span></h1>
+    </div>${filete}
 
     <div class="segmentos">
       ${SEGMENTOS.map((s) => `<span class="segmento">${esc(s.nome)}</span>`).join("")}
@@ -213,17 +243,17 @@ const html = `<!doctype html>
       <p class="lista">${ESPACOS.map((e) => esc(e.nome)).join(" &middot; ")}</p>
     </div>
 
-    <div class="convite">
+    <div class="${conviteClasse}">
       <p class="chamada">
         Venha viver um dia dentro da nossa escola,<br>
         <b>junto com seu filho ou sua filha.</b>
       </p>
       <div class="quando">
-        <span class="bloco">
+        <span class="bloco-h">
           <span class="valor">${EVENTO.data}</span>
           <span class="rot">${EVENTO.diaSemana}</span>
         </span>
-        <span class="bloco">
+        <span class="bloco-h">
           <span class="valor">${EVENTO.hora}</span>
           <span class="rot">na escola</span>
         </span>
@@ -245,5 +275,6 @@ const html = `<!doctype html>
 </body>
 </html>`;
 
-fs.writeFileSync(path.join(saida, "Encarte_Experiencia_Amadeus.html"), html);
-console.log("Encarte_Experiencia_Amadeus.html montado");
+const nome = `Encarte_Experiencia_Amadeus_${marca.toUpperCase()}.html`;
+fs.writeFileSync(path.join(saida, nome), html);
+console.log(nome, "montado");
