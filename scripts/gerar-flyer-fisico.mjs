@@ -8,6 +8,8 @@ import {
   ESPORTES,
   ESPACOS,
   COMUNICACAO,
+  BOLHAS_DENTRO,
+  BOLHAS_FORA,
   PRAZO_ANTECIPADA,
   DESCONTO_FIDELIDADE,
   DIA_FIDELIDADE,
@@ -27,6 +29,7 @@ import {
  */
 
 const saida = process.argv[2] ?? ".";
+const capa = process.argv[3] ?? "fotos"; // "fotos" ou "constelacao"
 const raiz = path.join(import.meta.dirname, "..");
 
 function embutir(relativo, tipo = "png") {
@@ -37,6 +40,7 @@ function embutir(relativo, tipo = "png") {
 /* A marca dos 30 anos é a versão para fundo claro. O logo horizontal tem o
    "AMADEUS" em creme e sumiria no bege. */
 const LOGO = embutir("public/folder/marca-30-anos.png");
+const GLOBO = embutir("public/folder/marca-globo.png"); // só a marca d'água
 const QR = embutir("public/materiais/qr-folder.png");
 
 /* Os seis quadros da frente. A foto vem do mesmo arquivo que o folder
@@ -77,6 +81,13 @@ const CSS = `
     width:210mm;height:297mm;position:relative;overflow:hidden;
     page-break-after:always;display:flex;flex-direction:column;
   }
+  /* A mesma silhueta dos slides. No bege ela entra escura e bem apagada:
+     serve de textura, não pode disputar com o texto nem sujar a impressão. */
+  .agua{
+    position:absolute;right:-52mm;bottom:-58mm;width:190mm;
+    opacity:.05;filter:grayscale(1) brightness(.35);
+  }
+  .folha > *:not(.agua){position:relative;z-index:1}
   .folha:last-child{page-break-after:auto}
 
   .serifa{font-family:Fraunces,Georgia,serif;font-optical-sizing:auto;font-weight:600;letter-spacing:-.02em}
@@ -146,6 +157,44 @@ const CSS = `
   .qr-bloco .titulo{display:block;font-size:13.5pt;font-weight:800;line-height:1.2;color:#17223D}
   .qr-bloco .texto{display:block;margin-top:2mm;font-size:9.8pt;line-height:1.42;color:#5A657F}
   .qr-bloco .url{display:block;margin-top:2.5mm;font-size:9.6pt;font-weight:700;color:#B9862F}
+
+
+  /* ------------------------------------------------------- constelação
+     No folder digital ela vive sobre o azul. Aqui o papel é bege, então as
+     bolhas viram brancas com fio fino, e as três etapas ficam sólidas em
+     azul pra se destacarem das outras catorze. */
+  .capa-constelacao{justify-content:space-between}
+  .constelacao{
+    position:relative;width:100%;height:176mm;margin:auto 0;
+    flex:0 0 auto;
+  }
+  .constelacao .anel{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    border-radius:50%;border:.3mm solid rgba(23,34,61,.14);
+  }
+  .bolha{position:absolute;left:50%;top:50%}
+  .miolo-bolha{
+    display:flex;flex-direction:column;width:100%;height:100%;
+    align-items:center;justify-content:center;
+    border-radius:50%;text-align:center;line-height:1.14;padding:0 2mm;
+    background:#FFFFFF;border:.3mm solid rgba(23,34,61,.16);
+    font-size:8.6pt;font-weight:700;color:#17223D;
+  }
+  .bolha.miuda .miolo-bolha{font-size:7.6pt}
+  .bolha.dentro .miolo-bolha{
+    background:#17223D;border-color:#17223D;color:#FAF7F0;
+    font-size:9.4pt;font-weight:800;
+  }
+  .miolo-bolha span{display:block}
+
+  .centro{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:64mm;text-align:center;
+  }
+  .centro .convite{
+    display:block;font-size:23pt;line-height:1.1;color:#17223D;
+  }
+  .capa-constelacao .qr-bloco{margin-top:auto}
 
   /* ---------------------------------------------------------------- verso */
   .verso{background:#FAF7F0;color:#17223D;padding:13mm 15mm 11mm}
@@ -265,17 +314,14 @@ const chips = [
   { nome: "Agenda digital com a família" },
 ];
 
-const html = `<!doctype html>
-<html lang="pt-BR">
-<head>
-<meta charset="utf-8">
-<title>Centro Educacional Amadeus - Matrículas 2027</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,500;9..40,600;9..40,700;9..40,800&family=Fraunces:opsz,wght@9..144,600&display=swap">
-<style>${CSS}</style>
-</head>
-<body>
+/* ------------------------------------------------------------- as capas
+   Duas versões do mesmo encarte, escolhidas pelo segundo argumento:
+   "fotos" mostra o compilado em quadros, "constelacao" traz o desenho da
+   capa do folder digital. O verso é o mesmo nas duas. */
 
-  <section class="folha frente">
+function frenteFotos() {
+  return `  <section class="folha frente">
+    <img class="agua" src="${GLOBO}" alt="">
     <div class="topo-frente">
       <img class="logo" src="${LOGO}" alt="Centro Educacional Amadeus">
       <span class="selo">Matrículas<span>2027</span></span>
@@ -283,8 +329,8 @@ const html = `<!doctype html>
 
     <h1 class="serifa">Isso é o <em>Amadeus.</em></h1>
     <p class="linha-fina">
-      Em trinta anos, muita coisa mudou aqui dentro.
-      <b>O cuidado com cada aluno, não.</b>
+      Tem criança vivendo cada uma dessas coisas hoje, nesta escola.
+      <b>Ano que vem, uma delas pode ser a sua.</b>
     </p>
 
     <div class="quadros">
@@ -307,8 +353,92 @@ const html = `<!doctype html>
       </span>
     </div>
   </section>
+`;
+}
 
+/* ------------------------------------------------------- a constelação
+   Mesmo desenho da capa do folder digital: um anel com as etapas por dentro
+   e um anel com tudo o que a escola tem por fora. A geometria veio do
+   app/folder/folder-cliente.tsx, com o anel de dentro mais aberto, porque
+   aqui o miolo carrega uma frase e não a marca. */
+const D = 168; // diâmetro da constelação, em mm
+const RAIO_DENTRO = 0.275;
+const RAIO_FORA = 0.432;
+const TAM_DENTRO = 0.125;
+const TAM_FORA = 0.152;
+
+function angulos(quantidade, deslocamento) {
+  const passo = 360 / quantidade;
+  return Array.from({ length: quantidade }, (_, i) => deslocamento + i * passo);
+}
+
+function bolha(rotulo, linhas, angulo, raio, tamanho, dentro) {
+  const lado = D * tamanho;
+  const partes = linhas ?? [rotulo];
+  const maior = Math.max(...partes.map((x) => x.length));
+  const corpo = partes.map((x) => `<span>${esc(x)}</span>`).join("");
+  return `
+        <span class="bolha${dentro ? " dentro" : ""}${maior > 9 ? " miuda" : ""}" style="width:${lado.toFixed(
+          2,
+        )}mm;height:${lado.toFixed(2)}mm;margin:${(-lado / 2).toFixed(2)}mm 0 0 ${(-lado / 2).toFixed(
+          2,
+        )}mm;transform:rotate(${angulo}deg) translate(${(D * raio).toFixed(2)}mm) rotate(${-angulo}deg)">
+          <span class="miolo-bolha">${corpo}</span>
+        </span>`;
+}
+
+function frenteConstelacao() {
+  const dentro = angulos(BOLHAS_DENTRO.length, -90)
+    .map((a, i) => bolha(BOLHAS_DENTRO[i].rotulo, null, a, RAIO_DENTRO, TAM_DENTRO, true))
+    .join("");
+  const fora = angulos(BOLHAS_FORA.length, 0)
+    .map((a, i) => bolha(BOLHAS_FORA[i].rotulo, BOLHAS_FORA[i].linhas, a, RAIO_FORA, TAM_FORA, false))
+    .join("");
+  const anelDentro = (D * RAIO_DENTRO * 2).toFixed(1);
+  const anelFora = (D * RAIO_FORA * 2).toFixed(1);
+
+  return `  <section class="folha frente capa-constelacao">
+    <img class="agua" src="${GLOBO}" alt="">
+    <div class="topo-frente">
+      <img class="logo" src="${LOGO}" alt="Centro Educacional Amadeus">
+      <span class="selo">Matrículas<span>2027</span></span>
+    </div>
+
+    <div class="constelacao">
+      <span class="anel" style="width:${anelDentro}mm;height:${anelDentro}mm"></span>
+      <span class="anel" style="width:${anelFora}mm;height:${anelFora}mm"></span>
+      ${dentro}
+      ${fora}
+      <span class="centro">
+        <span class="convite serifa">Faça parte<br>de tudo isso!</span>
+      </span>
+    </div>
+
+    <div class="qr-bloco">
+      <img src="${QR}" alt="QR do folder digital">
+      <span>
+        <span class="titulo">A escola inteira, no seu celular.</span>
+        <span class="texto">Aponte a câmera para o código: cada programa com foto e explicação, os vídeos das etapas e os valores por segmento.</span>
+        <span class="url">${esc(URL_FOLDER)}</span>
+      </span>
+    </div>
+  </section>
+`;
+}
+
+const html = `<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Centro Educacional Amadeus - Matrículas 2027</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,500;9..40,600;9..40,700;9..40,800&family=Fraunces:opsz,wght@9..144,600&display=swap">
+<style>${CSS}</style>
+</head>
+<body>
+
+  ${capa === "constelacao" ? frenteConstelacao() : frenteFotos()}
   <section class="folha verso">
+    <img class="agua" src="${GLOBO}" alt="">
     <p class="etiqueta">Investimento 2027</p>
     <h2 class="serifa">Doze parcelas, três condições.</h2>
 
@@ -362,5 +492,7 @@ const html = `<!doctype html>
 </body>
 </html>`;
 
-fs.writeFileSync(path.join(saida, "Flyer_Matriculas_2027.html"), html);
-console.log("Flyer_Matriculas_2027.html montado");
+const nome =
+  "Flyer_Matriculas_2027" + (capa === "constelacao" ? "_Constelacao" : "") + ".html";
+fs.writeFileSync(path.join(saida, nome), html);
+console.log(nome, "montado");
