@@ -11,21 +11,19 @@ import {
 /**
  * Encarte do convite da Experiência Amadeus. A4 retrato, uma página.
  *
- * A marca é a opção A: bloco azul no topo, "Experiência" em creme e
- * "AMADEUS" em dourado. O dourado da marca só funciona aí: sobre o creme
- * ele dá 1,71:1 de contraste e some; sobre o azul dá 6,73:1.
+ * Agora é a Arena Arbória de verdade: fundo escuro #08080C, a escala neutra
+ * dela e uma cor de acento só. Onde a Arena usa o turquesa para "ARBÓRIA",
+ * aqui entra o dourado do Amadeus para "AMADEUS".
  *
- * TRÊS CORREÇÕES FUNCIONAIS, além do desenho:
+ * A marca ocupa o topo inteiro, sem caixa em volta, como na Arena: o efeito
+ * vem do tamanho e do aperto entre as letras, não de moldura. "Experiência"
+ * é dimensionado para começar um pouco antes do M do AMADEUS, e é essa
+ * diferença de largura que desenha a pirâmide.
  *
- *   1. ENDEREÇO. O convite existe para atrair quem ainda não conhece a
- *      escola, e essa família não sabe onde ela fica. Entra o endereço
- *      completo, com QR que abre o mapa.
- *   2. O QUE FAZER DEPOIS DE LER. Antes a peça terminava num telefone em
- *      cinza claro no rodapé. Agora tem QR do WhatsApp com mensagem pronta,
- *      que é o que transforma interesse em confirmação, e dá para medir.
- *   3. CONTRASTE DOS TEXTOS PEQUENOS. O cinza-azulado #9BA4B8 dava 2,34:1
- *      sobre o creme, abaixo do mínimo de 4,5:1, logo nos textos em caixa
- *      alta espaçada, que já são os mais difíceis. Virou #5A6478, 5,56:1.
+ * Contraste sobre o #08080C, conferido: dourado 10,91:1, branco 17,96:1,
+ * e a escala de cinzas da Arena vai de 12,11:1 a 5,77:1. Todos passam.
+ * O azul da marca dá 1,62:1 e por isso NÃO pode aparecer aqui: é o motivo
+ * de o logo ser a versão 3D, que tem contorno claro em volta das letras.
  *
  * Uso: node scripts/gerar-encarte-experiencia.mjs <pasta-de-saida>
  */
@@ -39,6 +37,7 @@ function embutir(relativo, tipo = "png") {
 }
 
 const GLOBO = embutir("public/folder/marca-globo.png");
+const LOGO = embutir("docs/EventoRematricula/3D LOGO AMADEUS 30 ANOS.png");
 const QR_ZAP = embutir("public/materiais/qr-experiencia-whatsapp.png");
 const QR_MAPA = embutir("public/materiais/qr-experiencia-mapa.png");
 
@@ -46,7 +45,7 @@ const EVENTO = { data: "10/10/2026", diaSemana: "sábado", hora: "14h" };
 const ENDERECO = {
   rua: "Av. Benedito Santana, 09",
   bairro: "Amarante, São Gonçalo do Amarante · RN",
-  cep: "CEP 59296-515",
+  cep: "CEP 59296-515 · (84) 9 8145-0229",
 };
 
 function acharFoto(nome, lista) {
@@ -55,9 +54,6 @@ function acharFoto(nome, lista) {
   return embutir(path.join("public", peca.foto.src), "webp");
 }
 
-/* Nome curto de propósito: no quadro pequeno, nome comprido quebra em três
-   linhas e some. O "foco" sobe a janela até a altura dos rostos, porque a
-   foto é em pé e o quadro é deitado. */
 const QUADROS = [
   { nome: "Projeto Arboria", foto: acharFoto("Projeto Arboria", PROGRAMAS), foco: "10%" },
   {
@@ -79,12 +75,15 @@ const CSS = `
   @page{ size:A4; margin:0 }
   *{box-sizing:border-box;margin:0;padding:0}
 
+  /* a escala da Arena, com o dourado no lugar do turquesa */
   :root{
-    --bg:#FAF7F0;
-    --ink:#0B1A3A;
-    --prosa:#33405C;
-    --mut:#5A6478;  /* 5,56:1 sobre o creme. O #9BA4B8 anterior dava 2,34:1 */
-    --acc:#083078;
+    --bg:#08080C;
+    --ink:#F3F2F8;
+    --prosa:#E6E5EE;
+    --gancho:#C9C8D6;
+    --ink2:#A6A5B8;
+    --mut:#8A8899;
+    --acc:#FFB000;
   }
 
   body{font-family:${FONTE};-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -93,74 +92,67 @@ const CSS = `
     width:210mm;height:297mm;position:relative;overflow:hidden;
     background:var(--bg);color:var(--ink);
     display:flex;flex-direction:column;align-items:center;
-    padding:11mm 14mm 9mm;text-align:center;
+    padding:14mm 14mm 10mm;text-align:center;
   }
   .agua{
     position:absolute;left:50%;bottom:-96mm;width:270mm;
-    transform:translateX(-50%);opacity:.05;z-index:0;
+    transform:translateX(-50%);opacity:.07;z-index:0;
   }
   .folha > *:not(.agua){position:relative;z-index:1}
 
   /* ------------------------------------------------------------- a marca
-     A palavra de cima é dimensionada para começar um pouco antes do M do
-     AMADEUS: é essa diferença de largura que desenha a pirâmide.
-     O azul e o dourado são degradê, não chapado, pra cor não ficar lisa. */
-  .marca-evento{
-    width:100%;border-radius:7mm;padding:9mm 8mm 10mm;
-    background:linear-gradient(145deg, #0C3F94 0%, #083078 46%, #051C4E 100%);
-  }
-  .nome{line-height:.84;text-align:center}
+     Sem caixa: o peso vem do corpo e do aperto, como na Arena. */
+  .nome{line-height:.82;width:100%}
   .nome .um{
-    display:block;font-size:43.5pt;font-weight:600;letter-spacing:-.012em;
-    color:#EEF1F8;
+    display:block;font-size:58pt;font-weight:600;letter-spacing:-.022em;color:var(--ink);
   }
   .nome .dois{
-    display:block;font-size:60pt;font-weight:800;letter-spacing:-.045em;
-    background:linear-gradient(160deg, #FFD978 0%, #FFB000 42%, #F08A00 100%);
+    display:block;font-size:80pt;font-weight:800;letter-spacing:-.05em;
+    background:linear-gradient(160deg, #FFE08C 0%, #FFB000 46%, #ED8A00 100%);
     -webkit-background-clip:text;background-clip:text;color:transparent;
   }
 
   /* ---------------------------------------------------------- o convite */
   .chamada{
-    margin-top:8mm;max-width:158mm;
-    font-size:15pt;font-weight:700;line-height:1.3;letter-spacing:-.015em;color:var(--ink);
+    margin-top:9mm;max-width:160mm;
+    font-size:14.5pt;font-weight:600;line-height:1.35;color:var(--gancho);
   }
   .chamada b{color:var(--acc);font-weight:800}
 
-  .quando{margin-top:6mm;display:flex;align-items:stretch;justify-content:center}
+  .quando{margin-top:7mm;display:flex;align-items:stretch;justify-content:center}
   .quando .bloco-h{padding:0 9mm}
-  .quando .bloco-h + .bloco-h{border-left:.4mm solid rgba(11,26,58,.18)}
+  .quando .bloco-h + .bloco-h{border-left:.4mm solid rgba(243,242,248,.2)}
   .quando .valor{
-    display:block;font-size:23pt;font-weight:800;letter-spacing:-.03em;
-    line-height:1;color:var(--acc);
+    display:block;font-size:24pt;font-weight:800;letter-spacing:-.03em;
+    line-height:1;color:var(--ink);
   }
   .quando .rot{
     display:block;margin-top:2mm;font-size:8pt;font-weight:700;
     letter-spacing:.16em;text-transform:uppercase;color:var(--mut);
   }
 
-  /* --------------------------------------------------------- o conteúdo */
-  .segmentos{margin-top:7mm;display:flex;gap:2.5mm;justify-content:center;flex-wrap:wrap}
-  .segmento{
-    border:.35mm solid rgba(8,48,120,.3);border-radius:99mm;
-    padding:2mm 5.5mm;font-size:9.6pt;font-weight:700;color:var(--acc);
+  /* segmentos: só os nomes, sem cápsula em volta */
+  .segmentos{
+    margin-top:7mm;font-size:10.5pt;font-weight:700;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink2);
   }
+  .segmentos i{font-style:normal;color:var(--acc);margin:0 3mm}
 
   .quadros{
     margin-top:6mm;width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:3mm;
   }
-  .quadro{position:relative;height:45mm;border-radius:4mm;overflow:hidden;background:#0B1733}
+  .quadro{position:relative;height:45mm;border-radius:4mm;overflow:hidden;background:#111119}
   .quadro img{width:100%;height:100%;object-fit:cover;display:block}
   .quadro .veu{
     position:absolute;inset:0;
     background:linear-gradient(180deg,
-      rgba(7,11,24,.04) 0%, rgba(7,11,24,.34) 42%,
-      rgba(7,11,24,.8) 72%, rgba(7,11,24,.95) 100%);
+      rgba(8,8,12,.06) 0%, rgba(8,8,12,.34) 42%,
+      rgba(8,8,12,.8) 72%, rgba(8,8,12,.96) 100%);
   }
   .quadro .nome-q{
     position:absolute;left:4mm;right:4mm;bottom:4mm;
     font-size:10pt;font-weight:700;line-height:1.1;color:#FFFFFF;
-    text-shadow:0 .3mm 1mm rgba(0,0,0,.5);
+    text-shadow:0 .3mm 1mm rgba(0,0,0,.6);
   }
 
   .espacos{margin-top:6mm;max-width:168mm}
@@ -172,29 +164,31 @@ const CSS = `
     margin-top:2.5mm;font-size:10pt;font-weight:600;line-height:1.55;color:var(--prosa);
   }
 
-  /* ------------------------------------------------- onde é e o que fazer
-     Os dois QR ficam lado a lado, cada um com o seu rótulo: um resolve
-     "onde fica" e o outro resolve "como eu confirmo". */
+  /* --------------------------------------------- a marca, onde é, e o QR */
   .acao{
-    margin-top:auto;width:100%;display:flex;align-items:center;gap:7mm;
-    border-top:.4mm solid rgba(11,26,58,.16);padding-top:7mm;text-align:left;
+    margin-top:auto;width:100%;display:flex;align-items:center;gap:6mm;
+    border-top:.4mm solid rgba(243,242,248,.16);padding-top:7mm;text-align:left;
   }
+  .acao .selo{width:32mm;height:auto;flex:0 0 auto}
   .endereco{flex:1}
   .endereco .titulo{
     font-size:8pt;font-weight:700;letter-spacing:.24em;
     text-transform:uppercase;color:var(--mut);
   }
   .endereco .escola{
-    margin-top:2.5mm;font-size:12pt;font-weight:800;color:var(--ink);line-height:1.3;
+    margin-top:2.5mm;font-size:11.5pt;font-weight:800;color:var(--ink);line-height:1.3;
   }
-  .endereco .linha{margin-top:1.5mm;font-size:10.5pt;font-weight:600;color:var(--prosa);line-height:1.45}
-  .endereco .cep{margin-top:1mm;font-size:9.6pt;font-weight:500;color:var(--mut)}
+  .endereco .linha{margin-top:1.5mm;font-size:10pt;font-weight:600;color:var(--prosa);line-height:1.45}
+  .endereco .cep{margin-top:1mm;font-size:9.2pt;font-weight:500;color:var(--ink2)}
 
-  .codigos{display:flex;gap:6mm}
-  .codigo{width:26mm;text-align:center}
+  .codigos{display:flex;gap:5mm;flex:0 0 auto}
+  .codigo{width:25mm;text-align:center}
+  /* O QR guarda o próprio fundo claro, e não leva arredondamento: cantos
+     redondos comem a zona de silêncio, que é o que o leitor usa para achar
+     os três quadrados de canto. */
   .codigo img{width:26mm;height:26mm;display:block}
   .codigo span{
-    display:block;margin-top:2mm;font-size:7.4pt;font-weight:700;
+    display:block;margin-top:2mm;font-size:7.2pt;font-weight:700;
     letter-spacing:.1em;text-transform:uppercase;color:var(--mut);line-height:1.3;
   }
 `;
@@ -222,9 +216,7 @@ const html = `<!doctype html>
   <section class="folha">
     <img class="agua" src="${GLOBO}" alt="">
 
-    <div class="marca-evento">
-      <h1 class="nome"><span class="um">Experiência</span><span class="dois">AMADEUS</span></h1>
-    </div>
+    <h1 class="nome"><span class="um">Experiência</span><span class="dois">AMADEUS</span></h1>
 
     <p class="chamada">
       Venha viver um dia dentro da nossa escola,<br>
@@ -242,9 +234,7 @@ const html = `<!doctype html>
       </span>
     </div>
 
-    <div class="segmentos">
-      ${SEGMENTOS.map((s) => `<span class="segmento">${esc(s.nome)}</span>`).join("")}
-    </div>
+    <p class="segmentos">${SEGMENTOS.map((s) => esc(s.nome)).join("<i>·</i>")}</p>
 
     <div class="quadros">
       ${QUADROS.map(quadro).join("")}
@@ -256,11 +246,12 @@ const html = `<!doctype html>
     </div>
 
     <div class="acao">
+      <img class="selo" src="${LOGO}" alt="Centro Educacional Amadeus - 30 anos">
       <div class="endereco">
         <p class="titulo">Onde é</p>
         <p class="escola">Centro Educacional Amadeus</p>
         <p class="linha">${esc(ENDERECO.rua)}<br>${esc(ENDERECO.bairro)}</p>
-        <p class="cep">${esc(ENDERECO.cep)} &middot; (84) 9 8145-0229</p>
+        <p class="cep">${esc(ENDERECO.cep)}</p>
       </div>
       <div class="codigos">
         <span class="codigo">
