@@ -156,6 +156,67 @@ const ADRIANA = {
   ],
 };
 
+const GRACA = {
+  arquivo: "Slides_Graca_Abertura",
+  titulo: "Maria das Graças - Abertura",
+  etiquetaPadrao: "Abertura",
+  slides: [
+    {
+      tipo: "abertura",
+      nome: "Maria das Graças",
+      cargo: "Diretora",
+    },
+    {
+      // Sem etiqueta e sem índice: é o eco do trailer, que acabou de terminar
+      // nessa frase. Ela continua dali em vez de recomeçar.
+      tipo: "fecho",
+      frase: "Isso é o que",
+      destaque: "nós somos.",
+    },
+    {
+      tipo: "dialogo",
+      etiqueta: "Quem está aqui hoje",
+      pergunta: "Tem gente aqui há quinze anos.",
+      resposta: "E tem gente que entrou esse ano.",
+    },
+    {
+      // O miolo da fala, cinco dos quinze minutos. As três linhas são
+      // memórias da escola e só a direção pode preenchê-las: cada uma
+      // precisa ser uma mudança que incomodou na época e que hoje ninguém
+      // imagina a escola sem.
+      tipo: "cartoes",
+      etiqueta: "Trinta anos, três mudanças",
+      cartoes: [
+        { texto: "1. a completar com a direção" },
+        { texto: "2. a completar com a direção" },
+        { texto: "3. a completar com a direção" },
+      ],
+      nota: "Cada uma precisa ter duas coisas ao mesmo tempo: ter incomodado na época, e hoje ninguém imaginar a escola sem ela.",
+    },
+    {
+      tipo: "frase",
+      etiqueta: "Por que mudamos",
+      frase: "Em trinta anos, mudamos muita coisa.",
+      destaque: "O motivo nunca mudou.",
+      nota: "Escola que não muda em trinta anos não é escola tradicional. É escola parada.",
+    },
+    {
+      tipo: "cartoes",
+      etiqueta: "As duas perguntas",
+      cartoes: [
+        { texto: "“Quanto isso vai custar?”" },
+        { texto: "“Meu filho vai ser cobaia?”" },
+      ],
+      nota: "As duas têm resposta, e as duas vão ser respondidas hoje, com o valor por escrito.",
+    },
+    {
+      tipo: "fecho",
+      frase: "A partir de 2027, o material do seu filho",
+      destaque: "muda.",
+    },
+  ],
+};
+
 /* ------------------------------------------------------------------ css */
 
 const CSS = `
@@ -387,7 +448,7 @@ ${deck.slides
 </html>`;
 }
 
-for (const deck of [GISLENE, ADRIANA]) {
+for (const deck of [GRACA, GISLENE, ADRIANA]) {
   fs.writeFileSync(path.join(saida, deck.arquivo + ".html"), montarDeck(deck));
   console.log(deck.arquivo + ".html", deck.slides.length, "slides");
 }

@@ -23,6 +23,7 @@ const ESCALA = 4; // 200mm em 4x = 3024px de lado
 const LADO_CSS = 756; // 200mm a 96dpi
 
 const DECKS = {
+  Slides_Graca_Abertura: "graca",
   Slides_Gislene_Infantil: "gislene",
   Slides_Adriana_Fundamental: "adriana",
 };
