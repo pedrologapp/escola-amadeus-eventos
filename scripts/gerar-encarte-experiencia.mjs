@@ -104,10 +104,10 @@ const CSS = `
      Sem caixa: o peso vem do corpo e do aperto, como na Arena. */
   .nome{line-height:.82;width:100%}
   .nome .um{
-    display:block;font-size:58pt;font-weight:600;letter-spacing:-.022em;color:var(--ink);
+    display:block;font-size:60pt;font-weight:600;letter-spacing:-.016em;color:var(--ink);
   }
   .nome .dois{
-    display:block;font-size:80pt;font-weight:800;letter-spacing:-.05em;
+    display:block;font-size:100pt;font-weight:800;letter-spacing:-.052em;
     background:linear-gradient(160deg, #FFE08C 0%, #FFB000 46%, #ED8A00 100%);
     -webkit-background-clip:text;background-clip:text;color:transparent;
   }
@@ -169,7 +169,8 @@ const CSS = `
     margin-top:auto;width:100%;display:flex;align-items:center;gap:6mm;
     border-top:.4mm solid rgba(243,242,248,.16);padding-top:7mm;text-align:left;
   }
-  .acao .selo{width:32mm;height:auto;flex:0 0 auto}
+  /* o selo acompanha a altura do bloco ao lado, do "onde é" até o cep */
+  .acao .selo{height:26mm;width:auto;flex:0 0 auto}
   .endereco{flex:1}
   .endereco .titulo{
     font-size:8pt;font-weight:700;letter-spacing:.24em;
@@ -216,7 +217,7 @@ const html = `<!doctype html>
   <section class="folha">
     <img class="agua" src="${GLOBO}" alt="">
 
-    <h1 class="nome"><span class="um">Experiência</span><span class="dois">AMADEUS</span></h1>
+    <h1 class="nome"><span class="um">EXPERIÊNCIA</span><span class="dois">AMADEUS</span></h1>
 
     <p class="chamada">
       Venha viver um dia dentro da nossa escola,<br>
