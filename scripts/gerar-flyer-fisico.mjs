@@ -81,11 +81,13 @@ const CSS = `
     width:210mm;height:297mm;position:relative;overflow:hidden;
     page-break-after:always;display:flex;flex-direction:column;
   }
-  /* A mesma silhueta dos slides. No bege ela entra escura e bem apagada:
-     serve de textura, não pode disputar com o texto nem sujar a impressão. */
+  /* A marca ao fundo, atrás de tudo. Sem dessaturar: em cinza ela virava um
+     borrão e ninguém reconhecia o símbolo. Fica no azul e no dourado dela
+     mesma, só bem apagada. */
   .agua{
-    position:absolute;right:-52mm;bottom:-58mm;width:190mm;
-    opacity:.05;filter:grayscale(1) brightness(.35);
+    position:absolute;left:50%;bottom:-64mm;width:250mm;
+    transform:translateX(-50%);
+    opacity:.11;z-index:0;
   }
   .folha > *:not(.agua){position:relative;z-index:1}
   .folha:last-child{page-break-after:auto}
