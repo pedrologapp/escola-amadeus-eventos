@@ -43,8 +43,8 @@ const QR_MAPA = embutir("public/materiais/qr-experiencia-mapa.png");
 
 const EVENTO = { data: "10/10/2026", diaSemana: "sábado", hora: "14h" };
 const ENDERECO = {
-  rua: "Av. Benedito Santana, 09",
-  bairro: "Amarante, São Gonçalo do Amarante · RN",
+  rua: "Av. Benedito Santana, 09 · Amarante",
+  bairro: "São Gonçalo do Amarante · RN",
   cep: "CEP 59296-515 · (84) 9 8145-0229",
 };
 
@@ -104,7 +104,7 @@ const CSS = `
      Sem caixa: o peso vem do corpo e do aperto, como na Arena. */
   .nome{line-height:.82;width:100%}
   .nome .um{
-    display:block;font-size:60pt;font-weight:600;letter-spacing:-.016em;color:var(--ink);
+    display:block;font-size:72pt;font-weight:600;letter-spacing:-.022em;color:var(--ink);
   }
   .nome .dois{
     display:block;font-size:100pt;font-weight:800;letter-spacing:-.052em;
@@ -166,11 +166,11 @@ const CSS = `
 
   /* --------------------------------------------- a marca, onde é, e o QR */
   .acao{
-    margin-top:auto;width:100%;display:flex;align-items:center;gap:6mm;
+    margin-top:auto;width:100%;display:flex;align-items:center;gap:5mm;
     border-top:.4mm solid rgba(243,242,248,.16);padding-top:7mm;text-align:left;
   }
   /* o selo acompanha a altura do bloco ao lado, do "onde é" até o cep */
-  .acao .selo{height:26mm;width:auto;flex:0 0 auto}
+  .acao .selo{height:34mm;width:auto;flex:0 0 auto}
   .endereco{flex:1}
   .endereco .titulo{
     font-size:8pt;font-weight:700;letter-spacing:.24em;
@@ -179,10 +179,10 @@ const CSS = `
   .endereco .escola{
     margin-top:2.5mm;font-size:11.5pt;font-weight:800;color:var(--ink);line-height:1.3;
   }
-  .endereco .linha{margin-top:1.5mm;font-size:10pt;font-weight:600;color:var(--prosa);line-height:1.45}
+  .endereco .linha{margin-top:1.5mm;font-size:9.6pt;font-weight:600;color:var(--prosa);line-height:1.45}
   .endereco .cep{margin-top:1mm;font-size:9.2pt;font-weight:500;color:var(--ink2)}
 
-  .codigos{display:flex;gap:5mm;flex:0 0 auto}
+  .codigos{display:flex;gap:4mm;flex:0 0 auto}
   .codigo{width:25mm;text-align:center}
   /* O QR guarda o próprio fundo claro, e não leva arredondamento: cantos
      redondos comem a zona de silêncio, que é o que o leitor usa para achar
