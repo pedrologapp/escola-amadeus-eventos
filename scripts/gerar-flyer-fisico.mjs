@@ -122,11 +122,21 @@ const CSS = `
   .quadro img{width:100%;height:100%;object-fit:cover;display:block}
   .quadro .veu{
     position:absolute;inset:0;
-    background:linear-gradient(180deg, rgba(7,11,24,.12) 0%, rgba(7,11,24,.52) 48%, rgba(7,11,24,.9) 100%);
+    background:linear-gradient(180deg,
+      rgba(7,11,24,.04) 0%,
+      rgba(7,11,24,.38) 40%,
+      rgba(7,11,24,.82) 68%,
+      rgba(7,11,24,.96) 100%);
   }
   .quadro .texto{position:absolute;left:6mm;right:6mm;bottom:5mm}
-  .quadro .nome{display:block;font-size:13pt;font-weight:800;line-height:1.1;color:#FAF7F0}
-  .quadro .legenda{display:block;margin-top:1.6mm;font-size:8.6pt;font-weight:500;line-height:1.3;color:rgba(250,247,240,.78)}
+  .quadro .nome{
+    display:block;font-size:13pt;font-weight:800;line-height:1.1;color:#FFFFFF;
+    text-shadow:0 .3mm 1.1mm rgba(0,0,0,.55);
+  }
+  .quadro .legenda{
+    display:block;margin-top:1.6mm;font-size:8.6pt;font-weight:600;line-height:1.3;
+    color:rgba(255,255,255,.88);text-shadow:0 .3mm 1mm rgba(0,0,0,.5);
+  }
 
   /* a novidade do ano tem faixa própria */
   .faixa-geekie{
