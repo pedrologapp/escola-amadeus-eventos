@@ -489,7 +489,14 @@
   .vcard .mes { margin-top: 1.6cqw; font: 600 3cqw var(--sans); color: var(--creme-2); }
 
   /* ---------- Sônia: fotos maiores ---------- */
-  .foto-q.banner { width: 100%; aspect-ratio: auto; height: 46cqw; margin-top: 6cqw; }
+  .foto-q.banner { width: 100%; aspect-ratio: auto; height: 46cqw; margin-top: 6cqw; position: relative; }
+  .foto-q.banner img { filter: brightness(.72) saturate(.9); }
+  .escolinha { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .escolinha .eq { fill: none; stroke: #FFD860; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 1.2px rgba(0,0,0,.9)); }
+  .escolinha .sol { stroke: #FFB000; }
+  .escolinha .bandeira { fill: rgba(255, 176, 0, .5); }
+  .escolinha .eq-txt { font: 800 4px var(--sans); letter-spacing: .6px; fill: #FFD860; opacity: 0; transition: opacity .8s ease 3.4s; }
+  .escolinha g.in .eq-txt { opacity: 1; }
   .stage.duo .foto-retrato { flex: 0 0 48cqw; width: 48cqw; }
   .stage.duo { gap: 5cqw; }
   .stage.duo .h-l { font-size: 6.4cqw; }
@@ -910,6 +917,27 @@
   </div>
 </section>
 
+<!-- Abertura do vídeo do Infantil -->
+<section class="s" data-who="gislene" data-block="gislene" data-label="">
+  <div class="stage somos">
+    <div class="halo r"></div>
+    <p class="small r fade" style="--d:.2s;color:var(--ouro)">Educação Infantil</p>
+    <p class="h-xl mt2 r" data-split style="--d:.5s">Onde tudo <em class="ouro">começa.</em></p>
+    <div class="uline r"></div>
+  </div>
+</section>
+
+<!-- ============================ VÍDEO DO INFANTIL ============================ -->
+<!-- Toca antes da fala da Gislene; ao terminar, segue sozinho para a capa dela. -->
+<section class="s video paused" data-who="gislene" data-block="gislene" data-label="" data-video>
+  <!-- o vídeo mora dentro do quadro, como todo o resto: acompanha o ajuste do telão e nunca é cortado -->
+  <div class="stage vstage">
+    <video src="video/infantil.mp4" playsinline preload="auto"></video>
+    <div class="vplay" aria-hidden="true"></div>
+    <div class="vmiss">Vídeo não encontrado. Coloque o arquivo em <b>video/infantil.mp4</b>, ao lado desta apresentação.</div>
+  </div>
+</section>
+
 <!-- ============================ GISLENE ============================ -->
 
 <section class="s" data-who="gislene" data-block="gislene" data-label="Gislene Sátiro · Educação Infantil" data-tk="Educação Infantil" data-tn="Gislene Sátiro">
@@ -1035,6 +1063,44 @@
       </div>
     </div>
     <p class="small cap r fade" style="--d:1.2s">Centro Educacional Amadeus · 30 anos</p>
+  </div>
+</section>
+
+<!-- ============================ VÍDEOS DO FUNDAMENTAL 1 E 2 ============================ -->
+<!-- Abertura + vídeo de cada segmento; ao terminar o do F2, segue sozinho para a capa da Adriana. -->
+<section class="s" data-who="adriana" data-block="adriana" data-label="">
+  <div class="stage somos">
+    <div class="halo r"></div>
+    <p class="small r fade" style="--d:.2s;color:var(--ouro)">Fundamental 1</p>
+    <p class="h-xl mt2 r" data-split style="--d:.5s">Onde a curiosidade <em class="ouro">vira conhecimento.</em></p>
+    <div class="uline r"></div>
+  </div>
+</section>
+
+<section class="s video paused" data-who="adriana" data-block="adriana" data-label="" data-video>
+  <!-- o vídeo mora dentro do quadro, como todo o resto: acompanha o ajuste do telão e nunca é cortado -->
+  <div class="stage vstage">
+    <video src="video/fundamental1.mp4" playsinline preload="auto"></video>
+    <div class="vplay" aria-hidden="true"></div>
+    <div class="vmiss">Vídeo não encontrado. Coloque o arquivo em <b>video/fundamental1.mp4</b>, ao lado desta apresentação.</div>
+  </div>
+</section>
+
+<section class="s" data-who="adriana" data-block="adriana" data-label="">
+  <div class="stage somos">
+    <div class="halo r"></div>
+    <p class="small r fade" style="--d:.2s;color:var(--ouro)">Fundamental 2</p>
+    <p class="h-xl mt2 r" data-split style="--d:.5s">Onde eles descobrem <em class="ouro">do que são capazes.</em></p>
+    <div class="uline r"></div>
+  </div>
+</section>
+
+<section class="s video paused" data-who="adriana" data-block="adriana" data-label="" data-video>
+  <!-- o vídeo mora dentro do quadro, como todo o resto: acompanha o ajuste do telão e nunca é cortado -->
+  <div class="stage vstage">
+    <video src="video/fundamental2.mp4" playsinline preload="auto"></video>
+    <div class="vplay" aria-hidden="true"></div>
+    <div class="vmiss">Vídeo não encontrado. Coloque o arquivo em <b>video/fundamental2.mp4</b>, ao lado desta apresentação.</div>
   </div>
 </section>
 
@@ -1388,7 +1454,24 @@
 <section class="s" data-who="sonia" data-block="sonia" data-label="Sônia Travessa · Investimento">
   <div class="stage">
     <div class="kicker r">Onde tudo começou</div>
-    <div class="foto-q banner r fade" style="--d:.2s"><img src="assets/sonia-sitio.jpg" alt="Paisagem do interior"></div>
+    <div class="foto-q banner r fade" style="--d:.2s"><img src="assets/sonia-sitio.jpg" alt="Paisagem do interior">
+      <!-- a escolinha do sítio, desenhada em traço sobre a paisagem -->
+      <svg class="escolinha" viewBox="0 0 200 110" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <g class="r">
+          <circle class="eq sol draw" pathLength="1" style="--d:.6s" cx="160" cy="27" r="7"/>
+          <path class="eq sol draw" pathLength="1" style="--d:.9s" d="M160 15v-4M160 43v-4M148 27h-4M176 27h-4M151.5 18.5l-2.8-2.8M168.5 35.5l2.8 2.8M168.5 18.5l2.8-2.8M151.5 35.5l-2.8 2.8"/>
+          <path class="eq draw" pathLength="1" style="--d:1s" d="M78 82V56h44v26"/>
+          <path class="eq draw" pathLength="1" style="--d:1.5s" d="M73 58l27-20 27 20"/>
+          <path class="eq draw" pathLength="1" style="--d:2s" d="M94 82V68h12v14"/>
+          <path class="eq draw" pathLength="1" style="--d:2.3s" d="M83 62h7v7h-7zM110 62h7v7h-7zM86.5 62v7M113.5 62v7"/>
+          <path class="eq draw" pathLength="1" style="--d:2.6s" d="M100 38v-9h5v9M102.5 29v-4"/>
+          <circle class="eq draw" pathLength="1" style="--d:2.8s" cx="102.5" cy="34" r="1.6"/>
+          <path class="eq bandeira draw" pathLength="1" style="--d:3s" d="M102.5 25V14l8 3-8 3"/>
+          <path class="eq draw" pathLength="1" style="--d:3.2s" d="M64 82c14-2 60-2 74 0"/>
+          <text class="eq-txt" x="100" y="52.5" text-anchor="middle">ESCOLA</text>
+        </g>
+      </svg>
+    </div>
     <p class="small mt2 r fade" style="--d:.5s">Do sítio aos sonhos</p>
     <p class="h-l mt1 r" data-split data-step="1" style="font-style:italic;font-weight:400">“O dinheiro era pouco, <span class="ouro">mas os valores eram enormes.”</span></p>
   </div>
@@ -1685,16 +1768,17 @@
   }
 
   // ---------- vídeo ----------
-  const vsec = secs.find(s => s.hasAttribute('data-video'));
-  const vid = vsec && vsec.querySelector('video');
-  if (vid) {
+  // cada tela com data-video tem o seu vídeo; toca ao chegar, para ao sair
+  const vidDe = sec => sec && sec.hasAttribute('data-video') ? sec.querySelector('video') : null;
+  secs.filter(x => x.hasAttribute('data-video')).forEach(vsec => {
+    const vid = vsec.querySelector('video');
     vid.addEventListener('play', () => vsec.classList.remove('paused'));
     vid.addEventListener('pause', () => vsec.classList.add('paused'));
     vid.addEventListener('error', () => vsec.classList.add('missing'));
     // terminou o vídeo: segue sozinho para a tela seguinte
     vid.addEventListener('ended', () => { if (secs[cur] === vsec) { mode = 'key'; go(cur + 1); } });
     vsec.addEventListener('click', () => { vid.paused ? vid.play().catch(() => {}) : vid.pause(); });
-  }
+  });
 
   function activate(i) {
     if (i === cur) return;
@@ -1703,7 +1787,7 @@
     const prev = secs[cur];
     if (prev) {
       prev.classList.remove('on');
-      if (prev === vsec) vid.pause();
+      if (vidDe(prev)) vidDe(prev).pause();
       setTimeout(() => { if (secs[cur] !== prev) steps(prev).forEach(r => r.classList.remove('in')); }, 700);
     }
     cur = i;
@@ -1713,7 +1797,7 @@
     document.getElementById('who').textContent = s.dataset.label || '';
     [...dots.children].forEach((d, j) => d.classList.toggle('on', j === i));
     // chegando no vídeo para frente, ele toca do começo; voltando, fica parado
-    if (s === vsec && !back && shot === null) { vid.currentTime = 0; vid.play().catch(() => {}); }
+    if (vidDe(s) && !back && shot === null) { vidDe(s).currentTime = 0; vidDe(s).play().catch(() => {}); }
     const start = shot !== null ? (atParam !== null ? +atParam : s.max) : reduced ? s.max : (mode === 'key' && back ? s.max : 0);
     s.at = start;
     if (shot !== null) apply(s, start); else timers.push(setTimeout(() => apply(s, start), 40));
@@ -1786,7 +1870,7 @@
     else if (e.key === 'End') { e.preventDefault(); mode = 'key'; go(secs.length - 1); }
     else if (e.key === 'f' || e.key === 'F') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
     else if (e.key === 'h' || e.key === 'H') document.body.classList.toggle('clean');
-    else if ('pPkK'.includes(e.key) && vid && secs[cur] === vsec) { vid.paused ? vid.play().catch(() => {}) : vid.pause(); }
+    else if ('pPkK'.includes(e.key) && vidDe(secs[cur])) { const v = vidDe(secs[cur]); v.paused ? v.play().catch(() => {}) : v.pause(); }
   });
   addEventListener('wheel', () => { mode = 'scroll'; }, { passive: true });
   addEventListener('touchstart', () => { mode = 'scroll'; }, { passive: true });
