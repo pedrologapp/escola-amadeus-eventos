@@ -424,22 +424,6 @@
   .r.in .geekie { opacity: 1; transform: none; filter: none; }
   .bemvindo { margin-top: 4cqw; }
 
-  /* ---------- transição entre blocos ---------- */
-  #tr { position: fixed; inset: 0; z-index: 20; pointer-events: none; visibility: hidden; }
-  #tr.in { visibility: visible; }
-  #tr .p { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 55%, #0C2360, var(--bg) 72%);
-    transform: translateY(101%); transition: transform .85s cubic-bezier(.75, 0, .2, 1); }
-  #tr .p::before, #tr .p::after { content: ''; position: absolute; left: 0; right: 0; height: 3px; background: var(--ouro); box-shadow: 0 0 40px 8px rgba(255, 176, 0, .55); }
-  #tr .p::before { top: 0; } #tr .p::after { bottom: 0; }
-  #tr.in .p { transform: none; }
-  #tr.in.out .p { transform: translateY(-101%); }
-  #tr.reset .p { transition: none; transform: translateY(101%); }
-  #tr .card { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 2vmin; opacity: 0; transform: translateY(3vmin);
-    transition: opacity .5s ease, transform .9s var(--ease); }
-  #tr.in .card { opacity: 1; transform: none; transition-delay: .55s; }
-  #tr.in.out .card { opacity: 0; transform: translateY(-3vmin); transition-delay: 0s; }
-  #tr .tk { font: 800 max(12px, 2.4vmin) var(--sans); letter-spacing: .3em; text-transform: uppercase; color: var(--ouro); }
-  #tr .tn { font: 700 min(12vmin, 12vw)/1 var(--serif); letter-spacing: -.03em; color: var(--creme); font-variation-settings: "opsz" 144; }
 
 
   body[data-who="sonia"] #bg .b3 { background: rgba(0, 88, 176, .22); }
@@ -548,7 +532,6 @@
 
 
   /* ---------- telão: modo esticado (a processadora espreme o 16:9 no quadrado) ---------- */
-  #tr .tk, #tr .tn { scale: var(--sx, 1) 1; }
   html.esticado .expand > img { left: 50%; width: 100vh; margin-left: -50vh; transform: none; scale: var(--sx, 1) 1; }
 
   /* ---------- teste do telão (tecla T) ---------- */
@@ -685,6 +668,24 @@
     <p class="h-xl frase r" data-split style="--d:.3s">Isso é o que<br><span class="nos"><em class="ouro">nós</em></span><em class="ouro">somos!</em></p>
     <div class="uline r"></div>
     <p class="h-m sozinha r" data-split data-step="1" style="--d:1.1s">Porque uma escola <em class="ouro">não se faz sozinha!</em></p>
+  </div>
+</section>
+
+<!-- ============================ ENTRE UMA FALA E OUTRA ============================ -->
+<section class="s" data-who="abertura" data-block="giro-1" data-label="">
+  <div class="stage opening">
+    <div class="spin r fade" style="--d:.2s">
+      <div class="glow"></div>
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <circle class="o2" cx="50" cy="50" r="49" />
+        <circle class="o1" cx="50" cy="50" r="45" />
+      </svg>
+      <div class="coin">
+        <img src="assets/marca-globo.png" alt="Centro Educacional Amadeus">
+        <img class="back" src="assets/marca-globo.png" alt="">
+      </div>
+    </div>
+    <p class="small cap r fade" style="--d:1.2s">Centro Educacional Amadeus · 30 anos</p>
   </div>
 </section>
 
@@ -987,6 +988,24 @@
   </div>
 </section>
 
+<!-- ============================ ENTRE UMA FALA E OUTRA ============================ -->
+<section class="s" data-who="abertura" data-block="giro-2" data-label="">
+  <div class="stage opening">
+    <div class="spin r fade" style="--d:.2s">
+      <div class="glow"></div>
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <circle class="o2" cx="50" cy="50" r="49" />
+        <circle class="o1" cx="50" cy="50" r="45" />
+      </svg>
+      <div class="coin">
+        <img src="assets/marca-globo.png" alt="Centro Educacional Amadeus">
+        <img class="back" src="assets/marca-globo.png" alt="">
+      </div>
+    </div>
+    <p class="small cap r fade" style="--d:1.2s">Centro Educacional Amadeus · 30 anos</p>
+  </div>
+</section>
+
 <!-- ============================ ADRIANA ============================ -->
 
 <section class="s" data-who="adriana" data-block="adriana" data-label="Adriana Alves · Fundamental 1 e 2" data-tk="Fundamental 1 e 2" data-tn="Adriana Alves">
@@ -1098,6 +1117,24 @@
     <div class="year r" id="year"></div>
     <p class="h-l r" data-split style="--d:.3s">Você vai acompanhar <em class="ouro">o ano inteiro.</em></p>
     <p class="h-m mt2 r" data-split data-step="1" style="color:var(--creme-2)">Não só o resultado dele.</p>
+  </div>
+</section>
+
+<!-- ============================ ENTRE UMA FALA E OUTRA ============================ -->
+<section class="s" data-who="abertura" data-block="giro-3" data-label="">
+  <div class="stage opening">
+    <div class="spin r fade" style="--d:.2s">
+      <div class="glow"></div>
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <circle class="o2" cx="50" cy="50" r="49" />
+        <circle class="o1" cx="50" cy="50" r="45" />
+      </svg>
+      <div class="coin">
+        <img src="assets/marca-globo.png" alt="Centro Educacional Amadeus">
+        <img class="back" src="assets/marca-globo.png" alt="">
+      </div>
+    </div>
+    <p class="small cap r fade" style="--d:1.2s">Centro Educacional Amadeus · 30 anos</p>
   </div>
 </section>
 
@@ -1395,7 +1432,6 @@
 
 </main>
 
-<div id="tr" aria-hidden="true"><div class="p"></div><div class="card"><div class="tk"></div><div class="tn"></div></div></div>
 <div id="cal" aria-hidden="true">
   <div class="stage cal-stage">
     <div class="cal-grid"></div>
@@ -1608,27 +1644,10 @@
     }
   }
 
-  // ---------- transição entre blocos (abertura, Graça, Gislene, Adriana) ----------
-  const tr = document.getElementById('tr');
-  const head = s => secs.find(x => x.dataset.block === s.dataset.block) || s;
-  function cross(i) {
-    busy = true;
-    const h = head(secs[i]);
-    tr.querySelector('.tk').textContent = h.dataset.tk || '';
-    tr.querySelector('.tn').textContent = h.dataset.tn || '';
-    if (secs[cur] === vsec) vid.pause();
-    tr.className = 'in';
-    setTimeout(() => { driving = Date.now(); secs[i].scrollIntoView({ behavior: 'auto' }); }, 900);
-    setTimeout(() => { driving = Date.now(); activate(i); tr.className = 'in out'; }, 2000);
-    setTimeout(() => { tr.className = 'reset'; busy = false; }, 2900);
-    setTimeout(() => { if (tr.className === 'reset') tr.className = ''; }, 2960);
-  }
-
   // Pelo teclado/passador a tela ativa no clique, sem esperar a rolagem;
   // o observador só manda quando quem rola é o mouse ou o dedo.
   const go = i => {
     if (i < 0 || i >= secs.length || busy) return;
-    if (!reduced && cur >= 0 && secs[i].dataset.block !== secs[cur].dataset.block) return cross(i);
     driving = Date.now(); activate(i);
     secs[i].scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
   };
