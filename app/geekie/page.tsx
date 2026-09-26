@@ -121,7 +121,7 @@ export default function GeekiePage() {
             className="g-sobe mt-3 text-center text-[0.7rem] text-[#FAF7F0]/35"
             style={{ animationDelay: ".5s" }}
           >
-            Exemplo ilustrativo
+            Exemplo ilustrativo do 6º ao 9º ano
           </p>
           {/* É o convite para rolar a página. Se passar despercebido,
               o pai para na primeira tela e não vê o resto. */}
@@ -287,9 +287,6 @@ export default function GeekiePage() {
               <>
                 Do 1º ao 3º vem material de recorte, <b>cartas para jogos,
                 quebra-cabeças e fichas de leitura</b>.
-              </>,
-              <>
-                O relatório de sexta-feira <b>já vale aqui</b>.
               </>,
             ]}
           />
