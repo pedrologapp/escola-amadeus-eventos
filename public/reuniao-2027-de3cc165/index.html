@@ -619,6 +619,15 @@
   .seta .ponta { transition: stroke-dashoffset 1.6s var(--ease) var(--d, 0s), opacity .6s ease; }
   .s[data-at="1"] .seta .ponta { opacity: 0; }
 
+  /* ---------- Sônia: material didático, quatro cartões em 2x2 ---------- */
+  .vcards.q2 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2.6cqw 4cqw; margin-top: 4cqw; }
+  .vcards.q2 .vcard { padding: 3.4cqw 2cqw 3cqw; }
+  .vcards.q2 .seg { min-height: 0; font-size: 2.8cqw; }
+  .vcards.q2 .de { margin-top: 1.4cqw; font-size: 3.8cqw; }
+  .vcards.q2 .val { font-size: 6cqw; }
+  .vcards.q2 .vista { margin-top: 1.4cqw; font: 600 2.8cqw var(--sans); color: var(--creme-2); opacity: 0; transition: opacity .6s ease 1.6s; }
+  .vcards.q2 .vista.in { opacity: 1; }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
   }
@@ -1417,6 +1426,43 @@
       <div class="pl"><span>Fundamental 1</span><span>R$ 550</span><span>R$ 530</span></div>
       <div class="pl"><span>Fundamental 2</span><span>R$ 570</span><span>R$ 550</span></div>
     </div>
+  </div>
+</section>
+
+<!-- Material didático: os valores do ano em 12 parcelas; no clique, o
+     desconto de quem matricula até 30/10 (valores de lib/folder-config.ts). -->
+<section class="s" data-who="sonia" data-block="sonia" data-label="Sônia Travessa · Investimento">
+  <div class="stage">
+    <div class="kicker r">Material didático 2027</div>
+    <p class="h-l r" data-split style="--d:.2s">Material didático <span class="ouro">Geekie:</span></p>
+    <p class="h-l ouro r" data-split data-step="1" style="font-style:italic">matriculando até 30 de outubro:</p>
+    <div class="vcards q2">
+      <div class="vcard r" style="--d:0.80s">
+        <div class="seg">Maternal II e III</div>
+        <div class="de r" data-step="1">12x R$ 83</div>
+        <div class="val">12x R$ <span class="r" data-step="1" data-count-from="83" data-count-to="74" data-count-delay="700">83</span></div>
+        <div class="vista r" data-step="1">ou R$ 799,20 à vista</div>
+      </div>
+      <div class="vcard r" style="--d:1.05s">
+        <div class="seg">Grupo IV e V</div>
+        <div class="de r" data-step="1">12x R$ 92</div>
+        <div class="val">12x R$ <span class="r" data-step="1" data-count-from="92" data-count-to="82" data-count-delay="700">92</span></div>
+        <div class="vista r" data-step="1">ou R$ 885,60 à vista</div>
+      </div>
+      <div class="vcard r" style="--d:1.30s">
+        <div class="seg">1º ao 5º ano</div>
+        <div class="de r" data-step="1">12x R$ 159</div>
+        <div class="val">12x R$ <span class="r" data-step="1" data-count-from="159" data-count-to="142" data-count-delay="700">159</span></div>
+        <div class="vista r" data-step="1">ou R$ 1.533,60 à vista</div>
+      </div>
+      <div class="vcard r" style="--d:1.55s">
+        <div class="seg">6º ao 9º ano</div>
+        <div class="de r" data-step="1">12x R$ 181</div>
+        <div class="val">12x R$ <span class="r" data-step="1" data-count-from="181" data-count-to="162" data-count-delay="700">181</span></div>
+        <div class="vista r" data-step="1">ou R$ 1.749,60 à vista</div>
+      </div>
+    </div>
+    <p class="body mt2 r fade" style="--d:1.9s">Comprado à parte, uma vez no ano.</p>
   </div>
 </section>
 
