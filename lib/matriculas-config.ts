@@ -49,7 +49,8 @@ export const MATRICULAS_2027: CampanhaMatriculas = {
   local: "Centro Educacional Amadeus",
   localDetalhe: "São Gonçalo do Amarante · RN",
   // Fecha o formulário na manhã do evento.
-  prazoInscricao: "2026-09-26T12:00:00-03:00",
+  // Fechado antes do previsto (era 12h) a pedido do Pedro, na manhã da reunião.
+  prazoInscricao: "2026-09-26T00:00:00-03:00",
   maxPessoas: 2,
 
   infos: [
