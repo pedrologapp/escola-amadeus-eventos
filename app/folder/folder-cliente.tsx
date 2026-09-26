@@ -1313,7 +1313,10 @@ function SecaoValores({
 
               <span className="mt-4 block border-t border-[#17223D]/14 pt-3.5 text-[0.76rem] leading-relaxed text-[#5A657F]">
                 Sem nenhuma das duas condições, a mensalidade 2027 é{" "}
-                {valores.cheia.mensal}. A Mensalidade Fidelidade vale sempre, em
+                <strong className="whitespace-nowrap text-[1.05rem] font-extrabold text-[#17223D]">
+                  {valores.cheia.mensal}
+                </strong>
+                . A Mensalidade Fidelidade vale sempre, em
                 qualquer condição.
               </span>
             </div>
