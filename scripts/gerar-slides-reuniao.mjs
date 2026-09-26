@@ -174,12 +174,13 @@ const GRACA = {
       destaque: "nós somos.",
     },
     {
-      // Une a sala em vez de separar em veteranos e novatos: o que todos
-      // ali têm em comum é maior do que há quanto tempo cada um está.
+      // O miolo da fala: ela conta como a escola começou. A frase já carrega
+      // o argumento da reunião inteira, porque diz que a escola de hoje é
+      // resultado de mudança, antes mesmo de ela contar qualquer coisa.
       tipo: "frase",
-      etiqueta: "Quem está aqui hoje",
-      frase: "Todo mundo nesta sala tomou a mesma decisão:",
-      destaque: "confiar um filho a outra pessoa.",
+      etiqueta: "Como isso aqui começou",
+      frase: "A escola que vocês conhecem hoje",
+      destaque: "não nasceu assim.",
     },
     {
       // Uma frase só, e a história vai na voz dela. Lista numerada na tela
@@ -208,9 +209,17 @@ const GRACA = {
       destaque: "sem ter certeza.",
     },
     {
+      tipo: "frase",
+      etiqueta: "E agora",
+      frase: "A gente tomou mais uma decisão.",
+      destaque: "E está muito feliz com ela.",
+    },
+    {
+      // O nome sai da boca da diretora, e não da empresa. Vindo dela, é
+      // endosso de trinta anos; vindo de quem vende, é anúncio.
       tipo: "fecho",
-      frase: "A partir de 2027, o material do seu filho",
-      destaque: "muda.",
+      frase: "A partir de 2027, o material do seu filho é o",
+      destaque: "Geekie.",
     },
   ],
 };

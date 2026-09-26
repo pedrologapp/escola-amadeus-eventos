@@ -1,5 +1,5 @@
 TEXTO DOS SLIDES — REUNIÃO DE MATRÍCULAS 2027
-Extraído dos slides prontos, para montar no Gamma.
+Extraído dos slides prontos.
 
 
 ==================================================
@@ -14,8 +14,8 @@ Diretora
 Isso é o que nós somos.
 
 --- slide 2 ---
-[Quem está aqui hoje]
-Todo mundo nesta sala tomou a mesma decisão: confiar um filho a outra pessoa.
+[Como isso aqui começou]
+A escola que vocês conhecem hoje não nasceu assim.
 
 --- slide 3 ---
 [Não é a primeira vez]
@@ -31,7 +31,11 @@ apoio: Escola que não muda em trinta anos não é escola tradicional. É escola
 A gente não muda nada sem ter certeza.
 
 --- slide 6 ---
-A partir de 2027, o material do seu filho muda.
+[E agora]
+A gente tomou mais uma decisão. E está muito feliz com ela.
+
+--- slide 7 ---
+A partir de 2027, o material do seu filho é o Geekie.
 
 
 ==================================================
