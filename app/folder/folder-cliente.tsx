@@ -609,7 +609,17 @@ function SecaoVideo({
             } bg-[#0B1733]`}
           >
             {s.video ? (
-              <video src={s.video} controls playsInline className="w-full flex-1 object-cover" />
+              /* O vídeo é quadrado: contain mostra ele inteiro no card. A capa é
+                 o mesmo nome com -capa.jpg; metadata evita baixar os três vídeos
+                 de uma vez no celular. */
+              <video
+                src={s.video}
+                poster={s.video.replace(/\.mp4$/, "-capa.jpg")}
+                controls
+                playsInline
+                preload="metadata"
+                className="aspect-square w-full flex-1 bg-black object-contain"
+              />
             ) : (
               <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
                 <span className="grid size-[4.5rem] place-items-center rounded-full bg-[#FAF7F0]">

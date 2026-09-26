@@ -648,6 +648,21 @@
   .s[data-at="2"] .pg img { border-color: var(--ouro); box-shadow: 0 0 4cqw rgba(255, 176, 0, .35); }
   .s[data-at="2"] .pg figcaption { color: var(--ouro); }
 
+  /* ---------- Valores ---------- */
+  .riscado { position: relative; display: inline-block; transition: color .8s ease; }
+  .riscado::after { content: ''; position: absolute; left: -2%; right: -2%; top: 55%; height: .07em; background: var(--ouro); transform: scaleX(0); transform-origin: left; transition: transform .8s var(--ease); }
+  .s[data-at="1"] .riscado { color: var(--creme-3); }
+  .s[data-at="1"] .riscado::after { transform: scaleX(1); }
+  .coracao-grande { display: block; width: 16cqw; height: auto; margin-top: 4cqw; overflow: visible; }
+  .coracao-grande path, .maos .cor path { fill: rgba(224, 82, 76, .18); stroke: #E0524C; stroke-width: 1.6; stroke-linejoin: round; }
+  .grat { display: flex; flex-direction: column; gap: 4.4cqw; margin-top: 6cqw; }
+  .grat p { transition: opacity 1s ease; }
+  .s[data-at="1"] .grat p:nth-child(1), .s[data-at="2"] .grat p:nth-child(-n+2), .s[data-at="3"] .grat p:nth-child(-n+3) { opacity: .4; }
+  .maos { display: flex; align-items: center; gap: 6cqw; margin-top: 8cqw; }
+  .maos svg { width: 24cqw; height: auto; overflow: visible; }
+  .maos svg[data-icon] { stroke: var(--ouro); stroke-width: 1.4; }
+  .fss3 { display: flex; flex-direction: column; gap: 5cqw; margin-top: 6cqw; }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
   }
@@ -932,7 +947,7 @@
 <section class="s video paused" data-who="gislene" data-block="gislene" data-label="" data-video>
   <!-- o vídeo mora dentro do quadro, como todo o resto: acompanha o ajuste do telão e nunca é cortado -->
   <div class="stage vstage">
-    <video src="video/infantil.mp4" playsinline preload="auto"></video>
+    <video src="/folder/video/infantil.mp4" playsinline preload="auto"></video>
     <div class="vplay" aria-hidden="true"></div>
     <div class="vmiss">Vídeo não encontrado. Coloque o arquivo em <b>video/infantil.mp4</b>, ao lado desta apresentação.</div>
   </div>
@@ -1080,7 +1095,7 @@
 <section class="s video paused" data-who="adriana" data-block="adriana" data-label="" data-video>
   <!-- o vídeo mora dentro do quadro, como todo o resto: acompanha o ajuste do telão e nunca é cortado -->
   <div class="stage vstage">
-    <video src="video/fundamental1.mp4" playsinline preload="auto"></video>
+    <video src="/folder/video/fundamental1.mp4" playsinline preload="auto"></video>
     <div class="vplay" aria-hidden="true"></div>
     <div class="vmiss">Vídeo não encontrado. Coloque o arquivo em <b>video/fundamental1.mp4</b>, ao lado desta apresentação.</div>
   </div>
@@ -1098,7 +1113,7 @@
 <section class="s video paused" data-who="adriana" data-block="adriana" data-label="" data-video>
   <!-- o vídeo mora dentro do quadro, como todo o resto: acompanha o ajuste do telão e nunca é cortado -->
   <div class="stage vstage">
-    <video src="video/fundamental2.mp4" playsinline preload="auto"></video>
+    <video src="/folder/video/fundamental2.mp4" playsinline preload="auto"></video>
     <div class="vplay" aria-hidden="true"></div>
     <div class="vmiss">Vídeo não encontrado. Coloque o arquivo em <b>video/fundamental2.mp4</b>, ao lado desta apresentação.</div>
   </div>
@@ -1396,7 +1411,7 @@
 
 <!-- ============================ HUMANIZAÇÃO E VALORES (Maria das Graças) ============================ -->
 <!-- Só o símbolo girando enquanto ela fala. -->
-<section class="s" data-who="abertura" data-block="valores" data-label="">
+<section class="s" data-who="abertura" data-block="giro-4" data-label="">
   <div class="stage opening">
     <div class="spin r fade" style="--d:.2s">
       <div class="glow"></div>
@@ -1410,6 +1425,95 @@
       </div>
     </div>
     <p class="small cap r fade" style="--d:1.2s">Centro Educacional Amadeus · 30 anos</p>
+  </div>
+</section>
+
+
+<!-- ============================ MARIA DAS GRAÇAS · VALORES ============================ -->
+<section class="s" data-who="graca" data-block="valores" data-label="Maria das Graças · Valores">
+  <div class="stage cover">
+    <div class="orb r">
+      <svg viewBox="0 0 100 100">
+        <circle class="orbit" cx="50" cy="50" r="49" />
+        <circle class="ring draw" cx="50" cy="50" r="44" pathLength="1" style="--d:.2s" transform="rotate(-90 50 50)" />
+        <circle class="sat" cx="50" cy="1" r="1.2" />
+      </svg>
+      <img src="assets/marca-globo.png" alt="">
+    </div>
+    <div class="stack">
+      <div class="small r fade" style="--d:.3s">Valores</div>
+      <h1 class="h-xl name r" data-split style="--d:.5s">Maria das Graças</h1>
+      <p class="body role r fade" style="--d:1.3s">Diretora</p>
+    </div>
+    <div class="small event r fade" style="--d:1.8s">Matrículas 2027 · Centro Educacional Amadeus</div>
+  </div>
+</section>
+
+<!-- V1 · não é só uma rematrícula -->
+<section class="s" data-who="graca" data-block="valores" data-label="Maria das Graças · Valores">
+  <div class="stage">
+    <div class="kicker r">Valores</div>
+    <p class="h-l l1r r" data-split style="--d:.2s">Para nós, não é simplesmente <span class="riscado">uma rematrícula.</span></p>
+    <p class="h-xl ouro mt2 r" data-split data-step="1" style="font-style:italic">É uma renovação de confiança.</p>
+  </div>
+</section>
+
+<!-- V2 · o que têm de mais precioso -->
+<section class="s" data-who="graca" data-block="valores" data-label="Maria das Graças · Valores">
+  <div class="stage">
+    <div class="kicker r">Valores</div>
+    <p class="h-l r" data-split style="--d:.2s;font-style:italic;font-weight:400">“Eu continuo acreditando <span class="ouro">nessa escola.”</span></p>
+    <p class="h-m mt3 r" data-split data-step="1" style="color:var(--creme-2)">Vocês estão nos entregando o que têm de mais precioso:</p>
+    <p class="h-xl ouro mt1 r" data-split data-step="1" style="--d:1.2s">seus filhos.</p>
+    <svg class="coracao-grande r" data-step="1" viewBox="0 0 40 36" aria-hidden="true"><path class="draw" pathLength="1" style="--d:1.8s" d="M20 33S3 22 3 11c0-5 4-8 8-8 4 0 7 3 9 6 2-3 5-6 9-6 4 0 8 3 8 8 0 11-17 22-17 22z"/></svg>
+  </div>
+</section>
+
+<!-- V3 · obrigada: uma linha por vez -->
+<section class="s" data-who="graca" data-block="valores" data-label="Maria das Graças · Valores">
+  <div class="stage">
+    <div class="kicker r">Obrigada</div>
+    <div class="grat">
+      <p class="h-m r" data-split>Às famílias que caminharam conosco <em class="ouro">todos esses anos.</em></p>
+      <p class="h-m r" data-split data-step="1">Às que <em class="ouro">chegaram agora.</em></p>
+      <p class="h-m r" data-split data-step="2">Às que confiaram os primeiros filhos <em class="ouro">e depois trouxeram os irmãos.</em></p>
+      <p class="h-m r" data-split data-step="3">Aos nossos professores e colaboradores, <em class="ouro">que construíram cada etapa.</em></p>
+    </div>
+  </div>
+</section>
+
+<!-- V4 · a mãe dela: alguém acreditando junto -->
+<section class="s" data-who="graca" data-block="valores" data-label="Maria das Graças · Valores">
+  <div class="stage">
+    <div class="kicker r">E à minha mãe</div>
+    <div class="maos r">
+      <svg data-icon="printer" style="--d:.3s"></svg>
+      <svg class="cor" viewBox="0 0 40 36" aria-hidden="true"><path class="draw" pathLength="1" style="--d:1.2s" d="M20 33S3 22 3 11c0-5 4-8 8-8 4 0 7 3 9 6 2-3 5-6 9-6 4 0 8 3 8 8 0 11-17 22-17 22z"/></svg>
+    </div>
+    <p class="h-m mt2 r" data-split style="--d:.8s;color:var(--creme-2)">Muito maior do que a compra de um equipamento:</p>
+    <p class="h-l mt1 r" data-split data-step="1">Havia alguém acreditando comigo <em class="ouro">em um sonho.</em></p>
+  </div>
+</section>
+
+<!-- V5 · fomos, somos, seremos -->
+<section class="s" data-who="graca" data-block="valores" data-label="Maria das Graças · Valores">
+  <div class="stage">
+    <div class="kicker r">30 anos</div>
+    <div class="fss3">
+      <p class="h-l r" data-split>Nós sabemos <em class="ouro">o que fomos.</em></p>
+      <p class="h-l r" data-split data-step="1">Temos orgulho <em class="ouro">do que somos.</em></p>
+      <p class="h-l r" data-split data-step="2">E trabalhamos, todos os dias, <em class="ouro">pelo que seremos.</em></p>
+    </div>
+  </div>
+</section>
+
+<!-- V6 · o fecho -->
+<section class="s" data-who="graca" data-block="valores" data-label="Maria das Graças · Valores">
+  <div class="stage somos">
+    <div class="halo r"></div>
+    <p class="h-m r" data-split style="--d:.2s;color:var(--creme-2)">Uma escola não completa 30 anos apenas porque o tempo passou.</p>
+    <p class="h-l mt2 r" data-split data-step="1">Completa 30 anos porque <em class="ouro">muitas pessoas acreditaram nela.</em></p>
+    <p class="h-xl ouro mt3 r" data-split data-step="2">Muito obrigada!</p>
   </div>
 </section>
 

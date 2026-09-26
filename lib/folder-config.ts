@@ -34,7 +34,7 @@ export const SEGMENTOS: Segmento[] = [
     curto: "Infantil",
     idade: "2 a 5 anos",
     series: null,
-    video: null,
+    video: "/folder/video/infantil.mp4",
   },
   {
     id: "f1",
@@ -42,7 +42,7 @@ export const SEGMENTOS: Segmento[] = [
     curto: "Fund. 1",
     idade: "6 a 10 anos",
     series: "do 1º ao 5º ano",
-    video: null,
+    video: "/folder/video/fundamental1.mp4",
   },
   {
     id: "f2",
@@ -50,7 +50,7 @@ export const SEGMENTOS: Segmento[] = [
     curto: "Fund. 2",
     idade: "11 a 14 anos",
     series: "do 6º ao 9º ano",
-    video: null,
+    video: "/folder/video/fundamental2.mp4",
   },
 ];
 
