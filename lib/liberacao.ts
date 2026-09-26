@@ -8,7 +8,7 @@ import type { Metadata } from "next";
  *
  * Para liberar: trocar para true e publicar.
  */
-export const PAGINAS_LIBERADAS = false;
+export const PAGINAS_LIBERADAS = true;
 
 /** Título e prévia neutros, para o link no WhatsApp não entregar o anúncio. */
 export const METADATA_EM_BREVE: Metadata = {
