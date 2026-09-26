@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import EmBreve from "@/components/em-breve";
 import { PERGUNTAS } from "@/lib/folder-config";
+import { METADATA_EM_BREVE, PAGINAS_LIBERADAS } from "@/lib/liberacao";
 
-export const metadata: Metadata = {
+const METADATA_GEEKIE: Metadata = {
   title: "Geekie no Amadeus · O que muda em 2027",
   description:
     "A partir de 2027 o material didático do Amadeus é Geekie. Entenda o que muda para o seu filho e o que muda para você.",
@@ -14,6 +16,9 @@ export const metadata: Metadata = {
     type: "website",
   },
 };
+
+/** Fechado até o anúncio na reunião: ver lib/liberacao.ts. */
+export const metadata: Metadata = PAGINAS_LIBERADAS ? METADATA_GEEKIE : METADATA_EM_BREVE;
 
 /** Página institucional, sem dado dinâmico. */
 export const revalidate = 3600;
@@ -35,6 +40,7 @@ const MATERIAS: Materia[] = [
 ];
 
 export default function GeekiePage() {
+  if (!PAGINAS_LIBERADAS) return <EmBreve />;
   return (
     <main className="bg-[#05060C] text-[#FAF7F0]">
       {/* As barras do relatório crescem ao abrir. Partem de um estado
