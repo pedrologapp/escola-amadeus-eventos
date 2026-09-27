@@ -190,19 +190,19 @@ const CSS = `
 .topo .logo { width: 25mm; height: auto; }
 .topo .selo { text-align: right; font-size: 8.4pt; font-weight: 800; letter-spacing: .22em; text-transform: uppercase; color: #B9862F; line-height: 1.7; }
 .topo .selo span { display: block; color: #9AA3B4; }
-.olho { margin-top: 13mm; font-size: 9pt; font-weight: 800; letter-spacing: .24em; text-transform: uppercase; color: #B9862F; }
-.folha h1 { margin-top: 2mm; font-size: 30pt; line-height: 1.05; letter-spacing: -.02em; color: #083078; max-width: 165mm; }
-.abertura { margin-top: 5mm; font-size: 12pt; line-height: 1.5; color: #5A6478; max-width: 160mm; }
+.olho { margin-top: 8mm; font-size: 9pt; font-weight: 800; letter-spacing: .24em; text-transform: uppercase; color: #B9862F; }
+.folha h1 { margin-top: 2mm; font-size: 27pt; line-height: 1.05; letter-spacing: -.02em; color: #083078; max-width: 165mm; }
+.abertura { margin-top: 4mm; font-size: 12pt; line-height: 1.5; color: #5A6478; max-width: 160mm; }
 .abertura b { color: #17223D; }
-.serie { margin-top: 5mm; font-size: 9.5pt; font-weight: 700; color: #5A6478; }
+.serie { margin-top: 4mm; font-size: 9.5pt; font-weight: 700; color: #5A6478; }
 .serie span {
   display: inline-block; margin-right: 2mm; padding: 1.2mm 3.5mm; border-radius: 99px;
   background: #083078; color: #FFB000; font-weight: 800;
 }
-.cartoes { margin-top: 9mm; display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
-.cartao { border-radius: 6mm; padding: 7mm 7mm 6mm; border: .4mm solid rgba(23,34,61,.16); background: rgba(255,255,255,.55); }
+.cartoes { margin-top: 6mm; display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+.cartao { border-radius: 6mm; padding: 6mm 6.5mm 5mm; border: .4mm solid rgba(23,34,61,.16); background: rgba(255,255,255,.55); }
 .cartao.destaque { background: #083078; color: #fff; border-color: #083078; }
-.cartao .rotulo { font-size: 8.4pt; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: #5A6478; margin-bottom: 5mm; }
+.cartao .rotulo { font-size: 8.4pt; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: #5A6478; margin-bottom: 3.5mm; }
 .cartao.destaque .rotulo { color: #FFB000; }
 .cartao .linha { display: flex; justify-content: space-between; font-size: 10.5pt; padding: 1.4mm 0; }
 .cartao .linha b { font-weight: 800; }
@@ -214,24 +214,24 @@ const CSS = `
 .cartao .total { margin-top: 3mm; padding-top: 4mm; border-top: .3mm solid rgba(23,34,61,.16); display: flex; flex-direction: column; }
 .cartao.destaque .total { border-color: rgba(255,255,255,.22); }
 .cartao .por-mes { font-size: 9pt; opacity: .75; }
-.cartao .valor { font-size: 30pt; line-height: 1.1; letter-spacing: -.02em; }
+.cartao .valor { font-size: 27pt; line-height: 1.1; letter-spacing: -.02em; }
 .cartao .fidelidade {
   margin-top: 4mm; display: inline-block; padding: 2mm 3.5mm; border-radius: 3mm; font-size: 9.4pt;
   background: rgba(8,48,120,.07); color: #083078;
 }
 .cartao.destaque .fidelidade { background: rgba(255,176,0,.16); color: #FFB000; }
-.economia { margin-top: 7mm; font-size: 12pt; line-height: 1.45; color: #17223D; }
+.economia { margin-top: 5mm; font-size: 12pt; line-height: 1.45; color: #17223D; }
 .economia b { color: #B9862F; font-weight: 800; }
 .notas { margin-top: 4mm; padding-left: 4.5mm; font-size: 9.6pt; line-height: 1.6; color: #5A6478; }
 .notas b { color: #17223D; }
-.qr-bloco { margin-top: auto; display: flex; align-items: center; gap: 7mm; padding-top: 6mm; border-top: .4mm solid rgba(23,34,61,.16); }
-.qr-bloco .qr { width: 30mm; height: 30mm; flex: 0 0 auto; }
+.qr-bloco { margin-top: auto; display: flex; align-items: center; gap: 7mm; padding-top: 4.5mm; border-top: .4mm solid rgba(23,34,61,.16); }
+.qr-bloco .qr { width: 27mm; height: 27mm; flex: 0 0 auto; }
 .qr-bloco .qr svg { width: 100%; height: 100%; display: block; }
 .qr-bloco > span:last-child { flex: 1; }
 .qr-bloco .titulo { display: block; font-size: 13.5pt; font-weight: 800; line-height: 1.2; }
 .qr-bloco .texto { display: block; margin-top: 2mm; font-size: 9.8pt; line-height: 1.42; color: #5A6478; }
 .qr-bloco .url { display: block; margin-top: 2.5mm; font-size: 9.6pt; font-weight: 700; color: #B9862F; }
-.rodape { margin-top: 5mm; font-size: 7.6pt; color: #9AA3B4; }
+.rodape { margin-top: 3.5mm; font-size: 7.6pt; color: #9AA3B4; }
 @media print {
   .barra-controle { display: none; }
   .folha { margin: 0; box-shadow: none; }
