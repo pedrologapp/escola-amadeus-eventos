@@ -1,0 +1,804 @@
+{
+  "name": "Aniversários · Alunos e Colaboradores",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## ANIVERSÁRIOS · ALUNOS E COLABORADORES\n\nTodo dia às 7h busca no Activesoft quem faz aniversário hoje e manda o cartão (imagem gerada em eventos.escolaamadeus.com/api/aniversario):\n- **Aluno:** para TODOS os responsáveis (sem repetir número).\n- **Colaborador:** no privado dele.\nCada envio fica em `aniversario_envios` (Supabase SEA), para nunca repetir no mesmo dia.\n\n**Teste:** com `modoTeste = true` no nó Configuração, manda só para o telefoneTeste um cartão de aluno e um de colaborador.\n**Para valer:** `modoTeste = false` e ativar (Publish) o fluxo.",
+        "height": 420,
+        "width": 520
+      },
+      "id": "a11e0000-0000-4000-8000-000000000001",
+      "name": "Instruções",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -760,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "id": "a11e0000-0000-4000-8000-000000000002",
+      "name": "Todo dia às 7h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -720,
+        160
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "a11e0000-0000-4000-8000-000000000003",
+      "name": "Executar manualmente",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ================= CONFIGURAÇÃO =================\n// modoTeste = true  -> manda SÓ para o telefoneTeste: um cartão de aluno e um de\n//                      colaborador com o nomeTeste, como se fosse o aniversário dele.\n// modoTeste = false -> manda para os aniversariantes de hoje (alunos e colaboradores).\nconst modoTeste = true;\nconst telefoneTeste = '84991335975';\nconst nomeTeste = 'Pedro Luciano';\n\nconst site = 'https://eventos.escolaamadeus.com';\n\n// {nome} vira os dois primeiros nomes da pessoa.\nconst textoAluno =\n`🎉 Hoje é um dia muito especial: *{nome}* está fazendo aniversário!\n\nToda a família Amadeus deseja um novo ano cheio de alegria, descobertas e muito aprendizado. 💙\n\nParabéns! 🎂\n_Centro Educacional Amadeus_`;\n\nconst textoColaborador =\n`🎉 Feliz aniversário, *{nome}*!\n\nObrigado por fazer parte, todos os dias, do que nós somos. Que o seu novo ano seja leve, cheio de saúde e de conquistas. 💙\n\n_Equipe Centro Educacional Amadeus_`;\n// ================================================\n\nconst hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Fortaleza' }); // AAAA-MM-DD\nreturn [{ json: { modoTeste, telefoneTeste, nomeTeste, site, textoAluno, textoColaborador, hoje } }];"
+      },
+      "id": "a11e0000-0000-4000-8000-000000000004",
+      "name": "Configuração",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -500,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://siga01.activesoft.com.br/api/v0/acesso/alunos/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {}
+      },
+      "id": "a11e0000-0000-4000-8000-000000000005",
+      "name": "Alunos Ativos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -300,
+        240
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "O1Shny6h20txi7XS",
+          "name": "Bearer Auth account"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "url": "https://siga01.activesoft.com.br/api/v1/lista_alunos/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {}
+      },
+      "id": "a11e0000-0000-4000-8000-000000000006",
+      "name": "Lista Alunos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -100,
+        240
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "O1Shny6h20txi7XS",
+          "name": "Bearer Auth account"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "url": "https://siga01.activesoft.com.br/api/v1/lista_responsaveis/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {}
+      },
+      "id": "a11e0000-0000-4000-8000-000000000007",
+      "name": "Responsáveis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        100,
+        240
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "O1Shny6h20txi7XS",
+          "name": "Bearer Auth account"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "url": "https://siga01.activesoft.com.br/api/v1/lista_colaboradores/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {}
+      },
+      "id": "a11e0000-0000-4000-8000-000000000008",
+      "name": "Colaboradores",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        300,
+        240
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "O1Shny6h20txi7XS",
+          "name": "Bearer Auth account"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "aniversario_envios",
+        "returnAll": true,
+        "filterType": "manual",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "data",
+              "condition": "eq",
+              "keyValue": "={{ $('Configuração').first().json.hoje }}"
+            }
+          ]
+        }
+      },
+      "id": "a11e0000-0000-4000-8000-000000000009",
+      "name": "Já enviados hoje",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        500,
+        240
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "twGMaqD94DHqfjbv",
+          "name": "SEA"
+        }
+      },
+      "executeOnce": true,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Configuração').first().json;\nconst hoje = cfg.hoje;\nconst mmdd = hoje.slice(5);\nconst ehBissexto = (a) => (a % 4 === 0 && a % 100 !== 0) || a % 400 === 0;\n// quem nasceu em 29/02 comemora em 28/02 nos anos não bissextos\nconst fazHoje = (nasc) => {\n  if (!nasc) return false;\n  const d = String(nasc).slice(5, 10);\n  if (d === mmdd) return true;\n  return d === '02-29' && mmdd === '02-28' && !ehBissexto(+hoje.slice(0, 4));\n};\nconst CONECT = new Set(['de', 'da', 'do', 'das', 'dos', 'e']);\nconst doisNomes = (bruto) => {\n  const cap = (p) => p.charAt(0).toLocaleUpperCase('pt-BR') + p.slice(1).toLocaleLowerCase('pt-BR');\n  const partes = String(bruto || '').trim().split(/\\s+/).filter(Boolean);\n  const out = [];\n  for (const p of partes) { if (!out.length) { out.push(cap(p)); continue; } if (CONECT.has(p.toLowerCase())) continue; out.push(cap(p)); break; }\n  return out.join(' ');\n};\nconst tel = (t) => { let d = String(t || '').replace(/\\D/g, ''); if (d.startsWith('55') && d.length > 11) d = d.slice(2); return d.length >= 10 ? d : null; };\nconst cartao = (tipo, nomeCompleto) => cfg.site + '/api/aniversario?tipo=' + tipo + '&nome=' + encodeURIComponent(nomeCompleto);\nconst item = (tipo, pessoaRef, nomeCompleto, telefone) => {\n  const nome = doisNomes(nomeCompleto);\n  const texto = (tipo === 'aluno' ? cfg.textoAluno : cfg.textoColaborador).replace(/\\{nome\\}/g, nome);\n  return { json: { data: hoje, tipo, pessoa_ref: pessoaRef, nome, telefone, imagem: cartao(tipo, nomeCompleto), texto } };\n};\n\n// ---- aniversariantes reais de hoje (também calculados no teste, só para o resumo)\nconst ativos = new Map();\nfor (const i of $('Alunos Ativos').all()) { const a = i.json; if (a && a.id_aluno && !ativos.has(a.id_aluno)) ativos.set(a.id_aluno, a); }\nconst cadastro = new Map($('Lista Alunos').all().map(i => [i.json.id, i.json]));\nconst celResp = new Map($('Responsáveis').all().map(i => [i.json.id, i.json.celular]));\nconst reais = [];\nfor (const a of ativos.values()) {\n  if (!fazHoje(a.data_nascimento)) continue;\n  const c = cadastro.get(a.id_aluno) || {};\n  const ids = [c.responsavel_id, c.responsavel_secundario_id, c.filiacao_1_id, c.filiacao_2_id, ...(c.responsaveis_adicionais_ids || [])].filter(Boolean);\n  const fones = [...new Set(ids.map(r => tel(celResp.get(r))).filter(Boolean))];\n  for (const f of fones) reais.push(item('aluno', 'aluno:' + a.id_aluno, a.nome, f));\n}\nfor (const i of $('Colaboradores').all()) {\n  const c = i.json;\n  if (!c || c.ativo === false || !fazHoje(c.data_nascimento)) continue;\n  const f = tel(c.celular);\n  if (f) reais.push(item('colaborador', 'colab:' + c.id, c.nome, f));\n}\n\nif (cfg.modoTeste) {\n  const t = tel(cfg.telefoneTeste);\n  if (!t) throw new Error('Modo teste: telefoneTeste inválido no nó Configuração.');\n  const agora = Date.now();\n  return [\n    item('aluno', 'teste:aluno:' + agora, cfg.nomeTeste, t),\n    item('colaborador', 'teste:colab:' + agora, cfg.nomeTeste, t),\n  ].map(x => ({ json: { ...x.json, resumoReal: reais.length + ' envio(s) reais seriam feitos hoje (' + hoje + ')' } }));\n}\n\n// ---- tira quem já recebeu hoje\nconst jaFoi = new Set($('Já enviados hoje').all().map(i => i.json && i.json.pessoa_ref ? i.json.pessoa_ref + '|' + i.json.telefone : null).filter(Boolean));\nreturn reais.filter(x => !jaFoi.has(x.json.pessoa_ref + '|' + x.json.telefone));"
+      },
+      "id": "a11e0000-0000-4000-8000-000000000010",
+      "name": "Montar Aniversariantes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "a11e0000-0000-4000-8000-000000000011",
+      "name": "Uma por vez",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        900,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $('Uma por vez').first().json.telefone;\nlet ddd, num;\nif (d.length <= 9) { ddd = '84'; num = d; } else { ddd = d.substring(0, 2); num = d.substring(2); }\nconst semNove = (num.length === 9 && num.startsWith('9')) ? num.substring(1) : num;\nreturn [{ json: {\n  phoneSemNove: `55${ddd}${semNove}`, phoneComNove: `55${ddd}9${semNove}`,\n  chatIdSemNove: `55${ddd}${semNove}@c.us`, chatIdComNove: `55${ddd}9${semNove}@c.us`,\n} }];"
+      },
+      "id": "a11e0000-0000-4000-8000-000000000012",
+      "name": "Formatar Telefone",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "Contacts",
+        "operation": "Check Exists",
+        "session": "=amadeus",
+        "phone": "={{ $json.phoneSemNove }}"
+      },
+      "id": "a11e0000-0000-4000-8000-000000000013",
+      "name": "Check Sem 9",
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        1320,
+        320
+      ],
+      "credentials": {
+        "wahaApi": {
+          "id": "Wa5n1cK3Gl4WH4bW",
+          "name": "WAHA account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "sem9",
+              "leftValue": "={{ $json.numberExists }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a11e0000-0000-4000-8000-000000000014",
+      "name": "Existe sem 9?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1520,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "Usar sem 9",
+              "name": "chatId",
+              "value": "={{ $('Formatar Telefone').first().json.chatIdSemNove }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a11e0000-0000-4000-8000-000000000015",
+      "name": "Usar sem 9",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1740,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "Contacts",
+        "operation": "Check Exists",
+        "session": "=amadeus",
+        "phone": "={{ $('Formatar Telefone').first().json.phoneComNove }}"
+      },
+      "id": "a11e0000-0000-4000-8000-000000000016",
+      "name": "Check Com 9",
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        1740,
+        420
+      ],
+      "credentials": {
+        "wahaApi": {
+          "id": "Wa5n1cK3Gl4WH4bW",
+          "name": "WAHA account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "com9",
+              "leftValue": "={{ $json.numberExists }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a11e0000-0000-4000-8000-000000000017",
+      "name": "Existe com 9?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1940,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "Usar com 9",
+              "name": "chatId",
+              "value": "={{ $('Formatar Telefone').first().json.chatIdComNove }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a11e0000-0000-4000-8000-000000000018",
+      "name": "Usar com 9",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2160,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Image",
+        "session": "=amadeus",
+        "chatId": "={{ $json.chatId }}",
+        "file": "={\n  \"mimetype\": \"image/png\",\n  \"filename\": \"aniversario.png\",\n  \"url\": \"{{ $('Uma por vez').first().json.imagem }}\"\n}",
+        "caption": "={{ $('Uma por vez').first().json.texto }}"
+      },
+      "id": "a11e0000-0000-4000-8000-000000000019",
+      "name": "Enviar Cartão",
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        2380,
+        260
+      ],
+      "credentials": {
+        "wahaApi": {
+          "id": "Wa5n1cK3Gl4WH4bW",
+          "name": "WAHA account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "tableId": "aniversario_envios",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "data",
+              "fieldValue": "={{ $('Uma por vez').first().json.data }}"
+            },
+            {
+              "fieldId": "tipo",
+              "fieldValue": "={{ $('Uma por vez').first().json.tipo }}"
+            },
+            {
+              "fieldId": "pessoa_ref",
+              "fieldValue": "={{ $('Uma por vez').first().json.pessoa_ref }}"
+            },
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $('Uma por vez').first().json.nome }}"
+            },
+            {
+              "fieldId": "telefone",
+              "fieldValue": "={{ $('Uma por vez').first().json.telefone }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "={{ $json.error ? 'erro' : 'enviado' }}"
+            },
+            {
+              "fieldId": "detalhe",
+              "fieldValue": "={{ $json.error ? JSON.stringify($json.error).slice(0, 300) : '' }}"
+            }
+          ]
+        }
+      },
+      "id": "a11e0000-0000-4000-8000-000000000020",
+      "name": "Registrar Envio",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2600,
+        260
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "twGMaqD94DHqfjbv",
+          "name": "SEA"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "tableId": "aniversario_envios",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "data",
+              "fieldValue": "={{ $('Uma por vez').first().json.data }}"
+            },
+            {
+              "fieldId": "tipo",
+              "fieldValue": "={{ $('Uma por vez').first().json.tipo }}"
+            },
+            {
+              "fieldId": "pessoa_ref",
+              "fieldValue": "={{ $('Uma por vez').first().json.pessoa_ref }}"
+            },
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $('Uma por vez').first().json.nome }}"
+            },
+            {
+              "fieldId": "telefone",
+              "fieldValue": "={{ $('Uma por vez').first().json.telefone }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "sem_whatsapp"
+            },
+            {
+              "fieldId": "detalhe",
+              "fieldValue": "={{ $json.error ? JSON.stringify($json.error).slice(0, 300) : '' }}"
+            }
+          ]
+        }
+      },
+      "id": "a11e0000-0000-4000-8000-000000000021",
+      "name": "Registrar Sem WhatsApp",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2380,
+        520
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "twGMaqD94DHqfjbv",
+          "name": "SEA"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "amount": 20,
+        "unit": "seconds"
+      },
+      "id": "a11e0000-0000-4000-8000-000000000022",
+      "name": "Esperar 20s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2820,
+        380
+      ],
+      "webhookId": "a11e0000-0000-4000-8000-0000000000aa"
+    },
+    {
+      "parameters": {
+        "jsCode": "const itens = $('Montar Aniversariantes').all();\nreturn [{ json: { concluido: true, envios: itens.length, teste: $('Configuração').first().json.modoTeste, resumoReal: itens[0] ? itens[0].json.resumoReal : null } }];"
+      },
+      "id": "a11e0000-0000-4000-8000-000000000023",
+      "name": "Resumo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        80
+      ]
+    }
+  ],
+  "connections": {
+    "Todo dia às 7h": {
+      "main": [
+        [
+          {
+            "node": "Configuração",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Executar manualmente": {
+      "main": [
+        [
+          {
+            "node": "Configuração",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuração": {
+      "main": [
+        [
+          {
+            "node": "Alunos Ativos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alunos Ativos": {
+      "main": [
+        [
+          {
+            "node": "Lista Alunos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lista Alunos": {
+      "main": [
+        [
+          {
+            "node": "Responsáveis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responsáveis": {
+      "main": [
+        [
+          {
+            "node": "Colaboradores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Colaboradores": {
+      "main": [
+        [
+          {
+            "node": "Já enviados hoje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Já enviados hoje": {
+      "main": [
+        [
+          {
+            "node": "Montar Aniversariantes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar Aniversariantes": {
+      "main": [
+        [
+          {
+            "node": "Uma por vez",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Uma por vez": {
+      "main": [
+        [
+          {
+            "node": "Resumo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Formatar Telefone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatar Telefone": {
+      "main": [
+        [
+          {
+            "node": "Check Sem 9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Sem 9": {
+      "main": [
+        [
+          {
+            "node": "Existe sem 9?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Existe sem 9?": {
+      "main": [
+        [
+          {
+            "node": "Usar sem 9",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check Com 9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Com 9": {
+      "main": [
+        [
+          {
+            "node": "Existe com 9?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Existe com 9?": {
+      "main": [
+        [
+          {
+            "node": "Usar com 9",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Registrar Sem WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Usar sem 9": {
+      "main": [
+        [
+          {
+            "node": "Enviar Cartão",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Usar com 9": {
+      "main": [
+        [
+          {
+            "node": "Enviar Cartão",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Cartão": {
+      "main": [
+        [
+          {
+            "node": "Registrar Envio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar Envio": {
+      "main": [
+        [
+          {
+            "node": "Esperar 20s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar Sem WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Esperar 20s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Esperar 20s": {
+      "main": [
+        [
+          {
+            "node": "Uma por vez",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Fortaleza"
+  },
+  "pinData": {}
+}
