@@ -1,7 +1,15 @@
 import Link from "next/link";
 import { ArrowLeft, TriangleAlert } from "lucide-react";
-import { lerAluno, listarAlunos, type AlunoBusca, type Leitura } from "@/lib/rematricula-2027-dados";
-import { Simulador } from "./simulador";
+import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  lerAluno,
+  listarAlunos,
+  responsaveisDoAluno,
+  type AlunoBusca,
+  type Leitura,
+  type Responsavel,
+} from "@/lib/rematricula-2027-dados";
+import { Simulador, type EnvioFeito } from "./simulador";
 
 /**
  * Simulador da rematrícula 2027 (só a direção usa). Escolhe o aluno, o
@@ -16,10 +24,27 @@ export default async function RematriculaPage({ searchParams }: { searchParams: 
   const { aluno } = await searchParams;
   let alunos: AlunoBusca[] = [];
   let leitura: Leitura | null = null;
+  let responsaveis: Responsavel[] = [];
+  let envios: EnvioFeito[] = [];
   let erro: string | null = null;
   try {
     alunos = await listarAlunos();
-    if (aluno && /^\d+$/.test(aluno)) leitura = await lerAluno(Number(aluno));
+    if (aluno && /^\d+$/.test(aluno)) {
+      const id = Number(aluno);
+      const [l, r, e] = await Promise.all([
+        lerAluno(id),
+        responsaveisDoAluno(id).catch(() => []),
+        createAdminClient()
+          .from("rematricula_envios")
+          .select("responsavel, telefone, status, created_at")
+          .eq("aluno_id", id)
+          .order("created_at", { ascending: false })
+          .limit(20),
+      ]);
+      leitura = l;
+      responsaveis = r;
+      envios = (e.data ?? []) as EnvioFeito[];
+    }
   } catch (e) {
     erro = (e as Error).message;
   }
@@ -40,7 +65,7 @@ export default async function RematriculaPage({ searchParams }: { searchParams: 
         </div>
       )}
 
-      <Simulador key={leitura?.aluno.id ?? "novo"} alunos={alunos} leitura={leitura} />
+      <Simulador key={leitura?.aluno.id ?? "novo"} alunos={alunos} leitura={leitura} responsaveis={responsaveis} envios={envios} />
     </div>
   );
 }

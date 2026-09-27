@@ -66,7 +66,39 @@ export async function listarAlunos(): Promise<AlunoBusca[]> {
   return [...porId.values()].sort((x, y) => x.nome.localeCompare(y.nome, "pt-BR"));
 }
 
-export type Confianca = "certa" | "provavel" | "revisar";
+export interface Responsavel {
+  nome: string;
+  telefone: string; // só dígitos, DDD + número
+}
+
+const soDigitos = (t: unknown): string | null => {
+  let d = String(t ?? "").replace(/\D/g, "");
+  if (d.startsWith("55") && d.length > 11) d = d.slice(2);
+  return d.length >= 10 ? d : null;
+};
+
+/** Responsáveis e filiação do aluno com celular, sem repetir número (igual aos aniversários). */
+export async function responsaveisDoAluno(id: number): Promise<Responsavel[]> {
+  const [cad, resp] = (await Promise.all([
+    buscar("v1/lista_alunos/", 3600),
+    buscar("v1/lista_responsaveis/", 3600),
+  ])) as [Json[] | { results: Json[] }, Json[] | { results: Json[] }];
+  const lista = (x: Json[] | { results: Json[] }) => (Array.isArray(x) ? x : x.results);
+  const c = lista(cad).find((a) => a.id === id);
+  if (!c) return [];
+  const porId = new Map(lista(resp).map((r) => [r.id as number, r]));
+  const ids = [c.responsavel_id, c.responsavel_secundario_id, c.filiacao_1_id, c.filiacao_2_id, ...((c.responsaveis_adicionais_ids as number[]) ?? [])]
+    .filter(Boolean) as number[];
+  const saida: Responsavel[] = [];
+  for (const rid of new Set(ids)) {
+    const r = porId.get(rid);
+    const t = soDigitos(r?.celular);
+    if (t && !saida.some((s) => s.telefone === t)) saida.push({ nome: String(r?.nome ?? "Responsável").trim(), telefone: t });
+  }
+  return saida;
+}
+
+export type Confianca ="certa" | "provavel" | "revisar";
 
 export interface Leitura {
   aluno: AlunoBusca;

@@ -22,6 +22,22 @@ export const REAJUSTE = { promo: 50, depois: 60 };
 export const FIDELIDADE = 20;
 export const URL_FOLDER = "https://eventos.escolaamadeus.com/folder";
 
+/**
+ * WhatsApp (admin → n8n "Rematrícula 2027 · Enviar carta" → WAHA da escola).
+ * Vão duas mensagens: primeiro a apresentação da escola com o folder, depois
+ * a imagem da carta. Os valores ficam só na imagem, não no texto.
+ */
+export const WEBHOOK_ENVIO = "https://n8n.escolaamadeus.com/webhook/rematricula-carta";
+
+export const textoApresentacao = (primeiro: string) =>
+  `Olá, família de *${primeiro}*! Aqui é o Centro Educacional Amadeus.
+
+Há 30 anos, aqui cada aluno importa. Preparamos um folder digital para vocês conhecerem a escola por dentro: as etapas, o novo material, os projetos, os esportes e os espaços.
+
+Conheça: ${URL_FOLDER}`;
+
+export const legendaCarta = (primeiro: string) => `Os valores de 2027 para ${primeiro}.`;
+
 /** Livro por parcela (12x). "promo2025" é o que ficou nos boletos de 2026 de quem fechou até 31/10/2025. */
 export const LIVRO: Record<Segmento, { promo2025: number; l2026: number; l2027: number }> = {
   maternal: { promo2025: 66, l2026: 74, l2027: 83 },
@@ -60,7 +76,14 @@ export const SERIES = [
 
 export type NomeSerie = (typeof SERIES)[number]["nome"];
 
-export const segmentoDe = (serie: string): Segmento | null =>
+export const SEGMENTO_NOME: Record<Segmento, string> = {
+  maternal: "Educação Infantil",
+  grupo: "Educação Infantil",
+  ef1: "Ensino Fundamental I",
+  ef2: "Ensino Fundamental II",
+};
+
+export const segmentoDe =(serie: string): Segmento | null =>
   SERIES.find((s) => s.nome === serie)?.segmento ?? null;
 
 /** "Maternalzinho(2)", "Mensalidade EI Maternalzinho II", "EF 6º Ano"... → nome canônico. */

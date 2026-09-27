@@ -2,8 +2,9 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Copy, Loader2, Printer, Search, UserPlus } from "lucide-react";
-import type { AlunoBusca, Leitura } from "@/lib/rematricula-2027-dados";
+import { Check, Copy, Loader2, Printer, Search, Send, UserPlus } from "lucide-react";
+import type { AlunoBusca, Leitura, Responsavel } from "@/lib/rematricula-2027-dados";
+import { enviarCarta, type Destino, type ResultadoEnvio } from "./actions";
 import {
   DEPOIS_DO_PRAZO,
   FIDELIDADE,
@@ -72,7 +73,132 @@ function linhasTexto(c: Condicao, modo: ModoLivro) {
   return l;
 }
 
-export function Simulador({ alunos, leitura }: { alunos: AlunoBusca[]; leitura: Leitura | null }) {
+export interface EnvioFeito {
+  responsavel: string | null;
+  telefone: string;
+  status: string;
+  created_at: string;
+}
+
+const telLegivel = (t: string) => `(${t.slice(0, 2)}) ${t.slice(2, -4)}-${t.slice(-4)}`;
+const quando = (iso: string) =>
+  new Date(iso).toLocaleString("pt-BR", { timeZone: "America/Fortaleza", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+const SELO_ENVIO: Record<string, { texto: string; classe: string }> = {
+  enviado: { texto: "Enviado", classe: "bg-emerald-50 text-emerald-700" },
+  sem_whatsapp: { texto: "Sem WhatsApp", classe: "bg-amber-100 text-amber-800" },
+  erro: { texto: "Erro", classe: "bg-red-50 text-red-700" },
+};
+
+function EnviarWhatsApp({ responsaveis, envios, enviar }: {
+  responsaveis: Responsavel[];
+  envios: EnvioFeito[];
+  enviar: (destinos: Destino[]) => Promise<{ ok: boolean; erro?: string; resultados: ResultadoEnvio[] }>;
+}) {
+  const [marcados, setMarcados] = useState<Set<string>>(new Set());
+  const [outro, setOutro] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const [retorno, setRetorno] = useState<{ erro?: string; resultados: ResultadoEnvio[] } | null>(null);
+  const jaRecebeu = new Set(envios.filter((e) => e.status === "enviado").map((e) => e.telefone));
+
+  const destinos: Destino[] = [
+    ...responsaveis.filter((r) => marcados.has(r.telefone)).map((r) => ({ nome: r.nome, telefone: r.telefone })),
+    ...(outro.replace(/\D/g, "").length >= 10 ? [{ nome: null, telefone: outro }] : []),
+  ];
+
+  const disparar = async () => {
+    const repetidos = destinos.filter((d) => jaRecebeu.has(d.telefone.replace(/\D/g, "")));
+    const aviso = repetidos.length ? `\n\n${repetidos.length} desse(s) número(s) já recebeu a carta antes.` : "";
+    if (!window.confirm(`Enviar a apresentação e a carta para ${destinos.length} número(s) pelo WhatsApp da escola?${aviso}`)) return;
+    setEnviando(true);
+    setRetorno(null);
+    try {
+      setRetorno(await enviar(destinos));
+    } catch (e) {
+      setRetorno({ erro: (e as Error).message, resultados: [] });
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  return (
+    <div className="mt-6 rounded-2xl border border-border/60 bg-white p-5">
+      <p className="flex items-center gap-2 text-sm font-bold text-amadeus-blue"><Send className="size-4" /> Enviar pelo WhatsApp da escola</p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Vão duas mensagens: a apresentação da escola com o folder digital e, em seguida, a imagem da carta com os valores.
+      </p>
+
+      {responsaveis.length > 0 && (
+        <ul className="mt-4 space-y-2">
+          {responsaveis.map((r) => (
+            <li key={r.telefone}>
+              <label className="flex cursor-pointer items-center gap-3 text-sm">
+                <input
+                  type="checkbox"
+                  className="size-4 accent-[#083078]"
+                  checked={marcados.has(r.telefone)}
+                  onChange={(e) => {
+                    const s = new Set(marcados);
+                    if (e.target.checked) s.add(r.telefone); else s.delete(r.telefone);
+                    setMarcados(s);
+                  }}
+                />
+                <span className="font-semibold">{r.nome}</span>
+                <span className="text-muted-foreground">{telLegivel(r.telefone)}</span>
+                {jaRecebeu.has(r.telefone) && <span className="rounded-md bg-emerald-50 px-1.5 py-0.5 text-xs font-bold text-emerald-700">já recebeu</span>}
+              </label>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <label className="mt-4 block max-w-xs text-sm font-semibold">
+        {responsaveis.length ? "Outro número" : "Número (DDD + celular)"}
+        <input value={outro} onChange={(e) => setOutro(e.target.value)} inputMode="tel" placeholder="84 99999-9999" className="mt-1 w-full rounded-xl border border-border px-3 py-2 font-normal outline-none focus:border-amadeus-blue" />
+      </label>
+
+      <button
+        type="button"
+        disabled={!destinos.length || enviando}
+        onClick={disparar}
+        className="mt-4 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        {enviando ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+        {enviando ? "Enviando…" : destinos.length ? `Enviar para ${destinos.length} número${destinos.length > 1 ? "s" : ""}` : "Escolha para quem enviar"}
+      </button>
+
+      {retorno?.erro && <p className="mt-3 text-sm text-red-700">{retorno.erro}</p>}
+      {retorno?.resultados.map((r) => (
+        <p key={r.telefone} className="mt-2 text-sm">
+          {telLegivel(r.telefone)}{" "}
+          <span className={`rounded-md px-1.5 py-0.5 text-xs font-bold ${SELO_ENVIO[r.status].classe}`}>{SELO_ENVIO[r.status].texto}</span>
+          {r.detalhe && r.status === "erro" && <span className="ml-2 text-xs text-muted-foreground">{r.detalhe}</span>}
+        </p>
+      ))}
+
+      {envios.length > 0 && (
+        <div className="mt-5 border-t border-border/60 pt-3">
+          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Envios anteriores</p>
+          <ul className="mt-2 space-y-1 text-sm">
+            {envios.map((e, i) => (
+              <li key={i} className="flex flex-wrap items-center gap-2">
+                <span className="text-muted-foreground">{quando(e.created_at)}</span>
+                <span>{e.responsavel ?? "Outro número"} · {telLegivel(e.telefone)}</span>
+                <span className={`rounded-md px-1.5 py-0.5 text-xs font-bold ${(SELO_ENVIO[e.status] ?? SELO_ENVIO.erro).classe}`}>{(SELO_ENVIO[e.status] ?? SELO_ENVIO.erro).texto}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function Simulador({ alunos, leitura, responsaveis, envios }: {
+  alunos: AlunoBusca[];
+  leitura: Leitura | null;
+  responsaveis: Responsavel[];
+  envios: EnvioFeito[];
+}) {
   const router = useRouter();
   const [carregando, iniciar] = useTransition();
   const [busca, setBusca] = useState("");
@@ -270,6 +396,20 @@ export function Simulador({ alunos, leitura }: { alunos: AlunoBusca[]; leitura: 
                     {copiado ? "Copiado" : "Copiar texto para o WhatsApp"}
                   </button>
                 </div>
+                <EnviarWhatsApp
+                  responsaveis={novato ? [] : responsaveis}
+                  envios={novato ? [] : envios}
+                  enviar={(destinos) =>
+                    enviarCarta({
+                      alunoId: novato ? null : leitura!.aluno.id,
+                      nome,
+                      serie: sim.serie2027,
+                      base: baseNum,
+                      modo,
+                      destinos,
+                    })
+                  }
+                />
               </>
             ) : (
               <p className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
