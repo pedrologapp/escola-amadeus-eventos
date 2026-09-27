@@ -48,9 +48,9 @@ function Cartao({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; mo
   const realce = destaque ? AMARELO : AZUL;
   const fio = destaque ? "rgba(255,255,255,.24)" : "rgba(23,34,61,.16)";
   const legenda = { fontSize: pt(8.4), opacity: 0.72, marginTop: 2 } as const;
-  const bloco = { display: "flex", flexDirection: "column", marginTop: mm(2.5), paddingTop: mm(2.5), borderTop: `2px solid ${fio}` } as const;
+  const bloco = { display: "flex", flexDirection: "column", marginTop: mm(2), paddingTop: mm(2), borderTop: `2px solid ${fio}` } as const;
   const linha = (rotulo: string, valor: number, o: { forte?: boolean; menos?: boolean; cor?: string } = {}) => (
-    <div style={{ display: "flex", justifyContent: "space-between", fontSize: pt(10.5), padding: `${mm(0.9)}px 0`, fontWeight: o.forte ? 800 : 400, color: o.cor ?? cor }}>
+    <div style={{ display: "flex", justifyContent: "space-between", fontSize: pt(10.5), padding: `${mm(0.55)}px 0`, fontWeight: o.forte ? 800 : 400, color: o.cor ?? cor }}>
       <span>{rotulo}</span>
       <span>{`${o.menos ? "− " : ""}${reais(valor)}`}</span>
     </div>
@@ -58,18 +58,21 @@ function Cartao({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; mo
   return (
     <div
       style={{
-        flex: 1, display: "flex", flexDirection: "column", borderRadius: mm(6), padding: `${mm(6)}px ${mm(6.5)}px ${mm(5)}px`,
+        flex: 1, display: "flex", flexDirection: "column", borderRadius: mm(6), padding: `${mm(5)}px ${mm(6.5)}px ${mm(4.5)}px`,
         background: destaque ? AZUL : "rgba(255,255,255,.55)", border: `3px solid ${destaque ? AZUL : "rgba(23,34,61,.16)"}`, color: cor,
       }}
     >
-      <div style={{ fontSize: pt(8.4), fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: destaque ? AMARELO : CINZA, marginBottom: mm(3) }}>
+      <div style={{ fontSize: pt(8.4), fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: destaque ? AMARELO : CINZA, marginBottom: mm(2.5) }}>
         {titulo}
       </div>
       {linha("Mensalidade cheia", c.cheia, { forte: true })}
       {linha("Fidelidade", c.fidelidade, { menos: true })}
-      {c.desconto > 0 && linha("Desconto da família", c.desconto, { menos: true })}
+      {c.desconto > 0 && linha("Desconto", c.desconto, { menos: true })}
       {c.irmao > 0 && linha("Desconto de irmão", c.irmao, { menos: true })}
-      <div style={bloco}>{linha("Pagando até o dia 05", c.ate05, { forte: true, cor: realce })}</div>
+      <div style={bloco}>
+        <div style={{ fontSize: pt(9.6), fontWeight: 800 }}>Pagando até o dia 05</div>
+        <div style={{ fontFamily: "Fraunces", fontSize: pt(28), color: realce, marginTop: 2, letterSpacing: -1 }}>{reais(c.ate05)}</div>
+      </div>
       <div style={legenda}>{`do dia 06 ao 10: ${reais(c.ate10)}`}</div>
       <div style={legenda}>{`depois do dia 10: ${reais(c.cheia)}`}</div>
       {modo === "com" && (
@@ -78,7 +81,10 @@ function Cartao({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; mo
             {linha("Livros · 12 parcelas", c.livro)}
             <div style={legenda}>{`ou ${reais(livroAVista(c.livro))} à vista`}</div>
           </div>
-          <div style={bloco}>{linha("Total por mês até o dia 05", c.totalAte05, { forte: true, cor: realce })}</div>
+          <div style={bloco}>
+            <div style={{ fontSize: pt(9.6), fontWeight: 800 }}>Total por mês até o dia 05</div>
+            <div style={{ fontFamily: "Fraunces", fontSize: pt(20), color: realce, marginTop: 2 }}>{reais(c.totalAte05)}</div>
+          </div>
           <div style={legenda}>{`depois do dia 10: ${reais(c.totalCheio)}`}</div>
         </div>
       )}
@@ -123,9 +129,9 @@ export async function GET(req: NextRequest) {
           </div>
         </div>
 
-        <div style={{ marginTop: mm(8), fontSize: pt(9), fontWeight: 800, letterSpacing: 4.5, textTransform: "uppercase", color: OURO }}>Para a família de</div>
-        <div style={{ marginTop: mm(2), fontFamily: "Fraunces", fontSize: pt(27), lineHeight: 1.05, color: AZUL, letterSpacing: -1, maxWidth: mm(165) }}>{d.nome}</div>
-        <div style={{ marginTop: mm(4), fontSize: pt(12), lineHeight: 1.5, color: CINZA, maxWidth: mm(160) }}>
+        <div style={{ marginTop: mm(5), fontSize: pt(9), fontWeight: 800, letterSpacing: 4.5, textTransform: "uppercase", color: OURO }}>Para a família de</div>
+        <div style={{ marginTop: mm(2), fontFamily: "Fraunces", fontSize: pt(27), lineHeight: 1.05, color: AZUL, letterSpacing: -1, maxWidth: mm(165), flexShrink: 0 }}>{d.nome}</div>
+        <div style={{ marginTop: mm(4), fontSize: pt(12), lineHeight: 1.5, color: CINZA, maxWidth: mm(160), flexShrink: 0 }}>
           {`Em 2027, ${primeiro} ${veterano ? "segue com a gente" : "começa com a gente"} ${naSerie(d.serie)}. ${
             veterano ? "Preparamos os valores do ano que vem a partir do que a sua família já investe hoje." : "Preparamos aqui os valores do ano que vem."
           }`}
@@ -135,7 +141,7 @@ export async function GET(req: NextRequest) {
           {`${SEGMENTO_NOME[sim.segmento]} · 2027`}
         </div>
 
-        <div style={{ display: "flex", gap: mm(5), marginTop: mm(6), alignItems: "flex-start" }}>
+        <div style={{ display: "flex", gap: mm(5), marginTop: mm(4.5), alignItems: "flex-start", flexShrink: 0 }}>
           <Cartao titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} modo={d.modo} destaque />
           <Cartao titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} modo={d.modo} />
         </div>

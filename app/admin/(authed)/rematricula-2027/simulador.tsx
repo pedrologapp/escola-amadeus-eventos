@@ -8,6 +8,7 @@ import { enviarCarta, type Destino, type ResultadoEnvio } from "./actions";
 import {
   DEPOIS_DO_PRAZO,
   DESCONTO_IRMAO,
+  FIDELIDADE,
   MODOS_LIVRO,
   PARCELAS_MATRICULA,
   PRAZO_PROMOCAO,
@@ -53,11 +54,12 @@ function Coluna({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; mo
       <div className="mt-4 space-y-1.5">
         <Linha rotulo="Mensalidade cheia" valor={c.cheia} forte />
         <Linha rotulo="Fidelidade (até o dia 05)" valor={c.fidelidade} menos />
-        {c.desconto > 0 && <Linha rotulo="Desconto da família" valor={c.desconto} menos />}
+        {c.desconto > 0 && <Linha rotulo="Desconto" valor={c.desconto} menos />}
         {c.irmao > 0 && <Linha rotulo="Desconto de irmão" valor={c.irmao} menos />}
       </div>
-      <div className={`mt-3 border-t pt-3 ${fio} ${cor}`}>
-        <Linha rotulo="Pagando até o dia 05" valor={c.ate05} forte />
+      <div className={`mt-3 border-t pt-3 ${fio}`}>
+        <p className="text-sm font-bold">Pagando até o dia 05</p>
+        <p className={`text-4xl font-extrabold ${cor}`}>{reais(c.ate05)}</p>
       </div>
       <p className="mt-1 text-xs opacity-75">do dia 06 ao 10: {reais(c.ate10)} · depois do dia 10: {reais(c.cheia)}</p>
 
@@ -67,8 +69,9 @@ function Coluna({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; mo
             <Linha rotulo="Livros (12x)" valor={c.livro} />
             <p className="text-xs opacity-75">ou {reais(livroAVista(c.livro))} à vista</p>
           </div>
-          <div className={`mt-3 border-t pt-3 ${fio} ${cor}`}>
-            <Linha rotulo="Total por mês até o dia 05" valor={c.totalAte05} forte />
+          <div className={`mt-3 border-t pt-3 ${fio}`}>
+            <p className="text-sm font-bold">Total por mês até o dia 05</p>
+            <p className={`text-2xl font-extrabold ${cor}`}>{reais(c.totalAte05)}</p>
           </div>
           <p className="mt-1 text-xs opacity-75">depois do dia 10: {reais(c.totalCheio)}</p>
         </>
@@ -83,7 +86,7 @@ function Coluna({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; mo
 /** Linhas de uma condição no texto do WhatsApp. */
 function linhasTexto(c: Condicao, modo: ModoLivro) {
   const l = [`Mensalidade cheia: ${reais(c.cheia)}`, `Fidelidade (até o dia 05): − ${reais(c.fidelidade)}`];
-  if (c.desconto) l.push(`Desconto da família: − ${reais(c.desconto)}`);
+  if (c.desconto) l.push(`Desconto: − ${reais(c.desconto)}`);
   if (c.irmao) l.push(`Desconto de irmão: − ${reais(c.irmao)}`);
   l.push(`*Mensalidade pagando até o dia 05: ${reais(c.ate05)}*`);
   if (modo === "com") {
@@ -249,7 +252,7 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
   const nome = novato ? nomeNovato.trim() : leitura?.aluno.nome ?? "";
   const baseNum = novato ? null : Number(base.replace(",", "."));
   const teto = leitura?.tetoAtual ?? null;
-  const descontoBoleto = !novato && teto !== null && Number.isFinite(baseNum) ? Math.max(0, teto - (baseNum ?? teto)) : 0;
+  const descontoBoleto = !novato && teto !== null && Number.isFinite(baseNum) ? Math.max(0, teto - (baseNum ?? teto) - FIDELIDADE) : 0;
   const descontoPag = novato ? 0 : Math.max(0, Number(descPag.replace(",", ".")) || 0);
   const desconto = descontoBoleto + descontoPag;
   const pronto = ativo && serie && nome && (novato || (Number.isFinite(baseNum) && (baseNum ?? 0) > 0));
@@ -376,7 +379,7 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                 <div className="space-y-2 rounded-xl border border-border/60 p-3 text-sm">
                   <p className="font-semibold">Desconto que a família tem hoje</p>
                   <div className="flex justify-between gap-2">
-                    <span className="text-muted-foreground">No boleto (teto {teto !== null ? reais(teto) : "—"} − mensalidade de hoje)</span>
+                    <span className="text-muted-foreground">No boleto (teto {teto !== null ? reais(teto) : "—"} − mensalidade de hoje − {reais(FIDELIDADE)} da Fidelidade)</span>
                     <b className="tabular-nums">{reais(descontoBoleto)}</b>
                   </div>
                   <label className="flex items-center justify-between gap-2">

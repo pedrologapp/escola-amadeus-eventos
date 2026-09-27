@@ -3,7 +3,7 @@
  *
  * Mensalidade cheia = teto de 2026 do segmento de 2027 + R$ 50 fechando até
  * 30/10, ou + R$ 60 depois (vale para veterano e novato). O veterano mantém o
- * desconto que já tem (teto − boleto, mais o que o Isaac tira no pagamento
+ * desconto que já tem (teto − boleto − 20 da Fidelidade, mais o que o Isaac tira no pagamento
  * até o dia 05), e todos os descontos só valem pagando até o dia 05.
  * Regras fechadas com a direção em 27/09/2026 (casos Arthur Mafra e Pedro
  * Gregório).

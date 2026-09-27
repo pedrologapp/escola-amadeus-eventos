@@ -49,9 +49,12 @@ function Cartao({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; mo
       <p className="rotulo">{titulo}</p>
       <Linha rotulo="Mensalidade cheia" valor={c.cheia} forte />
       <Linha rotulo="Fidelidade" valor={c.fidelidade} menos />
-      {c.desconto > 0 && <Linha rotulo="Desconto da família" valor={c.desconto} menos />}
+      {c.desconto > 0 && <Linha rotulo="Desconto" valor={c.desconto} menos />}
       {c.irmao > 0 && <Linha rotulo="Desconto de irmão" valor={c.irmao} menos />}
-      <div className="bloco destaque-linha"><Linha rotulo="Pagando até o dia 05" valor={c.ate05} forte /></div>
+      <div className="bloco destaque-linha">
+        <p className="bloco-titulo">Pagando até o dia 05</p>
+        <span className={`valor ${fraunces.className}`}>{reais(c.ate05)}</span>
+      </div>
       <p className="legenda">do dia 06 ao 10: {reais(c.ate10)}</p>
       <p className="legenda">depois do dia 10: {reais(c.cheia)}</p>
       {modo === "com" && (
@@ -60,7 +63,10 @@ function Cartao({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; mo
             <Linha rotulo="Livros · 12 parcelas" valor={c.livro} />
             <p className="legenda">ou {reais(livroAVista(c.livro))} à vista</p>
           </div>
-          <div className="bloco destaque-linha"><Linha rotulo="Total por mês até o dia 05" valor={c.totalAte05} forte /></div>
+          <div className="bloco destaque-linha">
+            <p className="bloco-titulo">Total por mês até o dia 05</p>
+            <span className={`valor-total ${fraunces.className}`}>{reais(c.totalAte05)}</span>
+          </div>
           <p className="legenda">depois do dia 10: {reais(c.totalCheio)}</p>
         </>
       )}
@@ -194,7 +200,7 @@ const CSS = `
 .topo .logo { width: 25mm; height: auto; }
 .topo .selo { text-align: right; font-size: 8.4pt; font-weight: 800; letter-spacing: .22em; text-transform: uppercase; color: #B9862F; line-height: 1.7; }
 .topo .selo span { display: block; color: #9AA3B4; }
-.olho { margin-top: 8mm; font-size: 9pt; font-weight: 800; letter-spacing: .24em; text-transform: uppercase; color: #B9862F; }
+.olho { margin-top: 5mm; font-size: 9pt; font-weight: 800; letter-spacing: .24em; text-transform: uppercase; color: #B9862F; }
 .folha h1 { margin-top: 2mm; font-size: 27pt; line-height: 1.05; letter-spacing: -.02em; color: #083078; max-width: 165mm; }
 .abertura { margin-top: 4mm; font-size: 12pt; line-height: 1.5; color: #5A6478; max-width: 160mm; }
 .abertura b { color: #17223D; }
@@ -203,16 +209,19 @@ const CSS = `
   display: inline-block; margin-right: 2mm; padding: 1.2mm 3.5mm; border-radius: 99px;
   background: #083078; color: #FFB000; font-weight: 800;
 }
-.cartoes { margin-top: 6mm; display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+.cartoes { margin-top: 4.5mm; display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
 .cartao { border-radius: 6mm; padding: 6mm 6.5mm 5mm; border: .4mm solid rgba(23,34,61,.16); background: rgba(255,255,255,.55); }
 .cartao.destaque { background: #083078; color: #fff; border-color: #083078; }
 .cartao .rotulo { font-size: 8.4pt; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: #5A6478; margin-bottom: 3.5mm; }
 .cartao.destaque .rotulo { color: #FFB000; }
-.cartao .linha { display: flex; justify-content: space-between; align-items: baseline; gap: 3mm; font-size: 10.5pt; padding: .9mm 0; }
+.cartao .linha { display: flex; justify-content: space-between; align-items: baseline; gap: 3mm; font-size: 10.5pt; padding: .55mm 0; }
 .cartao .linha > span:last-child { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .cartao .linha.forte { font-weight: 800; }
+.cartao .bloco-titulo { font-size: 9.6pt; font-weight: 800; color: inherit; }
+.cartao .valor { display: block; margin-top: .5mm; font-size: 28pt; line-height: 1.05; letter-spacing: -.02em; }
+.cartao .valor-total { display: block; margin-top: .5mm; font-size: 20pt; line-height: 1.1; }
 .cartao .legenda { margin-top: .5mm; font-size: 8.4pt; opacity: .72; }
-.cartao .bloco { margin-top: 2.5mm; padding-top: 2.5mm; border-top: .3mm solid rgba(23,34,61,.16); }
+.cartao .bloco { margin-top: 2mm; padding-top: 2mm; border-top: .3mm solid rgba(23,34,61,.16); }
 .cartao.destaque .bloco { border-color: rgba(255,255,255,.24); }
 .cartao.destaque .destaque-linha { color: #FFB000; }
 .cartao:not(.destaque) .destaque-linha { color: #083078; }
