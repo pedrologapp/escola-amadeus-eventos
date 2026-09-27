@@ -30,17 +30,17 @@ const site = 'https://eventos.escolaamadeus.com';
 
 // {nome} vira os dois primeiros nomes da pessoa.
 const textoAluno =
-\`🎉 Hoje é um dia muito especial: *{nome}* está fazendo aniversário!
+\`Hoje é um dia muito especial: *{nome}* está fazendo aniversário!
 
-Toda a família Amadeus deseja um novo ano cheio de alegria, descobertas e muito aprendizado. 💙
+Toda a família Amadeus deseja um novo ano cheio de alegria, descobertas e muito aprendizado.
 
-Parabéns! 🎂
+Parabéns!
 _Centro Educacional Amadeus_\`;
 
 const textoColaborador =
-\`🎉 Feliz aniversário, *{nome}*!
+\`Feliz aniversário, *{nome}*!
 
-Obrigado por fazer parte, todos os dias, do que nós somos. Que o seu novo ano seja leve, cheio de saúde e de conquistas. 💙
+Obrigado por fazer parte, todos os dias, do que nós somos. Que o seu novo ano seja leve, cheio de saúde e de conquistas.
 
 _Equipe Centro Educacional Amadeus_\`;
 // ================================================
