@@ -10,6 +10,7 @@ import {
   type Responsavel,
 } from "@/lib/rematricula-2027-dados";
 import { Simulador, type EnvioFeito } from "./simulador";
+import { AbasRematricula } from "./abas";
 
 /**
  * Simulador da rematrícula 2027 (só a direção usa). Escolhe o aluno, o
@@ -55,7 +56,8 @@ export default async function RematriculaPage({ searchParams }: { searchParams: 
         <ArrowLeft className="size-4" /> Campanhas
       </Link>
       <h1 className="mt-2 text-2xl font-extrabold text-amadeus-blue">Rematrícula 2027</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <AbasRematricula ativa="simulador" />
+      <p className="mt-4 text-sm text-muted-foreground">
         Escolha o aluno para ver quanto a família paga hoje e como fica 2027. Se não achar, simule como novato.
       </p>
 

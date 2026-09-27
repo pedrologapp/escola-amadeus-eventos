@@ -8,6 +8,7 @@ import {
   serieCanonica,
   type NomeSerie,
 } from "@/lib/rematricula-2027";
+import { PRECO_LIVRO, anoLetivo } from "@/lib/rematricula-historico";
 
 /**
  * Leitura do Activesoft para o simulador da rematrícula 2027.
@@ -98,7 +99,7 @@ export async function responsaveisDoAluno(id: number): Promise<Responsavel[]> {
   return saida;
 }
 
-export type Confianca ="certa" | "provavel" | "revisar";
+export type Confianca = "certa" | "provavel" | "revisar";
 
 export interface Leitura {
   aluno: AlunoBusca;
@@ -241,4 +242,68 @@ export async function lerAluno(id: number): Promise<Leitura | null> {
     explicacao: `${v} = ${escolhida.base} de mensalidade + ${escolhida.livro} do ${qual}${exata ? "." : `. Fechou ${fechouNaPromo ? "até" : "depois de"} 31/10/2025.`}`,
     alternativa: outra && !exata ? { base: outra.base, livro: outra.livro } : undefined,
   };
+}
+
+export interface AnoDoAluno {
+  ano: number;
+  serie: string;
+  geradoEm: string | null; // quando as parcelas foram lançadas no sistema (AAAA-MM-DD)
+  naPromocao: boolean | null; // null = ano sem data de promoção conhecida
+  valor: number; // mensalidade do boleto (a mais frequente)
+  base: number | null; // sem o livro
+  livro: number; // 0 = fora da mensalidade
+  livroDoAno: number | null; // de que ano é o preço do livro que ele pegou
+  livroAParte: boolean;
+  temTabela: boolean;
+}
+
+/** Cada ano letivo do aluno no Activesoft: quando rematriculou, quanto paga e de que ano é o livro. */
+export async function historicoDoAluno(id: number): Promise<AnoDoAluno[]> {
+  type T = Titulo & { turma?: string };
+  const j = (await buscar(`v1/informacoes_boleto/?id_aluno=${id}`)) as { resultados?: T[] };
+  const titulos = (j.resultados ?? []).filter((t) => t.situacao_titulo !== "CAN");
+  const porAno = new Map<number, T[]>();
+  const livroAParte = new Set<number>();
+  for (const t of titulos) {
+    const ano = Number((t.turma ?? "").match(/\/ (20\d\d) \//)?.[1]);
+    if (!ano) continue;
+    if (/^Livros? Ensino/i.test(t.nome_servico)) livroAParte.add(ano);
+    if (/^Mensalidade/i.test(t.nome_servico) && /^\d{2}\/12/.test(t.parcela_cobranca.trim())) porAno.set(ano, [...(porAno.get(ano) ?? []), t]);
+  }
+  const saida: AnoDoAluno[] = [];
+  for (const [ano, ts] of porAno) {
+    const cont = new Map<number, number>();
+    for (const t of ts) cont.set(t.valor_documento, (cont.get(t.valor_documento) ?? 0) + 1);
+    const v = [...cont.entries()].sort((a, b) => b[1] - a[1])[0][0];
+    const geradoEm = ts.map((t) => (t.dt_processamento ?? "").slice(0, 10)).filter(Boolean).sort()[0] ?? null;
+    const serie = serieCanonica(ts[0].nome_servico) ?? ts[0].nome_servico.replace(/^Mensalidade\s*/i, "").replace(/\s*\(.*\)$/, "");
+    const seg = segmentoDe(serie);
+    const info = anoLetivo(ano);
+    const pelaData = info?.prazoIso && geradoEm ? geradoEm <= info.prazoIso : null;
+    let base: number | null = null;
+    let livro = 0;
+    let livroDoAno: number | null = null;
+    if (seg && info) {
+      const tabela = info.mensalidade[seg];
+      if (!info.livroNaMensalidade || v <= tabela) {
+        base = v;
+      } else {
+        const opcoes = [ano - 1, ano]
+          .filter((a) => PRECO_LIVRO[a])
+          .map((a) => ({ a, l: PRECO_LIVRO[a][seg], b: v - PRECO_LIVRO[a][seg] }))
+          .filter((o) => o.b <= tabela && o.b >= tabela - 120);
+        const certa = opcoes.find((o) => o.b === tabela) ?? opcoes.find((o) => o.a === (pelaData ? ano - 1 : ano)) ?? opcoes[0];
+        if (certa) {
+          base = certa.b;
+          livro = certa.l;
+          livroDoAno = certa.a;
+        }
+      }
+    }
+    // O preço do livro no boleto diz se a família pegou a promoção; a data de
+    // lançamento das parcelas só decide quando não há livro na mensalidade.
+    const naPromocao = livroDoAno !== null ? livroDoAno === ano - 1 : pelaData;
+    saida.push({ ano, serie, geradoEm, naPromocao, valor: v, base, livro, livroDoAno, livroAParte: livroAParte.has(ano), temTabela: !!info });
+  }
+  return saida.sort((a, b) => b.ano - a.ano);
 }
