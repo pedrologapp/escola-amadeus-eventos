@@ -4,7 +4,8 @@ import QRCode from "qrcode";
 import { lerLinkDaCarta } from "@/lib/rematricula-2027-link";
 import {
   DEPOIS_DO_PRAZO,
-  FIDELIDADE,
+  ACRESCIMO_DIA_06_A_10,
+  PARCELAS_MATRICULA,
   PRAZO_PROMOCAO,
   SEGMENTO_NOME,
   URL_FOLDER,
@@ -44,9 +45,16 @@ async function fonte(origem: string, arquivo: string) {
 
 function Cartao({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; modo: ModoLivro; destaque?: boolean }) {
   const cor = destaque ? "#FFFFFF" : TINTA;
-  const valor = destaque ? AMARELO : AZUL;
+  const realce = destaque ? AMARELO : AZUL;
   const fio = destaque ? "rgba(255,255,255,.24)" : "rgba(23,34,61,.16)";
-  const legenda = { fontSize: pt(8.4), opacity: 0.72, marginTop: 4 } as const;
+  const legenda = { fontSize: pt(8.4), opacity: 0.72, marginTop: 2 } as const;
+  const bloco = { display: "flex", flexDirection: "column", marginTop: mm(2.5), paddingTop: mm(2.5), borderTop: `2px solid ${fio}` } as const;
+  const linha = (rotulo: string, valor: number, o: { forte?: boolean; menos?: boolean; cor?: string } = {}) => (
+    <div style={{ display: "flex", justifyContent: "space-between", fontSize: pt(10.5), padding: `${mm(0.9)}px 0`, fontWeight: o.forte ? 800 : 400, color: o.cor ?? cor }}>
+      <span>{rotulo}</span>
+      <span>{`${o.menos ? "− " : ""}${reais(valor)}`}</span>
+    </div>
+  );
   return (
     <div
       style={{
@@ -54,32 +62,30 @@ function Cartao({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; mo
         background: destaque ? AZUL : "rgba(255,255,255,.55)", border: `3px solid ${destaque ? AZUL : "rgba(23,34,61,.16)"}`, color: cor,
       }}
     >
-      <div style={{ fontSize: pt(8.4), fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: destaque ? AMARELO : CINZA, marginBottom: mm(3.5) }}>
+      <div style={{ fontSize: pt(8.4), fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: destaque ? AMARELO : CINZA, marginBottom: mm(3) }}>
         {titulo}
       </div>
-      <div style={{ fontSize: pt(9.6), fontWeight: 800 }}>Mensalidade Fidelidade</div>
-      <div style={{ fontFamily: "Fraunces", fontSize: pt(30), color: valor, marginTop: 4, letterSpacing: -1 }}>{reais(c.mensalidade - FIDELIDADE)}</div>
-      <div style={legenda}>pagando até o dia 05 de cada mês</div>
-      <div style={{ display: "flex", fontSize: pt(10), marginTop: mm(2.5) }}>
-        Mensalidade:&nbsp;<span style={{ fontWeight: 800 }}>{reais(c.mensalidade)}</span>
-      </div>
+      {linha("Mensalidade cheia", c.cheia, { forte: true })}
+      {linha("Fidelidade", c.fidelidade, { menos: true })}
+      {c.desconto > 0 && linha("Desconto da família", c.desconto, { menos: true })}
+      {c.irmao > 0 && linha("Desconto de irmão", c.irmao, { menos: true })}
+      <div style={bloco}>{linha("Pagando até o dia 05", c.ate05, { forte: true, cor: realce })}</div>
+      <div style={legenda}>{`do dia 06 ao 10: ${reais(c.ate10)}`}</div>
+      <div style={legenda}>{`depois do dia 10: ${reais(c.cheia)}`}</div>
       {modo === "com" && (
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", flexDirection: "column", marginTop: mm(4), paddingTop: mm(3.5), borderTop: `2px solid ${fio}` }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", fontSize: pt(10.5) }}>
-              <span style={{ fontSize: pt(9.6), fontWeight: 800 }}>Livros</span>
-              <span style={{ fontWeight: 800 }}>{`12x ${reais(c.livro)}`}</span>
-            </div>
+          <div style={bloco}>
+            {linha("Livros · 12 parcelas", c.livro)}
             <div style={legenda}>{`ou ${reais(livroAVista(c.livro))} à vista`}</div>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", marginTop: mm(4), paddingTop: mm(3.5), borderTop: `2px solid ${fio}` }}>
-            <div style={{ fontSize: pt(9.6), fontWeight: 800 }}>Total por mês</div>
-            <div style={{ fontFamily: "Fraunces", fontSize: pt(20), color: valor, marginTop: 4 }}>{reais(c.fidelidade)}</div>
-            <div style={legenda}>mensalidade Fidelidade + livros</div>
-            <div style={legenda}>{`após o dia 05: ${reais(c.total)}`}</div>
-          </div>
+          <div style={bloco}>{linha("Total por mês até o dia 05", c.totalAte05, { forte: true, cor: realce })}</div>
+          <div style={legenda}>{`depois do dia 10: ${reais(c.totalCheio)}`}</div>
         </div>
       )}
+      <div style={bloco}>
+        {linha("Matrícula", c.matricula)}
+        <div style={legenda}>{`em até ${PARCELAS_MATRICULA}x de ${reais(c.matricula / PARCELAS_MATRICULA)}`}</div>
+      </div>
     </div>
   );
 }
@@ -89,8 +95,8 @@ export async function GET(req: NextRequest) {
   const d = lerLinkDaCarta(searchParams.get("p"), searchParams.get("s"));
   if (!d) return new Response("Link inválido ou vencido.", { status: 404 });
 
-  const sim = simular(d.serie, d.base);
-  const veterano = d.base !== null;
+  const sim = simular(d.serie, d.veterano ? d.desconto : 0, d.irmao);
+  const veterano = d.veterano;
   const primeiro = primeiroNome(d.nome);
   const [r400, r500, r700, r800, f600, qr] = await Promise.all([
     fonte(origin, "DMSans-400.woff"),
@@ -141,9 +147,9 @@ export async function GET(req: NextRequest) {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", marginTop: mm(4), fontSize: pt(9.6), lineHeight: 1.6, color: CINZA }}>
-          <div style={{ display: "flex" }}>
-            {"•  "}<span style={{ color: TINTA, fontWeight: 700 }}>Mensalidade Fidelidade:</span>
-            {` ${reais(FIDELIDADE)} de desconto em cada mês pago até o dia 05.`}
+          <div style={{ display: "flex", flexWrap: "wrap" }}>
+            {"•  "}<span style={{ color: TINTA, fontWeight: 700 }}>Descontos:</span>
+            {` valem pagando até o dia 05. Do dia 06 ao 10, a mensalidade cheia tem ${reais(ACRESCIMO_DIA_06_A_10)} a menos.`}
           </div>
           {d.modo === "com" && (
             <div style={{ display: "flex" }}>

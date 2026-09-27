@@ -1,14 +1,19 @@
 /**
  * Regras da rematrícula 2027 (valores combinados com a direção em 27/09/2026).
  *
- * Veterano: parte do que a família paga HOJE sem o livro (com os descontos
- * que já tem) e soma o reajuste: R$ 50 fechando até 30/10, R$ 60 depois.
- * Mudar de segmento não muda o reajuste; só o livro, que é o da série nova.
+ * Mensalidade cheia = teto de 2026 do segmento de 2027 + R$ 50 fechando até
+ * 30/10, ou + R$ 60 depois (vale para veterano e novato). O veterano mantém o
+ * desconto que já tem (teto − boleto, mais o que o Isaac tira no pagamento
+ * até o dia 05), e todos os descontos só valem pagando até o dia 05.
+ * Regras fechadas com a direção em 27/09/2026 (casos Arthur Mafra e Pedro
+ * Gregório).
  *
  * Livro 2027: fechando até 30/10 fica no preço de 2026; depois, preço de 2027
  * (sobe ~12% ao ano). Novato usa a tabela cheia do flyer.
  *
- * Fidelidade: R$ 20 a menos no mês pagando até o dia 05, em qualquer caso.
+ * Fidelidade (= pontualidade): R$ 20 até o dia 05; do dia 06 ao 10, R$ 10.
+ * Irmão: R$ 20 para cada irmão, só quando a direção marca. Matrícula = uma
+ * mensalidade cheia, em até 5x.
  *
  * Para 2028: copiar as tabelas, trocar os valores e as datas.
  */
@@ -48,14 +53,6 @@ export const LIVRO: Record<Segmento, { promo2025: number; l2026: number; l2027: 
 
 /** Mensalidade cheia (sem livro) da tabela de 2026 — base para separar o livro do boleto. */
 export const TABELA_2026: Record<Segmento, number> = { maternal: 520, grupo: 520, ef1: 490, ef2: 510 };
-
-/** Novato 2027 (flyer das matrículas), sem livro. */
-export const NOVATO_2027: Record<Segmento, { promo: number; depois: number }> = {
-  maternal: { promo: 570, depois: 580 },
-  grupo: { promo: 570, depois: 580 },
-  ef1: { promo: 540, depois: 550 },
-  ef2: { promo: 560, depois: 570 },
-};
 
 /** Séries na ordem pedagógica, com o nome que vai no papel. */
 export const SERIES = [
@@ -103,11 +100,23 @@ export function proximaSerie(serie: NomeSerie): NomeSerie | null {
   return i >= 0 && i < SERIES.length - 1 ? SERIES[i + 1].nome : null;
 }
 
+/**
+ * Uma condição de fechamento (até 30/10 ou depois). A carta mostra nesta
+ * ordem: mensalidade cheia, os descontos, e a mensalidade real pagando até
+ * o dia 05. Todos os descontos (Fidelidade, o da família, irmão) só valem
+ * pagando até o dia 05; do dia 06 ao 10 é a cheia − 10; depois, a cheia.
+ */
 export interface Condicao {
-  mensalidade: number;
+  cheia: number; // teto do segmento de 2027 + reajuste
+  fidelidade: number; // R$ 20
+  desconto: number; // o que a família já tem hoje (no boleto + no pagamento)
+  irmao: number; // R$ 20 se a direção marcar
+  ate05: number; // mensalidade real pagando até o dia 05
+  ate10: number;
   livro: number;
-  total: number;
-  fidelidade: number; // total pagando até o dia 05
+  totalAte05: number; // mensalidade real + livro
+  totalCheio: number; // cheia + livro (depois do dia 10)
+  matricula: number; // = mensalidade cheia
 }
 
 export interface Simulacao {
@@ -115,28 +124,33 @@ export interface Simulacao {
   segmento: Segmento;
   promo: Condicao;
   depois: Condicao;
-  economiaAno: number; // quanto a família deixa de pagar em 12 meses fechando no prazo
 }
 
-/** base = mensalidade de hoje sem o livro (veterano); null = novato. */
-export function simular(serie2027: NomeSerie, base: number | null): Simulacao {
+export const DESCONTO_IRMAO = 20;
+export const ACRESCIMO_DIA_06_A_10 = 10; // do dia 06 ao 10 paga a cheia − 10
+export const PARCELAS_MATRICULA = 5;
+
+/**
+ * Veterano e novato partem do mesmo teto: o da tabela de 2026 do segmento
+ * de 2027 (Grupo V → 1º ano parte de 490; 5º → 6º de 510) + 50 até 30/10 ou
+ * + 60 depois. É igual à tabela do novato do flyer (570/580, 540/550, 560/570).
+ * O desconto da família (novato: 0) entra só pagando até o dia 05.
+ */
+export function simular(serie2027: NomeSerie, desconto = 0, irmao = false): Simulacao {
   const segmento = segmentoDe(serie2027)!;
   const l = LIVRO[segmento];
-  const cond = (mensalidade: number, livro: number): Condicao => ({
-    mensalidade,
-    livro,
-    total: mensalidade + livro,
-    fidelidade: mensalidade + livro - FIDELIDADE,
-  });
-  const promo =
-    base === null
-      ? cond(NOVATO_2027[segmento].promo, l.l2026)
-      : cond(base + REAJUSTE.promo, l.l2026);
-  const depois =
-    base === null
-      ? cond(NOVATO_2027[segmento].depois, l.l2027)
-      : cond(base + REAJUSTE.depois, l.l2027);
-  return { serie2027, segmento, promo, depois, economiaAno: (depois.total - promo.total) * 12 };
+  const cond = (reajuste: number, livro: number): Condicao => {
+    const cheia = TABELA_2026[segmento] + reajuste;
+    const d = Math.max(0, desconto);
+    const i = irmao ? DESCONTO_IRMAO : 0;
+    const ate05 = Math.max(0, cheia - FIDELIDADE - d - i);
+    return {
+      cheia, fidelidade: FIDELIDADE, desconto: d, irmao: i, ate05,
+      ate10: cheia - (FIDELIDADE - ACRESCIMO_DIA_06_A_10),
+      livro, totalAte05: ate05 + livro, totalCheio: cheia + livro, matricula: cheia,
+    };
+  };
+  return { serie2027, segmento, promo: cond(REAJUSTE.promo, l.l2026), depois: cond(REAJUSTE.depois, l.l2027) };
 }
 
 /** Livro à vista: as 12 parcelas com 10% de desconto (74 → R$ 799,20, 142 → R$ 1.533,60, como no flyer). */
@@ -153,9 +167,9 @@ export const MODOS_LIVRO: { valor: ModoLivro; rotulo: string }[] = [
 ];
 export const modoLivroValido = (v: unknown): ModoLivro => (v === "sem" ? "sem" : "com");
 
-/** Economia de 12 meses fechando no prazo, no que a carta mostra. */
+/** Economia de 12 meses fechando no prazo (pagando até o dia 05), no que a carta mostra. */
 export const economiaNoAno = (s: Simulacao, modo: ModoLivro) =>
-  modo === "sem" ? (s.depois.mensalidade - s.promo.mensalidade) * 12 : s.economiaAno;
+  (modo === "sem" ? s.depois.ate05 - s.promo.ate05 : s.depois.totalAte05 - s.promo.totalAte05) * 12;
 
 export const reais =(v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });

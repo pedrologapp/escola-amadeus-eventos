@@ -3,7 +3,8 @@ import { Fraunces } from "next/font/google";
 import { listarAlunos } from "@/lib/rematricula-2027-dados";
 import {
   DEPOIS_DO_PRAZO,
-  FIDELIDADE,
+  ACRESCIMO_DIA_06_A_10,
+  PARCELAS_MATRICULA,
   PRAZO_PROMOCAO,
   SERIES,
   URL_FOLDER,
@@ -32,35 +33,41 @@ const fraunces = Fraunces({ subsets: ["latin"], weight: ["600"], display: "swap"
 
 const SEGMENTO_NOME = { maternal: "Educação Infantil", grupo: "Educação Infantil", ef1: "Ensino Fundamental I", ef2: "Ensino Fundamental II" };
 
+function Linha({ rotulo, valor, forte, menos }: { rotulo: string; valor: number; forte?: boolean; menos?: boolean }) {
+  return (
+    <div className={`linha ${forte ? "forte" : ""}`}>
+      <span>{rotulo}</span>
+      <span>{menos ? "− " : ""}{reais(valor)}</span>
+    </div>
+  );
+}
+
+/** Mensalidade cheia → descontos → real até o dia 05; livro; total; matrícula. Mesma letra em tudo. */
 function Cartao({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; modo: ModoLivro; destaque?: boolean }) {
-  const soMensalidade = c.mensalidade - FIDELIDADE;
   return (
     <div className={`cartao ${destaque ? "destaque" : ""}`}>
       <p className="rotulo">{titulo}</p>
-
-      {/* 1. Mensalidade: a Fidelidade em destaque, que é onde a família consegue chegar */}
-      <p className="bloco-titulo">Mensalidade Fidelidade</p>
-      <span className={`valor ${fraunces.className}`}>{reais(soMensalidade)}</span>
-      <p className="legenda">pagando até o dia 05 de cada mês</p>
-      <p className="normal">Mensalidade: <b>{reais(c.mensalidade)}</b></p>
-
+      <Linha rotulo="Mensalidade cheia" valor={c.cheia} forte />
+      <Linha rotulo="Fidelidade" valor={c.fidelidade} menos />
+      {c.desconto > 0 && <Linha rotulo="Desconto da família" valor={c.desconto} menos />}
+      {c.irmao > 0 && <Linha rotulo="Desconto de irmão" valor={c.irmao} menos />}
+      <div className="bloco destaque-linha"><Linha rotulo="Pagando até o dia 05" valor={c.ate05} forte /></div>
+      <p className="legenda">do dia 06 ao 10: {reais(c.ate10)}</p>
+      <p className="legenda">depois do dia 10: {reais(c.cheia)}</p>
       {modo === "com" && (
         <>
-          {/* 2. Livro */}
-          <div className="bloco livro">
-            <div className="linha"><span className="bloco-titulo">Livros</span><b>12x {reais(c.livro)}</b></div>
+          <div className="bloco">
+            <Linha rotulo="Livros · 12 parcelas" valor={c.livro} />
             <p className="legenda">ou {reais(livroAVista(c.livro))} à vista</p>
           </div>
-
-          {/* 3. Total da parcela */}
-          <div className="bloco total">
-            <p className="bloco-titulo">Total por mês</p>
-            <span className={`valor-total ${fraunces.className}`}>{reais(c.fidelidade)}</span>
-            <p className="legenda">mensalidade Fidelidade + livros</p>
-            <p className="legenda">após o dia 05: {reais(c.total)}</p>
-          </div>
+          <div className="bloco destaque-linha"><Linha rotulo="Total por mês até o dia 05" valor={c.totalAte05} forte /></div>
+          <p className="legenda">depois do dia 10: {reais(c.totalCheio)}</p>
         </>
       )}
+      <div className="bloco">
+        <Linha rotulo="Matrícula" valor={c.matricula} />
+        <p className="legenda">em até {PARCELAS_MATRICULA}x de {reais(c.matricula / PARCELAS_MATRICULA)}</p>
+      </div>
     </div>
   );
 }
@@ -68,24 +75,25 @@ function Cartao({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; mo
 export default async function CartaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ aluno?: string; base?: string; serie?: string; nome?: string; livro?: string }>;
+  searchParams: Promise<{ aluno?: string; desconto?: string; irmao?: string; serie?: string; nome?: string; livro?: string }>;
 }) {
   const sp = await searchParams;
   const modo = modoLivroValido(sp.livro);
   const serie = SERIES.find((s) => s.nome === sp.serie)?.nome as NomeSerie | undefined;
-  const base = sp.base ? Number(sp.base) : null;
+  const desconto = Math.max(0, Number(sp.desconto) || 0);
+  const irmao = sp.irmao === "1";
   let nome = sp.nome?.trim() ?? "";
   if (sp.aluno && /^\d+$/.test(sp.aluno)) {
     const alunos = await listarAlunos().catch(() => []);
     nome = alunos.find((a) => a.id === Number(sp.aluno))?.nome ?? nome;
   }
-  const veterano = sp.aluno != null && base != null && Number.isFinite(base) && base > 0;
+  const veterano = sp.aluno != null;
 
-  if (!serie || !nome || (sp.aluno && !veterano)) {
+  if (!serie || !nome) {
     return <p className="p-10 text-center text-sm text-muted-foreground">Faltam dados para a carta. Volte ao simulador e clique em “Imprimir carta”.</p>;
   }
 
-  const sim = simular(serie, veterano ? base : null);
+  const sim = simular(serie, veterano ? desconto : 0, irmao);
   const primeiro = primeiroNome(nome);
   const qr = await QRCode.toString(URL_FOLDER, {
     type: "svg",
@@ -138,7 +146,7 @@ export default async function CartaPage({
         </p>
 
         <ul className="notas">
-          <li><b>Mensalidade Fidelidade:</b> {reais(FIDELIDADE)} de desconto em cada mês pago até o dia 05.</li>
+          <li><b>Descontos:</b> valem pagando até o dia 05. Do dia 06 ao 10, a mensalidade cheia tem {reais(ACRESCIMO_DIA_06_A_10)} a menos.</li>
           {modo !== "sem" && (
             <li><b>Livros:</b> até {PRAZO_PROMOCAO}, o livro sai pelo valor atual, sem o reajuste de 2027. À vista, 10% de desconto.</li>
           )}
@@ -200,18 +208,14 @@ const CSS = `
 .cartao.destaque { background: #083078; color: #fff; border-color: #083078; }
 .cartao .rotulo { font-size: 8.4pt; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: #5A6478; margin-bottom: 3.5mm; }
 .cartao.destaque .rotulo { color: #FFB000; }
-.cartao .bloco-titulo { font-size: 9.6pt; font-weight: 800; }
-.cartao .valor { display: block; margin-top: 1mm; font-size: 30pt; line-height: 1.05; letter-spacing: -.02em; }
-.cartao .legenda { margin-top: .8mm; font-size: 8.4pt; opacity: .72; }
-.cartao .normal { margin-top: 2.5mm; font-size: 10pt; }
-.cartao .normal b { font-weight: 800; }
-.cartao .bloco { margin-top: 4mm; padding-top: 3.5mm; border-top: .3mm solid rgba(23,34,61,.16); }
+.cartao .linha { display: flex; justify-content: space-between; align-items: baseline; gap: 3mm; font-size: 10.5pt; padding: .9mm 0; }
+.cartao .linha > span:last-child { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cartao .linha.forte { font-weight: 800; }
+.cartao .legenda { margin-top: .5mm; font-size: 8.4pt; opacity: .72; }
+.cartao .bloco { margin-top: 2.5mm; padding-top: 2.5mm; border-top: .3mm solid rgba(23,34,61,.16); }
 .cartao.destaque .bloco { border-color: rgba(255,255,255,.24); }
-.cartao .linha { display: flex; justify-content: space-between; align-items: baseline; font-size: 10.5pt; }
-.cartao .linha b { font-weight: 800; }
-.cartao .valor-total { display: block; margin-top: .8mm; font-size: 20pt; line-height: 1.1; }
-.cartao.destaque .valor, .cartao.destaque .valor-total { color: #FFB000; }
-.cartao:not(.destaque) .valor, .cartao:not(.destaque) .valor-total { color: #083078; }
+.cartao.destaque .destaque-linha { color: #FFB000; }
+.cartao:not(.destaque) .destaque-linha { color: #083078; }
 .economia { margin-top: 5mm; font-size: 12pt; line-height: 1.45; color: #17223D; }
 .economia b { color: #B9862F; font-weight: 800; }
 .notas { margin-top: 4mm; padding-left: 4.5mm; font-size: 9.6pt; line-height: 1.6; color: #5A6478; }

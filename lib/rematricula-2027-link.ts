@@ -13,7 +13,9 @@ import type { ModoLivro, NomeSerie } from "@/lib/rematricula-2027";
 export interface DadosCarta {
   nome: string;
   serie: NomeSerie;
-  base: number | null; // null = novato
+  veterano: boolean;
+  desconto: number; // desconto da família mantido em 2027 (novato: 0)
+  irmao: boolean;
   modo: ModoLivro;
   data: string; // "27 de setembro de 2026", como sai no rodapé
 }

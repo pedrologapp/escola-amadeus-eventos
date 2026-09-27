@@ -7,8 +7,9 @@ import type { AlunoBusca, Leitura, Responsavel } from "@/lib/rematricula-2027-da
 import { enviarCarta, type Destino, type ResultadoEnvio } from "./actions";
 import {
   DEPOIS_DO_PRAZO,
-  FIDELIDADE,
+  DESCONTO_IRMAO,
   MODOS_LIVRO,
+  PARCELAS_MATRICULA,
   PRAZO_PROMOCAO,
   SERIES,
   URL_FOLDER,
@@ -29,47 +30,67 @@ const SELO_CONFIANCA = {
   revisar: { texto: "Precisa de você", classe: "bg-red-50 text-red-700" },
 } as const;
 
+function Linha({ rotulo, valor, forte, menos }: { rotulo: string; valor: number; forte?: boolean; menos?: boolean }) {
+  return (
+    <div className={`flex items-baseline justify-between gap-3 text-sm ${forte ? "font-extrabold" : ""}`}>
+      <span>{rotulo}</span>
+      <span className="tabular-nums">{menos ? "− " : ""}{reais(valor)}</span>
+    </div>
+  );
+}
+
+/**
+ * Uma condição na ordem da carta: mensalidade cheia, os descontos, a
+ * mensalidade real pagando até o dia 05; depois o livro e o total.
+ * Tudo no mesmo tamanho de letra (pedido da direção).
+ */
 function Coluna({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; modo: ModoLivro; destaque?: boolean }) {
-  const soMensalidade = c.mensalidade - FIDELIDADE;
+  const fio = destaque ? "border-white/20" : "border-border/60";
+  const cor = destaque ? "text-amadeus-yellow" : "text-amadeus-blue";
   return (
     <div className={`rounded-2xl p-5 ${destaque ? "bg-amadeus-blue text-white" : "border border-border/60 bg-white"}`}>
       <p className={`text-xs font-bold uppercase tracking-widest ${destaque ? "text-amadeus-yellow" : "text-muted-foreground"}`}>{titulo}</p>
-      {/* 1. Mensalidade */}
-      <p className="mt-4 text-sm font-bold">Mensalidade Fidelidade</p>
-      <p className={`text-4xl font-extrabold ${destaque ? "text-amadeus-yellow" : "text-amadeus-blue"}`}>{reais(soMensalidade)}</p>
-      <p className="text-xs opacity-75">pagando até o dia 05 de cada mês</p>
-      <p className="mt-2 text-sm">Mensalidade: <b>{reais(c.mensalidade)}</b></p>
+      <div className="mt-4 space-y-1.5">
+        <Linha rotulo="Mensalidade cheia" valor={c.cheia} forte />
+        <Linha rotulo="Fidelidade (até o dia 05)" valor={c.fidelidade} menos />
+        {c.desconto > 0 && <Linha rotulo="Desconto da família" valor={c.desconto} menos />}
+        {c.irmao > 0 && <Linha rotulo="Desconto de irmão" valor={c.irmao} menos />}
+      </div>
+      <div className={`mt-3 border-t pt-3 ${fio} ${cor}`}>
+        <Linha rotulo="Pagando até o dia 05" valor={c.ate05} forte />
+      </div>
+      <p className="mt-1 text-xs opacity-75">do dia 06 ao 10: {reais(c.ate10)} · depois do dia 10: {reais(c.cheia)}</p>
 
       {modo === "com" && (
         <>
-          {/* 2. Livro */}
-          <div className={`mt-4 border-t pt-3 ${destaque ? "border-white/20" : "border-border/60"}`}>
-            <div className="flex items-baseline justify-between text-sm"><span className="font-bold">Livros</span><b>12x {reais(c.livro)}</b></div>
+          <div className={`mt-3 border-t pt-3 ${fio}`}>
+            <Linha rotulo="Livros (12x)" valor={c.livro} />
             <p className="text-xs opacity-75">ou {reais(livroAVista(c.livro))} à vista</p>
           </div>
-          {/* 3. Total */}
-          <div className={`mt-4 border-t pt-3 ${destaque ? "border-white/20" : "border-border/60"}`}>
-            <p className="text-sm font-bold">Total por mês</p>
-            <p className={`text-2xl font-extrabold ${destaque ? "text-amadeus-yellow" : "text-amadeus-blue"}`}>{reais(c.fidelidade)}</p>
-            <p className="text-xs opacity-75">mensalidade Fidelidade + livros</p>
-            <p className="text-xs opacity-75">após o dia 05: {reais(c.total)}</p>
+          <div className={`mt-3 border-t pt-3 ${fio} ${cor}`}>
+            <Linha rotulo="Total por mês até o dia 05" valor={c.totalAte05} forte />
           </div>
+          <p className="mt-1 text-xs opacity-75">depois do dia 10: {reais(c.totalCheio)}</p>
         </>
       )}
+      <div className={`mt-3 border-t pt-3 text-sm ${fio}`}>
+        Matrícula: <b>{reais(c.matricula)}</b> <span className="opacity-75">· até {PARCELAS_MATRICULA}x de {reais(c.matricula / PARCELAS_MATRICULA)}</span>
+      </div>
     </div>
   );
 }
 
 /** Linhas de uma condição no texto do WhatsApp. */
 function linhasTexto(c: Condicao, modo: ModoLivro) {
-  const l = [
-    `Mensalidade Fidelidade: *${reais(c.mensalidade - FIDELIDADE)}* (pagando até o dia 05)`,
-    `Mensalidade: ${reais(c.mensalidade)}`,
-  ];
+  const l = [`Mensalidade cheia: ${reais(c.cheia)}`, `Fidelidade (até o dia 05): − ${reais(c.fidelidade)}`];
+  if (c.desconto) l.push(`Desconto da família: − ${reais(c.desconto)}`);
+  if (c.irmao) l.push(`Desconto de irmão: − ${reais(c.irmao)}`);
+  l.push(`*Mensalidade pagando até o dia 05: ${reais(c.ate05)}*`);
   if (modo === "com") {
     l.push(`Livros: 12x ${reais(c.livro)} (ou ${reais(livroAVista(c.livro))} à vista)`);
-    l.push(`Total por mês: *${reais(c.fidelidade)}* (após o dia 05: ${reais(c.total)})`);
+    l.push(`*Total por mês até o dia 05: ${reais(c.totalAte05)}*`);
   }
+  l.push(`Matrícula: ${reais(c.matricula)} (até ${PARCELAS_MATRICULA}x)`);
   return l;
 }
 
@@ -208,6 +229,8 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
   const [serie, setSerie] = useState<NomeSerie | "">(leitura?.serie2027 ?? "");
   const [copiado, setCopiado] = useState(false);
   const [modo, setModo] = useState<ModoLivro>("com");
+  const [descPag, setDescPag] = useState<string>(String(leitura?.descontoPagamento ?? 0));
+  const [irmao, setIrmao] = useState(false);
 
   const achados = useMemo(() => {
     const q = semAcento(busca.trim());
@@ -225,13 +248,19 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
   const ativo = novato || leitura;
   const nome = novato ? nomeNovato.trim() : leitura?.aluno.nome ?? "";
   const baseNum = novato ? null : Number(base.replace(",", "."));
+  const teto = leitura?.tetoAtual ?? null;
+  const descontoBoleto = !novato && teto !== null && Number.isFinite(baseNum) ? Math.max(0, teto - (baseNum ?? teto)) : 0;
+  const descontoPag = novato ? 0 : Math.max(0, Number(descPag.replace(",", ".")) || 0);
+  const desconto = descontoBoleto + descontoPag;
   const pronto = ativo && serie && nome && (novato || (Number.isFinite(baseNum) && (baseNum ?? 0) > 0));
-  const sim = pronto ? simular(serie as NomeSerie, baseNum) : null;
+  const sim = pronto ? simular(serie as NomeSerie, desconto, irmao) : null;
 
   const linkCarta = sim
     ? `/admin/rematricula-2027/carta?${new URLSearchParams({
-        ...(novato ? { nome } : { aluno: String(leitura!.aluno.id), base: String(baseNum) }),
+        ...(novato ? { nome } : { aluno: String(leitura!.aluno.id) }),
         serie: sim.serie2027,
+        desconto: String(desconto),
+        ...(irmao ? { irmao: "1" } : {}),
         livro: modo,
       })}`
     : "";
@@ -246,7 +275,7 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
         `*A partir de ${DEPOIS_DO_PRAZO}*`,
         ...linhasTexto(sim.depois, modo),
         "",
-        `A Mensalidade Fidelidade tem ${reais(FIDELIDADE)} de desconto para pagamento até o dia 05 de cada mês.`,
+        "Os descontos valem pagando até o dia 05 de cada mês.",
         "",
         `Conheça tudo o que vem em 2027: ${URL_FOLDER}`,
         "",
@@ -311,6 +340,10 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                   <input value={nomeNovato} onChange={(e) => setNomeNovato(e.target.value)} className="mt-1 w-full rounded-xl border border-border px-3 py-2 font-normal outline-none focus:border-amadeus-blue" />
                 </label>
                 <p className="text-sm text-muted-foreground">Usa a tabela de 2027 do flyer, mais o livro da série.</p>
+                <label className="flex items-center gap-2 text-sm font-semibold">
+                  <input type="checkbox" className="size-4 accent-[#083078]" checked={irmao} onChange={(e) => setIrmao(e.target.checked)} />
+                  Tem irmão na escola (− {reais(DESCONTO_IRMAO)} até o dia 05)
+                </label>
               </>
             ) : leitura && (
               <>
@@ -338,15 +371,49 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                   Mensalidade de hoje, sem o livro
                   <input inputMode="decimal" value={base} onChange={(e) => setBase(e.target.value)} className="mt-1 w-full rounded-xl border border-border px-3 py-2 text-lg font-bold outline-none focus:border-amadeus-blue" />
                 </label>
-                {leitura.descontos.length > 0 && (
-                  <div className="text-sm">
-                    <p className="font-semibold">Descontos cadastrados à parte em 2026</p>
-                    <ul className="mt-1 list-disc pl-5 text-muted-foreground">
-                      {leitura.descontos.map((d) => <li key={d}>{d}</li>)}
-                    </ul>
-                    <p className="mt-1 text-xs text-muted-foreground">Não entram na conta; o boleto vem sem eles.</p>
+
+                {/* O desconto que a família tem hoje e mantém em 2027 */}
+                <div className="space-y-2 rounded-xl border border-border/60 p-3 text-sm">
+                  <p className="font-semibold">Desconto que a família tem hoje</p>
+                  <div className="flex justify-between gap-2">
+                    <span className="text-muted-foreground">No boleto (teto {teto !== null ? reais(teto) : "—"} − mensalidade de hoje)</span>
+                    <b className="tabular-nums">{reais(descontoBoleto)}</b>
                   </div>
-                )}
+                  <label className="flex items-center justify-between gap-2">
+                    <span className="text-muted-foreground">
+                      No pagamento até o dia 05, além da Fidelidade
+                      {leitura.descontoPagamento === null
+                        ? " (nunca pagou até o dia 05 em 2026)"
+                        : ` (visto em ${leitura.pagamentosAte05} pagamento${leitura.pagamentosAte05 > 1 ? "s" : ""})`}
+                    </span>
+                    <input inputMode="decimal" value={descPag} onChange={(e) => setDescPag(e.target.value)} className="w-24 rounded-lg border border-border px-2 py-1 text-right font-bold outline-none focus:border-amadeus-blue" />
+                  </label>
+                  <div className="flex justify-between gap-2 border-t border-border/60 pt-2 font-bold text-amadeus-blue">
+                    <span>Desconto mantido em 2027</span>
+                    <span className="tabular-nums">{reais(desconto)}</span>
+                  </div>
+                  {leitura.descontos.length > 0 && (
+                    <p className="text-xs text-muted-foreground">No Activesoft: {leitura.descontos.join("; ")}.</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">Se o desconto for erro de lançamento, corrija a mensalidade de hoje ou zere o campo.</p>
+                </div>
+
+                {/* Irmão: só aparece aqui, não na carta */}
+                <div className="space-y-2 rounded-xl border border-border/60 p-3 text-sm">
+                  <p className="font-semibold">Irmãos na escola</p>
+                  {leitura.irmaos.length ? (
+                    <ul className="text-muted-foreground">
+                      {leitura.irmaos.map((i) => <li key={i.nome}>{i.nome} · {i.serie}</li>)}
+                    </ul>
+                  ) : (
+                    <p className="text-muted-foreground">Nenhum irmão ativo encontrado pela filiação.</p>
+                  )}
+                  <label className="flex items-center gap-2 font-semibold">
+                    <input type="checkbox" className="size-4 accent-[#083078]" checked={irmao} onChange={(e) => setIrmao(e.target.checked)} />
+                    Somar desconto de irmão (− {reais(DESCONTO_IRMAO)} até o dia 05)
+                  </label>
+                  <p className="text-xs text-muted-foreground">Marque só se o desconto de hoje ainda não for o de irmão.</p>
+                </div>
               </>
             )}
 
@@ -385,7 +452,7 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                 </div>
                 <p className="mt-3 text-sm text-muted-foreground">
                   Fechando no prazo, a família economiza <b className="text-amadeus-blue">{reais(economiaNoAno(sim, modo))}</b> no ano.
-                  {" "}Os valores já têm o desconto Fidelidade de {reais(FIDELIDADE)} (pagando até o dia 05).
+                  {" "}Todos os descontos valem só pagando até o dia 05.
                 </p>
                 <div className="mt-5 flex flex-wrap gap-3">
                   <a href={linkCarta} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-amadeus-blue px-4 py-2.5 text-sm font-bold text-white hover:opacity-90">
@@ -404,7 +471,8 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                       alunoId: novato ? null : leitura!.aluno.id,
                       nome,
                       serie: sim.serie2027,
-                      base: baseNum,
+                      desconto,
+                      irmao,
                       modo,
                       destinos,
                     })

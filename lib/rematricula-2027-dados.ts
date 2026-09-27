@@ -111,10 +111,25 @@ export interface Leitura {
   explicacao: string;
   alternativa?: { base: number; livro: number };
   descontos: string[]; // descontos condicionais cadastrados em 2026
+  /** Teto (tabela 2026) do segmento atual; teto − base = desconto que já vem no boleto. */
+  tetoAtual: number | null;
+  descontoBoleto: number;
+  /**
+   * O que o Isaac tira a mais quando a família paga até o dia 05, além dos
+   * R$ 20 da Fidelidade (ex.: Pedro Gregório, 602 no boleto e 432 pago = 150
+   * de desconto da escola). null = nunca pagou até o dia 05 em 2026.
+   */
+  descontoPagamento: number | null;
+  pagamentosAte05: number;
+  irmaos: { nome: string; serie: string }[];
 }
 
 interface Titulo {
   valor_documento: number;
+  valor_recebido_total?: number | null;
+  valor_recebido_multa?: number | null;
+  valor_recebido_juros?: number | null;
+  dt_pagamento?: string | null;
   dt_vencimento: string;
   dt_processamento: string | null;
   parcela_cobranca: string;
@@ -145,7 +160,9 @@ async function descontosDoAluno(id: number): Promise<string[]> {
   return saida;
 }
 
-export async function lerAluno(id: number): Promise<Leitura | null> {
+type LeituraBoleto = Omit<Leitura, "tetoAtual" | "descontoBoleto" | "descontoPagamento" | "pagamentosAte05" | "irmaos">;
+
+async function lerBoleto(id: number): Promise<(LeituraBoleto & { mensais: Titulo[] }) | null> {
   const alunos = await listarAlunos();
   const aluno = alunos.find((a) => a.id === id);
   if (!aluno) return null;
@@ -163,7 +180,7 @@ export async function lerAluno(id: number): Promise<Leitura | null> {
   const daSerie = todasMensais.filter((t) => serieCanonica(t.nome_servico) === aluno.serie);
   const mensais = daSerie.length ? daSerie : todasMensais;
   const serie2027 = aluno.serie ? proximaSerie(aluno.serie) : null;
-  const vazio = { aluno, serie2027, descontos, alternativa: undefined };
+  const vazio = { aluno, serie2027, descontos, alternativa: undefined, mensais };
 
   if (mensais.length === 0) {
     const outras = de2026.filter((t) => /^Mensalidade/i.test(t.nome_servico));
@@ -194,7 +211,7 @@ export async function lerAluno(id: number): Promise<Leitura | null> {
   const tabela = TABELA_2026[seg];
   const { promo2025, l2026 } = LIVRO[seg];
 
-  if (de2026.some((t) => /^Livro/i.test(t.nome_servico))) {
+  if (de2026.some((t) => /^Livros? Ensino/i.test(t.nome_servico))) {
     return { ...vazio, valorBoleto: v, base: v, livroNoBoleto: 0, confianca: "certa", explicacao: `O livro é cobrado à parte, então a mensalidade de hoje é ${v}.` };
   }
 
@@ -306,4 +323,57 @@ export async function historicoDoAluno(id: number): Promise<AnoDoAluno[]> {
     saida.push({ ano, serie, geradoEm, naPromocao, valor: v, base, livro, livroDoAno, livroAParte: livroAParte.has(ano), temTabela: !!info });
   }
   return saida.sort((a, b) => b.ano - a.ano);
+}
+
+/** Moda do que a família deixou de pagar nas parcelas pagas até o dia 05 (sem multa nem juros). */
+function descontoNoPagamento(mensais: Titulo[]): { valor: number | null; n: number } {
+  const difs: number[] = [];
+  for (const t of mensais) {
+    if (t.situacao_titulo !== "LIQ" || !t.dt_pagamento || t.valor_recebido_total == null) continue;
+    if ((t.valor_recebido_multa ?? 0) > 0 || (t.valor_recebido_juros ?? 0) > 0) continue;
+    const pago = t.dt_pagamento.slice(0, 10);
+    const venc = t.dt_vencimento.slice(0, 10);
+    // até o dia 05 do mês do vencimento, ou antes desse mês
+    if (pago.slice(0, 7) > venc.slice(0, 7) || (pago.slice(0, 7) === venc.slice(0, 7) && Number(pago.slice(8)) > 5)) continue;
+    difs.push(Math.round((t.valor_documento - t.valor_recebido_total) * 100) / 100);
+  }
+  if (!difs.length) return { valor: null, n: 0 };
+  const c = new Map<number, number>();
+  for (const d of difs) c.set(d, (c.get(d) ?? 0) + 1);
+  const moda = [...c.entries()].sort((a, b) => b[1] - a[1] || b[0] - a[0])[0][0];
+  return { valor: Math.max(0, moda - 20), n: difs.length };
+}
+
+/** Irmãos ativos: mesmo pai ou mesma mãe (filiação) no Activesoft — nunca pelo nome do responsável. */
+async function irmaosDoAluno(id: number, alunos: AlunoBusca[]): Promise<{ nome: string; serie: string }[]> {
+  const cad = (await buscar("v1/lista_alunos/", 3600)) as Json[] | { results: Json[] };
+  const lista = Array.isArray(cad) ? cad : cad.results;
+  const eu = lista.find((a) => a.id === id);
+  const pais = new Set([eu?.filiacao_1_id, eu?.filiacao_2_id].filter(Boolean));
+  if (!pais.size) return [];
+  const ativos = new Map(alunos.map((a) => [a.id, a]));
+  return lista
+    .filter((a) => a.id !== id && ativos.has(a.id as number) && (pais.has(a.filiacao_1_id) || pais.has(a.filiacao_2_id)))
+    .map((a) => {
+      const x = ativos.get(a.id as number)!;
+      return { nome: x.nome, serie: x.serie ?? x.turma };
+    });
+}
+
+export async function lerAluno(id: number): Promise<Leitura | null> {
+  const [l, alunos] = await Promise.all([lerBoleto(id), listarAlunos()]);
+  if (!l) return null;
+  const { mensais, ...resto } = l;
+  const seg = l.aluno.serie ? segmentoDe(l.aluno.serie) : null;
+  const tetoAtual = seg ? TABELA_2026[seg] : null;
+  const pag = descontoNoPagamento(mensais);
+  const irmaos = await irmaosDoAluno(id, alunos).catch(() => []);
+  return {
+    ...resto,
+    tetoAtual,
+    descontoBoleto: tetoAtual !== null && l.base !== null ? Math.max(0, tetoAtual - l.base) : 0,
+    descontoPagamento: pag.valor,
+    pagamentosAte05: pag.n,
+    irmaos,
+  };
 }

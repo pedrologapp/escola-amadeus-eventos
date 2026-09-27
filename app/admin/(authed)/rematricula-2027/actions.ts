@@ -33,7 +33,8 @@ export async function enviarCarta(entrada: {
   alunoId: number | null;
   nome: string;
   serie: string;
-  base: number | null;
+  desconto: number;
+  irmao: boolean;
   modo: string;
   destinos: Destino[];
 }): Promise<{ ok: boolean; erro?: string; resultados: ResultadoEnvio[] }> {
@@ -44,7 +45,7 @@ export async function enviarCarta(entrada: {
   const serie = SERIES.find((s) => s.nome === entrada.serie)?.nome as NomeSerie | undefined;
   const nome = entrada.nome.trim();
   if (!serie || !nome) return { ok: false, erro: "Faltam o nome ou a série de 2027.", resultados: [] };
-  if (entrada.base !== null && !(entrada.base > 0)) return { ok: false, erro: "Mensalidade de hoje inválida.", resultados: [] };
+  if (!(entrada.desconto >= 0)) return { ok: false, erro: "Desconto inválido.", resultados: [] };
   const chave = process.env.WEBHOOK_CONFIRM_SECRET;
   if (!chave) return { ok: false, erro: "WEBHOOK_CONFIRM_SECRET não está configurada no servidor.", resultados: [] };
 
@@ -55,7 +56,10 @@ export async function enviarCarta(entrada: {
 
   const origem = process.env.NEXT_PUBLIC_SITE_URL ?? "https://eventos.escolaamadeus.com";
   const data = new Date().toLocaleDateString("pt-BR", { timeZone: "America/Fortaleza", day: "2-digit", month: "long", year: "numeric" });
-  const imagem = linkDaCarta(origem, { nome, serie, base: entrada.base, modo: modoLivroValido(entrada.modo), data });
+  const imagem = linkDaCarta(origem, {
+    nome, serie, veterano: entrada.alunoId !== null, desconto: entrada.alunoId !== null ? entrada.desconto : 0,
+    irmao: !!entrada.irmao, modo: modoLivroValido(entrada.modo), data,
+  });
   const primeiro = primeiroNome(nome);
   const admin = createAdminClient();
 
