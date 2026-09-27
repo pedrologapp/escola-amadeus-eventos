@@ -7,12 +7,16 @@ import type { AlunoBusca, Leitura } from "@/lib/rematricula-2027-dados";
 import {
   DEPOIS_DO_PRAZO,
   FIDELIDADE,
+  MODOS_LIVRO,
   PRAZO_PROMOCAO,
   SERIES,
   URL_FOLDER,
+  economiaNoAno,
+  livroAVista,
   reais,
   simular,
   type Condicao,
+  type ModoLivro,
   type NomeSerie,
 } from "@/lib/rematricula-2027";
 
@@ -24,23 +28,45 @@ const SELO_CONFIANCA = {
   revisar: { texto: "Precisa de você", classe: "bg-red-50 text-red-700" },
 } as const;
 
-function Coluna({ titulo, c, destaque }: { titulo: string; c: Condicao; destaque?: boolean }) {
+function Coluna({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; modo: ModoLivro; destaque?: boolean }) {
+  const soMensalidade = c.mensalidade - FIDELIDADE;
   return (
     <div className={`rounded-2xl p-5 ${destaque ? "bg-amadeus-blue text-white" : "border border-border/60 bg-white"}`}>
       <p className={`text-xs font-bold uppercase tracking-widest ${destaque ? "text-amadeus-yellow" : "text-muted-foreground"}`}>{titulo}</p>
       <dl className="mt-4 space-y-2 text-sm">
-        <div className="flex justify-between"><dt>Mensalidade Fidelidade</dt><dd className="font-semibold">{reais(c.mensalidade - FIDELIDADE)}</dd></div>
-        <div className="flex justify-between"><dt>Livros (12x)</dt><dd className="font-semibold">{reais(c.livro)}</dd></div>
+        <div className="flex justify-between"><dt>Mensalidade</dt><dd className="font-extrabold">{reais(c.mensalidade)}</dd></div>
+        <div className="flex justify-between"><dt>Mensalidade Fidelidade</dt><dd>{reais(soMensalidade)}</dd></div>
+        {modo !== "sem" && (
+          <div className="flex justify-between gap-2">
+            <dt>Livros (12x)</dt>
+            <dd className="text-right">{reais(c.livro)}<span className="block text-xs opacity-75">ou {reais(livroAVista(c.livro))} à vista</span></dd>
+          </div>
+        )}
       </dl>
       <div className={`mt-3 border-t pt-3 ${destaque ? "border-white/20" : "border-border/60"}`}>
         <p className="text-xs opacity-80">Por mês, pagando até o dia 05</p>
-        <p className="text-3xl font-extrabold">{reais(c.fidelidade)}</p>
-        <p className={`mt-1 text-sm ${destaque ? "text-amadeus-yellow" : "text-amadeus-blue"}`}>
-          Após o dia 05: <b>{reais(c.total)}</b>
+        <p className="text-3xl font-extrabold">{reais(modo === "sem" ? soMensalidade : c.fidelidade)}</p>
+        {modo !== "sem" && <p className="text-xs opacity-80">com os livros</p>}
+        {modo === "ambos" && <p className="mt-1 text-sm"><b className="text-lg">{reais(soMensalidade)}</b> só a mensalidade</p>}
+        <p className={`mt-2 text-sm ${destaque ? "text-amadeus-yellow" : "text-amadeus-blue"}`}>
+          Após o dia 05:{" "}
+          {modo === "sem" ? <b>{reais(c.mensalidade)}</b>
+            : modo === "com" ? <b>{reais(c.total)}</b>
+            : <><b>{reais(c.total)}</b> com livros · <b>{reais(c.mensalidade)}</b> sem</>}
         </p>
       </div>
     </div>
   );
+}
+
+/** Linhas de uma condição no texto do WhatsApp. */
+function linhasTexto(c: Condicao, modo: ModoLivro) {
+  const so = c.mensalidade - FIDELIDADE;
+  const l = [`Mensalidade: *${reais(c.mensalidade)}*`, `Mensalidade Fidelidade: ${reais(so)}`];
+  if (modo !== "sem") l.push(`Livros: 12x ${reais(c.livro)} (ou ${reais(livroAVista(c.livro))} à vista)`);
+  if (modo !== "sem") l.push(`Total com os livros, pagando até o dia 05: ${reais(c.fidelidade)}`);
+  if (modo !== "com") l.push(`Só a mensalidade, pagando até o dia 05: ${reais(so)}`);
+  return l;
 }
 
 export function Simulador({ alunos, leitura }: { alunos: AlunoBusca[]; leitura: Leitura | null }) {
@@ -52,6 +78,7 @@ export function Simulador({ alunos, leitura }: { alunos: AlunoBusca[]; leitura: 
   const [base, setBase] = useState<string>(leitura?.base != null ? String(leitura.base) : "");
   const [serie, setSerie] = useState<NomeSerie | "">(leitura?.serie2027 ?? "");
   const [copiado, setCopiado] = useState(false);
+  const [modo, setModo] = useState<ModoLivro>("ambos");
 
   const achados = useMemo(() => {
     const q = semAcento(busca.trim());
@@ -76,6 +103,7 @@ export function Simulador({ alunos, leitura }: { alunos: AlunoBusca[]; leitura: 
     ? `/admin/campanhas/rematricula-2027/carta?${new URLSearchParams({
         ...(novato ? { nome } : { aluno: String(leitura!.aluno.id), base: String(baseNum) }),
         serie: sim.serie2027,
+        livro: modo,
       })}`
     : "";
 
@@ -84,16 +112,12 @@ export function Simulador({ alunos, leitura }: { alunos: AlunoBusca[]; leitura: 
         `Olá! Seguem os valores de 2027 de *${nome}* (${sim.serie2027}):`,
         "",
         `*Fechando até ${PRAZO_PROMOCAO}*`,
-        `Mensalidade Fidelidade: ${reais(sim.promo.mensalidade - FIDELIDADE)}`,
-        `Livros: 12x ${reais(sim.promo.livro)}`,
-        `Total por mês: *${reais(sim.promo.fidelidade)}* (após o dia 05: ${reais(sim.promo.total)})`,
+        ...linhasTexto(sim.promo, modo),
         "",
         `*A partir de ${DEPOIS_DO_PRAZO}*`,
-        `Mensalidade Fidelidade: ${reais(sim.depois.mensalidade - FIDELIDADE)}`,
-        `Livros: 12x ${reais(sim.depois.livro)}`,
-        `Total por mês: *${reais(sim.depois.fidelidade)}* (após o dia 05: ${reais(sim.depois.total)})`,
+        ...linhasTexto(sim.depois, modo),
         "",
-        `Os valores já têm o desconto Fidelidade de ${reais(FIDELIDADE)}, para pagamento até o dia 05 de cada mês.`,
+        `A Mensalidade Fidelidade tem ${reais(FIDELIDADE)} de desconto para pagamento até o dia 05 de cada mês.`,
         "",
         `Conheça tudo o que vem em 2027: ${URL_FOLDER}`,
         "",
@@ -213,12 +237,25 @@ export function Simulador({ alunos, leitura }: { alunos: AlunoBusca[]; leitura: 
           <div>
             {sim ? (
               <>
+                <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
+                  <span className="font-semibold text-muted-foreground">Mostrar:</span>
+                  {MODOS_LIVRO.map((m) => (
+                    <button
+                      key={m.valor}
+                      type="button"
+                      onClick={() => setModo(m.valor)}
+                      className={`rounded-xl px-3 py-1.5 font-semibold ${modo === m.valor ? "bg-amadeus-blue text-white" : "bg-amadeus-blue-50/70 text-amadeus-blue hover:bg-amadeus-blue-50"}`}
+                    >
+                      {m.rotulo}
+                    </button>
+                  ))}
+                </div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Coluna titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} destaque />
-                  <Coluna titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} />
+                  <Coluna titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} modo={modo} destaque />
+                  <Coluna titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} modo={modo} />
                 </div>
                 <p className="mt-3 text-sm text-muted-foreground">
-                  Fechando no prazo, a família economiza <b className="text-amadeus-blue">{reais(sim.economiaAno)}</b> no ano.
+                  Fechando no prazo, a família economiza <b className="text-amadeus-blue">{reais(economiaNoAno(sim, modo))}</b> no ano.
                   {" "}Os valores já têm o desconto Fidelidade de {reais(FIDELIDADE)} (pagando até o dia 05).
                 </p>
                 <div className="mt-5 flex flex-wrap gap-3">

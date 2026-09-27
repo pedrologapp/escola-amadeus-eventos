@@ -116,7 +116,23 @@ export function simular(serie2027: NomeSerie, base: number | null): Simulacao {
   return { serie2027, segmento, promo, depois, economiaAno: (depois.total - promo.total) * 12 };
 }
 
-export const reais = (v: number) =>
+/** Livro à vista: as 12 parcelas com 10% de desconto (74 → R$ 799,20, 142 → R$ 1.533,60, como no flyer). */
+export const livroAVista = (parcela: number) => Math.round(parcela * 12 * 0.9 * 100) / 100;
+
+/** O que a carta mostra: só com o livro, só a mensalidade, ou os dois lado a lado. */
+export type ModoLivro = "com" | "sem" | "ambos";
+export const MODOS_LIVRO: { valor: ModoLivro; rotulo: string }[] = [
+  { valor: "ambos", rotulo: "Com e sem o livro" },
+  { valor: "com", rotulo: "Só com o livro" },
+  { valor: "sem", rotulo: "Só a mensalidade" },
+];
+export const modoLivroValido = (v: unknown): ModoLivro => (v === "com" || v === "sem" ? v : "ambos");
+
+/** Economia de 12 meses fechando no prazo, no que a carta mostra. */
+export const economiaNoAno = (s: Simulacao, modo: ModoLivro) =>
+  modo === "sem" ? (s.depois.mensalidade - s.promo.mensalidade) * 12 : s.economiaAno;
+
+export const reais =(v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 /** "no 1º Ano", "no Grupo V", "no Maternal III" — todas pedem "no". */

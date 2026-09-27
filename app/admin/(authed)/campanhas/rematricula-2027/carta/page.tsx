@@ -7,11 +7,15 @@ import {
   PRAZO_PROMOCAO,
   SERIES,
   URL_FOLDER,
+  economiaNoAno,
+  livroAVista,
+  modoLivroValido,
   naSerie,
   primeiroNome,
   reais,
   simular,
   type Condicao,
+  type ModoLivro,
   type NomeSerie,
 } from "@/lib/rematricula-2027";
 import { BotaoImprimir } from "./botao-imprimir";
@@ -28,17 +32,39 @@ const fraunces = Fraunces({ subsets: ["latin"], weight: ["600"], display: "swap"
 
 const SEGMENTO_NOME = { maternal: "Educação Infantil", grupo: "Educação Infantil", ef1: "Ensino Fundamental I", ef2: "Ensino Fundamental II" };
 
-function Cartao({ titulo, c, destaque }: { titulo: string; c: Condicao; destaque?: boolean }) {
+function Cartao({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; modo: ModoLivro; destaque?: boolean }) {
+  const soMensalidade = c.mensalidade - FIDELIDADE;
   return (
     <div className={`cartao ${destaque ? "destaque" : ""}`}>
       <p className="rotulo">{titulo}</p>
-      <div className="linha"><span>Mensalidade Fidelidade</span><b>{reais(c.mensalidade - FIDELIDADE)}</b></div>
-      <div className="linha"><span>Livros · 12 parcelas</span><b>{reais(c.livro)}</b></div>
+      <div className="linha"><span>Mensalidade</span><b>{reais(c.mensalidade)}</b></div>
+      <div className="linha"><span>Mensalidade Fidelidade</span><span>{reais(soMensalidade)}</span></div>
+      {modo !== "sem" && (
+        <div className="linha livro">
+          <span>Livros · 12 parcelas</span>
+          <span>{reais(c.livro)}<small>ou {reais(livroAVista(c.livro))} à vista</small></span>
+        </div>
+      )}
       <div className="total">
         <span className="por-mes">por mês, pagando até o dia 05</span>
-        <span className={`valor ${fraunces.className}`}>{reais(c.fidelidade)}</span>
+        {modo === "sem" ? (
+          <span className={`valor ${fraunces.className}`}>{reais(soMensalidade)}</span>
+        ) : (
+          <>
+            <span className={`valor ${fraunces.className}`}>{reais(c.fidelidade)}</span>
+            <span className="legenda-valor">com os livros</span>
+          </>
+        )}
+        {modo === "ambos" && (
+          <span className="sem-livro"><b className={fraunces.className}>{reais(soMensalidade)}</b> só a mensalidade</span>
+        )}
       </div>
-      <p className="fidelidade">Após o dia 05: <b>{reais(c.total)}</b></p>
+      <p className="fidelidade">
+        Após o dia 05:{" "}
+        {modo === "sem" ? <b>{reais(c.mensalidade)}</b>
+          : modo === "com" ? <b>{reais(c.total)}</b>
+          : <><b>{reais(c.total)}</b> com livros · <b>{reais(c.mensalidade)}</b> sem</>}
+      </p>
     </div>
   );
 }
@@ -46,9 +72,10 @@ function Cartao({ titulo, c, destaque }: { titulo: string; c: Condicao; destaque
 export default async function CartaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ aluno?: string; base?: string; serie?: string; nome?: string }>;
+  searchParams: Promise<{ aluno?: string; base?: string; serie?: string; nome?: string; livro?: string }>;
 }) {
   const sp = await searchParams;
+  const modo = modoLivroValido(sp.livro);
   const serie = SERIES.find((s) => s.nome === sp.serie)?.nome as NomeSerie | undefined;
   const base = sp.base ? Number(sp.base) : null;
   let nome = sp.nome?.trim() ?? "";
@@ -106,17 +133,19 @@ export default async function CartaPage({
         </p>
 
         <div className="cartoes">
-          <Cartao titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} destaque />
-          <Cartao titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} />
+          <Cartao titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} modo={modo} destaque />
+          <Cartao titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} modo={modo} />
         </div>
 
         <p className="economia">
-          Fechando até {PRAZO_PROMOCAO}, a sua família economiza <b>{reais(sim.economiaAno)}</b> ao longo de 2027.
+          Fechando até {PRAZO_PROMOCAO}, a sua família economiza <b>{reais(economiaNoAno(sim, modo))}</b> ao longo de 2027.
         </p>
 
         <ul className="notas">
-          <li><b>Mensalidade Fidelidade:</b> os valores já têm {reais(FIDELIDADE)} de desconto, para pagamento até o dia 05 de cada mês.</li>
-          <li><b>Livros:</b> até {PRAZO_PROMOCAO}, o livro de 2027 sai pelo preço de 2026.</li>
+          <li><b>Mensalidade Fidelidade:</b> {reais(FIDELIDADE)} de desconto em cada mês pago até o dia 05.</li>
+          {modo !== "sem" && (
+            <li><b>Livros:</b> até {PRAZO_PROMOCAO}, o livro de 2027 sai pelo preço de 2026. À vista, 10% de desconto.</li>
+          )}
         </ul>
 
         <div className="qr-bloco">
@@ -176,7 +205,12 @@ const CSS = `
 .cartao .rotulo { font-size: 8.4pt; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: #5A6478; margin-bottom: 5mm; }
 .cartao.destaque .rotulo { color: #FFB000; }
 .cartao .linha { display: flex; justify-content: space-between; font-size: 10.5pt; padding: 1.4mm 0; }
-.cartao .linha b { font-weight: 700; }
+.cartao .linha b { font-weight: 800; }
+.cartao .linha.livro > span:last-child { text-align: right; }
+.cartao .linha small { display: block; font-size: 8pt; opacity: .72; }
+.cartao .legenda-valor { font-size: 8.6pt; opacity: .75; margin-top: .5mm; }
+.cartao .sem-livro { margin-top: 2.5mm; font-size: 9.4pt; }
+.cartao .sem-livro b { font-size: 15pt; font-weight: 600; margin-right: 1mm; }
 .cartao .total { margin-top: 3mm; padding-top: 4mm; border-top: .3mm solid rgba(23,34,61,.16); display: flex; flex-direction: column; }
 .cartao.destaque .total { border-color: rgba(255,255,255,.22); }
 .cartao .por-mes { font-size: 9pt; opacity: .75; }
