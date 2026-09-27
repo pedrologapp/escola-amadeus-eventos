@@ -266,9 +266,11 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
   // Troca de segmento: parte do teto novo e aplica todos os descontos (inclusive o que vem no boleto).
   // Mesmo segmento: parte da mensalidade de hoje, onde o desconto do boleto já está.
   const troca = !novato && !!serie && trocaDeSegmento(serieAtualCedo, serie as NomeSerie);
-  const descontoBoleto = troca && teto !== null && Number.isFinite(baseNum) ? Math.max(0, teto - (baseNum ?? teto)) : 0;
+  // Boleto abaixo do teto NÃO é desconto (Arthur Mafra: 480 era a tabela de 2025; o recibo do Isaac
+  // mostra só os R$ 20 da Fidelidade). Desconto é só o que o Isaac tira no pagamento, além da Fidelidade.
+  const abaixoDoTeto = troca && teto !== null && Number.isFinite(baseNum) ? Math.max(0, teto - (baseNum ?? teto)) : 0;
   const descontoPag = novato ? 0 : Math.max(0, Number(descPag.replace(",", ".")) || 0);
-  const desconto = manterDesconto ? descontoBoleto + descontoPag : 0;
+  const desconto = manterDesconto ? descontoPag : 0;
   const serieAtual = novato ? null : leitura?.aluno.serie ?? null;
   const pronto = ativo && serie && nome && (novato || (Number.isFinite(baseNum) && (baseNum ?? 0) > 0));
   const baseMesmoSegmento = !novato && !troca && Number.isFinite(baseNum) ? baseNum : null;
@@ -395,14 +397,11 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                 {/* O desconto que a família tem hoje e mantém em 2027 */}
                 <div className="space-y-2 rounded-xl border border-border/60 p-3 text-sm">
                   <p className="font-semibold">Desconto que a família tem hoje</p>
-                  <div className="flex justify-between gap-2">
-                    <span className="text-muted-foreground">
-                      {troca
-                        ? `No boleto (teto ${teto !== null ? reais(teto) : "—"} − mensalidade de hoje)`
-                        : "No boleto: já está na mensalidade de hoje (mesmo segmento)"}
-                    </span>
-                    <b className="tabular-nums">{reais(descontoBoleto)}</b>
-                  </div>
+                  {abaixoDoTeto > 0 && (
+                    <p className="rounded-lg bg-amber-50 px-2 py-1 text-xs text-amber-900">
+                      O boleto de hoje está {reais(abaixoDoTeto)} abaixo do teto ({teto !== null ? reais(teto) : "—"}). Isso não conta como desconto: na troca de segmento a conta parte do teto novo.
+                    </p>
+                  )}
                   <label className="flex items-center justify-between gap-2">
                     <span className="text-muted-foreground">
                       No pagamento até o dia 05, além da Fidelidade
@@ -417,7 +416,7 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                       <input type="checkbox" className="size-4 accent-[#083078]" checked={manterDesconto} onChange={(e) => setManterDesconto(e.target.checked)} />
                       Manter o desconto em 2027
                     </span>
-                    <span className={`tabular-nums ${manterDesconto ? "" : "text-muted-foreground line-through"}`}>{reais(descontoBoleto + descontoPag)}</span>
+                    <span className={`tabular-nums ${manterDesconto ? "" : "text-muted-foreground line-through"}`}>{reais(descontoPag)}</span>
                   </label>
                   {leitura.descontos.length > 0 && (
                     <p className="text-xs text-muted-foreground">No Activesoft: {leitura.descontos.join("; ")}.</p>

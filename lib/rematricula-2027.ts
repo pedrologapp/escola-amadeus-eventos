@@ -5,8 +5,8 @@
  * - mesmo segmento: a mensalidade de hoje sem o livro + reajuste; o desconto
  *   é só o que o Isaac tira no pagamento além da Fidelidade (ex.: 150);
  * - troca de segmento (Grupo V → 1º, 5º → 6º): o teto do segmento novo +
- *   reajuste, menos TODOS os descontos da família (teto antigo − boleto, mais
- *   o do pagamento);
+ *   reajuste, menos o desconto que o Isaac dá no pagamento. Boleto abaixo do
+ *   teto NÃO é desconto (Arthur Mafra: recibo com só os R$ 20 da Fidelidade);
  * - novato: a tabela (teto) + reajuste.
  * A Fidelidade não está no boleto: o Isaac tira na hora do pagamento (dados
  * de 2026). Todos os descontos só valem pagando até o dia 05.
@@ -176,7 +176,7 @@ export function origemDaCheia(serieAtual: string | null | undefined, serie2027: 
   const seg = segmentoDe(serie2027)!;
   if (!serieAtual) return `Novato: tabela do ${SEG_CURTO[seg]} (${reais(TABELA_2026[seg])}) + ${reais(reajuste)}.`;
   return trocaDeSegmento(serieAtual, serie2027)
-    ? `Troca de segmento (${serieAtual} → ${serie2027}): parte do teto do ${SEG_CURTO[seg]} (${reais(TABELA_2026[seg])}) + ${reais(reajuste)}, e aplica todos os descontos que a família tem.`
+    ? `Troca de segmento (${serieAtual} → ${serie2027}): parte do teto do ${SEG_CURTO[seg]} (${reais(TABELA_2026[seg])}) + ${reais(reajuste)}, e aplica os descontos que a família tem no Isaac.`
     : `Mesmo segmento: mensalidade de hoje (${baseHoje !== null ? reais(baseHoje) : "—"}) + ${reais(reajuste)}; o desconto do boleto já está nela.`;
 }
 

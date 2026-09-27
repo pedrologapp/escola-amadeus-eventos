@@ -58,7 +58,7 @@ export const ANOS_LETIVOS: AnoLetivo[] = [
     observacoes: [
       "Novato: a tabela acima (teto + R$ 50 até 30/10, ou + R$ 60 depois).",
       "Veterano no mesmo segmento: a mensalidade de hoje (sem livro) + R$ 50/60; depois, a Fidelidade e o desconto que o Isaac dá no pagamento.",
-      "Troca de segmento (Grupo V → 1º ano: 490; 5º → 6º: 510): o teto do segmento novo + R$ 50/60, menos todos os descontos que a família tem (teto antigo − boleto, mais o do pagamento).",
+      "Troca de segmento (Grupo V → 1º ano: 490; 5º → 6º: 510): o teto do segmento novo + R$ 50/60, menos o desconto que a família tem no Isaac. Boleto abaixo do teto não é desconto.",
       "Todos os descontos valem só pagando até o dia 05: Fidelidade − R$ 20, o da família e irmão − R$ 20 (cada irmão). Do dia 06 ao 10: cheia − R$ 10. Depois do dia 10: cheia.",
       "Matrícula: uma mensalidade cheia, sem desconto, em até 5x.",
       "Livro à vista: 12 parcelas com 10% de desconto.",
