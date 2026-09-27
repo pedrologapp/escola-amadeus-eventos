@@ -2,7 +2,6 @@ import {
   ClipboardList,
   GraduationCap,
   Heart,
-  Shirt,
 } from "lucide-react";
 import { ModuloCard, type Modulo } from "@/components/admin/modulo-card";
 
@@ -16,15 +15,7 @@ import { ModuloCard, type Modulo } from "@/components/admin/modulo-card";
  */
 export const metadata = { title: "Campanhas · Admin Amadeus" };
 
-const EM_ANDAMENTO: Modulo[] = [
-  {
-    href: "/admin/fardamento",
-    icone: Shirt,
-    titulo: "Fardamento",
-    descricao: "Pedidos de fardamento dos colaboradores, com tamanhos.",
-    selo: "Em andamento",
-  },
-];
+const EM_ANDAMENTO: Modulo[] = [];
 
 const ENCERRADAS: Modulo[] = [
   {
@@ -59,11 +50,17 @@ export default function CampanhasPage() {
       </p>
 
       <h2 className="mt-8 text-xs font-bold uppercase tracking-widest text-muted-foreground">Em andamento</h2>
-      <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {EM_ANDAMENTO.map((m) => (
-          <ModuloCard key={m.href} m={m} />
-        ))}
-      </div>
+      {EM_ANDAMENTO.length === 0 ? (
+        <p className="mt-3 rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          Nenhuma campanha em andamento.
+        </p>
+      ) : (
+        <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {EM_ANDAMENTO.map((m) => (
+            <ModuloCard key={m.href} m={m} />
+          ))}
+        </div>
+      )}
 
       <h2 className="mt-10 text-xs font-bold uppercase tracking-widest text-muted-foreground">Encerradas</h2>
       <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
