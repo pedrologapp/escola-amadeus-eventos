@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Cartão de aniversário · colaborador (protótipo)</title>
+<!-- Protótipo do cartão do colaborador, 1080x1350: recado escrito a giz num
+     quadro azul de sala de aula. ?nome=Pedro%20Luciano troca o nome. -->
+<style>
+  @font-face { font-family: Caveat; src: url(../EventoRematricula/deck/fonts/caveat.woff2) format('woff2'); font-weight: 400 700; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1350px; overflow: hidden; }
+  body { background: radial-gradient(120% 80% at 50% 30%, #FFFDF7 0%, #F6EEDB 100%); position: relative; font-family: "Segoe UI", sans-serif; }
+
+  .topo { position: absolute; top: 46px; left: 64px; right: 64px; display: flex; justify-content: space-between; align-items: center; }
+  .topo img { width: 150px; }
+  .selo { transform: rotate(4deg); background: #FFB000; color: #083078; font-weight: 800; font-size: 26px; letter-spacing: .16em; text-transform: uppercase; padding: 14px 26px; border-radius: 8px; box-shadow: 0 6px 14px rgba(8,48,120,.18); }
+
+  /* o quadro: azul da marca, moldura de madeira clara, pó de giz */
+  .quadro { position: absolute; left: 56px; right: 56px; top: 250px; height: 960px; border-radius: 14px;
+    border: 22px solid #C9A46A; box-shadow: inset 0 0 0 4px #A9844C, 0 18px 40px rgba(26,34,64,.28);
+    background:
+      radial-gradient(60% 40% at 30% 25%, rgba(255,255,255,.07), transparent 70%),
+      radial-gradient(50% 35% at 75% 70%, rgba(255,255,255,.05), transparent 70%),
+      linear-gradient(160deg, #0F3A86 0%, #0A2D6C 55%, #082456 100%); }
+  .apoio { position: absolute; left: 110px; right: 110px; top: 1204px; height: 26px; border-radius: 6px; background: #B08C55; box-shadow: 0 8px 14px rgba(26,34,64,.2); }
+  .giz { position: absolute; top: 1192px; width: 64px; height: 14px; border-radius: 7px; }
+  .giz.g1 { left: 190px; background: #F4F1E8; transform: rotate(-4deg); }
+  .giz.g2 { left: 272px; background: #FFD860; transform: rotate(3deg); }
+  .apagador { position: absolute; top: 1176px; right: 190px; width: 130px; height: 34px; border-radius: 6px; background: #083078; border-top: 12px solid #D8C9A8; }
+
+  .giz-txt { position: absolute; left: 80px; right: 60px; font-family: Caveat, cursive; color: rgba(244,241,232,.95); text-shadow: 0 0 1px rgba(244,241,232,.6); }
+  .l1 { top: 60px; font-size: 66px; font-weight: 700; }
+  .nome { top: 136px; font-size: 124px; font-weight: 700; line-height: 1.02; color: #FFFFFF; }
+  .risco { position: absolute; left: 80px; top: 290px; width: 600px; height: 40px; }
+  .l3 { top: 330px; font-size: 52px; font-weight: 600; color: rgba(244,241,232,.88); }
+  .l3 b { color: #FFD860; font-weight: 700; }
+  .desenho { position: absolute; left: 60px; right: 40px; top: 450px; height: 330px; }
+  .desenho svg, .risco svg { width: 100%; height: 100%; overflow: visible; }
+  .desenho g, .risco path { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 5; }
+  .assina { top: 760px; right: 80px; text-align: right; font-size: 50px; line-height: 64px; font-weight: 600; }
+  .assina b { font-weight: 700; color: #FFD860; }
+</style>
+</head>
+<body>
+  <div class="topo">
+    <img src="../../public/folder/marca-30-anos.png" alt="">
+    <span class="selo">Parabéns!</span>
+  </div>
+
+  <div class="quadro">
+    <p class="giz-txt l1">Feliz aniversário,</p>
+    <p class="giz-txt nome"><span id="nome">Pedro Luciano</span>!</p>
+    <div class="risco"><svg viewBox="0 0 600 40" preserveAspectRatio="none"><path d="M6 24C120 10 240 34 360 18S540 22 594 14" stroke="#FFD860"/></svg></div>
+    <p class="giz-txt l3">Obrigado por fazer parte, todos os dias,<br><b>do que nós somos.</b></p>
+
+    <div class="desenho">
+      <svg viewBox="0 0 900 330" aria-hidden="true">
+        <!-- balões a giz -->
+        <g stroke="rgba(244,241,232,.9)"><ellipse cx="110" cy="120" rx="54" ry="66"/><path d="M110 186l-8 12h16zM110 198c-12 34 14 60 0 110"/></g>
+        <g stroke="#FFD860"><ellipse cx="205" cy="150" rx="48" ry="60"/><path d="M205 210l-7 11h14zM205 221c12 30-12 54 4 100"/></g>
+        <!-- presente -->
+        <g stroke="rgba(244,241,232,.9)"><path d="M340 318V230h150v88zM325 230h180v-34H325zM415 196v122"/><path d="M415 196c-30-40-70-20-50 0M415 196c30-40 70-20 50 0" stroke="#FFD860"/></g>
+        <!-- bolo -->
+        <g stroke="rgba(244,241,232,.9)"><path d="M570 318V240h190v78zM595 240v-46h140v46M570 272c32 16 64-16 95 0s64 16 95 0M550 318h230"/></g>
+        <g stroke="#FFD860" stroke-width="6"><path d="M625 194v-32M665 194v-32M705 194v-32"/></g>
+        <g stroke="#FFB000"><path d="M625 158c-8-11 0-20 0-20s8 9 0 20zM665 158c-8-11 0-20 0-20s8 9 0 20zM705 158c-8-11 0-20 0-20s8 9 0 20z"/></g>
+        <!-- estrelinhas e confete -->
+        <g stroke="#FFD860" stroke-width="4"><path d="M300 60v30M285 75h30M820 70v28M806 84h28M520 110v22M509 121h22"/></g>
+        <g stroke="rgba(244,241,232,.7)" stroke-width="4"><circle cx="400" cy="120" r="5"/><circle cx="780" cy="160" r="5"/><circle cx="270" cy="250" r="4"/><path d="M840 250l12 8M480 60l-10 12"/></g>
+      </svg>
+    </div>
+
+    <p class="giz-txt assina">Com carinho,<br><b>Centro Educacional Amadeus</b> 💙</p>
+  </div>
+  <div class="apoio"></div><span class="giz g1"></span><span class="giz g2"></span><span class="apagador"></span>
+
+  <script>
+    const n = new URLSearchParams(location.search).get('nome');
+    if (n) document.getElementById('nome').textContent = n;
+  </script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Cartão de aniversário · aluno (protótipo)</title>
+<!-- Protótipo do cartão do aluno, 1080x1350. ?nome=Maria%20Clara troca o nome. -->
+<style>
+  @font-face { font-family: Fraunces; src: url(../EventoRematricula/deck/fonts/fraunces.woff2) format('woff2'); font-weight: 100 900; }
+  @font-face { font-family: Caveat; src: url(../EventoRematricula/deck/fonts/caveat.woff2) format('woff2'); font-weight: 400 700; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1350px; overflow: hidden; }
+  body { background: radial-gradient(120% 80% at 50% 30%, #FFFDF7 0%, #F6EEDB 100%); font-family: "Segoe UI", sans-serif; position: relative; }
+
+  .topo { position: absolute; top: 54px; left: 64px; right: 64px; display: flex; justify-content: space-between; align-items: center; }
+  .topo img { width: 170px; }
+  .selo { transform: rotate(4deg); background: #FFB000; color: #083078; font-weight: 800; font-size: 26px; letter-spacing: .16em; text-transform: uppercase; padding: 14px 26px; border-radius: 8px; box-shadow: 0 6px 14px rgba(8,48,120,.18); }
+
+  /* folha de caderno arrancada */
+  .folha { position: absolute; left: 70px; right: 70px; top: 290px; height: 990px; transform: rotate(-1.4deg);
+    background:
+      linear-gradient(90deg, transparent 88px, rgba(226,110,110,.6) 88px 91px, transparent 91px),
+      repeating-linear-gradient(180deg, #FFFFFF 0 62px, #CFDCEE 62px 64px);
+    background-position: 0 30px; background-color: #fff; box-shadow: 0 14px 34px rgba(26,34,64,.16);
+    -webkit-mask: radial-gradient(circle at 50% 0, transparent 9px, #000 10px) 0 0/34px 100% repeat-x;
+            mask: radial-gradient(circle at 50% 0, transparent 9px, #000 10px) 0 0/34px 100% repeat-x; }
+  .fita { position: absolute; top: -14px; right: 120px; width: 170px; height: 52px; transform: rotate(7deg); background: rgba(127,178,230,.85);
+    background-image: repeating-linear-gradient(90deg, rgba(255,255,255,.3) 0 8px, transparent 8px 16px); }
+  .fita.b { left: 110px; right: auto; transform: rotate(-6deg); background-color: rgba(255,192,64,.85); }
+
+  .mao { position: absolute; left: 130px; right: 60px; font-family: Caveat, cursive; color: #1D4FA0; }
+  .l1 { top: 60px; font-size: 64px; font-weight: 700; }
+  .nome { top: 134px; font-size: 118px; font-weight: 700; line-height: 1.05; color: #083078; }
+  .nome span { background: linear-gradient(transparent 58%, rgba(255,192,64,.75) 58% 90%, transparent 90%); padding: 0 10px; }
+  .l3 { top: 290px; font-size: 54px; font-weight: 600; }
+  .desenho { position: absolute; left: 90px; right: 50px; top: 380px; height: 400px; }
+  .desenho svg { width: 100%; height: 100%; overflow: visible; }
+  .desenho g { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 4.5; }
+
+  .assina { top: 800px; right: 90px; text-align: right; font-size: 50px; line-height: 64px; font-weight: 600; }
+  .assina b { font-weight: 700; color: #083078; }
+  .rodape { position: absolute; left: 0; right: 0; bottom: 60px; text-align: center; font-family: Fraunces, Georgia, serif; font-size: 34px; font-weight: 600; color: #083078; }
+  .rodape small { display: block; margin-top: 6px; font-family: "Segoe UI", sans-serif; font-size: 22px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: #B07800; }
+</style>
+</head>
+<body>
+  <div class="topo">
+    <img src="../../public/folder/marca-30-anos.png" alt="">
+    <span class="selo">Parabéns!</span>
+  </div>
+
+  <div class="folha">
+    <span class="fita"></span><span class="fita b"></span>
+    <p class="mao l1">Feliz aniversário,</p>
+    <p class="mao nome"><span id="nome">Maria Clara</span>!</p>
+    <p class="mao l3">Hoje o dia é todo seu!</p>
+
+    <div class="desenho">
+      <svg viewBox="0 0 900 440" aria-hidden="true">
+        <!-- bandeirinhas -->
+        <g stroke="#083078"><path d="M20 40 Q450 144 880 40"/></g>
+        <g stroke="#FFB000" fill="#FFB00033"><path d="M80 53L102 112L124 62Z"/></g>
+        <g stroke="#E0524C" fill="#E0524C33"><path d="M172 70L194 127L216 77Z"/></g>
+        <g stroke="#1D4FA0" fill="#1D4FA033"><path d="M264 82L286 136L308 86Z"/></g>
+        <g stroke="#FFB000" fill="#FFB00033"><path d="M356 90L378 141L400 91Z"/></g>
+        <g stroke="#E0524C" fill="#E0524C33"><path d="M448 92L470 142L492 92Z"/></g>
+        <g stroke="#1D4FA0" fill="#1D4FA033"><path d="M540 90L562 140L584 87Z"/></g>
+        <g stroke="#FFB000" fill="#FFB00033"><path d="M632 83L654 133L676 78Z"/></g>
+        <g stroke="#E0524C" fill="#E0524C33"><path d="M724 71L746 121L768 64Z"/></g>
+        <g stroke="#1D4FA0" fill="#1D4FA033"><path d="M816 54L838 104L860 45Z"/></g>
+        <!-- balões -->
+        <g stroke="#E0524C" fill="rgba(224,82,76,.18)"><ellipse cx="110" cy="230" rx="52" ry="64"/><path d="M110 294l-8 12h16zM110 306c-10 30 14 60 0 100"/></g>
+        <g stroke="#1D4FA0" fill="rgba(29,79,160,.15)"><ellipse cx="200" cy="260" rx="46" ry="58"/><path d="M200 318l-7 11h14zM200 329c12 26-12 50 4 86"/></g>
+        <g stroke="#FFB000" fill="rgba(255,176,0,.22)"><ellipse cx="800" cy="220" rx="50" ry="62"/><path d="M800 282l-8 12h16zM800 294c-12 34 14 64-2 110"/></g>
+        <!-- bolo -->
+        <g stroke="#083078"><path d="M330 400V300h240v100z"/><path d="M360 300v-60h180v60"/><path d="M330 340c40 20 80-20 120 0s80 20 120 0"/><path d="M360 262c30 14 60-14 90 0s60 14 90 0"/><path d="M300 400h300"/></g>
+        <g stroke="#FFB000" stroke-width="5"><path d="M400 240v-40M450 240v-40M500 240v-40"/></g>
+        <g stroke="#E0524C" fill="rgba(255,176,0,.5)"><path d="M400 200c-10-14 0-26 0-26s10 12 0 26zM450 200c-10-14 0-26 0-26s10 12 0 26zM500 200c-10-14 0-26 0-26s10 12 0 26z"/></g>
+        <!-- confetes -->
+        <g stroke="#FFB000"><path d="M650 170l14 10M700 300l-10 14M640 360l16-4"/></g>
+        <g stroke="#1D4FA0"><path d="M270 160l10 14M600 150l-14 8M720 380l12 8"/></g>
+        <g stroke="#E0524C"><circle cx="300" cy="200" r="5"/><circle cx="640" cy="250" r="5"/><circle cx="740" cy="140" r="5"/></g>
+      </svg>
+    </div>
+    <p class="mao assina">Com carinho,<br><b>Centro Educacional Amadeus</b> 💙</p>
+  </div>
+
+  
+  <script>
+    const n = new URLSearchParams(location.search).get('nome');
+    if (n) document.getElementById('nome').textContent = n;
+  </script>
+</body>
+</html>
