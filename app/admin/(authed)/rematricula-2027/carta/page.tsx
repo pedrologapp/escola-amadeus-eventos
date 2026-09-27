@@ -4,8 +4,6 @@ import { listarAlunos } from "@/lib/rematricula-2027-dados";
 import {
   DEPOIS_DO_PRAZO,
   PARCELAS_MATRICULA,
-  fraseTrocaSegmento,
-  trocaDeSegmento,
   PRAZO_PROMOCAO,
   SERIES,
   URL_FOLDER,
@@ -107,7 +105,6 @@ export default async function CartaPage({
   }
 
   const sim = simular(serie, veterano ? desconto : 0, irmao);
-  const troca = veterano && trocaDeSegmento(sp.atual, serie) ? fraseTrocaSegmento(serie) : undefined;
   const primeiro = primeiroNome(nome);
   const qr = await QRCode.toString(URL_FOLDER, {
     type: "svg",
@@ -151,8 +148,8 @@ export default async function CartaPage({
         </p>
 
         <div className="cartoes">
-          <Cartao titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} modo={modo} destaque troca={troca} />
-          <Cartao titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} modo={modo} troca={troca} />
+          <Cartao titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} modo={modo} destaque />
+          <Cartao titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} modo={modo} />
         </div>
 
         <p className="economia">

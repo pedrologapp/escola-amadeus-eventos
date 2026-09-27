@@ -5,8 +5,6 @@ import { lerLinkDaCarta } from "@/lib/rematricula-2027-link";
 import {
   DEPOIS_DO_PRAZO,
   PARCELAS_MATRICULA,
-  fraseTrocaSegmento,
-  trocaDeSegmento,
   PRAZO_PROMOCAO,
   SEGMENTO_NOME,
   URL_FOLDER,
@@ -110,7 +108,6 @@ export async function GET(req: NextRequest) {
 
   const sim = simular(d.serie, d.veterano ? d.desconto : 0, d.irmao);
   const veterano = d.veterano;
-  const troca = veterano && trocaDeSegmento(d.serieAtual, d.serie) ? fraseTrocaSegmento(d.serie) : undefined;
   const primeiro = primeiroNome(d.nome);
   const [r400, r500, r700, r800, f600, qr] = await Promise.all([
     fonte(origin, "DMSans-400.woff"),
@@ -150,8 +147,8 @@ export async function GET(req: NextRequest) {
         </div>
 
         <div style={{ display: "flex", gap: mm(5), marginTop: mm(4.5), alignItems: "flex-start", flexShrink: 0 }}>
-          <Cartao titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} modo={d.modo} destaque troca={troca} />
-          <Cartao titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} modo={d.modo} troca={troca} />
+          <Cartao titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} modo={d.modo} destaque />
+          <Cartao titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} modo={d.modo} />
         </div>
 
         <div style={{ display: "flex", flexWrap: "wrap", marginTop: mm(5), fontSize: pt(12), lineHeight: 1.45 }}>

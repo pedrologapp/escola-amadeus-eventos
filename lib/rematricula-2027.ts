@@ -154,7 +154,6 @@ export function simular(serie2027: NomeSerie, desconto = 0, irmao = false): Simu
 }
 
 const SEG_CURTO: Record<Segmento, string> = { maternal: "Infantil", grupo: "Infantil", ef1: "Fund. 1", ef2: "Fund. 2" };
-const SEG_LONGO: Record<Segmento, string> = { maternal: "Educação Infantil", grupo: "Educação Infantil", ef1: "Ensino Fundamental I", ef2: "Ensino Fundamental II" };
 
 /** Muda de segmento em 2027 (Grupo V → 1º ano, 5º → 6º)? Infantil conta como um segmento só. */
 export function trocaDeSegmento(serieAtual: string | null | undefined, serie2027: NomeSerie): boolean {
@@ -165,7 +164,7 @@ export function trocaDeSegmento(serieAtual: string | null | undefined, serie2027
   return grupo(a) !== grupo(b);
 }
 
-/** Para a equipe: de onde sai a mensalidade cheia. */
+/** Só para a equipe (nunca vai na carta): de onde sai a mensalidade cheia. */
 export function origemDaCheia(serieAtual: string | null | undefined, serie2027: NomeSerie, reajuste: number): string {
   const seg = segmentoDe(serie2027)!;
   const base = `teto do ${SEG_CURTO[seg]} (${reais(TABELA_2026[seg])}) + ${reais(reajuste)}`;
@@ -173,10 +172,6 @@ export function origemDaCheia(serieAtual: string | null | undefined, serie2027: 
     ? `Troca de segmento (${serieAtual} → ${serie2027}): parte do ${base}.`
     : `Mesmo segmento: ${base}.`;
 }
-
-/** Para a carta: frase curta, só quando troca de segmento. */
-export const fraseTrocaSegmento = (serie2027: NomeSerie) =>
-  `Tabela do novo segmento: ${SEG_LONGO[segmentoDe(serie2027)!]}`;
 
 /** Livro à vista: as 12 parcelas com 10% de desconto (74 → R$ 799,20, 142 → R$ 1.533,60, como no flyer). */
 export const livroAVista = (parcela: number) => Math.round(parcela * 12 * 0.9 * 100) / 100;
