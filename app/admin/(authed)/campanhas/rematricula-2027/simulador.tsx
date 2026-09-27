@@ -29,14 +29,14 @@ function Coluna({ titulo, c, destaque }: { titulo: string; c: Condicao; destaque
     <div className={`rounded-2xl p-5 ${destaque ? "bg-amadeus-blue text-white" : "border border-border/60 bg-white"}`}>
       <p className={`text-xs font-bold uppercase tracking-widest ${destaque ? "text-amadeus-yellow" : "text-muted-foreground"}`}>{titulo}</p>
       <dl className="mt-4 space-y-2 text-sm">
-        <div className="flex justify-between"><dt>Mensalidade</dt><dd className="font-semibold">{reais(c.mensalidade)}</dd></div>
+        <div className="flex justify-between"><dt>Mensalidade Fidelidade</dt><dd className="font-semibold">{reais(c.mensalidade - FIDELIDADE)}</dd></div>
         <div className="flex justify-between"><dt>Livros (12x)</dt><dd className="font-semibold">{reais(c.livro)}</dd></div>
       </dl>
       <div className={`mt-3 border-t pt-3 ${destaque ? "border-white/20" : "border-border/60"}`}>
-        <p className="text-xs opacity-80">Total por mês</p>
-        <p className="text-3xl font-extrabold">{reais(c.total)}</p>
+        <p className="text-xs opacity-80">Por mês, pagando até o dia 05</p>
+        <p className="text-3xl font-extrabold">{reais(c.fidelidade)}</p>
         <p className={`mt-1 text-sm ${destaque ? "text-amadeus-yellow" : "text-amadeus-blue"}`}>
-          <b>{reais(c.fidelidade)}</b> pagando até o dia 05
+          Após o dia 05: <b>{reais(c.total)}</b>
         </p>
       </div>
     </div>
@@ -84,14 +84,16 @@ export function Simulador({ alunos, leitura }: { alunos: AlunoBusca[]; leitura: 
         `Olá! Seguem os valores de 2027 de *${nome}* (${sim.serie2027}):`,
         "",
         `*Fechando até ${PRAZO_PROMOCAO}*`,
-        `Mensalidade: ${reais(sim.promo.mensalidade)}`,
+        `Mensalidade Fidelidade: ${reais(sim.promo.mensalidade - FIDELIDADE)}`,
         `Livros: 12x ${reais(sim.promo.livro)}`,
-        `Total por mês: ${reais(sim.promo.total)} (${reais(sim.promo.fidelidade)} pagando até o dia 05)`,
+        `Total por mês: *${reais(sim.promo.fidelidade)}* (após o dia 05: ${reais(sim.promo.total)})`,
         "",
         `*A partir de ${DEPOIS_DO_PRAZO}*`,
-        `Mensalidade: ${reais(sim.depois.mensalidade)}`,
+        `Mensalidade Fidelidade: ${reais(sim.depois.mensalidade - FIDELIDADE)}`,
         `Livros: 12x ${reais(sim.depois.livro)}`,
-        `Total por mês: ${reais(sim.depois.total)} (${reais(sim.depois.fidelidade)} pagando até o dia 05)`,
+        `Total por mês: *${reais(sim.depois.fidelidade)}* (após o dia 05: ${reais(sim.depois.total)})`,
+        "",
+        `Os valores já têm o desconto Fidelidade de ${reais(FIDELIDADE)}, para pagamento até o dia 05 de cada mês.`,
         "",
         `Conheça tudo o que vem em 2027: ${URL_FOLDER}`,
         "",
@@ -217,7 +219,7 @@ export function Simulador({ alunos, leitura }: { alunos: AlunoBusca[]; leitura: 
                 </div>
                 <p className="mt-3 text-sm text-muted-foreground">
                   Fechando no prazo, a família economiza <b className="text-amadeus-blue">{reais(sim.economiaAno)}</b> no ano.
-                  {" "}Fidelidade: {reais(FIDELIDADE)} a menos pagando até o dia 05.
+                  {" "}Os valores já têm o desconto Fidelidade de {reais(FIDELIDADE)} (pagando até o dia 05).
                 </p>
                 <div className="mt-5 flex flex-wrap gap-3">
                   <a href={linkCarta} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-amadeus-blue px-4 py-2.5 text-sm font-bold text-white hover:opacity-90">

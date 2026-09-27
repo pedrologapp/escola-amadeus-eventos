@@ -32,13 +32,13 @@ function Cartao({ titulo, c, destaque }: { titulo: string; c: Condicao; destaque
   return (
     <div className={`cartao ${destaque ? "destaque" : ""}`}>
       <p className="rotulo">{titulo}</p>
-      <div className="linha"><span>Mensalidade</span><b>{reais(c.mensalidade)}</b></div>
+      <div className="linha"><span>Mensalidade Fidelidade</span><b>{reais(c.mensalidade - FIDELIDADE)}</b></div>
       <div className="linha"><span>Livros · 12 parcelas</span><b>{reais(c.livro)}</b></div>
       <div className="total">
-        <span className="por-mes">por mês</span>
-        <span className={`valor ${fraunces.className}`}>{reais(c.total)}</span>
+        <span className="por-mes">por mês, pagando até o dia 05</span>
+        <span className={`valor ${fraunces.className}`}>{reais(c.fidelidade)}</span>
       </div>
-      <p className="fidelidade"><b>{reais(c.fidelidade)}</b> pagando até o dia 05</p>
+      <p className="fidelidade">Após o dia 05: <b>{reais(c.total)}</b></p>
     </div>
   );
 }
@@ -115,7 +115,7 @@ export default async function CartaPage({
         </p>
 
         <ul className="notas">
-          <li><b>Mensalidade Fidelidade:</b> {reais(FIDELIDADE)} a menos em cada mês pago até o dia 05.</li>
+          <li><b>Mensalidade Fidelidade:</b> os valores já têm {reais(FIDELIDADE)} de desconto, para pagamento até o dia 05 de cada mês.</li>
           <li><b>Livros:</b> até {PRAZO_PROMOCAO}, o livro de 2027 sai pelo preço de 2026.</li>
         </ul>
 
