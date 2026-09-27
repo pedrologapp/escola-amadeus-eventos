@@ -37,34 +37,30 @@ function Cartao({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; mo
   return (
     <div className={`cartao ${destaque ? "destaque" : ""}`}>
       <p className="rotulo">{titulo}</p>
-      <div className="linha"><span>Mensalidade</span><b>{reais(c.mensalidade)}</b></div>
-      <div className="linha"><span>Mensalidade Fidelidade</span><span>{reais(soMensalidade)}</span></div>
-      {modo !== "sem" && (
-        <div className="linha livro">
-          <span>Livros · 12 parcelas</span>
-          <span>{reais(c.livro)}<small>ou {reais(livroAVista(c.livro))} à vista</small></span>
-        </div>
+
+      {/* 1. Mensalidade: a Fidelidade em destaque, que é onde a família consegue chegar */}
+      <p className="bloco-titulo">Mensalidade Fidelidade</p>
+      <span className={`valor ${fraunces.className}`}>{reais(soMensalidade)}</span>
+      <p className="legenda">pagando até o dia 05 de cada mês</p>
+      <p className="normal">Mensalidade: <b>{reais(c.mensalidade)}</b></p>
+
+      {modo === "com" && (
+        <>
+          {/* 2. Livro */}
+          <div className="bloco livro">
+            <div className="linha"><span className="bloco-titulo">Livros</span><b>12x {reais(c.livro)}</b></div>
+            <p className="legenda">ou {reais(livroAVista(c.livro))} à vista</p>
+          </div>
+
+          {/* 3. Total da parcela */}
+          <div className="bloco total">
+            <p className="bloco-titulo">Total por mês</p>
+            <span className={`valor-total ${fraunces.className}`}>{reais(c.fidelidade)}</span>
+            <p className="legenda">mensalidade Fidelidade + livros</p>
+            <p className="legenda">após o dia 05: {reais(c.total)}</p>
+          </div>
+        </>
       )}
-      <div className="total">
-        <span className="por-mes">por mês, pagando até o dia 05</span>
-        {modo === "sem" ? (
-          <span className={`valor ${fraunces.className}`}>{reais(soMensalidade)}</span>
-        ) : (
-          <>
-            <span className={`valor ${fraunces.className}`}>{reais(c.fidelidade)}</span>
-            <span className="legenda-valor">com os livros</span>
-          </>
-        )}
-        {modo === "ambos" && (
-          <span className="sem-livro"><b className={fraunces.className}>{reais(soMensalidade)}</b> só a mensalidade</span>
-        )}
-      </div>
-      <p className="fidelidade">
-        Após o dia 05:{" "}
-        {modo === "sem" ? <b>{reais(c.mensalidade)}</b>
-          : modo === "com" ? <b>{reais(c.total)}</b>
-          : <><b>{reais(c.total)}</b> com livros · <b>{reais(c.mensalidade)}</b> sem</>}
-      </p>
     </div>
   );
 }
@@ -204,22 +200,18 @@ const CSS = `
 .cartao.destaque { background: #083078; color: #fff; border-color: #083078; }
 .cartao .rotulo { font-size: 8.4pt; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: #5A6478; margin-bottom: 3.5mm; }
 .cartao.destaque .rotulo { color: #FFB000; }
-.cartao .linha { display: flex; justify-content: space-between; font-size: 10.5pt; padding: 1.4mm 0; }
+.cartao .bloco-titulo { font-size: 9.6pt; font-weight: 800; }
+.cartao .valor { display: block; margin-top: 1mm; font-size: 30pt; line-height: 1.05; letter-spacing: -.02em; }
+.cartao .legenda { margin-top: .8mm; font-size: 8.4pt; opacity: .72; }
+.cartao .normal { margin-top: 2.5mm; font-size: 10pt; }
+.cartao .normal b { font-weight: 800; }
+.cartao .bloco { margin-top: 4mm; padding-top: 3.5mm; border-top: .3mm solid rgba(23,34,61,.16); }
+.cartao.destaque .bloco { border-color: rgba(255,255,255,.24); }
+.cartao .linha { display: flex; justify-content: space-between; align-items: baseline; font-size: 10.5pt; }
 .cartao .linha b { font-weight: 800; }
-.cartao .linha.livro > span:last-child { text-align: right; }
-.cartao .linha small { display: block; font-size: 8pt; opacity: .72; }
-.cartao .legenda-valor { font-size: 8.6pt; opacity: .75; margin-top: .5mm; }
-.cartao .sem-livro { margin-top: 2.5mm; font-size: 9.4pt; }
-.cartao .sem-livro b { font-size: 15pt; font-weight: 600; margin-right: 1mm; }
-.cartao .total { margin-top: 3mm; padding-top: 4mm; border-top: .3mm solid rgba(23,34,61,.16); display: flex; flex-direction: column; }
-.cartao.destaque .total { border-color: rgba(255,255,255,.22); }
-.cartao .por-mes { font-size: 9pt; opacity: .75; }
-.cartao .valor { font-size: 27pt; line-height: 1.1; letter-spacing: -.02em; }
-.cartao .fidelidade {
-  margin-top: 4mm; display: inline-block; padding: 2mm 3.5mm; border-radius: 3mm; font-size: 9.4pt;
-  background: rgba(8,48,120,.07); color: #083078;
-}
-.cartao.destaque .fidelidade { background: rgba(255,176,0,.16); color: #FFB000; }
+.cartao .valor-total { display: block; margin-top: .8mm; font-size: 20pt; line-height: 1.1; }
+.cartao.destaque .valor, .cartao.destaque .valor-total { color: #FFB000; }
+.cartao:not(.destaque) .valor, .cartao:not(.destaque) .valor-total { color: #083078; }
 .economia { margin-top: 5mm; font-size: 12pt; line-height: 1.45; color: #17223D; }
 .economia b { color: #B9862F; font-weight: 800; }
 .notas { margin-top: 4mm; padding-left: 4.5mm; font-size: 9.6pt; line-height: 1.6; color: #5A6478; }

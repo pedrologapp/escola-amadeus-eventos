@@ -33,39 +33,42 @@ function Coluna({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; mo
   return (
     <div className={`rounded-2xl p-5 ${destaque ? "bg-amadeus-blue text-white" : "border border-border/60 bg-white"}`}>
       <p className={`text-xs font-bold uppercase tracking-widest ${destaque ? "text-amadeus-yellow" : "text-muted-foreground"}`}>{titulo}</p>
-      <dl className="mt-4 space-y-2 text-sm">
-        <div className="flex justify-between"><dt>Mensalidade</dt><dd className="font-extrabold">{reais(c.mensalidade)}</dd></div>
-        <div className="flex justify-between"><dt>Mensalidade Fidelidade</dt><dd>{reais(soMensalidade)}</dd></div>
-        {modo !== "sem" && (
-          <div className="flex justify-between gap-2">
-            <dt>Livros (12x)</dt>
-            <dd className="text-right">{reais(c.livro)}<span className="block text-xs opacity-75">ou {reais(livroAVista(c.livro))} à vista</span></dd>
+      {/* 1. Mensalidade */}
+      <p className="mt-4 text-sm font-bold">Mensalidade Fidelidade</p>
+      <p className={`text-4xl font-extrabold ${destaque ? "text-amadeus-yellow" : "text-amadeus-blue"}`}>{reais(soMensalidade)}</p>
+      <p className="text-xs opacity-75">pagando até o dia 05 de cada mês</p>
+      <p className="mt-2 text-sm">Mensalidade: <b>{reais(c.mensalidade)}</b></p>
+
+      {modo === "com" && (
+        <>
+          {/* 2. Livro */}
+          <div className={`mt-4 border-t pt-3 ${destaque ? "border-white/20" : "border-border/60"}`}>
+            <div className="flex items-baseline justify-between text-sm"><span className="font-bold">Livros</span><b>12x {reais(c.livro)}</b></div>
+            <p className="text-xs opacity-75">ou {reais(livroAVista(c.livro))} à vista</p>
           </div>
-        )}
-      </dl>
-      <div className={`mt-3 border-t pt-3 ${destaque ? "border-white/20" : "border-border/60"}`}>
-        <p className="text-xs opacity-80">Por mês, pagando até o dia 05</p>
-        <p className="text-3xl font-extrabold">{reais(modo === "sem" ? soMensalidade : c.fidelidade)}</p>
-        {modo !== "sem" && <p className="text-xs opacity-80">com os livros</p>}
-        {modo === "ambos" && <p className="mt-1 text-sm"><b className="text-lg">{reais(soMensalidade)}</b> só a mensalidade</p>}
-        <p className={`mt-2 text-sm ${destaque ? "text-amadeus-yellow" : "text-amadeus-blue"}`}>
-          Após o dia 05:{" "}
-          {modo === "sem" ? <b>{reais(c.mensalidade)}</b>
-            : modo === "com" ? <b>{reais(c.total)}</b>
-            : <><b>{reais(c.total)}</b> com livros · <b>{reais(c.mensalidade)}</b> sem</>}
-        </p>
-      </div>
+          {/* 3. Total */}
+          <div className={`mt-4 border-t pt-3 ${destaque ? "border-white/20" : "border-border/60"}`}>
+            <p className="text-sm font-bold">Total por mês</p>
+            <p className={`text-2xl font-extrabold ${destaque ? "text-amadeus-yellow" : "text-amadeus-blue"}`}>{reais(c.fidelidade)}</p>
+            <p className="text-xs opacity-75">mensalidade Fidelidade + livros</p>
+            <p className="text-xs opacity-75">após o dia 05: {reais(c.total)}</p>
+          </div>
+        </>
+      )}
     </div>
   );
 }
 
 /** Linhas de uma condição no texto do WhatsApp. */
 function linhasTexto(c: Condicao, modo: ModoLivro) {
-  const so = c.mensalidade - FIDELIDADE;
-  const l = [`Mensalidade: *${reais(c.mensalidade)}*`, `Mensalidade Fidelidade: ${reais(so)}`];
-  if (modo !== "sem") l.push(`Livros: 12x ${reais(c.livro)} (ou ${reais(livroAVista(c.livro))} à vista)`);
-  if (modo !== "sem") l.push(`Total com os livros, pagando até o dia 05: ${reais(c.fidelidade)}`);
-  if (modo !== "com") l.push(`Só a mensalidade, pagando até o dia 05: ${reais(so)}`);
+  const l = [
+    `Mensalidade Fidelidade: *${reais(c.mensalidade - FIDELIDADE)}* (pagando até o dia 05)`,
+    `Mensalidade: ${reais(c.mensalidade)}`,
+  ];
+  if (modo === "com") {
+    l.push(`Livros: 12x ${reais(c.livro)} (ou ${reais(livroAVista(c.livro))} à vista)`);
+    l.push(`Total por mês: *${reais(c.fidelidade)}* (após o dia 05: ${reais(c.total)})`);
+  }
   return l;
 }
 
@@ -78,7 +81,7 @@ export function Simulador({ alunos, leitura }: { alunos: AlunoBusca[]; leitura: 
   const [base, setBase] = useState<string>(leitura?.base != null ? String(leitura.base) : "");
   const [serie, setSerie] = useState<NomeSerie | "">(leitura?.serie2027 ?? "");
   const [copiado, setCopiado] = useState(false);
-  const [modo, setModo] = useState<ModoLivro>("ambos");
+  const [modo, setModo] = useState<ModoLivro>("com");
 
   const achados = useMemo(() => {
     const q = semAcento(busca.trim());
