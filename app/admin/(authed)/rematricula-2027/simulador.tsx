@@ -234,6 +234,7 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
   const [modo, setModo] = useState<ModoLivro>("com");
   const [descPag, setDescPag] = useState<string>(String(leitura?.descontoPagamento ?? 0));
   const [irmao, setIrmao] = useState(false);
+  const [manterDesconto, setManterDesconto] = useState(true);
 
   const achados = useMemo(() => {
     const q = semAcento(busca.trim());
@@ -254,7 +255,7 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
   const teto = leitura?.tetoAtual ?? null;
   const descontoBoleto = !novato && teto !== null && Number.isFinite(baseNum) ? Math.max(0, teto - (baseNum ?? teto) - FIDELIDADE) : 0;
   const descontoPag = novato ? 0 : Math.max(0, Number(descPag.replace(",", ".")) || 0);
-  const desconto = descontoBoleto + descontoPag;
+  const desconto = manterDesconto ? descontoBoleto + descontoPag : 0;
   const pronto = ativo && serie && nome && (novato || (Number.isFinite(baseNum) && (baseNum ?? 0) > 0));
   const sim = pronto ? simular(serie as NomeSerie, desconto, irmao) : null;
 
@@ -391,14 +392,17 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                     </span>
                     <input inputMode="decimal" value={descPag} onChange={(e) => setDescPag(e.target.value)} className="w-24 rounded-lg border border-border px-2 py-1 text-right font-bold outline-none focus:border-amadeus-blue" />
                   </label>
-                  <div className="flex justify-between gap-2 border-t border-border/60 pt-2 font-bold text-amadeus-blue">
-                    <span>Desconto mantido em 2027</span>
-                    <span className="tabular-nums">{reais(desconto)}</span>
-                  </div>
+                  <label className="flex cursor-pointer items-center justify-between gap-2 border-t border-border/60 pt-2 font-bold text-amadeus-blue">
+                    <span className="flex items-center gap-2">
+                      <input type="checkbox" className="size-4 accent-[#083078]" checked={manterDesconto} onChange={(e) => setManterDesconto(e.target.checked)} />
+                      Manter o desconto em 2027
+                    </span>
+                    <span className={`tabular-nums ${manterDesconto ? "" : "text-muted-foreground line-through"}`}>{reais(descontoBoleto + descontoPag)}</span>
+                  </label>
                   {leitura.descontos.length > 0 && (
                     <p className="text-xs text-muted-foreground">No Activesoft: {leitura.descontos.join("; ")}.</p>
                   )}
-                  <p className="text-xs text-muted-foreground">Se o desconto for erro de lançamento, corrija a mensalidade de hoje ou zere o campo.</p>
+                  <p className="text-xs text-muted-foreground">Desmarque para tirar o desconto (ex.: erro de lançamento). A carta sai só com a Fidelidade.</p>
                 </div>
 
                 {/* Irmão: só aparece aqui, não na carta */}
