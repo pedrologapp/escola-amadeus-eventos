@@ -394,6 +394,12 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                   <input inputMode="decimal" value={base} onChange={(e) => setBase(e.target.value)} className="mt-1 w-full rounded-xl border border-border px-3 py-2 text-lg font-bold outline-none focus:border-amadeus-blue" />
                 </label>
 
+                {serie && (
+                  <div className="rounded-xl bg-amber-50 p-3 text-xs text-amber-900">
+                    <p className="font-bold">Informação sobre a mensalidade</p>
+                    <p className="mt-1">{origemDaCheia(serieAtual, serie as NomeSerie, REAJUSTE.promo, Number.isFinite(baseNum) ? baseNum : null)} Depois de 30/10: + {reais(REAJUSTE.depois)}.</p>
+                  </div>
+                )}
                 {/* O desconto que a família tem hoje e mantém em 2027 */}
                 <div className="space-y-2 rounded-xl border border-border/60 p-3 text-sm">
                   <p className="font-semibold">Desconto que a família tem hoje</p>
@@ -450,12 +456,6 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                 {SERIES.map((s) => <option key={s.nome} value={s.nome}>{s.nome}</option>)}
               </select>
             </label>
-            {serie && (
-              <div className="rounded-xl bg-amber-50 p-3 text-xs text-amber-900">
-                <p className="font-bold">Informação sobre a mensalidade</p>
-                <p className="mt-1">{origemDaCheia(serieAtual, serie as NomeSerie, REAJUSTE.promo, Number.isFinite(baseNum) ? baseNum : null)} Depois de 30/10: + {reais(REAJUSTE.depois)}.</p>
-              </div>
-            )}
             {!novato && leitura && leitura.aluno.serie === "9º Ano" && (
               <p className="text-sm text-amber-800">Está no 9º ano: em 2027 sai da escola.</p>
             )}
