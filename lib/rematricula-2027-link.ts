@@ -16,6 +16,7 @@ export interface DadosCarta {
   veterano: boolean;
   desconto: number; // desconto da família mantido em 2027 (novato: 0)
   irmao: boolean;
+  base?: number | null; // mesmo segmento: mensalidade de hoje (a cheia = base + reajuste)
   serieAtual?: string | null; // para explicar a troca de segmento
   modo: ModoLivro;
   data: string; // "27 de setembro de 2026", como sai no rodapé

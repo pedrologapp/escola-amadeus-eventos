@@ -8,11 +8,11 @@ import { enviarCarta, type Destino, type ResultadoEnvio } from "./actions";
 import {
   DEPOIS_DO_PRAZO,
   DESCONTO_IRMAO,
-  FIDELIDADE,
   MODOS_LIVRO,
   PARCELAS_MATRICULA,
   REAJUSTE,
   origemDaCheia,
+  trocaDeSegmento,
   PRAZO_PROMOCAO,
   SERIES,
   URL_FOLDER,
@@ -262,18 +262,24 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
   const nome = novato ? nomeNovato.trim() : leitura?.aluno.nome ?? "";
   const baseNum = novato ? null : Number(base.replace(",", "."));
   const teto = leitura?.tetoAtual ?? null;
-  const descontoBoleto = !novato && teto !== null && Number.isFinite(baseNum) ? Math.max(0, teto - (baseNum ?? teto) - FIDELIDADE) : 0;
+  const serieAtualCedo = novato ? null : leitura?.aluno.serie ?? null;
+  // Troca de segmento: parte do teto novo e aplica todos os descontos (inclusive o que vem no boleto).
+  // Mesmo segmento: parte da mensalidade de hoje, onde o desconto do boleto já está.
+  const troca = !novato && !!serie && trocaDeSegmento(serieAtualCedo, serie as NomeSerie);
+  const descontoBoleto = troca && teto !== null && Number.isFinite(baseNum) ? Math.max(0, teto - (baseNum ?? teto)) : 0;
   const descontoPag = novato ? 0 : Math.max(0, Number(descPag.replace(",", ".")) || 0);
   const desconto = manterDesconto ? descontoBoleto + descontoPag : 0;
   const serieAtual = novato ? null : leitura?.aluno.serie ?? null;
   const pronto = ativo && serie && nome && (novato || (Number.isFinite(baseNum) && (baseNum ?? 0) > 0));
-  const sim = pronto ? simular(serie as NomeSerie, desconto, irmao) : null;
+  const baseMesmoSegmento = !novato && !troca && Number.isFinite(baseNum) ? baseNum : null;
+  const sim = pronto ? simular(serie as NomeSerie, desconto, irmao, baseMesmoSegmento) : null;
 
   const linkCarta = sim
     ? `/admin/rematricula-2027/carta?${new URLSearchParams({
         ...(novato ? { nome } : { aluno: String(leitura!.aluno.id), ...(serieAtual ? { atual: serieAtual } : {}) }),
         serie: sim.serie2027,
         desconto: String(desconto),
+        ...(baseMesmoSegmento !== null ? { base: String(baseMesmoSegmento) } : {}),
         ...(irmao ? { irmao: "1" } : {}),
         livro: modo,
       })}`
@@ -390,7 +396,11 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                 <div className="space-y-2 rounded-xl border border-border/60 p-3 text-sm">
                   <p className="font-semibold">Desconto que a família tem hoje</p>
                   <div className="flex justify-between gap-2">
-                    <span className="text-muted-foreground">No boleto (teto {teto !== null ? reais(teto) : "—"} − mensalidade de hoje − {reais(FIDELIDADE)} da Fidelidade)</span>
+                    <span className="text-muted-foreground">
+                      {troca
+                        ? `No boleto (teto ${teto !== null ? reais(teto) : "—"} − mensalidade de hoje)`
+                        : "No boleto: já está na mensalidade de hoje (mesmo segmento)"}
+                    </span>
                     <b className="tabular-nums">{reais(descontoBoleto)}</b>
                   </div>
                   <label className="flex items-center justify-between gap-2">
@@ -444,7 +454,7 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
             {serie && (
               <div className="rounded-xl bg-amber-50 p-3 text-xs text-amber-900">
                 <p className="font-bold uppercase tracking-wide">Só para a equipe · não vai na carta</p>
-                <p className="mt-1">Mensalidade cheia: {origemDaCheia(serieAtual, serie as NomeSerie, REAJUSTE.promo)} Depois de 30/10: + {reais(REAJUSTE.depois)}.</p>
+                <p className="mt-1">Mensalidade cheia: {origemDaCheia(serieAtual, serie as NomeSerie, REAJUSTE.promo, Number.isFinite(baseNum) ? baseNum : null)} Depois de 30/10: + {reais(REAJUSTE.depois)}.</p>
               </div>
             )}
             {!novato && leitura && leitura.aluno.serie === "9º Ano" && (
@@ -497,6 +507,7 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                       desconto,
                       irmao,
                       serieAtual,
+                      base: baseMesmoSegmento,
                       modo,
                       destinos,
                     })

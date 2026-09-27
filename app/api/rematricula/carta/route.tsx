@@ -106,7 +106,7 @@ export async function GET(req: NextRequest) {
   const d = lerLinkDaCarta(searchParams.get("p"), searchParams.get("s"));
   if (!d) return new Response("Link inválido ou vencido.", { status: 404 });
 
-  const sim = simular(d.serie, d.veterano ? d.desconto : 0, d.irmao);
+  const sim = simular(d.serie, d.veterano ? d.desconto : 0, d.irmao, d.veterano ? d.base ?? null : null);
   const veterano = d.veterano;
   const primeiro = primeiroNome(d.nome);
   const [r400, r500, r700, r800, f600, qr] = await Promise.all([

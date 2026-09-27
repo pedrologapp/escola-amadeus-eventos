@@ -111,7 +111,7 @@ export interface Leitura {
   explicacao: string;
   alternativa?: { base: number; livro: number };
   descontos: string[]; // descontos condicionais cadastrados em 2026
-  /** Teto (tabela 2026) do segmento atual; teto − base − 20 (Fidelidade) = desconto que já vem no boleto. */
+  /** Teto (tabela 2026) do segmento atual; teto − base = desconto que já vem no boleto. */
   tetoAtual: number | null;
   descontoBoleto: number;
   /**
@@ -371,9 +371,9 @@ export async function lerAluno(id: number): Promise<Leitura | null> {
   return {
     ...resto,
     tetoAtual,
-    // A diferença do teto para o boleto já inclui os R$ 20 da Fidelidade (direção, 27/09/2026:
-    // Arthur Mafra 520 → 480 = 20 de Fidelidade + 20 de desconto).
-    descontoBoleto: tetoAtual !== null && l.base !== null ? Math.max(0, tetoAtual - l.base - 20) : 0,
+    // Usado só na troca de segmento (no mesmo segmento esse desconto já está na
+    // mensalidade de hoje). A Fidelidade não está no boleto: o Isaac a tira no pagamento.
+    descontoBoleto: tetoAtual !== null && l.base !== null ? Math.max(0, tetoAtual - l.base) : 0,
     descontoPagamento: pag.valor,
     pagamentosAte05: pag.n,
     irmaos,

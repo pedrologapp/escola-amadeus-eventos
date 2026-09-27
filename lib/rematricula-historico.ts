@@ -56,9 +56,9 @@ export const ANOS_LETIVOS: AnoLetivo[] = [
     livroNaMensalidade: true,
     fonte: "Flyer das matrículas 2027 e regras da direção (27/09/2026)",
     observacoes: [
-      "Mensalidade cheia (veterano e novato) = teto de 2026 do segmento de 2027 + R$ 50 até 30/10, ou + R$ 60 depois. É a tabela acima.",
-      "Troca de segmento: parte do teto do segmento novo (Grupo V → 1º ano: 490; 5º → 6º: 510).",
-      "Veterano mantém o desconto que tem hoje: teto − boleto − R$ 20 (a diferença já inclui a Fidelidade), mais o que o Isaac tira no pagamento até o dia 05 além da Fidelidade.",
+      "Novato: a tabela acima (teto + R$ 50 até 30/10, ou + R$ 60 depois).",
+      "Veterano no mesmo segmento: a mensalidade de hoje (sem livro) + R$ 50/60; depois, a Fidelidade e o desconto que o Isaac dá no pagamento.",
+      "Troca de segmento (Grupo V → 1º ano: 490; 5º → 6º: 510): o teto do segmento novo + R$ 50/60, menos todos os descontos que a família tem (teto antigo − boleto, mais o do pagamento).",
       "Todos os descontos valem só pagando até o dia 05: Fidelidade − R$ 20, o da família e irmão − R$ 20 (cada irmão). Do dia 06 ao 10: cheia − R$ 10. Depois do dia 10: cheia.",
       "Matrícula: uma mensalidade cheia, sem desconto, em até 5x.",
       "Livro à vista: 12 parcelas com 10% de desconto.",

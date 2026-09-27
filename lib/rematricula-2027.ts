@@ -1,10 +1,15 @@
 /**
  * Regras da rematrícula 2027 (valores combinados com a direção em 27/09/2026).
  *
- * Mensalidade cheia = teto de 2026 do segmento de 2027 + R$ 50 fechando até
- * 30/10, ou + R$ 60 depois (vale para veterano e novato). O veterano mantém o
- * desconto que já tem (teto − boleto − 20 da Fidelidade, mais o que o Isaac tira no pagamento
- * até o dia 05), e todos os descontos só valem pagando até o dia 05.
+ * Mensalidade cheia de 2027 (+ R$ 50 fechando até 30/10, + R$ 60 depois):
+ * - mesmo segmento: a mensalidade de hoje sem o livro + reajuste; o desconto
+ *   é só o que o Isaac tira no pagamento além da Fidelidade (ex.: 150);
+ * - troca de segmento (Grupo V → 1º, 5º → 6º): o teto do segmento novo +
+ *   reajuste, menos TODOS os descontos da família (teto antigo − boleto, mais
+ *   o do pagamento);
+ * - novato: a tabela (teto) + reajuste.
+ * A Fidelidade não está no boleto: o Isaac tira na hora do pagamento (dados
+ * de 2026). Todos os descontos só valem pagando até o dia 05.
  * Regras fechadas com a direção em 27/09/2026 (casos Arthur Mafra e Pedro
  * Gregório).
  *
@@ -136,11 +141,13 @@ export const PARCELAS_MATRICULA = 5;
  * + 60 depois. É igual à tabela do novato do flyer (570/580, 540/550, 560/570).
  * O desconto da família (novato: 0) entra só pagando até o dia 05.
  */
-export function simular(serie2027: NomeSerie, desconto = 0, irmao = false): Simulacao {
+export function simular(serie2027: NomeSerie, desconto = 0, irmao = false, base: number | null = null): Simulacao {
   const segmento = segmentoDe(serie2027)!;
   const l = LIVRO[segmento];
   const cond = (reajuste: number, livro: number): Condicao => {
-    const cheia = TABELA_2026[segmento] + reajuste;
+    // Mesmo segmento: a mensalidade de hoje (sem livro) + reajuste. Troca de
+    // segmento e novato: o teto do segmento de 2027 + reajuste.
+    const cheia = (base !== null && base > 0 ? base : TABELA_2026[segmento]) + reajuste;
     const d = Math.max(0, desconto);
     const i = irmao ? DESCONTO_IRMAO : 0;
     const ate05 = Math.max(0, cheia - FIDELIDADE - d - i);
@@ -165,12 +172,12 @@ export function trocaDeSegmento(serieAtual: string | null | undefined, serie2027
 }
 
 /** Só para a equipe (nunca vai na carta): de onde sai a mensalidade cheia. */
-export function origemDaCheia(serieAtual: string | null | undefined, serie2027: NomeSerie, reajuste: number): string {
+export function origemDaCheia(serieAtual: string | null | undefined, serie2027: NomeSerie, reajuste: number, baseHoje: number | null): string {
   const seg = segmentoDe(serie2027)!;
-  const base = `teto do ${SEG_CURTO[seg]} (${reais(TABELA_2026[seg])}) + ${reais(reajuste)}`;
+  if (!serieAtual) return `Novato: tabela do ${SEG_CURTO[seg]} (${reais(TABELA_2026[seg])}) + ${reais(reajuste)}.`;
   return trocaDeSegmento(serieAtual, serie2027)
-    ? `Troca de segmento (${serieAtual} → ${serie2027}): parte do ${base}.`
-    : `Mesmo segmento: ${base}.`;
+    ? `Troca de segmento (${serieAtual} → ${serie2027}): parte do teto do ${SEG_CURTO[seg]} (${reais(TABELA_2026[seg])}) + ${reais(reajuste)}, e aplica todos os descontos que a família tem.`
+    : `Mesmo segmento: mensalidade de hoje (${baseHoje !== null ? reais(baseHoje) : "—"}) + ${reais(reajuste)}; o desconto do boleto já está nela.`;
 }
 
 /** Livro à vista: as 12 parcelas com 10% de desconto (74 → R$ 799,20, 142 → R$ 1.533,60, como no flyer). */

@@ -86,7 +86,7 @@ function Cartao({ titulo, c, modo, destaque, troca }: { titulo: string; c: Condi
 export default async function CartaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ atual?: string; aluno?: string; desconto?: string; irmao?: string; serie?: string; nome?: string; livro?: string }>;
+  searchParams: Promise<{ base?: string; atual?: string; aluno?: string; desconto?: string; irmao?: string; serie?: string; nome?: string; livro?: string }>;
 }) {
   const sp = await searchParams;
   const modo = modoLivroValido(sp.livro);
@@ -104,7 +104,8 @@ export default async function CartaPage({
     return <p className="p-10 text-center text-sm text-muted-foreground">Faltam dados para a carta. Volte ao simulador e clique em “Imprimir carta”.</p>;
   }
 
-  const sim = simular(serie, veterano ? desconto : 0, irmao);
+  const base = veterano && Number(sp.base) > 0 ? Number(sp.base) : null;
+  const sim = simular(serie, veterano ? desconto : 0, irmao, base);
   const primeiro = primeiroNome(nome);
   const qr = await QRCode.toString(URL_FOLDER, {
     type: "svg",
