@@ -35,6 +35,7 @@ export async function enviarCarta(entrada: {
   serie: string;
   desconto: number;
   irmao: boolean;
+  serieAtual?: string | null;
   modo: string;
   destinos: Destino[];
 }): Promise<{ ok: boolean; erro?: string; resultados: ResultadoEnvio[] }> {
@@ -58,7 +59,7 @@ export async function enviarCarta(entrada: {
   const data = new Date().toLocaleDateString("pt-BR", { timeZone: "America/Fortaleza", day: "2-digit", month: "long", year: "numeric" });
   const imagem = linkDaCarta(origem, {
     nome, serie, veterano: entrada.alunoId !== null, desconto: entrada.alunoId !== null ? entrada.desconto : 0,
-    irmao: !!entrada.irmao, modo: modoLivroValido(entrada.modo), data,
+    irmao: !!entrada.irmao, serieAtual: entrada.serieAtual ?? null, modo: modoLivroValido(entrada.modo), data,
   });
   const primeiro = primeiroNome(nome);
   const admin = createAdminClient();

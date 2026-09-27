@@ -3,8 +3,9 @@ import { Fraunces } from "next/font/google";
 import { listarAlunos } from "@/lib/rematricula-2027-dados";
 import {
   DEPOIS_DO_PRAZO,
-  ACRESCIMO_DIA_06_A_10,
   PARCELAS_MATRICULA,
+  fraseTrocaSegmento,
+  trocaDeSegmento,
   PRAZO_PROMOCAO,
   SERIES,
   URL_FOLDER,
@@ -43,11 +44,12 @@ function Linha({ rotulo, valor, forte, menos }: { rotulo: string; valor: number;
 }
 
 /** Mensalidade cheia → descontos → real até o dia 05; livro; total; matrícula. Mesma letra em tudo. */
-function Cartao({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; modo: ModoLivro; destaque?: boolean }) {
+function Cartao({ titulo, c, modo, destaque, troca }: { titulo: string; c: Condicao; modo: ModoLivro; destaque?: boolean; troca?: string }) {
   return (
     <div className={`cartao ${destaque ? "destaque" : ""}`}>
       <p className="rotulo">{titulo}</p>
       <Linha rotulo="Mensalidade cheia" valor={c.cheia} forte />
+      {troca && <p className="legenda">{troca}</p>}
       <Linha rotulo="Fidelidade" valor={c.fidelidade} menos />
       {c.desconto > 0 && <Linha rotulo="Desconto" valor={c.desconto} menos />}
       {c.irmao > 0 && <Linha rotulo="Desconto de irmão" valor={c.irmao} menos />}
@@ -55,8 +57,12 @@ function Cartao({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; mo
         <p className="bloco-titulo">Pagando até o dia 05</p>
         <span className={`valor ${fraunces.className}`}>{reais(c.ate05)}</span>
       </div>
-      <p className="legenda">do dia 06 ao 10: {reais(c.ate10)}</p>
-      <p className="legenda">depois do dia 10: {reais(c.cheia)}</p>
+      {modo === "sem" && (
+        <>
+          <p className="legenda">do dia 06 ao 10: {reais(c.ate10)} ({"sem os descontos, só R$ 10 de Fidelidade"})</p>
+          <p className="legenda">depois do dia 10: {reais(c.cheia)}</p>
+        </>
+      )}
       {modo === "com" && (
         <>
           <div className="bloco">
@@ -67,6 +73,7 @@ function Cartao({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; mo
             <p className="bloco-titulo">Total por mês até o dia 05</p>
             <span className={`valor-total ${fraunces.className}`}>{reais(c.totalAte05)}</span>
           </div>
+          <p className="legenda">do dia 06 ao 10: {reais(c.ate10 + c.livro)} ({"sem os descontos, só R$ 10 de Fidelidade"})</p>
           <p className="legenda">depois do dia 10: {reais(c.totalCheio)}</p>
         </>
       )}
@@ -81,7 +88,7 @@ function Cartao({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; mo
 export default async function CartaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ aluno?: string; desconto?: string; irmao?: string; serie?: string; nome?: string; livro?: string }>;
+  searchParams: Promise<{ atual?: string; aluno?: string; desconto?: string; irmao?: string; serie?: string; nome?: string; livro?: string }>;
 }) {
   const sp = await searchParams;
   const modo = modoLivroValido(sp.livro);
@@ -100,6 +107,7 @@ export default async function CartaPage({
   }
 
   const sim = simular(serie, veterano ? desconto : 0, irmao);
+  const troca = veterano && trocaDeSegmento(sp.atual, serie) ? fraseTrocaSegmento(serie) : undefined;
   const primeiro = primeiroNome(nome);
   const qr = await QRCode.toString(URL_FOLDER, {
     type: "svg",
@@ -143,8 +151,8 @@ export default async function CartaPage({
         </p>
 
         <div className="cartoes">
-          <Cartao titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} modo={modo} destaque />
-          <Cartao titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} modo={modo} />
+          <Cartao titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} modo={modo} destaque troca={troca} />
+          <Cartao titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} modo={modo} troca={troca} />
         </div>
 
         <p className="economia">
@@ -152,7 +160,6 @@ export default async function CartaPage({
         </p>
 
         <ul className="notas">
-          <li><b>Descontos:</b> valem pagando até o dia 05. Do dia 06 ao 10, a mensalidade cheia tem {reais(ACRESCIMO_DIA_06_A_10)} a menos.</li>
           {modo !== "sem" && (
             <li><b>Livros:</b> até {PRAZO_PROMOCAO}, o livro sai pelo valor atual, sem o reajuste de 2027. À vista, 10% de desconto.</li>
           )}

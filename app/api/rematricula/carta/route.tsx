@@ -4,8 +4,9 @@ import QRCode from "qrcode";
 import { lerLinkDaCarta } from "@/lib/rematricula-2027-link";
 import {
   DEPOIS_DO_PRAZO,
-  ACRESCIMO_DIA_06_A_10,
   PARCELAS_MATRICULA,
+  fraseTrocaSegmento,
+  trocaDeSegmento,
   PRAZO_PROMOCAO,
   SEGMENTO_NOME,
   URL_FOLDER,
@@ -43,7 +44,7 @@ async function fonte(origem: string, arquivo: string) {
   return r.arrayBuffer();
 }
 
-function Cartao({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; modo: ModoLivro; destaque?: boolean }) {
+function Cartao({ titulo, c, modo, destaque, troca }: { titulo: string; c: Condicao; modo: ModoLivro; destaque?: boolean; troca?: string }) {
   const cor = destaque ? "#FFFFFF" : TINTA;
   const realce = destaque ? AMARELO : AZUL;
   const fio = destaque ? "rgba(255,255,255,.24)" : "rgba(23,34,61,.16)";
@@ -66,6 +67,7 @@ function Cartao({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; mo
         {titulo}
       </div>
       {linha("Mensalidade cheia", c.cheia, { forte: true })}
+      {troca && <div style={legenda}>{troca}</div>}
       {linha("Fidelidade", c.fidelidade, { menos: true })}
       {c.desconto > 0 && linha("Desconto", c.desconto, { menos: true })}
       {c.irmao > 0 && linha("Desconto de irmão", c.irmao, { menos: true })}
@@ -73,8 +75,12 @@ function Cartao({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; mo
         <div style={{ fontSize: pt(9.6), fontWeight: 800 }}>Pagando até o dia 05</div>
         <div style={{ fontFamily: "Fraunces", fontSize: pt(28), color: realce, marginTop: 2, letterSpacing: -1 }}>{reais(c.ate05)}</div>
       </div>
-      <div style={legenda}>{`do dia 06 ao 10: ${reais(c.ate10)}`}</div>
-      <div style={legenda}>{`depois do dia 10: ${reais(c.cheia)}`}</div>
+      {modo === "sem" && (
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <div style={legenda}>{`do dia 06 ao 10: ${reais(c.ate10)} (sem os descontos, só R$ 10 de Fidelidade)`}</div>
+          <div style={legenda}>{`depois do dia 10: ${reais(c.cheia)}`}</div>
+        </div>
+      )}
       {modo === "com" && (
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={bloco}>
@@ -85,6 +91,7 @@ function Cartao({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; mo
             <div style={{ fontSize: pt(9.6), fontWeight: 800 }}>Total por mês até o dia 05</div>
             <div style={{ fontFamily: "Fraunces", fontSize: pt(20), color: realce, marginTop: 2 }}>{reais(c.totalAte05)}</div>
           </div>
+          <div style={legenda}>{`do dia 06 ao 10: ${reais(c.ate10 + c.livro)} (sem os descontos, só R$ 10 de Fidelidade)`}</div>
           <div style={legenda}>{`depois do dia 10: ${reais(c.totalCheio)}`}</div>
         </div>
       )}
@@ -103,6 +110,7 @@ export async function GET(req: NextRequest) {
 
   const sim = simular(d.serie, d.veterano ? d.desconto : 0, d.irmao);
   const veterano = d.veterano;
+  const troca = veterano && trocaDeSegmento(d.serieAtual, d.serie) ? fraseTrocaSegmento(d.serie) : undefined;
   const primeiro = primeiroNome(d.nome);
   const [r400, r500, r700, r800, f600, qr] = await Promise.all([
     fonte(origin, "DMSans-400.woff"),
@@ -142,8 +150,8 @@ export async function GET(req: NextRequest) {
         </div>
 
         <div style={{ display: "flex", gap: mm(5), marginTop: mm(4.5), alignItems: "flex-start", flexShrink: 0 }}>
-          <Cartao titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} modo={d.modo} destaque />
-          <Cartao titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} modo={d.modo} />
+          <Cartao titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} modo={d.modo} destaque troca={troca} />
+          <Cartao titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} modo={d.modo} troca={troca} />
         </div>
 
         <div style={{ display: "flex", flexWrap: "wrap", marginTop: mm(5), fontSize: pt(12), lineHeight: 1.45 }}>
@@ -153,11 +161,7 @@ export async function GET(req: NextRequest) {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", marginTop: mm(4), fontSize: pt(9.6), lineHeight: 1.6, color: CINZA }}>
-          <div style={{ display: "flex", flexWrap: "wrap" }}>
-            {"•  "}<span style={{ color: TINTA, fontWeight: 700 }}>Descontos:</span>
-            {` valem pagando até o dia 05. Do dia 06 ao 10, a mensalidade cheia tem ${reais(ACRESCIMO_DIA_06_A_10)} a menos.`}
-          </div>
-          {d.modo === "com" && (
+                    {d.modo === "com" && (
             <div style={{ display: "flex" }}>
               {"•  "}<span style={{ color: TINTA, fontWeight: 700 }}>Livros:</span>
               {` até ${PRAZO_PROMOCAO}, o livro sai pelo valor atual, sem o reajuste de 2027. À vista, 10% de desconto.`}

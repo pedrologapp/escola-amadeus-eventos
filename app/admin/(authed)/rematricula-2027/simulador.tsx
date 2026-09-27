@@ -11,6 +11,8 @@ import {
   FIDELIDADE,
   MODOS_LIVRO,
   PARCELAS_MATRICULA,
+  REAJUSTE,
+  origemDaCheia,
   PRAZO_PROMOCAO,
   SERIES,
   URL_FOLDER,
@@ -45,7 +47,7 @@ function Linha({ rotulo, valor, forte, menos }: { rotulo: string; valor: number;
  * mensalidade real pagando até o dia 05; depois o livro e o total.
  * Tudo no mesmo tamanho de letra (pedido da direção).
  */
-function Coluna({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; modo: ModoLivro; destaque?: boolean }) {
+function Coluna({ titulo, c, modo, destaque, origem }: { titulo: string; c: Condicao; modo: ModoLivro; destaque?: boolean; origem?: string }) {
   const fio = destaque ? "border-white/20" : "border-border/60";
   const cor = destaque ? "text-amadeus-yellow" : "text-amadeus-blue";
   return (
@@ -53,6 +55,7 @@ function Coluna({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; mo
       <p className={`text-xs font-bold uppercase tracking-widest ${destaque ? "text-amadeus-yellow" : "text-muted-foreground"}`}>{titulo}</p>
       <div className="mt-4 space-y-1.5">
         <Linha rotulo="Mensalidade cheia" valor={c.cheia} forte />
+        {origem && <p className="text-xs opacity-75">{origem}</p>}
         <Linha rotulo="Fidelidade (até o dia 05)" valor={c.fidelidade} menos />
         {c.desconto > 0 && <Linha rotulo="Desconto" valor={c.desconto} menos />}
         {c.irmao > 0 && <Linha rotulo="Desconto de irmão" valor={c.irmao} menos />}
@@ -61,7 +64,12 @@ function Coluna({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; mo
         <p className="text-sm font-bold">Pagando até o dia 05</p>
         <p className={`text-4xl font-extrabold ${cor}`}>{reais(c.ate05)}</p>
       </div>
-      <p className="mt-1 text-xs opacity-75">do dia 06 ao 10: {reais(c.ate10)} · depois do dia 10: {reais(c.cheia)}</p>
+      {modo === "sem" && (
+        <>
+          <p className="mt-1 text-xs opacity-75">do dia 06 ao 10: {reais(c.ate10)} ({"sem os descontos, só R$ 10 de Fidelidade"})</p>
+          <p className="text-xs opacity-75">depois do dia 10: {reais(c.cheia)}</p>
+        </>
+      )}
 
       {modo === "com" && (
         <>
@@ -73,7 +81,8 @@ function Coluna({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; mo
             <p className="text-sm font-bold">Total por mês até o dia 05</p>
             <p className={`text-2xl font-extrabold ${cor}`}>{reais(c.totalAte05)}</p>
           </div>
-          <p className="mt-1 text-xs opacity-75">depois do dia 10: {reais(c.totalCheio)}</p>
+          <p className="mt-1 text-xs opacity-75">do dia 06 ao 10: {reais(c.ate10 + c.livro)} ({"sem os descontos, só R$ 10 de Fidelidade"})</p>
+          <p className="text-xs opacity-75">depois do dia 10: {reais(c.totalCheio)}</p>
         </>
       )}
       <div className={`mt-3 border-t pt-3 text-sm ${fio}`}>
@@ -92,6 +101,7 @@ function linhasTexto(c: Condicao, modo: ModoLivro) {
   if (modo === "com") {
     l.push(`Livros: 12x ${reais(c.livro)} (ou ${reais(livroAVista(c.livro))} à vista)`);
     l.push(`*Total por mês até o dia 05: ${reais(c.totalAte05)}*`);
+    l.push(`Do dia 06 ao 10: ${reais(c.ate10 + c.livro)} (sem os descontos, só R$ 10 de Fidelidade)`);
   }
   l.push(`Matrícula: ${reais(c.matricula)} (até ${PARCELAS_MATRICULA}x)`);
   return l;
@@ -256,12 +266,13 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
   const descontoBoleto = !novato && teto !== null && Number.isFinite(baseNum) ? Math.max(0, teto - (baseNum ?? teto) - FIDELIDADE) : 0;
   const descontoPag = novato ? 0 : Math.max(0, Number(descPag.replace(",", ".")) || 0);
   const desconto = manterDesconto ? descontoBoleto + descontoPag : 0;
+  const serieAtual = novato ? null : leitura?.aluno.serie ?? null;
   const pronto = ativo && serie && nome && (novato || (Number.isFinite(baseNum) && (baseNum ?? 0) > 0));
   const sim = pronto ? simular(serie as NomeSerie, desconto, irmao) : null;
 
   const linkCarta = sim
     ? `/admin/rematricula-2027/carta?${new URLSearchParams({
-        ...(novato ? { nome } : { aluno: String(leitura!.aluno.id) }),
+        ...(novato ? { nome } : { aluno: String(leitura!.aluno.id), ...(serieAtual ? { atual: serieAtual } : {}) }),
         serie: sim.serie2027,
         desconto: String(desconto),
         ...(irmao ? { irmao: "1" } : {}),
@@ -454,8 +465,8 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                   ))}
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Coluna titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} modo={modo} destaque />
-                  <Coluna titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} modo={modo} />
+                  <Coluna titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} modo={modo} destaque origem={origemDaCheia(serieAtual, sim.serie2027, REAJUSTE.promo)} />
+                  <Coluna titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} modo={modo} origem={origemDaCheia(serieAtual, sim.serie2027, REAJUSTE.depois)} />
                 </div>
                 <p className="mt-3 text-sm text-muted-foreground">
                   Fechando no prazo, a família economiza <b className="text-amadeus-blue">{reais(economiaNoAno(sim, modo))}</b> no ano.
@@ -480,6 +491,7 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                       serie: sim.serie2027,
                       desconto,
                       irmao,
+                      serieAtual,
                       modo,
                       destinos,
                     })
