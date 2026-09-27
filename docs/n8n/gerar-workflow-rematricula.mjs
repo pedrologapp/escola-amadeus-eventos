@@ -4,7 +4,8 @@
 // O admin (Campanhas → Rematrícula 2027) chama o webhook uma vez por número.
 // O fluxo confere se o número tem WhatsApp (com e sem o 9), manda pelo WAHA
 // da escola (sessão "amadeus"):
-//   1) a apresentação da escola com o link do folder digital (com prévia);
+//   1) a capa 16:9 (/api/rematricula/capa) com a apresentação e o link do
+//      folder na legenda (imagem própria em vez da prévia do link, que ficava feia);
 //   2) a imagem da carta com os valores (/api/rematricula/carta, link assinado);
 // e responde { status: enviado | sem_whatsapp | erro } para o site registrar.
 //
@@ -81,8 +82,13 @@ const nodes = [
   setChat("Usar com 9", [1020, 180], "={{ $('Formatar Telefone').first().json.chatIdComNove }}"),
   responder("Sem WhatsApp", [1020, 380], 200, "={{ { ok: false, status: 'sem_whatsapp' } }}"),
   node("Enviar Apresentação", "@devlikeapro/n8n-nodes-waha.WAHA", 202502, [1240, 80], {
-    resource: "Chatting", operation: "Send Text", session: "=amadeus", chatId: "={{ $json.chatId }}",
-    text: `={{ ${corpo("texto")} }}`, linkPreview: true,
+    resource: "Chatting", operation: "Send Image", session: "=amadeus", chatId: "={{ $json.chatId }}",
+    file: `={
+  "mimetype": "image/png",
+  "filename": "amadeus.png",
+  "url": "{{ ${corpo("capa")} }}"
+}`,
+    caption: `={{ ${corpo("texto")} }}`,
   }, { credentials: CRED.waha, onError: "continueRegularOutput" }),
   node("Esperar 4s", "n8n-nodes-base.wait", 1.1, [1460, 80], { amount: 4, unit: "seconds" }, { webhookId: "4e3a0000-0000-4000-8000-0000000000ab" }),
   node("Enviar Carta", "@devlikeapro/n8n-nodes-waha.WAHA", 202502, [1680, 80], {

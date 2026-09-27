@@ -66,7 +66,13 @@ export async function enviarCarta(entrada: {
       const resp = await fetch(WEBHOOK_ENVIO, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-amadeus-chave": chave },
-        body: JSON.stringify({ telefone: d.telefone, texto: textoApresentacao(primeiro), imagem, legenda: legendaCarta(primeiro) }),
+        body: JSON.stringify({
+          telefone: d.telefone,
+          capa: `${origem}/api/rematricula/capa`,
+          texto: textoApresentacao(primeiro),
+          imagem,
+          legenda: legendaCarta(primeiro),
+        }),
         signal: AbortSignal.timeout(60_000),
       });
       const j = (await resp.json().catch(() => ({}))) as { status?: ResultadoEnvio["status"]; detalhe?: string };
