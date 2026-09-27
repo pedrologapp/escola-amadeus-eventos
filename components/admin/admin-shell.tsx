@@ -1,14 +1,9 @@
 import Link from "next/link";
-import {
-  CalendarDays,
-  LayoutDashboard,
-  LogOut,
-  Receipt,
-  Shapes,
-} from "lucide-react";
+import { LogOut } from "lucide-react";
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/app/admin/actions";
+import { AdminNav } from "@/components/admin/admin-nav";
 import {
   OlhinhoGlobal,
   ValoresSensiveisProvider,
@@ -19,18 +14,7 @@ interface AdminShellProps {
   children: React.ReactNode;
 }
 
-/**
- * Só o dia a dia fica na barra. Enquete, Fardamento e Dia dos Pais são
- * campanhas com começo e fim e moram em /admin/diversos — as rotas delas
- * continuam valendo, só saíram do menu.
- */
-const navLinks = [
-  { href: "/admin/dashboard", label: "Visão geral", icon: LayoutDashboard },
-  { href: "/admin/eventos", label: "Eventos", icon: CalendarDays },
-  { href: "/admin/cobrancas", label: "Cobranças", icon: Receipt },
-  { href: "/admin/diversos", label: "Diversos", icon: Shapes },
-];
-
+/** As abas da barra (e qual acende em cada página) estão em admin-nav.tsx. */
 export function AdminShell({ userEmail, children }: AdminShellProps) {
   return (
     <ValoresSensiveisProvider>
@@ -41,21 +25,7 @@ export function AdminShell({ userEmail, children }: AdminShellProps) {
             <Link href="/admin/dashboard" aria-label="Início do painel">
               <Logo variant="compact" />
             </Link>
-            <nav className="hidden items-center gap-1 md:flex">
-              {navLinks.map((link) => {
-                const Icone = link.icon;
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-amadeus-blue-50 hover:text-amadeus-blue"
-                  >
-                    <Icone className="size-4" />
-                    {link.label}
-                  </Link>
-                );
-              })}
-            </nav>
+            <AdminNav />
           </div>
 
           <div className="flex items-center gap-3">
@@ -74,22 +44,7 @@ export function AdminShell({ userEmail, children }: AdminShellProps) {
             </form>
           </div>
         </div>
-        {/* Nav mobile */}
-        <nav className="container mx-auto flex gap-1 overflow-x-auto px-4 pb-3 md:hidden">
-          {navLinks.map((link) => {
-            const Icone = link.icon;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="flex shrink-0 items-center gap-2 rounded-xl bg-amadeus-blue-50/70 px-3 py-2 text-sm font-semibold text-amadeus-blue"
-              >
-                <Icone className="size-4" />
-                {link.label}
-              </Link>
-            );
-          })}
-        </nav>
+        <AdminNav mobile />
       </header>
 
       <main>{children}</main>
