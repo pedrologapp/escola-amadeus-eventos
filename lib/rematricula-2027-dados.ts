@@ -232,7 +232,7 @@ export async function lerAluno(id: number): Promise<Leitura | null> {
   const escolhida =
     exata ?? opcoes.find((o) => o.livro === (fechouNaPromo ? promo2025 : l2026)) ?? opcoes[0];
   const outra = opcoes.find((o) => o !== escolhida);
-  const qual = escolhida.livro === promo2025 ? "livro da promoção de 2025" : "livro de 2026";
+  const qual = escolhida.livro === promo2025 ? "livro na promoção, valor de 2024" : "livro depois do prazo, valor de 2026";
   return {
     ...vazio,
     valorBoleto: v,

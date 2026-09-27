@@ -57,13 +57,13 @@ function CartaoAno({ a }: { a: AnoLetivo }) {
               )}
               {a.livroNaMensalidade && livroPromo ? (
                 <>
-                  <Th>Livro até o prazo<br /><span className="normal-case">preço {a.ano - 1}</span></Th>
-                  <Th>Livro depois<br /><span className="normal-case">preço {a.ano}</span></Th>
+                  <Th>Livro até o prazo<br /><span className="normal-case">valor de {a.ano - 2}</span></Th>
+                  <Th>Livro depois<br /><span className="normal-case">valor de {a.ano}</span></Th>
                   <Th destaque>Total no prazo</Th>
                   <Th destaque>Total depois</Th>
                 </>
               ) : (
-                <Th>Livro (à parte)<br /><span className="normal-case">preço {a.ano}</span></Th>
+                <Th>Livro (à parte)<br /><span className="normal-case">valor de {a.ano}</span></Th>
               )}
               {a.material && <Th>Material</Th>}
             </tr>
@@ -152,7 +152,7 @@ function HistoricoAluno({ aluno, anos }: { aluno: AlunoBusca; anos: AnoDoAluno[]
                     {!x.temTabela
                       ? "ano sem tabela cadastrada"
                       : x.livro && x.base !== null
-                        ? `${reais(x.base)} + livro ${reais(x.livro)} (preço ${x.livroDoAno})`
+                        ? `${reais(x.base)} + livro ${reais(x.livro)} (valor de ${x.livroDoAno === x.ano - 1 ? x.ano - 2 : x.ano})`
                         : x.base !== null
                           ? x.livroAParte ? "livro cobrado à parte" : "sem livro na mensalidade"
                           : "não fecha com a tabela, conferir"}
@@ -165,7 +165,7 @@ function HistoricoAluno({ aluno, anos }: { aluno: AlunoBusca; anos: AnoDoAluno[]
       )}
       <p className="mt-3 flex gap-2 text-xs text-muted-foreground">
         <Info className="mt-0.5 size-3.5 shrink-0" />
-        A data é quando as parcelas foram lançadas no Activesoft, que nem sempre é o dia da rematrícula. Quando o livro está na mensalidade, a condição vem do preço do livro (preço do ano anterior = promoção), que é mais seguro que a data.
+        A data é quando as parcelas foram lançadas no Activesoft, que nem sempre é o dia da rematrícula. Quando o livro está na mensalidade, a condição vem do valor do livro no boleto, que é mais seguro que a data.
       </p>
     </div>
   );
@@ -204,12 +204,13 @@ export default async function ValoresPage({ searchParams }: { searchParams: Prom
         <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm">
           <li>A rematrícula de um ano letivo é feita no ano anterior. Ex.: a de <b>2027</b> é feita em <b>2026</b>.</li>
           <li>
-            Quem fecha <b>até o fim de outubro</b> leva o livro pelo <b>preço do ano presente</b>. Quem fecha depois paga o preço do
-            ano letivo novo.
+            É sempre um ano para frente. Na rematrícula feita em <b>2025</b>, até o prazo o livro fica no <b>valor de 2024</b>; depois
+            do prazo, vai para o <b>valor de 2026</b>. Na feita em <b>2026</b>, até o prazo fica no <b>valor de 2025</b>; depois, no{" "}
+            <b>valor de 2027</b>.
           </li>
           <li>
-            Ex.: rematrícula de 2026 do Fund. 1 feita em 20/10/2025 ficou com o livro a <b>{reais(PRECO_LIVRO[2025].ef1)}</b> (preço 2025);
-            feita em 10/11/2025, a <b>{reais(PRECO_LIVRO[2026].ef1)}</b> (preço 2026).
+            Ex.: Fund. 1, rematrícula feita em 2026: até 30/10 o livro é <b>{reais(PRECO_LIVRO[2026].ef1)}</b> (valor de 2025); depois,{" "}
+            <b>{reais(PRECO_LIVRO[2027].ef1)}</b> (valor de 2027).
           </li>
           <li>O livro sobe cerca de 12% por ano. À vista, 10% de desconto sobre as 12 parcelas.</li>
           <li>A mensalidade de tabela subiu R$ 40 em 2025 e em 2026. Em 2027, o veterano tem + R$ 50 até 30/10 e + R$ 60 depois.</li>

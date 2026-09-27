@@ -140,7 +140,7 @@ export default async function CartaPage({
         <ul className="notas">
           <li><b>Mensalidade Fidelidade:</b> {reais(FIDELIDADE)} de desconto em cada mês pago até o dia 05.</li>
           {modo !== "sem" && (
-            <li><b>Livros:</b> até {PRAZO_PROMOCAO}, o livro de 2027 sai pelo preço de 2026. À vista, 10% de desconto.</li>
+            <li><b>Livros:</b> até {PRAZO_PROMOCAO}, o livro sai pelo valor atual, sem o reajuste de 2027. À vista, 10% de desconto.</li>
           )}
         </ul>
 

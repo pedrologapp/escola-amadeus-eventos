@@ -5,8 +5,14 @@ import type { Segmento } from "@/lib/rematricula-2027";
  * Não vai para o pai.
  *
  * A regra é a mesma todo ano: a rematrícula do ano letivo X acontece em X-1.
- * Quem fecha até o fim de outubro de X-1 leva o livro pelo preço de X-1
- * (o "ano presente"); depois disso, pelo preço de X. O livro sobe ~12% ao ano.
+ * Quem fecha até o fim de outubro de X-1 leva o livro pelo preço que valia
+ * no ano letivo X-1; depois disso, pelo preço de X. O livro sobe ~12% ao ano.
+ *
+ * Como a direção fala (27/09/2026): "é sempre um ano para frente". Na
+ * rematrícula feita em 2026, o livro até o prazo é o "valor de 2025" e depois
+ * o "valor de 2027". Por isso a tela rotula o preço da promoção como ano
+ * letivo − 2 e o de depois como o próprio ano letivo. As chaves de PRECO_LIVRO
+ * abaixo são o ano letivo em que aquele preço é o cheio.
  *
  * De onde saiu cada número (conferido em 27/09/2026):
  * - 2026 e 2027: flyers da escola (docs/EventoRematricula).
