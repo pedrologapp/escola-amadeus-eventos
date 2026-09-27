@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { ArrowLeft, BookOpen, Info, Lock, TriangleAlert } from "lucide-react";
+import { BookOpen, Info, Lock, TriangleAlert } from "lucide-react";
 import { historicoDoAluno, listarAlunos, type AlunoBusca, type AnoDoAluno } from "@/lib/rematricula-2027-dados";
 import { livroAVista, reais } from "@/lib/rematricula-2027";
 import {
@@ -189,10 +188,7 @@ export default async function ValoresPage({ searchParams }: { searchParams: Prom
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <Link href="/admin/campanhas" className="inline-flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-amadeus-blue">
-        <ArrowLeft className="size-4" /> Campanhas
-      </Link>
-      <h1 className="mt-2 text-2xl font-extrabold text-amadeus-blue">Rematrícula 2027</h1>
+      <h1 className="text-2xl font-extrabold text-amadeus-blue">Rematrícula 2027</h1>
       <AbasRematricula ativa="valores" />
 
       <p className="mt-5 inline-flex items-center gap-2 rounded-xl bg-amadeus-blue-50/70 px-3 py-1.5 text-xs font-bold text-amadeus-blue">

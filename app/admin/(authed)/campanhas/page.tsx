@@ -1,5 +1,4 @@
 import {
-  Calculator,
   ClipboardList,
   GraduationCap,
   Heart,
@@ -16,15 +15,8 @@ import { ModuloCard, type Modulo } from "@/components/admin/modulo-card";
  */
 export const metadata = { title: "Campanhas · Admin Amadeus" };
 
-const EM_ANDAMENTO: Modulo[] = [
-  {
-    href: "/admin/campanhas/rematricula-2027",
-    icone: Calculator,
-    titulo: "Rematrícula 2027",
-    descricao: "Quanto cada família paga hoje e como fica 2027. Imprime a carta com os valores para os pais.",
-    selo: "Em andamento",
-  },
-];
+// A Rematrícula 2027 tem aba própria no menu (/admin/rematricula-2027).
+const EM_ANDAMENTO: Modulo[] = [];
 
 const ENCERRADAS: Modulo[] = [
   {

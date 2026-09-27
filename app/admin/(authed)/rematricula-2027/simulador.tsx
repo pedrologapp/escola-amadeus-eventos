@@ -229,7 +229,7 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
   const sim = pronto ? simular(serie as NomeSerie, baseNum) : null;
 
   const linkCarta = sim
-    ? `/admin/campanhas/rematricula-2027/carta?${new URLSearchParams({
+    ? `/admin/rematricula-2027/carta?${new URLSearchParams({
         ...(novato ? { nome } : { aluno: String(leitura!.aluno.id), base: String(baseNum) }),
         serie: sim.serie2027,
         livro: modo,

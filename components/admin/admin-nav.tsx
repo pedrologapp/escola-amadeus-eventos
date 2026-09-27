@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Calculator,
   CalendarDays,
   LayoutDashboard,
   Megaphone,
@@ -22,6 +23,7 @@ import {
 const LINKS = [
   { href: "/admin/dashboard", label: "Visão geral", icon: LayoutDashboard, inclui: ["/admin/dashboard"] },
   { href: "/admin/eventos", label: "Eventos", icon: CalendarDays, inclui: ["/admin/eventos"] },
+  { href: "/admin/rematricula-2027", label: "Rematrícula 2027", icon: Calculator, inclui: ["/admin/rematricula-2027", "/admin/campanhas/rematricula-2027"] },
   { href: "/admin/cobrancas", label: "Cobranças", icon: Receipt, inclui: ["/admin/cobrancas"] },
   { href: "/admin/comunicacao", label: "Comunicação", icon: Megaphone, inclui: ["/admin/comunicacao", "/admin/enquete"] },
   {
