@@ -452,8 +452,8 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
             </label>
             {serie && (
               <div className="rounded-xl bg-amber-50 p-3 text-xs text-amber-900">
-                <p className="font-bold uppercase tracking-wide">Só para a equipe · não vai na carta</p>
-                <p className="mt-1">Mensalidade cheia: {origemDaCheia(serieAtual, serie as NomeSerie, REAJUSTE.promo, Number.isFinite(baseNum) ? baseNum : null)} Depois de 30/10: + {reais(REAJUSTE.depois)}.</p>
+                <p className="font-bold">Informação sobre a mensalidade</p>
+                <p className="mt-1">{origemDaCheia(serieAtual, serie as NomeSerie, REAJUSTE.promo, Number.isFinite(baseNum) ? baseNum : null)} Depois de 30/10: + {reais(REAJUSTE.depois)}.</p>
               </div>
             )}
             {!novato && leitura && leitura.aluno.serie === "9º Ano" && (
