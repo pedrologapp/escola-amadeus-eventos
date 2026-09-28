@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   Calculator,
   CalendarDays,
+  ImagePlus,
   ChevronDown,
   LayoutDashboard,
   Megaphone,
@@ -27,6 +28,7 @@ import {
 const LINKS = [
   { href: "/admin/dashboard", label: "Visão geral", icon: LayoutDashboard, inclui: ["/admin/dashboard"] },
   { href: "/admin/eventos", label: "Eventos", icon: CalendarDays, inclui: ["/admin/eventos"] },
+  { href: "/admin/imagens", label: "Gerador de Imagens", icon: ImagePlus, inclui: ["/admin/imagens", "/admin/eventos/encarte", "/admin/eventos/painel"] },
   { href: "/admin/rematricula-2027", label: "Rematrícula 2027", icon: Calculator, inclui: ["/admin/rematricula-2027", "/admin/campanhas/rematricula-2027"] },
   { href: "/admin/cobrancas", label: "Cobranças", icon: Receipt, inclui: ["/admin/cobrancas"] },
   { href: "/admin/comunicacao", label: "Comunicação", icon: Megaphone, inclui: ["/admin/comunicacao", "/admin/enquete"] },
@@ -41,7 +43,10 @@ const LINKS = [
 export function AdminNav({ mobile = false }: { mobile?: boolean }) {
   const caminho = usePathname() ?? "";
   const [aberto, setAberto] = useState(false);
-  const ativo = (inclui: string[]) => inclui.some((r) => caminho === r || caminho.startsWith(r + "/"));
+  // A rota mais específica vence: /admin/eventos/painel acende "Gerador de Imagens", não "Eventos".
+  const casa = (inclui: string[]) => Math.max(0, ...inclui.filter((r) => caminho === r || caminho.startsWith(r + "/")).map((r) => r.length));
+  const melhor = Math.max(...LINKS.map((l) => casa(l.inclui)));
+  const ativo = (inclui: string[]) => melhor > 0 && casa(inclui) === melhor;
 
   if (mobile) {
     // No celular as abas viram um "Menu": mostra onde está e, ao tocar, lista todas.

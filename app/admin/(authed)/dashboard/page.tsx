@@ -97,10 +97,10 @@ export default async function AdminDashboardPage() {
           extra={{ href: "/admin/eventos/novo", rotulo: "Novo evento" }}
         />
         <Atalho
-          href="/admin/eventos/encarte"
+          href="/admin/imagens"
           icone={PenLine}
-          titulo="Criar encarte"
-          descricao="Escreva um aviso ou convite e a IA monta a imagem no estilo da escola."
+          titulo="Gerador de Imagens"
+          descricao="Encarte (aviso, convite) ou painel de decoração para o evento, no estilo da escola."
         />
       </section>
     </div>
