@@ -104,8 +104,8 @@ function ColunaAVista({ titulo, c, destaque }: { titulo: string; c: Condicao; de
     <div className={`rounded-2xl p-5 ${destaque ? "bg-amadeus-blue text-white" : "border border-border/60 bg-white"}`}>
       <p className={`text-xs font-bold uppercase tracking-widest ${destaque ? "text-amadeus-yellow" : "text-muted-foreground"}`}>{titulo}</p>
       <div className="mt-4 space-y-1.5">
-        <Linha rotulo="Matrícula + 11 mensalidades" valor={v.ano} forte />
-        <p className="text-xs opacity-75">12 × {reais(v.mensalidade)}</p>
+        <Linha rotulo="Anuidade 2027" valor={v.ano} forte />
+        <p className="text-xs opacity-75">matrícula + 11 mensalidades de {reais(v.mensalidade)}</p>
         <Linha rotulo="Desconto à vista (10%)" valor={v.desconto} menos />
       </div>
       <div className={`mt-3 border-t pt-3 ${fio}`}>
@@ -127,7 +127,7 @@ function ColunaAVista({ titulo, c, destaque }: { titulo: string; c: Condicao; de
 function linhasAVista(c: Condicao) {
   const v = condicaoAVista(c);
   return [
-    `Matrícula + 11 mensalidades: ${reais(v.ano)} (12 × ${reais(v.mensalidade)})`,
+    `Anuidade (matrícula + 11 mensalidades de ${reais(v.mensalidade)}): ${reais(v.ano)}`,
     `Desconto à vista (10%): − ${reais(v.desconto)}`,
     `*À vista, sem os livros: ${reais(v.semLivro)}*`,
     `Livros à vista: ${reais(v.livro)} (12 × ${reais(c.livro)} com 10%)`,

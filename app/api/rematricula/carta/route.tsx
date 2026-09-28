@@ -126,8 +126,8 @@ function CartaoAVista({ titulo, c, destaque }: { titulo: string; c: Condicao; de
       <div style={{ fontSize: pt(8.4), fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: destaque ? AMARELO : CINZA, marginBottom: mm(2.5) }}>
         {titulo}
       </div>
-      {linha("Matrícula + 11 mensalidades", v.ano, { forte: true })}
-      <div style={legenda}>{`12 × ${reais(v.mensalidade)}`}</div>
+      {linha("Anuidade 2027", v.ano, { forte: true })}
+      <div style={legenda}>{`matrícula + 11 mensalidades de ${reais(v.mensalidade)}`}</div>
       {linha("Desconto à vista (10%)", v.desconto, { menos: true })}
       <div style={bloco}>
         <div style={{ fontSize: pt(9.6), fontWeight: 800 }}>À vista, sem os livros</div>
@@ -202,30 +202,28 @@ export async function GET(req: NextRequest) {
         </div>
 
         <div style={{ display: "flex", gap: mm(5), marginTop: mm(4.5), alignItems: "flex-start", flexShrink: 0 }}>
-          {avista ? (
-            <>
-              <CartaoAVista titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} destaque />
-              <CartaoAVista titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} />
-            </>
-          ) : (
-            <>
-              <Cartao titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} modo={d.modo} destaque />
-              <Cartao titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} modo={d.modo} />
-            </>
-          )}
+          {avista
+            ? [
+                <CartaoAVista key="p" titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} destaque />,
+                <CartaoAVista key="d" titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} />,
+              ]
+            : [
+                <Cartao key="p" titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} modo={d.modo} destaque />,
+                <Cartao key="d" titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} modo={d.modo} />,
+              ]}
         </div>
 
         <div style={{ display: "flex", flexWrap: "wrap", marginTop: mm(5), fontSize: pt(12), lineHeight: 1.45 }}>
-          {`Fechando até ${PRAZO_PROMOCAO}${avista ? ", com os livros," : ""} a sua família economiza `}
+          {`Fechando até ${PRAZO_PROMOCAO}${avista ? ", com os livros," : ","} a sua família economiza `}
           <span style={{ color: OURO, fontWeight: 800 }}>{reais(economia)}</span>
           {avista ? "." : "\u00A0ao longo de 2027."}
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", marginTop: mm(4), fontSize: pt(9.6), lineHeight: 1.6, color: CINZA }}>
           {avista && (
-            <div style={{ display: "flex", flexWrap: "wrap" }}>
-              {"•  "}<span style={{ color: TINTA, fontWeight: 700 }}>À vista:</span>
-              {" pagamento único do ano (matrícula + 11 mensalidades) com 10% de desconto. Não acumula com outros descontos."}
+            <div style={{ display: "flex" }}>
+              {"•  "}<span style={{ color: TINTA, fontWeight: 700 }}>À vista:</span>
+              {` pagamento único do ano com 10% de desconto. Não acumula com outros descontos.`}
             </div>
           )}
           {(avista || d.modo === "com") && (
