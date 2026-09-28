@@ -26,7 +26,7 @@ export function PainelFotos({ link, enviadas, faltam, total }: { link: string; e
     "",
     "*Como é bom ser criança...!*",
     "",
-    "Estamos preparando uma surpresa e queremos ver como cada um de vocês era quando criança.",
+    "Queremos ver como cada um de vocês era quando criança.",
     "",
     "É rapidinho: abra o link, *selecione o seu nome* e *envie uma foto sua de quando era criança*.",
     "",
