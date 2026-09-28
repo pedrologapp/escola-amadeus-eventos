@@ -130,7 +130,13 @@ export async function processarLote(msgs: MensagemVista[]): Promise<{ novas: num
   let erros = 0;
   for (const m of individuais) {
     const atual = porChat.get(m.chatId);
-    if (atual?.ultima_msg_id === m.id) continue; // nada novo nessa conversa
+    if (atual?.ultima_msg_id === m.id) {
+      // Nada novo. Só completa o texto de quem ficou sem (conversas lidas antes de guardarmos o texto).
+      if (!m.fromMe && atual.status === "aguardando" && !atual.ultimo_texto) {
+        await db.from("whatsapp_conversas").update({ ultimo_texto: (m.body.trim() || `[${tipoDeMidia(m)}]`).slice(-2000) }).eq("chat_id", m.chatId);
+      }
+      continue;
+    }
     novas++;
     const em = new Date(m.ts * 1000).toISOString();
     const telefone = m.chatId.replace(/@.*/, "");

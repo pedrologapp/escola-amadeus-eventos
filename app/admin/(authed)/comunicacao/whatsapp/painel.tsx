@@ -66,7 +66,7 @@ const telLegivel = (t: string | null) => {
   return d.length >= 10 ? `(${d.slice(0, 2)}) ${d.slice(2, -4)}-${d.slice(-4)}` : t ?? "";
 };
 
-function Responder({ c, fechar }: { c: Conversa; fechar: () => void }) {
+function Responder({ c, fechar, modo }: { c: Conversa; fechar: () => void; modo: "ver" | "responder" }) {
   const [texto, setTexto] = useState("");
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -132,7 +132,7 @@ function Responder({ c, fechar }: { c: Conversa; fechar: () => void }) {
           )}
         </div>
 
-        <div className="space-y-2 bg-[#F0F2F5] px-3 py-2.5">
+        {modo === "responder" && <div className="space-y-2 bg-[#F0F2F5] px-3 py-2.5">
           <div className="flex flex-wrap gap-1.5">
             {PRONTAS.map((p) => (
               <button key={p} type="button" onClick={() => setTexto(p)} className="rounded-full bg-white px-2.5 py-1 text-[11px] text-slate-600 ring-1 ring-slate-200 hover:text-[#075E54]">
@@ -169,13 +169,15 @@ function Responder({ c, fechar }: { c: Conversa; fechar: () => void }) {
             </button>
           </div>
           {erro && <p className="text-xs text-red-700">{erro}</p>}
-        </div>
+        </div>}
       </div>
     </div>
   );
 }
 
-function Linha({ c, agora, aberta, alternar }: { c: Conversa; agora: number; aberta: boolean; alternar: () => void }) {
+type Modo = "ver" | "responder";
+
+function Linha({ c, agora, aberta, abrir }: { c: Conversa; agora: number; aberta: Modo | null; abrir: (m: Modo | null) => void }) {
   const [pendente, iniciar] = useTransition();
   const imp = c.importancia ?? "media";
   const marcar = (s: "resolvida" | "ignorada" | "aguardando") => iniciar(async () => { await marcarConversa(c.chat_id, s); });
@@ -184,7 +186,7 @@ function Linha({ c, agora, aberta, alternar }: { c: Conversa; agora: number; abe
     <li className={aberta ? "bg-amadeus-blue-50/30" : ""}>
       <div className="flex items-center gap-3 px-4 py-2 text-sm">
         <span className={`size-2.5 shrink-0 rounded-full ${PONTO[imp]}`} title={ROTULO[imp]} />
-        <button type="button" onClick={alternar} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+        <button type="button" onClick={() => abrir(aberta ? null : "ver")} className="flex min-w-0 flex-1 items-center gap-3 text-left">
           <span className="w-40 shrink-0 truncate font-semibold" title={telLegivel(c.telefone)}>{c.contato || telLegivel(c.telefone)}</span>
           <span className="hidden w-32 shrink-0 truncate text-xs text-amadeus-blue sm:inline">{c.assunto}</span>
           <span className="min-w-0 flex-1 truncate text-muted-foreground">{c.resumo}</span>
@@ -205,6 +207,14 @@ function Linha({ c, agora, aberta, alternar }: { c: Conversa; agora: number; abe
           </span>
           <ChevronDown className={`size-4 shrink-0 text-muted-foreground transition-transform ${aberta ? "rotate-180" : ""}`} />
         </button>
+        <span className="flex shrink-0 items-center gap-1 text-xs font-semibold">
+          <button type="button" onClick={() => abrir(aberta === "ver" ? null : "ver")} className={`rounded-md px-2 py-1 ${aberta === "ver" ? "bg-amadeus-blue text-white" : "text-amadeus-blue hover:bg-amadeus-blue-50"}`}>
+            Ver mensagem
+          </button>
+          <button type="button" onClick={() => abrir(aberta === "responder" ? null : "responder")} className={`rounded-md px-2 py-1 ${aberta === "responder" ? "bg-[#00A884] text-white" : "text-[#008F72] hover:bg-emerald-50"}`}>
+            Responder
+          </button>
+        </span>
         <span className="flex shrink-0 items-center gap-1">
           {pendente ? (
             <Loader2 className="size-4 animate-spin text-muted-foreground" />
@@ -218,7 +228,7 @@ function Linha({ c, agora, aberta, alternar }: { c: Conversa; agora: number; abe
           )}
         </span>
       </div>
-      {aberta && <Responder c={c} fechar={alternar} />}
+      {aberta && <Responder c={c} modo={aberta} fechar={() => abrir(null)} />}
     </li>
   );
 }
@@ -231,7 +241,7 @@ export function PainelWhatsApp({ aguardando, fechadas, assuntos, geradoEm }: {
 }) {
   const router = useRouter();
   const [aba, setAba] = useState<"importantes" | "todas" | "fechadas">("importantes");
-  const [aberta, setAberta] = useState<string | null>(null);
+  const [aberta, setAberta] = useState<{ id: string; modo: Modo } | null>(null);
   const [atualizando, iniciar] = useTransition();
 
   // Atualiza sozinho a cada minuto (a leitura do WhatsApp roda a cada 5), sem perder o que está sendo escrito.
@@ -285,12 +295,12 @@ export function PainelWhatsApp({ aguardando, fechadas, assuntos, geradoEm }: {
       ) : (
         <ul className="divide-y divide-border/60 rounded-b-xl border border-t-0 border-border/60 bg-white">
           {lista.map((c) => (
-            <Linha key={c.chat_id} c={c} agora={geradoEm} aberta={aberta === c.chat_id} alternar={() => setAberta(aberta === c.chat_id ? null : c.chat_id)} />
+            <Linha key={c.chat_id} c={c} agora={geradoEm} aberta={aberta?.id === c.chat_id ? aberta.modo : null} abrir={(m) => setAberta(m ? { id: c.chat_id, modo: m } : null)} />
           ))}
         </ul>
       )}
       <p className="mt-3 text-xs text-muted-foreground">
-        Clique na linha para ver a mensagem e responder. ✓ e ⊘ só organizam a lista: não enviam nada. <span className="text-amber-700">●</span> = chegou com a escola fechada (fim de semana ou fora do horário).
+        “Ver mensagem” mostra o que a pessoa mandou; “Responder” abre a conversa para escrever. ✓ e ⊘ só organizam a lista: não enviam nada. <span className="text-amber-700">●</span> = chegou com a escola fechada (fim de semana ou fora do horário).
       </p>
     </div>
   );
