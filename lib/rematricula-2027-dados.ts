@@ -153,10 +153,16 @@ export interface Pendencia {
  * Títulos sem Isaac (antigos) contam se estiverem abertos no Activesoft.
  */
 function pendenciasFinanceiras(titulos: Titulo[]): Pendencia[] {
-  const hoje = new Date().toLocaleDateString("en-CA", { timeZone: "America/Fortaleza" });
+  // Conferido com o status do Isaac em 39 alunos (28/09/2026, 39 de 39): só
+  // conta MENSALIDADE vencida (atividade esportiva etc. não bloqueia), sem
+  // carência, e parcelas de mais de um ano ficam de fora.
+  const dia = (n: number) => new Date(Date.now() - n * 864e5).toLocaleDateString("en-CA", { timeZone: "America/Fortaleza" });
+  const limite = dia(0);
+  const umAno = dia(365);
   return titulos
     .filter((t) => {
-      if (t.dt_vencimento.slice(0, 10) >= hoje) return false;
+      const venc = t.dt_vencimento.slice(0, 10);
+      if (venc >= limite || venc < umAno || !/^Mensalidade/i.test(t.nome_servico)) return false;
       const agente = (t.situacao_no_agente ?? "").toLowerCase();
       if (agente.startsWith("isaac")) return /em aberto|parcial|vencid|atras/.test(agente);
       return t.situacao_titulo === "ABE";

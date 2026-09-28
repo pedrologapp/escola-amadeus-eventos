@@ -381,7 +381,7 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                   <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
                     <p className="font-bold">Não rematriculável: há pendências financeiras</p>
                     <p className="mt-0.5 text-xs">
-                      {leitura.pendencias.length} parcela{leitura.pendencias.length > 1 ? "s" : ""} vencida{leitura.pendencias.length > 1 ? "s" : ""} em aberto no Isaac ·
+                      {leitura.pendencias.length} parcela{leitura.pendencias.length > 1 ? "s" : ""} de mensalidade vencida{leitura.pendencias.length > 1 ? "s" : ""} em aberto no Isaac ·
                       total {reais(leitura.pendencias.reduce((t, p) => t + p.valor, 0))}
                     </p>
                     <ul className="mt-1.5 space-y-0.5 text-xs">
@@ -392,7 +392,7 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                     </ul>
                   </div>
                 ) : (
-                  <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800">Sem pendências financeiras no Isaac.</p>
+                  <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800">Rematriculável: sem mensalidade vencida em aberto no Isaac.</p>
                 )}
                 <div className="rounded-xl bg-muted/40 p-3 text-sm">
                   <div className="flex items-center justify-between gap-2">
