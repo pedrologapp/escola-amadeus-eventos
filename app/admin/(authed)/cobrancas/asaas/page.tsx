@@ -99,6 +99,9 @@ export default async function RecebimentosAsaasPage({ searchParams }: { searchPa
   const doMes = linhas.filter((l) => l.recebido_em?.startsWith(mes));
   const soma = (l: { valor: number | string }[]) => l.reduce((s, x) => s + Number(x.valor), 0);
   const totalMes = soma(doMes);
+  // NEEL (outra instituição) caiu na conta da escola: fica à parte e fora dos totais do Amadeus.
+  const ehNeel = (l: Linha) => l.categoria.startsWith("NEEL");
+  const neelMes = soma(doMes.filter(ehNeel));
   const sistemaMes = soma(doMes.filter((l) => l.origem !== "externo"));
   const aCairMes = soma((aCair ?? []).filter((l) => (l.previsto_em as string).startsWith(mes)));
   const aCairTotal = soma(aCair ?? []);
@@ -129,9 +132,9 @@ export default async function RecebimentosAsaasPage({ searchParams }: { searchPa
       </div>
 
       <section className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {cartao(`Entrou na conta · ${rotuloMes(mes)}`, totalMes, `${doMes.length} pagamentos`)}
+        {cartao(`Entrou na conta · ${rotuloMes(mes)}`, totalMes - neelMes, neelMes ? `${doMes.length} pagamentos · sem ${formatCurrency(neelMes)} do NEEL` : `${doMes.length} pagamentos`)}
         {cartao("Pelo sistema", sistemaMes, "eventos e cobranças avulsas")}
-        {cartao("Criado fora do sistema", totalMes - sistemaMes, "livros parcelados, outros (EduHub)", "text-sky-800")}
+        {cartao("Criado fora do sistema", totalMes - sistemaMes - neelMes, neelMes ? `livros, outros (EduHub) · sem ${formatCurrency(neelMes)} do NEEL` : "livros parcelados, outros (EduHub)", "text-sky-800")}
         {cartao(`Cartão a cair · ${rotuloMes(mes)}`, aCairMes, `${formatCurrency(aCairTotal)} a cair no total, nos próximos meses`, "text-emerald-700")}
       </section>
 
@@ -156,9 +159,9 @@ export default async function RecebimentosAsaasPage({ searchParams }: { searchPa
               </tr>
             ))}
             <tr className="bg-muted/40 font-bold">
-              <td className="px-4 py-2.5">Total</td>
+              <td className="px-4 py-2.5">Total do Amadeus (sem NEEL)</td>
               {meses.map((m) => (
-                <td key={m} className="px-3 py-2.5 text-right tabular-nums">{formatCurrency(soma(linhas.filter((l) => l.recebido_em?.startsWith(m))))}</td>
+                <td key={m} className="px-3 py-2.5 text-right tabular-nums">{formatCurrency(soma(linhas.filter((l) => !ehNeel(l) && l.recebido_em?.startsWith(m))))}</td>
               ))}
             </tr>
           </tbody>

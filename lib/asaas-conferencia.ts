@@ -78,6 +78,8 @@ function categoriaExterna(p: Pagamento): string {
   const d = (p.description ?? "").replace(/^Parcela \d+ de \d+\.\s*/i, "").trim();
   const antes = d.split(" - ")[0]?.trim() ?? "";
   if (!antes) return "Outros";
+  // Seminário/eventos do NEEL caíram na conta da escola; não é receita do Amadeus.
+  if (/neel/i.test(d)) return "NEEL (não é da escola)";
   if (/^amadeus$/i.test(antes)) return "Eventos (sistema antigo)";
   if (/livro/i.test(antes)) return "Livros";
   if (/material/i.test(antes)) return "Material escolar";
