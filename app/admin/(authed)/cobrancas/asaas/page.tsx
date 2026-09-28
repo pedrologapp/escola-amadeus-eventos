@@ -6,6 +6,7 @@ import { formatCurrency } from "@/lib/utils";
 import { valoresLiberados } from "@/lib/valores-auth";
 import { conferirSeAntigo, ultimaConferencia } from "@/lib/asaas-conferencia";
 import { BotaoMostrarValores } from "@/components/admin/valores-sensiveis";
+import { AlertasReembolso } from "../alertas-reembolso";
 import { AbasCobrancas } from "../abas";
 import { ConferirAsaasButton } from "../conferir-asaas-button";
 
@@ -56,6 +57,7 @@ export default async function RecebimentosAsaasPage({ searchParams }: { searchPa
   const cabecalho = (
     <>
       <AbasCobrancas atual="asaas" />
+      <AlertasReembolso liberado={liberado} />
       <header className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-amadeus-blue sm:text-4xl">Recebimentos Asaas</h1>

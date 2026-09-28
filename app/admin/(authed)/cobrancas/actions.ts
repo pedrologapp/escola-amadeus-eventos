@@ -350,3 +350,16 @@ export async function conferirAsaasAgora(): Promise<{ ok: boolean; erro?: string
   revalidatePath("/admin/cobrancas/asaas");
   return { ok: r.ok, erro: r.erro, recebimentos: r.recebimentos };
 }
+
+/** "Ciente" num alerta de reembolso: só tira o aviso da tela. */
+export async function marcarAlertaVisto(id: string): Promise<{ ok: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+  await createAdminClient().from("asaas_alertas").update({ visto_em: new Date().toISOString(), visto_por: user.email ?? null }).eq("id", id);
+  revalidatePath("/admin/cobrancas");
+  revalidatePath("/admin/cobrancas/asaas");
+  return { ok: true };
+}

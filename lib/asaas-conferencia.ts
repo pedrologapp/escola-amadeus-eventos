@@ -32,6 +32,8 @@ interface Pagamento {
   clientPaymentDate?: string | null;
   installmentNumber?: number | null;
   estimatedCreditDate?: string | null;
+  dateCreated?: string | null;
+  installment?: string | null;
 }
 
 const espera = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -189,6 +191,7 @@ export async function conferirComAsaas(): Promise<ResultadoConferencia> {
       await espera(120);
     }
 
+    await buscarAlertasReembolso().catch(() => 0);
     await db.from("asaas_conferencias").insert({ recebimentos: total, pendentes_conferidas: conferidas });
     return { ok: true, recebimentos: total, pendentesConferidas: conferidas };
   } catch (e) {
@@ -219,3 +222,84 @@ export async function ultimaConferencia() {
 }
 
 export const RECEBIDO_STATUS = RECEBIDO;
+
+// ---------------------------------------------------------------------------
+// Alertas de reembolso / contestação (direção, 28/09/2026). Só leitura.
+// ---------------------------------------------------------------------------
+const STATUS_ALERTA = ["REFUND_REQUESTED", "REFUND_IN_PROGRESS", "REFUNDED", "CHARGEBACK_REQUESTED", "CHARGEBACK_DISPUTE", "AWAITING_CHARGEBACK_REVERSAL"];
+
+export async function buscarAlertasReembolso(): Promise<number> {
+  const db = createAdminClient();
+  const { data: atuais } = await db.from("asaas_alertas").select("id, status");
+  const antes = new Map((atuais ?? []).map((a) => [a.id as string, a.status as string]));
+  let novos = 0;
+  for (const { conta, chave } of contas()) {
+    for (const st of STATUS_ALERTA) {
+      const lista = await listar(`status=${st}`, chave).catch(() => [] as Pagamento[]);
+      for (const p of lista) {
+        const mudou = antes.get(p.id) !== p.status;
+        if (!mudou) continue;
+        novos++;
+        await db.from("asaas_alertas").upsert({
+          id: p.id,
+          conta,
+          status: p.status,
+          valor: p.value,
+          descricao: p.description?.slice(0, 300) ?? null,
+          referencia: p.externalReference ?? null,
+          data: (p.paymentDate ?? p.confirmedDate ?? p.dateCreated ?? null)?.slice(0, 10) ?? null,
+          atualizado_em: new Date().toISOString(),
+          // Mudou de situação (ex.: pedido → reembolsado): volta a avisar.
+          visto_em: null,
+          visto_por: null,
+        });
+      }
+    }
+  }
+  return novos;
+}
+
+// ---------------------------------------------------------------------------
+// Limpeza: cobrança de INSCRIÇÃO não paga há 3 dias ou mais é excluída no Asaas
+// (o pai abre uma, depois abre outra, e a primeira fica mandando e-mail).
+// Só inscrições deste sistema; nunca cobrança avulsa, parcelamento ou algo
+// criado fora do sistema. A inscrição vira "cancelado" aqui.
+// ---------------------------------------------------------------------------
+export const DIAS_LIMPEZA = 3;
+/** Enquanto false, só SIMULA (registra o que seria excluído em asaas_exclusoes). */
+export const LIMPEZA_ATIVA = false;
+
+export async function limparPendentesAntigas(): Promise<{ simulado: boolean; itens: { id: string; valor: number; referencia: string; criado: string | null }[] }> {
+  const db = createAdminClient();
+  const limite = new Date(Date.now() - DIAS_LIMPEZA * 864e5).toISOString().slice(0, 10);
+  const itens: { id: string; valor: number; referencia: string; criado: string | null }[] = [];
+  for (const { conta, chave } of contas()) {
+    const pendentes = [
+      ...(await listar(`status=PENDING&dateCreated[le]=${limite}`, chave)),
+      ...(await listar(`status=OVERDUE&dateCreated[le]=${limite}`, chave)),
+    ].filter((p) => !p.installment && p.externalReference);
+    if (!pendentes.length) continue;
+    const refs = [...new Set(pendentes.map((p) => p.externalReference as string))].filter((r) => /^[0-9a-f-]{36}$/i.test(r));
+    const { data: insc } = refs.length
+      ? await db.from("inscricoes").select("id, status_pagamento").in("id", refs)
+      : { data: [] as { id: string; status_pagamento: string }[] };
+    const nossas = new Map((insc ?? []).map((i) => [i.id as string, i.status_pagamento as string]));
+    for (const p of pendentes) {
+      const ref = p.externalReference as string;
+      if (!nossas.has(ref) || nossas.get(ref) === "pago") continue;
+      itens.push({ id: p.id, valor: p.value, referencia: ref, criado: p.dateCreated ?? null });
+      let erro: string | null = null;
+      if (LIMPEZA_ATIVA) {
+        const r = await fetch(`${API}/payments/${p.id}`, { method: "DELETE", headers: { access_token: chave, "User-Agent": "amadeus-admin" } }).catch(() => null);
+        if (!r || !r.ok) erro = `Asaas respondeu ${r?.status ?? "sem resposta"}`;
+        else await db.from("inscricoes").update({ status_pagamento: "cancelado", asaas_status: "REMOVIDA", asaas_conferido_em: new Date().toISOString() }).eq("id", ref).eq("status_pagamento", "pendente");
+        await espera(150);
+      }
+      await db.from("asaas_exclusoes").upsert({
+        id: p.id, conta, referencia: ref, valor: p.value, status_antes: p.status,
+        criado_no_asaas: p.dateCreated?.slice(0, 10) ?? null, simulado: !LIMPEZA_ATIVA, em: new Date().toISOString(), erro,
+      });
+    }
+  }
+  return { simulado: !LIMPEZA_ATIVA, itens };
+}

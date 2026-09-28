@@ -14,6 +14,7 @@ import { BotaoMostrarValores, ValorSensivel } from "@/components/admin/valores-s
 import { valoresLiberados } from "@/lib/valores-auth";
 import { after } from "next/server";
 import { conferirSeAntigo } from "@/lib/asaas-conferencia";
+import { AlertasReembolso } from "./alertas-reembolso";
 import { AbasCobrancas } from "./abas";
 import { CobrancasTable, type CobrancaRow } from "./cobrancas-table";
 
@@ -80,6 +81,7 @@ export default async function CobrancasPage() {
   return (
     <div className="container mx-auto px-4 py-10">
       <AbasCobrancas atual="avulsas" />
+      <AlertasReembolso liberado={liberado} />
       <header className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-amadeus-blue sm:text-4xl">
