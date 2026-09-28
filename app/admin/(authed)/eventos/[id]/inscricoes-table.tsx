@@ -1,5 +1,6 @@
 "use client";
 
+import { ValorSensivel } from "@/components/admin/valores-sensiveis";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -242,7 +243,7 @@ export function InscricoesTable({ inscricoes, liberado = false }: { inscricoes: 
                       )}
                     </td>
                     <td className="py-3 pr-4 tabular-nums">
-                      {liberado ? formatCurrency(Number(i.valor_total)) : "R$ ••••"}
+                      <ValorSensivel valor={liberado ? formatCurrency(Number(i.valor_total)) : null} />
                     </td>
                     <td className="py-3 pr-4">
                       {i.metodo_pagamento === "pix"

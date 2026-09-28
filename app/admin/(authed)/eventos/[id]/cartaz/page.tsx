@@ -64,7 +64,7 @@ export default async function CartazPage({ params, searchParams }: { params: Pro
       <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-amadeus-blue">Cartaz do evento</h1>
       <p className="mt-1 text-muted-foreground">
         {novo ? "Evento criado! Que tal já fazer o cartaz? " : ""}
-        {ev.nome} · escolha como quer o cartaz e a IA propõe opções na identidade da escola.
+        {ev.nome} · a IA lê a foto e o cadastro e monta o cartaz no estilo caderno da escola.
       </p>
       <EditorCartaz fatos={fatos} />
     </div>

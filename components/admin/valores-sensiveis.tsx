@@ -87,7 +87,7 @@ export function OlhinhoGlobal() {
       className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-2.5 py-1.5 text-xs font-semibold text-muted-foreground shadow-sm transition-colors hover:bg-amadeus-blue-50 hover:text-amadeus-blue"
     >
       {pendente ? <Loader2 className="size-4 animate-spin" /> : mostrar ? <EyeOff className="size-4" /> : <Lock className="size-4" />}
-      <span className="hidden lg:inline">{mostrar ? "Ocultar valores" : "Mostrar valores"}</span>
+      <span>{mostrar ? "Ocultar valores" : "Mostrar valores"}</span>
     </button>
   );
 }
@@ -125,5 +125,28 @@ export function ValorSensivel({ valor, moeda = true }: { valor: string | null; m
     >
       {moeda ? "R$ ••••" : "••••"}
     </span>
+  );
+}
+
+/**
+ * Faixa visível nas telas com dinheiro (Cobranças, Eventos): trancado, avisa e
+ * oferece "Mostrar valores" (pede a senha); liberado, oferece "Ocultar valores".
+ */
+export function BotaoMostrarValores({ className = "" }: { className?: string }) {
+  const { mostrar, alternar, pendente } = useAlternar();
+  return (
+    <button
+      type="button"
+      onClick={alternar}
+      title={mostrar ? "Trancar os valores de novo" : "Digite a senha para ver os valores"}
+      className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold transition-colors ${
+        mostrar
+          ? "border-border bg-white text-muted-foreground hover:bg-muted"
+          : "border-amadeus-blue bg-amadeus-blue text-white hover:opacity-90"
+      } ${className}`}
+    >
+      {pendente ? <Loader2 className="size-4 animate-spin" /> : mostrar ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+      {mostrar ? "Ocultar valores" : "Mostrar valores"}
+    </button>
   );
 }

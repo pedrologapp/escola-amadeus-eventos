@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/lib/utils";
-import { ValorSensivel } from "@/components/admin/valores-sensiveis";
+import { BotaoMostrarValores, ValorSensivel } from "@/components/admin/valores-sensiveis";
 import { valoresLiberados } from "@/lib/valores-auth";
 import { CobrancasTable, type CobrancaRow } from "./cobrancas-table";
 
@@ -85,12 +85,15 @@ export default async function CobrancasPage() {
             )}
           </p>
         </div>
+        <div className="flex flex-wrap gap-2">
+        <BotaoMostrarValores />
         <Button asChild>
           <Link href="/admin/cobrancas/nova">
             <Receipt />
             Nova cobrança
           </Link>
         </Button>
+        </div>
       </header>
 
       {lista.length === 0 ? (

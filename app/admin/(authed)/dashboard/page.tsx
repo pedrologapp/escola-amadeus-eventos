@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Calculator, CalendarDays, MessageCircleWarning, type LucideIcon } from "lucide-react";
+import { ArrowRight, Calculator, CalendarDays, MessageCircleWarning, PenLine, type LucideIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -59,7 +59,7 @@ export default async function AdminDashboardPage() {
       <h1 className="text-3xl font-extrabold tracking-tight text-amadeus-blue sm:text-4xl">Visão geral</h1>
       <p className="mt-1 text-muted-foreground">Atalhos para o dia a dia.</p>
 
-      <section className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <Atalho
           href="/admin/rematricula-2027"
           icone={Calculator}
@@ -85,6 +85,12 @@ export default async function AdminDashboardPage() {
           descricao={prox ? `Próximo: ${prox.nome}` : "Nenhum evento publicado pela frente."}
           destaque={dataProx ? { valor: dataProx, rotulo: "próximo" } : undefined}
           extra={{ href: "/admin/eventos/novo", rotulo: "Novo evento" }}
+        />
+        <Atalho
+          href="/admin/eventos/encarte"
+          icone={PenLine}
+          titulo="Criar encarte"
+          descricao="Escreva um aviso ou convite e a IA monta a imagem no estilo da escola."
         />
       </section>
     </div>

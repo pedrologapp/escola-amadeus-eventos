@@ -234,7 +234,7 @@ function Linha({ c, agora, aberta, abrir }: { c: Conversa; agora: number; aberta
   const fechado = foraDoHorario(iso);
   // No computador tudo numa linha; no celular quebra em nome/hora, resumo e botões (nada fica por cima).
   return (
-    <li className={aberta ? "bg-amadeus-blue-50/30" : ""}>
+    <li className={`${aberta ? "bg-amadeus-blue-50/30" : esperando && c.ultima_da_escola ? "bg-emerald-50/50" : ""} ${esperando && c.ultima_da_escola ? "border-l-4 border-l-emerald-500" : ""}`}>
       <div className="flex flex-col gap-1.5 px-4 py-2.5 text-sm lg:flex-row lg:items-center lg:gap-3 lg:py-2">
         <button type="button" onClick={() => abrir(aberta ? null : "ver")} className="flex min-w-0 flex-1 flex-col gap-0.5 text-left lg:flex-row lg:items-center lg:gap-3">
           <span className="flex min-w-0 items-center gap-2 lg:w-56 lg:shrink-0">
@@ -244,8 +244,8 @@ function Linha({ c, agora, aberta, abrir }: { c: Conversa; agora: number; aberta
               <span className="shrink-0 rounded-md bg-red-600 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white" title={c.alertado_em ? "Avisado no grupo Amadeus - Direção" : undefined}>urgente</span>
             )}
             {c.status === "aguardando" && c.ultima_da_escola && (
-              <span className="shrink-0 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold uppercase text-emerald-700" title={c.respondido_por ? `Respondida por ${c.respondido_por}` : undefined}>
-                respondida{c.respondido_por ? ` · ${c.respondido_por}` : ""}
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-emerald-600 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white" title={`Respondida${c.respondido_por ? ` por ${c.respondido_por}` : ""}${c.respondido_em ? ` · ${quando(c.respondido_em, true)}` : ""}`}>
+                <Check className="size-3" /> respondida{c.respondido_em ? ` ${new Date(c.respondido_em).toLocaleTimeString("pt-BR", { timeZone: "America/Fortaleza", hour: "2-digit", minute: "2-digit" })}` : ""}
               </span>
             )}
             <span className={`shrink-0 text-xs tabular-nums lg:hidden ${fechado ? "text-amber-700" : "text-muted-foreground"}`}>
@@ -337,7 +337,7 @@ export function PainelWhatsApp({ aguardando, fechadas, contatos, assuntos, gerad
   geradoEm: number;
 }) {
   const router = useRouter();
-  const [aba, setAba] = useState<"importantes" | "todas" | "fechadas">("importantes");
+  const [aba, setAba] = useState<"importantes" | "respondidas" | "todas" | "fechadas">("importantes");
   const [aberta, setAberta] = useState<{ id: string; modo: Modo } | null>(null);
   const [atualizando, iniciar] = useTransition();
   const [nova, setNova] = useState(false);
@@ -351,14 +351,23 @@ export function PainelWhatsApp({ aguardando, fechadas, contatos, assuntos, gerad
   const ordenadas = [...aguardando].sort(
     (a, b) => Number(!!b.urgente) - Number(!!a.urgente) || ORDEM[a.importancia ?? "media"] - ORDEM[b.importancia ?? "media"] || Date.parse(a.aguardando_desde ?? "") - Date.parse(b.aguardando_desde ?? ""),
   );
-  const importantes = ordenadas.filter((c) => c.importancia !== "baixa");
+  // Quem já foi respondido (pelo painel ou pelo celular da escola) sai de "Precisam de resposta"
+  // e espera em "Já respondidas" até alguém marcar como concluída.
+  const importantes = ordenadas.filter((c) => c.importancia !== "baixa" && !c.ultima_da_escola);
+  const respondidas = ordenadas.filter((c) => c.ultima_da_escola);
   const semResposta = aguardando.filter((c) => !c.ultima_da_escola).length;
-  const lista = aba === "importantes" ? importantes : aba === "todas" ? ordenadas : fechadas;
+  const lista = aba === "importantes" ? importantes : aba === "respondidas" ? respondidas : aba === "todas" ? ordenadas : fechadas;
+  const concluirRespondidas = () =>
+    iniciar(async () => {
+      for (const c of respondidas) await marcarConversa(c.chat_id, "resolvida");
+      router.refresh();
+    });
   const nAlta = aguardando.filter((c) => c.importancia === "alta" && !c.ultima_da_escola).length;
   const hora = new Date(geradoEm).toLocaleTimeString("pt-BR", { timeZone: "America/Fortaleza", hour: "2-digit", minute: "2-digit" });
 
   const abas = [
     { id: "importantes", rotulo: "Precisam de resposta", n: importantes.length },
+    { id: "respondidas", rotulo: "Já respondidas", n: respondidas.length },
     { id: "todas", rotulo: "Todas aguardando", n: ordenadas.length },
     { id: "fechadas", rotulo: "Concluídas", n: fechadas.length },
   ] as const;
@@ -393,6 +402,15 @@ export function PainelWhatsApp({ aguardando, fechadas, contatos, assuntos, gerad
           </button>
         ))}
       </div>
+
+      {aba === "respondidas" && respondidas.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-2 border-x border-border/60 bg-emerald-50/60 px-4 py-2 text-xs text-emerald-900">
+          <span>Já receberam resposta (pelo painel ou pelo celular da escola). Confira e marque como concluída para tirar da lista.</span>
+          <button type="button" disabled={atualizando} onClick={concluirRespondidas} className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2.5 py-1 font-bold text-white hover:bg-emerald-700 disabled:opacity-50">
+            <Check className="size-3.5" /> Concluir todas ({respondidas.length})
+          </button>
+        </div>
+      )}
 
       {lista.length === 0 ? (
         <p className="py-10 text-center text-sm text-muted-foreground">Nada por aqui.</p>

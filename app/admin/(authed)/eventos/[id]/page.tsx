@@ -21,6 +21,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { valoresLiberados } from "@/lib/valores-auth";
+import { BotaoMostrarValores, ValorSensivel } from "@/components/admin/valores-sensiveis";
 import { calcEstoquePorTipo } from "@/lib/estoque";
 import {
   getLoteAtivo,
@@ -184,7 +185,10 @@ export default async function EventoDetailPage({ params }: PageProps) {
       </header>
 
       {/* Métricas */}
-      <section className="mt-8 grid gap-4 sm:grid-cols-3">
+      <div className="mt-8 flex justify-end">
+        <BotaoMostrarValores />
+      </div>
+      <section className="mt-3 grid gap-4 sm:grid-cols-3">
         <MetricCard
           label="Ingressos vendidos"
           value={ingressosVendidos}
@@ -197,7 +201,7 @@ export default async function EventoDetailPage({ params }: PageProps) {
         />
         <MetricCard
           label="Receita confirmada"
-          value={liberado ? formatCurrency(receita) : "R$ ••••"}
+          value={<ValorSensivel valor={liberado ? formatCurrency(receita) : null} />}
           icon={Wallet}
         />
       </section>
@@ -466,7 +470,7 @@ function MetricCard({
   icon: Icon,
 }: {
   label: string;
-  value: string | number;
+  value: React.ReactNode;
   icon: React.ComponentType<{ className?: string }>;
 }) {
   return (

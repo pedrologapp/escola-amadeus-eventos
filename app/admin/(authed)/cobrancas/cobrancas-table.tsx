@@ -1,5 +1,6 @@
 "use client";
 
+import { ValorSensivel } from "@/components/admin/valores-sensiveis";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ExternalLink, Lock, Trash2, X } from "lucide-react";
@@ -240,7 +241,7 @@ export function CobrancasTable({ cobrancas, liberado = false }: { cobrancas: Cob
                     </div>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right font-semibold tabular-nums">
-                    {liberado ? formatCurrency(Number(c.valor_total ?? c.valor)) : "R$ ••••"}
+                    <ValorSensivel valor={liberado ? formatCurrency(Number(c.valor_total ?? c.valor)) : null} />
                     <div className="text-xs font-normal text-muted-foreground">
                       {c.metodo_cobranca === "pix" && "PIX"}
                       {c.metodo_cobranca === "cartao" &&

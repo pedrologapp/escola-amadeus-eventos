@@ -133,6 +133,8 @@ export async function lerFotoParaCartaz(entrada: {
   foto: string | null;
   detalhe: Detalhe;
   frase: string;
+  /** Encarte a partir de texto (sem evento): o texto é a fonte principal. */
+  texto?: string;
 }): Promise<{ ok: boolean; erro?: string; leitura?: LeituraCaderno }> {
   if (!(await logado())) return { ok: false, erro: "Sessão expirada." };
   const chave = process.env.ANTHROPIC_API_KEY;
@@ -148,6 +150,7 @@ export async function lerFotoParaCartaz(entrada: {
         "Você monta cartazes de eventos do Centro Educacional Amadeus no estilo 'Caderno' (folha pautada, post-its, cartões com legenda). " +
         "Primeiro olhe a imagem: se ela for um material/flyer com textos e informações do evento, LEIA tudo o que está escrito (datas, horários, local, atividades, valores, público, observações) — tipoFoto='flyer'. " +
         "Se for uma foto de verdade (pessoas, lugar), tipoFoto='foto' e sugira uma legenda curta. Sem imagem, tipoFoto='nenhuma'. " +
+        "Se vier um TEXTO escrito pela escola, ele é a fonte principal: organize as informações dele nos campos (não copie parágrafos inteiros; resuma em frases curtas de cartaz) e use a imagem só como foto ou complemento. Se o assunto não for um evento (aviso, comunicado, campanha), adapte: post-its com prazos/datas importantes, itens com os pontos principais; campos sem informação ficam vazios. " +
         "Junte com os dados do cadastro: quando o cadastro tiver data, horário, local ou valor, use o do cadastro. Nunca invente o que não está na imagem nem no cadastro. " +
         "Escreva em português do Brasil, sem emojis, frases curtas. " +
         "Campos: etiqueta (1 palavra em maiúsculas: CONVITE, PASSEIO, EVENTO, FESTA, AVISO...); titulo + tituloMarca (o título dividido em duas partes; a segunda é grifada de amarelo, ex.: 'Dia das Crianças' + 'no Viva Park'); " +
@@ -163,7 +166,7 @@ export async function lerFotoParaCartaz(entrada: {
             ...(imagem ? [{ type: "image" as const, source: { type: "base64" as const, ...imagem } }] : []),
             {
               type: "text" as const,
-              text: `Dados do cadastro:\n${entrada.fatos}\n\n${entrada.frase.trim() ? `A escola quer usar esta frase na chamada: "${entrada.frase.trim()}"` : "Sem frase definida."}`,
+              text: `${entrada.texto?.trim() ? `TEXTO da escola:\n${entrada.texto.trim().slice(0, 6000)}\n\n` : ""}Dados do cadastro:\n${entrada.fatos || "(sem cadastro: encarte avulso)"}\n\n${entrada.frase.trim() ? `A escola quer usar esta frase na chamada: "${entrada.frase.trim()}"` : "Sem frase definida."}`,
             },
           ],
         },

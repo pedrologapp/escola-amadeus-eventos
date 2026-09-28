@@ -47,7 +47,14 @@ function Campo({ rotulo, valor, onChange, linhasTexto }: { rotulo: string; valor
   );
 }
 
-export function EditorCartaz({ fatos }: { fatos: FatosEvento }) {
+/**
+ * modo "evento": parte do cadastro e da foto do evento.
+ * modo "texto": encarte avulso — a escola escreve o texto (aviso, comunicado,
+ * campanha) e a IA organiza no estilo caderno; foto é opcional.
+ */
+export function EditorCartaz({ fatos, modo = "evento" }: { fatos: FatosEvento; modo?: "evento" | "texto" }) {
+  const deTexto = modo === "texto";
+  const [texto, setTexto] = useState("");
   const [formato, setFormato] = useState<Formato>("a4");
   const [detalhe, setDetalhe] = useState<Detalhe>("detalhado");
   const [frase, setFrase] = useState("");
@@ -91,7 +98,7 @@ export function EditorCartaz({ fatos }: { fatos: FatosEvento }) {
   const ler = async () => {
     setGerando(true);
     setErro(null);
-    const r = await lerFotoParaCartaz({ fatos: fatos.resumo, foto, detalhe, frase });
+    const r = await lerFotoParaCartaz({ fatos: fatos.resumo, foto, detalhe, frase, texto: deTexto ? texto : undefined });
     setGerando(false);
     if (!r.ok || !r.leitura) return setErro(r.erro ?? "Não consegui ler a foto.");
     const l = r.leitura;
@@ -112,8 +119,8 @@ export function EditorCartaz({ fatos }: { fatos: FatosEvento }) {
       valores: detalhe === "detalhado" ? l.valores : [],
       ondeTitulo: l.ondeTitulo || fatos.local || "",
       ondeLinhas: l.ondeLinhas,
-      qrRotulo: "Inscrição",
-      link: detalhe === "detalhado" ? fatos.link : null,
+      qrRotulo: deTexto ? "Saiba mais" : "Inscrição",
+      link: detalhe === "detalhado" && fatos.link ? fatos.link : null,
       foto: null,
       legendaFoto: l.legendaFoto,
     });
@@ -166,8 +173,15 @@ export function EditorCartaz({ fatos }: { fatos: FatosEvento }) {
         <p className="mt-1.5 text-xs text-muted-foreground">Se deixar em branco, a IA escreve a chamada a partir da foto e do evento.</p>
       </Passo>
 
-      <Passo n={4} titulo="Foto ou material do evento">
-        <p className="-mt-2 mb-3 text-xs text-muted-foreground">Se for um material pronto (flyer), a IA lê as informações dele e monta um cartaz novo no estilo caderno da escola.</p>
+      {deTexto && (
+        <Passo n={4} titulo="O que vai no encarte">
+          <textarea value={texto} onChange={(e) => setTexto(e.target.value)} rows={8} placeholder={"Cole ou escreva o texto do aviso, comunicado ou convite.\nEx.: Reunião de pais do 6º ano na quinta, 09/10, às 18h30, no auditório. Pauta: projeto Arbória, notas do 3º bimestre e passeio de novembro."} className="w-full rounded-xl border border-border px-3 py-2 text-sm outline-none focus:border-amadeus-blue" />
+          <p className="mt-1.5 text-xs text-muted-foreground">A IA organiza o texto em título, post-its (datas e horários), público, destaques e local. Você revisa tudo antes de baixar.</p>
+        </Passo>
+      )}
+
+      <Passo n={deTexto ? 5 : 4} titulo={deTexto ? "Foto (opcional)" : "Foto ou material do evento"}>
+        <p className="-mt-2 mb-3 text-xs text-muted-foreground">{deTexto ? "Uma foto entra no encarte com moldura de polaroid. Se for um material com texto, a IA também lê as informações dele." : "Se for um material pronto (flyer), a IA lê as informações dele e monta um cartaz novo no estilo caderno da escola."}</p>
         <div className="flex flex-wrap gap-3">
           {fotos.map((f) => (
             <button key={f} type="button" onClick={() => setFoto(f)} className={`relative size-24 overflow-hidden rounded-xl border-2 ${foto === f ? "border-amadeus-blue" : "border-transparent"}`}>
@@ -186,9 +200,11 @@ export function EditorCartaz({ fatos }: { fatos: FatosEvento }) {
       </Passo>
 
       <div className="flex flex-wrap items-center gap-3">
-        <button type="button" onClick={ler} disabled={gerando} className="inline-flex items-center gap-2 rounded-xl bg-amadeus-blue px-5 py-3 font-bold text-white hover:opacity-90 disabled:opacity-50">
+        <button type="button" onClick={ler} disabled={gerando || (deTexto && !texto.trim() && !foto)} className="inline-flex items-center gap-2 rounded-xl bg-amadeus-blue px-5 py-3 font-bold text-white hover:opacity-90 disabled:opacity-50">
           {gerando ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-          {gerando ? "Lendo a foto e montando o cartaz…" : edicao ? "Ler de novo" : "Ler a foto e montar o cartaz"}
+          {deTexto
+            ? gerando ? "Montando o encarte…" : edicao ? "Montar de novo" : "Montar o encarte"
+            : gerando ? "Lendo a foto e montando o cartaz…" : edicao ? "Ler de novo" : "Ler a foto e montar o cartaz"}
         </button>
         {erro && <p className="text-sm text-red-700">{erro}</p>}
       </div>
@@ -233,9 +249,16 @@ export function EditorCartaz({ fatos }: { fatos: FatosEvento }) {
               <Campo rotulo="Onde é" valor={edicao.ondeTitulo} onChange={(v) => muda({ ondeTitulo: v })} />
               <Campo rotulo="Detalhes do local (até 2 linhas)" valor={edicao.ondeLinhas.join("\n")} onChange={(v) => muda({ ondeLinhas: linhas(v, 2) })} linhasTexto={2} />
             </div>
-            <label className="flex items-center gap-2 font-semibold">
-              <input type="checkbox" checked={!!edicao.link} onChange={(e) => muda({ link: e.target.checked ? fatos.link : null })} /> QR code para inscrição
-            </label>
+            {fatos.link ? (
+              <label className="flex items-center gap-2 font-semibold">
+                <input type="checkbox" checked={!!edicao.link} onChange={(e) => muda({ link: e.target.checked ? fatos.link : null })} /> QR code para inscrição
+              </label>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_10rem]">
+                <Campo rotulo="Link do QR code (opcional)" valor={edicao.link ?? ""} onChange={(v) => muda({ link: v.trim() || null })} />
+                <Campo rotulo="Texto do QR" valor={edicao.qrRotulo} onChange={(v) => muda({ qrRotulo: v })} />
+              </div>
+            )}
             {foto && (
               <div className="space-y-2 rounded-lg border border-border p-3">
                 <label className="flex items-center gap-2 font-semibold">
@@ -245,7 +268,7 @@ export function EditorCartaz({ fatos }: { fatos: FatosEvento }) {
               </div>
             )}
             <a href={url(final, true)} className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 font-bold text-white hover:bg-emerald-700">
-              <Download className="size-4" /> Baixar cartaz (PNG)
+              <Download className="size-4" /> Baixar {deTexto ? "encarte" : "cartaz"} (PNG)
             </a>
           </div>
           <img key={previa ? codificarCaderno(previa) : "vazio"} src={previa ? url(previa) : undefined} alt="Prévia" className="w-full self-start rounded-xl border border-border bg-muted" style={{ aspectRatio: proporcao }} />

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarPlus, Sparkles } from "lucide-react";
+import { CalendarPlus, Sparkles, PenLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,6 +10,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/lib/utils";
 import { valoresLiberados } from "@/lib/valores-auth";
+import { BotaoMostrarValores } from "@/components/admin/valores-sensiveis";
 import { AdminEventosTabbed, type AdminEventoItem } from "./eventos-tabbed";
 import { MetricasCompactas, type MetricaItem } from "../dashboard/metricas-compactas";
 
@@ -124,6 +125,13 @@ export default async function AdminEventosPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <BotaoMostrarValores />
+          <Button asChild variant="outline">
+            <Link href="/admin/eventos/encarte">
+              <PenLine />
+              Criar encarte
+            </Link>
+          </Button>
           <Button asChild variant="outline">
             <Link href="/admin/eventos/importar">
               <Sparkles />

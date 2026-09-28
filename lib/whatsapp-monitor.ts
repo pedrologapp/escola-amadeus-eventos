@@ -158,12 +158,15 @@ export async function processarLote(msgs: MensagemVista[]): Promise<{ novas: num
       // marca "Resolvido" — direção, 28/09/2026), agora marcada como respondida.
       await db.from("whatsapp_eventos").upsert({ msg_id: m.id, chat_id: m.chatId, da_escola: true, em });
       const avisada = atual?.alertado_em && !atual?.respondido_em && !atual?.ultima_da_escola;
+      // Resposta que saiu do celular (comercial/secretaria) para quem estava esperando: sinaliza
+      // no painel como "respondida" com a hora; continua na lista até alguém concluir.
+      const primeiraResposta = atual && !atual.ultima_da_escola && !atual.respondido_em;
       await db.from("whatsapp_conversas").upsert({
         ...base,
         ultima_da_escola: true,
         msgs_sem_resposta: 0,
         status: atual?.status ?? "respondida",
-        ...(avisada ? { respondido_em: em, respondido_por: atual?.respondido_por ?? "WhatsApp da escola" } : {}),
+        ...(avisada || primeiraResposta ? { respondido_em: em, respondido_por: atual?.respondido_por ?? "WhatsApp da escola" } : {}),
       });
       if (avisada) {
         await avisarDirecao(`Já respondida pelo WhatsApp da escola: ${atual.contato || telLegivel(telefone)} (${quandoLegivel(em)}).`);
