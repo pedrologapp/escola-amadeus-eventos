@@ -8,8 +8,7 @@ import {
   FileText,
   MapPin,
   Ticket,
-  Wallet,
-} from "lucide-react";
+  Wallet, ImagePlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -163,6 +162,12 @@ export default async function EventoDetailPage({ params }: PageProps) {
             <Link href={`/admin/eventos/${evento.id}/venda`}>
               <Wallet />
               Venda em dinheiro
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href={`/admin/eventos/${evento.id}/cartaz`}>
+              <ImagePlus />
+              Criar cartaz
             </Link>
           </Button>
           <Button asChild variant="outline">

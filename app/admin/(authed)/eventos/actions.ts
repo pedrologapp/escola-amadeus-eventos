@@ -201,7 +201,8 @@ export async function createEvento(
 
   revalidatePath("/admin/eventos");
   revalidatePath("/");
-  redirect("/admin/eventos");
+  // Logo depois de criar, oferece o cartaz (dá para voltar sem fazer).
+  redirect(`/admin/eventos/${evento.id}/cartaz?novo=1`);
 }
 
 // ---------- helpers ----------
