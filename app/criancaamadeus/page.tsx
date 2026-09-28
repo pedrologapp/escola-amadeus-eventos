@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 /**
  * Página pública para a equipe mandar a foto de infância (28/09/2026).
- * Link: eventos.escolaamadeus.com/fotos-infancia. As fotos ficam num bucket
+ * Link: eventos.escolaamadeus.com/criancaamadeus. As fotos ficam num bucket
  * privado e só abrem no admin (Campanhas → Fotos de infância).
  */
 export default function FotosInfanciaPage() {

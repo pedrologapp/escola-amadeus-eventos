@@ -1,5 +1,5 @@
 -- (28/09/2026) Fotos de infância da equipe. Cada colaborador procura o nome
--- numa página pública (/fotos-infancia) e sobe uma foto de quando era criança.
+-- numa página pública (/criancaamadeus) e sobe uma foto de quando era criança.
 -- Uma foto por pessoa: mandar de novo troca a anterior.
 create table if not exists public.fotos_infancia (
   chave text primary key,             -- "colab:<id do Activesoft>" ou "nome:<nome sem acento>"

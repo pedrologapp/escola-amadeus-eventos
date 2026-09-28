@@ -7,7 +7,7 @@ import "server-only";
  */
 
 export const BUCKET_FOTOS = "fotos-infancia";
-export const URL_FOTOS = "https://eventos.escolaamadeus.com/fotos-infancia";
+export const URL_FOTOS = "https://eventos.escolaamadeus.com/criancaamadeus";
 
 export interface Colaborador {
   id: number;
