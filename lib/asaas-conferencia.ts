@@ -9,6 +9,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * - nas pendentes, anota a situação no Asaas (vencida, removida...).
  * Nunca muda status_pagamento: quem marca "pago" e manda a confirmação no
  * WhatsApp continua sendo o fluxo do n8n.
+ *
+ * Conta: só a conta ATUAL do Asaas (ASAAS_API_KEY). A antiga foi bloqueada e
+ * a escola trocou de conta em 08/09/2026; o que veio dela está guardado com
+ * conta = "antiga" (migration 0038).
  */
 
 const API = "https://www.asaas.com/api/v3";
@@ -109,6 +113,7 @@ export async function conferirComAsaas(): Promise<ResultadoConferencia> {
         origem,
         categoria: origem === "avulsa" ? "Cobrança avulsa" : origem === "evento" ? "Eventos" : categoriaExterna(p),
         parcela: p.installmentNumber ?? null,
+        conta: "atual", // a antiga (bloqueada, até 08/09) ficou só no histórico
         atualizado_em: new Date().toISOString(),
       };
     });
