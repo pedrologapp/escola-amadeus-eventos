@@ -63,9 +63,9 @@ export interface TextosCaderno {
   l3: string;
 }
 
-type Zona = { x: number; y: number; w: number; h: number };
+export type Zona = { x: number; y: number; w: number; h: number };
 
-function pintarFundo(ctx: CanvasRenderingContext2D, f: FundoCaderno, W: number, H: number, m: number, R: Rng) {
+export function pintarFundo(ctx: CanvasRenderingContext2D, f: FundoCaderno, W: number, H: number, m: number, R: Rng) {
   if (f.papel) {
     ctx.fillStyle = "#FDFBF6";
     ctx.fillRect(0, 0, W, H);
@@ -96,7 +96,7 @@ function pintarFundo(ctx: CanvasRenderingContext2D, f: FundoCaderno, W: number, 
 }
 
 /** Margem vermelha e furos do caderno (só na folha). */
-function margemEFuros(ctx: CanvasRenderingContext2D, W: number, H: number, m: number, margem: number) {
+export function margemEFuros(ctx: CanvasRenderingContext2D, W: number, H: number, m: number, margem: number) {
   ctx.strokeStyle = "#E8A9A9";
   ctx.lineWidth = Math.max(1.5, m * 0.004);
   ctx.beginPath();
@@ -117,7 +117,7 @@ function margemEFuros(ctx: CanvasRenderingContext2D, W: number, H: number, m: nu
 }
 
 /** Pedaço de fita adesiva (washi) centrado em (x, y). */
-function fita(ctx: CanvasRenderingContext2D, x: number, y: number, larg: number, giro: number, cor: string) {
+export function fita(ctx: CanvasRenderingContext2D, x: number, y: number, larg: number, giro: number, cor: string) {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(giro);
@@ -160,7 +160,7 @@ function bandeirinhas(ctx: CanvasRenderingContext2D, W: number, m: number, R: Rn
 }
 
 /** Título no estilo do encarte: rótulo pequeno, título Fraunces com marca-texto na última linha, etiqueta amarela. */
-function textoCaderno(ctx: CanvasRenderingContext2D, z: Zona, t: TextosCaderno, f: FundoCaderno, logo: HTMLImageElement | undefined, logoW: number) {
+export function textoCaderno(ctx: CanvasRenderingContext2D, z: Zona, t: TextosCaderno, f: FundoCaderno, logo: HTMLImageElement | undefined, logoW: number) {
   const pre = t.l1.trim().toUpperCase(), dest = t.dest.trim() || "Nome do evento", pos = t.l3.trim();
   const quebra = (F: number) => {
     ctx.font = `700 ${F}px "PainelFraunces"`;
@@ -275,7 +275,7 @@ function polaroid(ctx: CanvasRenderingContext2D, x: number, y: number, s: number
 }
 
 /** Desenho solto na folha (ou num adesivo branco, se o fundo for colorido). */
-function solto(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, icone: string, R: Rng, adesivo: boolean) {
+export function solto(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, icone: string, R: Rng, adesivo: boolean) {
   if (adesivo) {
     ctx.save();
     ctx.shadowColor = "rgba(0,0,0,.18)";
