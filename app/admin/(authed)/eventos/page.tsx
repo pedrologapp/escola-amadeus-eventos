@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarPlus, Sparkles, PenLine } from "lucide-react";
+import { CalendarPlus, Sparkles, PenLine, Frame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -130,6 +130,12 @@ export default async function AdminEventosPage() {
             <Link href="/admin/eventos/encarte">
               <PenLine />
               Criar encarte
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/admin/eventos/painel">
+              <Frame />
+              Criar painel
             </Link>
           </Button>
           <Button asChild variant="outline">
