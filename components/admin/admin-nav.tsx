@@ -34,7 +34,7 @@ const LINKS = [
     href: "/admin/campanhas",
     label: "Campanhas",
     icon: Shapes,
-    inclui: ["/admin/campanhas", "/admin/diversos", "/admin/matriculas2027", "/admin/reuniao", "/admin/dia-dos-pais", "/admin/fardamento"],
+    inclui: ["/admin/campanhas", "/admin/diversos", "/admin/matriculas2027", "/admin/reuniao", "/admin/dia-dos-pais", "/admin/fardamento", "/admin/fotos-infancia"],
   },
 ];
 

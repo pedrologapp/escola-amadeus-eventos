@@ -1,4 +1,5 @@
 import {
+  Baby,
   ClipboardList,
   GraduationCap,
   Heart,
@@ -16,7 +17,15 @@ import { ModuloCard, type Modulo } from "@/components/admin/modulo-card";
 export const metadata = { title: "Campanhas · Admin Amadeus" };
 
 // A Rematrícula 2027 tem aba própria no menu (/admin/rematricula-2027).
-const EM_ANDAMENTO: Modulo[] = [];
+const EM_ANDAMENTO: Modulo[] = [
+  {
+    href: "/admin/fotos-infancia",
+    icone: Baby,
+    titulo: "Fotos de infância",
+    descricao: "Cada colaborador envia uma foto de quando era criança. Veja quem já mandou e quem falta.",
+    selo: "Em andamento",
+  },
+];
 
 const ENCERRADAS: Modulo[] = [
   {
