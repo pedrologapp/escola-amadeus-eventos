@@ -38,7 +38,7 @@ function Passo({ n, titulo, children }: { n: number; titulo: string; children: R
   );
 }
 
-const url = (e: EspecCartaz, baixar = false) => `/api/eventos/cartaz?d=${codificar(e)}${baixar ? "&baixar=1" : ""}`;
+const url = (e: EspecCartaz, baixar = false) => `/api/eventos/cartaz?d=${codificar(e)}${baixar ? "&baixar=1" : "&escala=0.45"}`;
 
 export function EditorCartaz({ fatos }: { fatos: FatosEvento }) {
   const [formato, setFormato] = useState<Formato>("feed");

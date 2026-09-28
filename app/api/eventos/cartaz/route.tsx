@@ -20,14 +20,22 @@ async function fonte(origem: string, arquivo: string) {
  * vezes são WebP e vêm do Storage como "octet-stream" — o desenhador não lê
  * nenhum dos dois, então convertemos com sharp.
  */
+const cacheFotos = new Map<string, string>(); // por instância: prévias repetem a mesma foto
+
 async function fotoUtilizavel(url: string, largura: number): Promise<string | null> {
+  const chave = `${largura}|${url}`;
+  const pronta = cacheFotos.get(chave);
+  if (pronta) return pronta;
   try {
     const r = await fetch(url);
     if (!r.ok) return null;
     const buf = Buffer.from(await r.arrayBuffer());
     const sharp = (await import("sharp")).default;
     const jpg = await sharp(buf).rotate().resize({ width: largura, withoutEnlargement: true }).jpeg({ quality: 86 }).toBuffer();
-    return `data:image/jpeg;base64,${jpg.toString("base64")}`;
+    const uri = `data:image/jpeg;base64,${jpg.toString("base64")}`;
+    if (cacheFotos.size > 30) cacheFotos.clear();
+    cacheFotos.set(chave, uri);
+    return uri;
   } catch {
     return null;
   }
@@ -43,7 +51,10 @@ export async function GET(req: NextRequest) {
   const e = decodificar(searchParams.get("d") ?? "");
   if (!e || !FORMATOS[e.formato] || !ESTILOS[e.estilo]) return new Response("Cartaz inválido.", { status: 400 });
 
-  const { w: W, h: H } = FORMATOS[e.formato];
+  // Prévia na tela sai menor (?escala=0.45): bem mais rápida; o download sai em tamanho cheio.
+  const escala = Math.min(1, Math.max(0.3, Number(searchParams.get("escala")) || 1));
+  const W = Math.round(FORMATOS[e.formato].w * escala);
+  const H = Math.round(FORMATOS[e.formato].h * escala);
   const s = W / 1080;
   const P = Math.round(72 * s);
   const fotoSrc = e.foto && e.layout !== "sem-foto" ? await fotoUtilizavel(e.foto, W) : null;
@@ -177,7 +188,7 @@ export async function GET(req: NextRequest) {
       { name: "Fraunces", data: f600, weight: 600, style: "normal" },
     ],
     headers: {
-      "Cache-Control": "public, max-age=3600",
+      "Cache-Control": "public, max-age=86400, s-maxage=604800, immutable",
       ...(searchParams.get("baixar") ? { "Content-Disposition": `attachment; filename="cartaz-${e.formato}.png"` } : {}),
     },
   });
