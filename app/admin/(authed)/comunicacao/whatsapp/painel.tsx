@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Copy, EyeOff, Loader2, Paperclip, PenSquare, RefreshCw, RotateCcw, Search, Send, X } from "lucide-react";
+import { Check, ChevronDown, Copy, EyeOff, Loader2, Paperclip, PenSquare, RefreshCw, RotateCcw, Search, Send, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { enviarResposta, marcarConversa, prepararAnexo } from "./actions";
 
@@ -322,14 +322,14 @@ function Linha({ c, agora, aberta, abrir }: { c: Conversa; agora: number; aberta
             {fechado && "● "}{quando(iso, true)} · {tempo(iso, agora)}
           </span>
         </button>
-        <span className="flex shrink-0 items-center gap-1 pl-4.5 text-xs font-semibold lg:pl-0">
+        <span className="flex flex-wrap items-center gap-1 pl-4.5 text-xs font-semibold lg:shrink-0 lg:flex-nowrap lg:pl-0">
           <button type="button" onClick={() => abrir(aberta === "ver" ? null : "ver")} className={`rounded-md px-2 py-1 ${aberta === "ver" ? "bg-amadeus-blue text-white" : "text-amadeus-blue hover:bg-amadeus-blue-50"}`}>
             Ver mensagem
           </button>
           <button type="button" onClick={() => abrir(aberta === "responder" ? null : "responder")} className={`rounded-md px-2 py-1 ${aberta === "responder" ? "bg-[#00A884] text-white" : "text-[#008F72] hover:bg-emerald-50"}`}>
             Responder
           </button>
-          <span className="ml-auto flex items-center gap-1 lg:ml-1">
+          <span className="flex flex-wrap items-center gap-1 sm:ml-auto lg:ml-1">
             {pendente ? (
               <Loader2 className="size-4 animate-spin text-muted-foreground" />
             ) : esperando ? (
@@ -419,6 +419,7 @@ export function PainelWhatsApp({ aguardando, fechadas, contatos, assuntos, gerad
   const [aberta, setAberta] = useState<{ id: string; modo: Modo } | null>(null);
   const [atualizando, iniciar] = useTransition();
   const [nova, setNova] = useState(false);
+  const [menuAbas, setMenuAbas] = useState(false);
   const [confirmarTodas, setConfirmarTodas] = useState(false);
 
   // Atualiza sozinho a cada minuto (a leitura do WhatsApp roda a cada 5), sem perder o que está sendo escrito.
@@ -473,7 +474,30 @@ export function PainelWhatsApp({ aguardando, fechadas, contatos, assuntos, gerad
 
       {nova && <NovaMensagem contatos={contatos} fechar={() => setNova(false)} />}
 
-      <div className="mt-4 flex gap-1 overflow-x-auto border-b border-border/60">
+      {/* Celular: as abas viram um menu (mostra a atual; toca e escolhe). */}
+      <div className="relative mt-4 md:hidden">
+        <button type="button" onClick={() => setMenuAbas(!menuAbas)} aria-expanded={menuAbas} className="flex w-full items-center gap-2 rounded-xl border border-border bg-white px-3 py-2.5 text-sm font-bold text-amadeus-blue">
+          {abas.find((a) => a.id === aba)?.rotulo}
+          <span className="rounded-full bg-muted px-1.5 text-xs text-foreground">{abas.find((a) => a.id === aba)?.n}</span>
+          <ChevronDown className={`ml-auto size-4 transition-transform ${menuAbas ? "rotate-180" : ""}`} />
+        </button>
+        {menuAbas && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setMenuAbas(false)} />
+            <ul className="absolute inset-x-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-border bg-white py-1 shadow-xl">
+              {abas.map((a) => (
+                <li key={a.id}>
+                  <button type="button" onClick={() => { setAba(a.id); setMenuAbas(false); }} className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold ${aba === a.id ? "bg-amadeus-blue-50 text-amadeus-blue" : "text-foreground hover:bg-muted"}`}>
+                    {a.rotulo} <span className="rounded-full bg-muted px-2 text-xs">{a.n}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
+
+      <div className="mt-4 hidden gap-1 overflow-x-auto border-b border-border/60 md:flex">
         {abas.map((a) => (
           <button
             key={a.id}
