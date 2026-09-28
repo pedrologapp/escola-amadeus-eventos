@@ -1,9 +1,10 @@
 import Link from "next/link";
 
-/** Cobranças criadas aqui x tudo que entrou no Asaas (inclusive o que foi criado fora). */
-export function AbasCobrancas({ atual }: { atual: "avulsas" | "asaas" }) {
+/** Avulsas, inscrições dos eventos e tudo que entrou no Asaas (inclusive o criado fora). */
+export function AbasCobrancas({ atual }: { atual: "avulsas" | "eventos" | "asaas" }) {
   const abas = [
-    { id: "avulsas", href: "/admin/cobrancas", rotulo: "Cobranças avulsas" },
+    { id: "avulsas", href: "/admin/cobrancas", rotulo: "Avulsas" },
+    { id: "eventos", href: "/admin/cobrancas/eventos", rotulo: "Eventos" },
     { id: "asaas", href: "/admin/cobrancas/asaas", rotulo: "Recebimentos Asaas" },
   ] as const;
   return (

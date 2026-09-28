@@ -15,6 +15,7 @@ import { valoresLiberados } from "@/lib/valores-auth";
 import { after } from "next/server";
 import { conferirSeAntigo } from "@/lib/asaas-conferencia";
 import { AlertasReembolso } from "./alertas-reembolso";
+import { AvisoLimpeza } from "./aviso-limpeza";
 import { AbasCobrancas } from "./abas";
 import { CobrancasTable, type CobrancaRow } from "./cobrancas-table";
 
@@ -109,6 +110,7 @@ export default async function CobrancasPage() {
         </Button>
         </div>
       </header>
+      <AvisoLimpeza />
 
       {lista.length === 0 ? (
         <Card className="mt-8">
