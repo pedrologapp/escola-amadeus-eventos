@@ -1,20 +1,12 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element -- prévias vêm da rota /api/eventos/cartaz */
+/* eslint-disable @next/next/no-img-element -- prévias vêm da rota /api/eventos/cartaz-caderno */
 import { useEffect, useState } from "react";
 import { Check, Download, ImageOff, Loader2, Sparkles, Upload } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import {
-  ESTILOS,
-  FORMATOS,
-  LAYOUTS,
-  codificar,
-  type Detalhe,
-  type EspecCartaz,
-  type Formato,
-  type Proposta,
-} from "@/lib/cartaz";
-import { gerarPropostas, prepararFotoCartaz } from "./actions";
+import { FORMATOS, type Detalhe, type Formato } from "@/lib/cartaz";
+import { codificarCaderno, type EspecCaderno } from "@/lib/cartaz-caderno";
+import { lerFotoParaCartaz, prepararFotoCartaz, type LeituraCaderno } from "./actions";
 
 export interface FatosEvento {
   nome: string;
@@ -41,10 +33,22 @@ function Passo({ n, titulo, children }: { n: number; titulo: string; children: R
 // No domínio do admin (admin.eventos...) tudo que não é /admin é redirecionado, então
 // a imagem precisa vir do domínio do site, onde a rota de desenho mora.
 const SITE = (process.env.NEXT_PUBLIC_SITE_URL || "https://eventos.escolaamadeus.com").replace(/\/+$/, "");
-const url = (e: EspecCartaz, baixar = false) => `${SITE}/api/eventos/cartaz?d=${codificar(e)}${baixar ? "&baixar=1" : "&escala=0.45"}`;
+const url = (e: EspecCaderno, baixar = false) => `${SITE}/api/eventos/cartaz-caderno?d=${codificarCaderno(e)}${baixar ? "&baixar=1" : "&escala=0.45"}`;
+
+const linhas = (s: string, n: number) => s.split("\n").map((l) => l.trim()).filter(Boolean).slice(0, n);
+
+function Campo({ rotulo, valor, onChange, linhasTexto }: { rotulo: string; valor: string; onChange: (v: string) => void; linhasTexto?: number }) {
+  const cls = "mt-1 w-full rounded-lg border border-border px-3 py-2 font-normal outline-none focus:border-amadeus-blue";
+  return (
+    <label className="block font-semibold">
+      {rotulo}
+      {linhasTexto ? <textarea value={valor} onChange={(e) => onChange(e.target.value)} rows={linhasTexto} className={cls} /> : <input value={valor} onChange={(e) => onChange(e.target.value)} className={cls} />}
+    </label>
+  );
+}
 
 export function EditorCartaz({ fatos }: { fatos: FatosEvento }) {
-  const [formato, setFormato] = useState<Formato>("feed");
+  const [formato, setFormato] = useState<Formato>("a4");
   const [detalhe, setDetalhe] = useState<Detalhe>("detalhado");
   const [frase, setFrase] = useState("");
   const [foto, setFoto] = useState<string | null>(fatos.fotos[0] ?? null);
@@ -52,22 +56,20 @@ export function EditorCartaz({ fatos }: { fatos: FatosEvento }) {
   const [enviandoFoto, setEnviandoFoto] = useState(false);
   const [gerando, setGerando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const [propostas, setPropostas] = useState<Proposta[]>([]);
-  const [escolhida, setEscolhida] = useState<number | null>(null);
-  const [edicao, setEdicao] = useState<Proposta | null>(null);
-  const [previa, setPrevia] = useState<Proposta | null>(null);
+  const [tipoFoto, setTipoFoto] = useState<LeituraCaderno["tipoFoto"] | null>(null);
+  const [usarFoto, setUsarFoto] = useState(false);
+  const [edicao, setEdicao] = useState<EspecCaderno | null>(null);
+  const [previa, setPrevia] = useState<EspecCaderno | null>(null);
+
+  // O tamanho pode mudar depois sem ler a foto de novo.
+  const final: EspecCaderno | null = edicao ? { ...edicao, formato, foto: usarFoto ? foto : null } : null;
+  const chaveFinal = final ? codificarCaderno(final) : "";
   // A prévia só redesenha quando para de digitar (cada desenho leva uns segundos).
   useEffect(() => {
-    const t = setTimeout(() => setPrevia(edicao), 700);
+    const t = setTimeout(() => setPrevia(final), 700);
     return () => clearTimeout(t);
-  }, [edicao]);
-
-  const espec = (p: Proposta): EspecCartaz => ({
-    formato, detalhe, estilo: p.estilo, layout: foto ? p.layout : "sem-foto", foco: p.foco,
-    titulo: p.titulo || fatos.nome, chamada: p.chamada, destaques: p.destaques,
-    data: fatos.data, hora: fatos.hora, local: fatos.local,
-    preco: detalhe === "detalhado" ? fatos.preco : null, link: detalhe === "detalhado" ? fatos.link : null, foto,
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- chaveFinal resume o conteúdo de final
+  }, [chaveFinal]);
 
   const enviarFoto = async (arquivo: File) => {
     setEnviandoFoto(true);
@@ -86,18 +88,44 @@ export function EditorCartaz({ fatos }: { fatos: FatosEvento }) {
     }
   };
 
-  const gerar = async () => {
+  const ler = async () => {
     setGerando(true);
     setErro(null);
-    setPropostas([]);
-    setEscolhida(null);
-    setEdicao(null);
-    const r = await gerarPropostas({ fatos: fatos.resumo, formato, detalhe, frase, foto });
+    const r = await lerFotoParaCartaz({ fatos: fatos.resumo, foto, detalhe, frase });
     setGerando(false);
-    if (!r.ok || !r.propostas) return setErro(r.erro ?? "Não consegui gerar.");
-    setPropostas(r.propostas);
+    if (!r.ok || !r.leitura) return setErro(r.erro ?? "Não consegui ler a foto.");
+    const l = r.leitura;
+    setTipoFoto(l.tipoFoto);
+    // Flyer não entra como foto: as informações dele viram o cartaz novo.
+    setUsarFoto(l.tipoFoto === "foto");
+    setEdicao({
+      formato,
+      etiqueta: l.etiqueta,
+      titulo: l.titulo || fatos.nome,
+      tituloMarca: l.tituloMarca,
+      chamada: l.chamada,
+      chamadaForte: l.chamadaForte,
+      notas: l.notas,
+      publicoTitulo: l.publicoTitulo,
+      publico: l.publico,
+      itens: l.itens,
+      valores: detalhe === "detalhado" ? l.valores : [],
+      ondeTitulo: l.ondeTitulo || fatos.local || "",
+      ondeLinhas: l.ondeLinhas,
+      qrRotulo: "Inscrição",
+      link: detalhe === "detalhado" ? fatos.link : null,
+      foto: null,
+      legendaFoto: l.legendaFoto,
+    });
   };
 
+  const muda = (p: Partial<EspecCaderno>) => edicao && setEdicao({ ...edicao, ...p });
+  const mudaNota = (i: number, campo: "v" | "r", valor: string) => {
+    if (!edicao) return;
+    const n = [0, 1].map((k) => ({ v: edicao.notas[k]?.v ?? "", r: edicao.notas[k]?.r ?? "" }));
+    n[i][campo] = valor;
+    muda({ notas: n.filter((x) => x.v || x.r) });
+  };
   const proporcao = `${FORMATOS[formato].w} / ${FORMATOS[formato].h}`;
 
   return (
@@ -109,7 +137,7 @@ export function EditorCartaz({ fatos }: { fatos: FatosEvento }) {
             return (
               <button key={f} type="button" onClick={() => setFormato(f)} className={`flex flex-col items-center gap-2 rounded-xl border p-3 text-center ${formato === f ? "border-amadeus-blue bg-amadeus-blue-50 ring-2 ring-amadeus-blue/30" : "border-border hover:border-amadeus-blue/50"}`}>
                 <span className="flex h-24 items-center justify-center">
-                  <span className="block rounded-md bg-gradient-to-b from-amadeus-blue to-[#0A3A8C] shadow" style={{ height: 88, width: (88 * F.w) / F.h }} />
+                  <span className="block rounded-md border border-[#E4DCC8] bg-[#FAF7F0] shadow" style={{ height: 88, width: (88 * F.w) / F.h }} />
                 </span>
                 <span className="text-sm font-bold">{F.rotulo}</span>
                 <span className="text-xs text-muted-foreground">{F.detalhe}</span>
@@ -122,8 +150,8 @@ export function EditorCartaz({ fatos }: { fatos: FatosEvento }) {
       <Passo n={2} titulo="Quanta informação">
         <div className="grid gap-3 sm:grid-cols-2">
           {([
-            ["conciso", "Conciso", "Nome do evento, chamada, data, horário e local. Bom para story e para chamar atenção."],
-            ["detalhado", "Detalhado", "Tudo do conciso + destaques (o que inclui, público), valor e QR code para inscrição."],
+            ["conciso", "Conciso", "Título, chamada, data, horário, público e poucos destaques. Bom para story."],
+            ["detalhado", "Detalhado", "Tudo o que a foto e o cadastro trazem: atividades, valores, local e QR code para inscrição."],
           ] as const).map(([v, t, d]) => (
             <button key={v} type="button" onClick={() => setDetalhe(v)} className={`rounded-xl border p-4 text-left ${detalhe === v ? "border-amadeus-blue bg-amadeus-blue-50 ring-2 ring-amadeus-blue/30" : "border-border hover:border-amadeus-blue/50"}`}>
               <span className="font-bold">{t}</span>
@@ -135,10 +163,11 @@ export function EditorCartaz({ fatos }: { fatos: FatosEvento }) {
 
       <Passo n={3} titulo="Quer alguma frase? (opcional)">
         <input value={frase} onChange={(e) => setFrase(e.target.value)} placeholder="Ex.: Um dia inteiro de diversão com os amigos" className="w-full rounded-xl border border-border px-3 py-2 text-sm outline-none focus:border-amadeus-blue" />
-        <p className="mt-1.5 text-xs text-muted-foreground">Se deixar em branco, a IA sugere a chamada a partir da foto e do evento.</p>
+        <p className="mt-1.5 text-xs text-muted-foreground">Se deixar em branco, a IA escreve a chamada a partir da foto e do evento.</p>
       </Passo>
 
-      <Passo n={4} titulo="Foto">
+      <Passo n={4} titulo="Foto ou material do evento">
+        <p className="-mt-2 mb-3 text-xs text-muted-foreground">Se for um material pronto (flyer), a IA lê as informações dele e monta um cartaz novo no estilo caderno da escola.</p>
         <div className="flex flex-wrap gap-3">
           {fotos.map((f) => (
             <button key={f} type="button" onClick={() => setFoto(f)} className={`relative size-24 overflow-hidden rounded-xl border-2 ${foto === f ? "border-amadeus-blue" : "border-transparent"}`}>
@@ -157,70 +186,69 @@ export function EditorCartaz({ fatos }: { fatos: FatosEvento }) {
       </Passo>
 
       <div className="flex flex-wrap items-center gap-3">
-        <button type="button" onClick={gerar} disabled={gerando} className="inline-flex items-center gap-2 rounded-xl bg-amadeus-blue px-5 py-3 font-bold text-white hover:opacity-90 disabled:opacity-50">
+        <button type="button" onClick={ler} disabled={gerando} className="inline-flex items-center gap-2 rounded-xl bg-amadeus-blue px-5 py-3 font-bold text-white hover:opacity-90 disabled:opacity-50">
           {gerando ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-          {gerando ? "Lendo a foto e criando propostas…" : propostas.length ? "Gerar outras propostas" : "Ver propostas de cartaz"}
+          {gerando ? "Lendo a foto e montando o cartaz…" : edicao ? "Ler de novo" : "Ler a foto e montar o cartaz"}
         </button>
         {erro && <p className="text-sm text-red-700">{erro}</p>}
       </div>
 
-      {propostas.length > 0 && (
-        <section>
-          <p className="font-bold text-amadeus-blue">Escolha uma proposta</p>
-          <div className="mt-3 grid gap-4 md:grid-cols-3">
-            {propostas.map((p, i) => (
-              <button key={i} type="button" onClick={() => { setEscolhida(i); setEdicao(p); }} className={`overflow-hidden rounded-2xl border bg-white text-left ${escolhida === i ? "border-amadeus-blue ring-2 ring-amadeus-blue/40" : "border-border hover:border-amadeus-blue/50"}`}>
-                <img src={url(espec(p))} alt={p.nome} className="w-full bg-muted" style={{ aspectRatio: proporcao }} />
-                <span className="block p-3">
-                  <span className="block font-bold">{p.nome}</span>
-                  <span className="block text-xs text-muted-foreground">{p.porque}</span>
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {edicao && (
+      {edicao && final && (
         <section className="grid gap-5 rounded-2xl border border-border/60 bg-white p-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <div className="space-y-3 text-sm">
-            <p className="font-bold text-amadeus-blue">Ajustar e baixar</p>
-            <label className="block font-semibold">Título
-              <input value={edicao.titulo} onChange={(e) => setEdicao({ ...edicao, titulo: e.target.value })} className="mt-1 w-full rounded-lg border border-border px-3 py-2 font-normal outline-none focus:border-amadeus-blue" />
-            </label>
-            <label className="block font-semibold">Chamada
-              <textarea value={edicao.chamada} onChange={(e) => setEdicao({ ...edicao, chamada: e.target.value })} rows={2} className="mt-1 w-full rounded-lg border border-border px-3 py-2 font-normal outline-none focus:border-amadeus-blue" />
-            </label>
-            {detalhe === "detalhado" && (
-              <label className="block font-semibold">Destaques (um por linha, até 4)
-                <textarea value={edicao.destaques.join("\n")} onChange={(e) => setEdicao({ ...edicao, destaques: e.target.value.split("\n").slice(0, 4) })} rows={4} className="mt-1 w-full rounded-lg border border-border px-3 py-2 font-normal outline-none focus:border-amadeus-blue" />
-              </label>
-            )}
-            <div className="grid gap-3 sm:grid-cols-3">
-              <label className="block font-semibold">Cores
-                <select value={edicao.estilo} onChange={(e) => setEdicao({ ...edicao, estilo: e.target.value as Proposta["estilo"] })} className="mt-1 w-full rounded-lg border border-border bg-white px-2 py-2 font-normal">
-                  {Object.entries(ESTILOS).map(([k, v]) => <option key={k} value={k}>{v.rotulo}</option>)}
-                </select>
-              </label>
-              <label className="block font-semibold">Composição
-                <select value={edicao.layout} onChange={(e) => setEdicao({ ...edicao, layout: e.target.value as Proposta["layout"] })} className="mt-1 w-full rounded-lg border border-border bg-white px-2 py-2 font-normal">
-                  {Object.entries(LAYOUTS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                </select>
-              </label>
-              <label className="block font-semibold">Parte da foto
-                <select value={edicao.foco} onChange={(e) => setEdicao({ ...edicao, foco: e.target.value as Proposta["foco"] })} className="mt-1 w-full rounded-lg border border-border bg-white px-2 py-2 font-normal">
-                  <option value="top">Mostrar mais o topo</option>
-                  <option value="center">Centro</option>
-                  <option value="bottom">Mostrar mais embaixo</option>
-                </select>
-              </label>
+            <p className="font-bold text-amadeus-blue">Revisar e baixar</p>
+            {tipoFoto === "flyer" && <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">A imagem é um material com informações: a IA leu o que está escrito e montou o cartaz. Confira os dados antes de baixar.</p>}
+            <div className="grid gap-3 sm:grid-cols-[8rem_minmax(0,1fr)]">
+              <Campo rotulo="Etiqueta" valor={edicao.etiqueta} onChange={(v) => muda({ etiqueta: v.toUpperCase() })} />
+              <Campo rotulo="Título" valor={edicao.titulo} onChange={(v) => muda({ titulo: v })} />
             </div>
-            <a href={url(espec(edicao), true)} className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 font-bold text-white hover:bg-emerald-700">
+            <Campo rotulo="Parte do título grifada de amarelo" valor={edicao.tituloMarca} onChange={(v) => muda({ tituloMarca: v })} />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Campo rotulo="Chamada" valor={edicao.chamada} onChange={(v) => muda({ chamada: v })} linhasTexto={2} />
+              <Campo rotulo="Continuação em negrito" valor={edicao.chamadaForte} onChange={(v) => muda({ chamadaForte: v })} linhasTexto={2} />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[0, 1].map((i) => (
+                <div key={i} className="rounded-lg bg-[#FFF6D6] p-2">
+                  <p className="text-xs font-bold">Post-it {i + 1}</p>
+                  <input value={edicao.notas[i]?.v ?? ""} placeholder={i ? "Ex.: 7h30" : "Ex.: 15/10/2026"} onChange={(e) => mudaNota(i, "v", e.target.value)} className="mt-1 w-full rounded border border-border px-2 py-1" />
+                  <input value={edicao.notas[i]?.r ?? ""} placeholder={i ? "Ex.: SAÍDA DA ESCOLA" : "Ex.: QUINTA-FEIRA"} onChange={(e) => mudaNota(i, "r", e.target.value)} className="mt-1 w-full rounded border border-border px-2 py-1 text-xs" />
+                </div>
+              ))}
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Campo rotulo="Público (título)" valor={edicao.publicoTitulo} onChange={(v) => muda({ publicoTitulo: v })} />
+              <Campo rotulo="Público (um por linha)" valor={edicao.publico.join("\n")} onChange={(v) => muda({ publico: linhas(v, 4) })} linhasTexto={2} />
+            </div>
+            <Campo rotulo="Destaques / atividades (um por linha, até 6)" valor={edicao.itens.join("\n")} onChange={(v) => muda({ itens: v.split("\n").slice(0, 6) })} linhasTexto={4} />
+            {formato !== "quadrado" && (
+              <Campo
+                rotulo="Valores (um por linha, ex.: Aluno = R$ 80,00)"
+                valor={edicao.valores.map((x) => `${x.rotulo} = ${x.valor}`).join("\n")}
+                onChange={(v) => muda({ valores: linhas(v, 4).map((l) => { const [r, ...resto] = l.split("="); return { rotulo: r.trim(), valor: resto.join("=").trim() }; }) })}
+                linhasTexto={2}
+              />
+            )}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Campo rotulo="Onde é" valor={edicao.ondeTitulo} onChange={(v) => muda({ ondeTitulo: v })} />
+              <Campo rotulo="Detalhes do local (até 2 linhas)" valor={edicao.ondeLinhas.join("\n")} onChange={(v) => muda({ ondeLinhas: linhas(v, 2) })} linhasTexto={2} />
+            </div>
+            <label className="flex items-center gap-2 font-semibold">
+              <input type="checkbox" checked={!!edicao.link} onChange={(e) => muda({ link: e.target.checked ? fatos.link : null })} /> QR code para inscrição
+            </label>
+            {foto && (
+              <div className="space-y-2 rounded-lg border border-border p-3">
+                <label className="flex items-center gap-2 font-semibold">
+                  <input type="checkbox" checked={usarFoto} onChange={(e) => setUsarFoto(e.target.checked)} /> Colocar a foto no cartaz (moldura de polaroid)
+                </label>
+                {usarFoto && <Campo rotulo="Legenda da foto" valor={edicao.legendaFoto} onChange={(v) => muda({ legendaFoto: v })} />}
+              </div>
+            )}
+            <a href={url(final, true)} className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 font-bold text-white hover:bg-emerald-700">
               <Download className="size-4" /> Baixar cartaz (PNG)
             </a>
-            <p className="text-xs text-muted-foreground">Data, horário, local e valor vêm do cadastro do evento. Para mudar, edite o evento.</p>
           </div>
-          <img key={previa ? codificar(espec(previa)) : "vazio"} src={previa ? url(espec(previa)) : undefined} alt="Prévia" className="w-full rounded-xl border border-border bg-muted" style={{ aspectRatio: proporcao }} />
+          <img key={previa ? codificarCaderno(previa) : "vazio"} src={previa ? url(previa) : undefined} alt="Prévia" className="w-full self-start rounded-xl border border-border bg-muted" style={{ aspectRatio: proporcao }} />
         </section>
       )}
     </div>
