@@ -259,7 +259,7 @@ function Linha({ c, agora, aberta, abrir }: { c: Conversa; agora: number; aberta
               <Loader2 className="size-4 animate-spin text-muted-foreground" />
             ) : esperando ? (
               <>
-                <button type="button" onClick={() => marcar("resolvida")} title="Resolvido (não envia nada)" className="rounded-md p-1.5 text-emerald-700 hover:bg-emerald-50"><Check className="size-4" /></button>
+                <button type="button" onClick={() => marcar("resolvida")} title="Tira da lista (não envia nada)" className="inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50"><Check className="size-3.5" /> Marcar como concluída</button>
                 <button type="button" onClick={() => marcar("ignorada")} title="Ignorar (não envia nada)" className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"><EyeOff className="size-4" /></button>
               </>
             ) : (
@@ -346,7 +346,7 @@ export function PainelWhatsApp({ aguardando, fechadas, contatos, assuntos, gerad
   const abas = [
     { id: "importantes", rotulo: "Precisam de resposta", n: importantes.length },
     { id: "todas", rotulo: "Todas aguardando", n: ordenadas.length },
-    { id: "fechadas", rotulo: "Respondidas / resolvidas", n: fechadas.length },
+    { id: "fechadas", rotulo: "Concluídas", n: fechadas.length },
   ] as const;
 
   return (
@@ -390,7 +390,7 @@ export function PainelWhatsApp({ aguardando, fechadas, contatos, assuntos, gerad
         </ul>
       )}
       <p className="mt-3 text-xs text-muted-foreground">
-        “Ver mensagem” mostra o que a pessoa mandou; “Responder” abre a conversa para escrever. ✓ e ⊘ só organizam a lista: não enviam nada. <span className="text-amber-700">●</span> = chegou com a escola fechada (fim de semana ou fora do horário).
+        “Ver mensagem” mostra o que a pessoa mandou; “Responder” abre a conversa para escrever. “Marcar como concluída” e ⊘ só organizam a lista: não enviam nada. <span className="text-amber-700">●</span> = chegou com a escola fechada (fim de semana ou fora do horário).
       </p>
     </div>
   );
