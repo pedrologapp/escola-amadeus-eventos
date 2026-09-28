@@ -127,20 +127,22 @@ export async function GET(req: NextRequest) {
 
           </div>
 
-          {/* post-its + público */}
-          <div style={{ display: "flex", alignItems: "flex-start", gap: px(34), marginTop: px(46) }}>
-            {e.notas.slice(0, 2).map((n, i) => (
-              <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative", minWidth: px(300), padding: `${px(34)}px ${px(30)}px ${px(26)}px`, background: i === 0 ? "#FFE58A" : "#CFE3F7", transform: `rotate(${i === 0 ? -2.4 : 1.8}deg)` }}>
-                {fita(i === 0 ? "azul" : "ouro", i === 0 ? -3 : 2)}
-                <span style={{ fontFamily: "Fraunces", fontWeight: 700, fontSize: px(n.v.length > 11 ? 42 : 54), color: AZUL, lineHeight: 1 }}>{n.v}</span>
-                {n.r && <span style={{ marginTop: px(12), fontSize: px(21), fontWeight: 800, letterSpacing: px(4), textTransform: "uppercase", color: CINZA }}>{n.r}</span>}
-              </div>
-            ))}
+          {/* post-its e, embaixo, o público em pílulas (numa linha que quebra) */}
+          <div style={{ display: "flex", flexDirection: "column", marginTop: px(24) }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: px(34) }}>
+              {e.notas.slice(0, 2).map((n, i) => (
+                <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative", minWidth: px(300), padding: `${px(34)}px ${px(30)}px ${px(26)}px`, background: i === 0 ? "#FFE58A" : "#CFE3F7", transform: `rotate(${i === 0 ? -2.4 : 1.8}deg)` }}>
+                  {fita(i === 0 ? "azul" : "ouro", i === 0 ? -3 : 2)}
+                  <span style={{ fontFamily: "Fraunces", fontWeight: 700, fontSize: px(n.v.length > 11 ? 42 : 54), color: AZUL, lineHeight: 1 }}>{n.v}</span>
+                  {n.r && <span style={{ marginTop: px(12), fontSize: px(21), fontWeight: 800, letterSpacing: px(4), textTransform: "uppercase", color: CINZA }}>{n.r}</span>}
+                </div>
+              ))}
+            </div>
             {e.publico.length > 0 && (
-              <div style={{ display: "flex", flexDirection: "column", gap: px(12), marginLeft: px(10) }}>
-                {e.publicoTitulo && <span style={{ fontSize: px(25), color: CINZA }}>{e.publicoTitulo}</span>}
+              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: px(12), marginTop: px(34) }}>
+                {e.publicoTitulo && <span style={{ fontSize: px(25), color: CINZA, marginRight: px(6) }}>{e.publicoTitulo}</span>}
                 {e.publico.slice(0, 4).map((p) => (
-                  <span key={p} style={{ display: "flex", alignSelf: "flex-start", fontSize: px(22), fontWeight: 700, padding: `${px(8)}px ${px(22)}px`, borderRadius: 99, background: "#FFFFFF", border: `${Math.max(1, px(3))}px solid ${AZUL}`, color: AZUL }}>{p}</span>
+                  <span key={p} style={{ display: "flex", fontSize: px(22), fontWeight: 700, padding: `${px(8)}px ${px(22)}px`, borderRadius: 99, background: "#FFFFFF", border: `${Math.max(1, px(3))}px solid ${AZUL}`, color: AZUL }}>{p}</span>
                 ))}
               </div>
             )}
@@ -148,7 +150,7 @@ export async function GET(req: NextRequest) {
 
           {/* foto (polaroid) + itens */}
           {(foto || itens.length > 0) && (
-            <div style={{ display: "flex", flexWrap: foto ? "nowrap" : "wrap", alignItems: "flex-start", gap: px(30), marginTop: px(40) }}>
+            <div style={{ display: "flex", flexWrap: foto ? "nowrap" : "wrap", alignItems: "flex-start", gap: px(30), marginTop: px(24) }}>
               {foto && (
                 <div style={{ display: "flex", flexDirection: "column", position: "relative", background: "#FFFFFF", padding: `${px(16)}px ${px(16)}px 0`, transform: "rotate(-1.5deg)", width: itens.length ? px(470) : px(700) }}>
                   {fita("ouro", -2, 170)}
@@ -169,7 +171,7 @@ export async function GET(req: NextRequest) {
 
           {/* valores */}
           {e.valores.length > 0 && !quadrado && (
-            <div style={{ display: "flex", flexDirection: "column", marginTop: px(52) }}>
+            <div style={{ display: "flex", flexDirection: "column", marginTop: px(24) }}>
               {rotulo("Valores")}
               <div style={{ display: "flex", flexWrap: "wrap", gap: `${px(10)}px ${px(40)}px`, marginTop: px(16) }}>
                 {e.valores.slice(0, 4).map((v, i) => (
@@ -184,7 +186,7 @@ export async function GET(req: NextRequest) {
 
           {/* bilhete: onde é + QR */}
           {(e.ondeTitulo || qr) && (
-            <div style={{ display: "flex", alignItems: "center", gap: px(40), position: "relative", marginTop: px(40), background: "#FFFFFF", padding: `${px(40)}px ${px(46)}px`, borderRadius: px(10), transform: "rotate(-0.5deg)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: px(40), position: "relative", marginTop: px(30), background: "#FFFFFF", padding: `${px(34)}px ${px(46)}px`, borderRadius: px(10), transform: "rotate(-0.5deg)" }}>
               <div style={{ display: "flex", position: "absolute", top: -px(22), left: px(60), width: px(150), height: px(44), background: "rgba(127,178,230,.88)", transform: "rotate(-3deg)" }} />
               <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
                 <span style={{ fontSize: px(20), fontWeight: 800, letterSpacing: px(4), textTransform: "uppercase", color: "#B07800" }}>Onde é</span>

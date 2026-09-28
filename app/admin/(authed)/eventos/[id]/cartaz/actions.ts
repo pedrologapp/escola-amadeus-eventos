@@ -188,7 +188,7 @@ export async function lerFotoParaCartaz(entrada: {
         valores: (Array.isArray(j.valores) ? j.valores : []).slice(0, 4).map((v) => ({ rotulo: String(v?.rotulo ?? "").slice(0, 20), valor: String(v?.valor ?? "").slice(0, 16) })),
         ondeTitulo: String(j.ondeTitulo ?? "").slice(0, 40),
         ondeLinhas: lista(j.ondeLinhas, 2),
-        legendaFoto: String(j.legendaFoto ?? "").slice(0, 30),
+        legendaFoto: String(j.legendaFoto ?? "").slice(0, 40),
       },
     };
   } catch (e) {
