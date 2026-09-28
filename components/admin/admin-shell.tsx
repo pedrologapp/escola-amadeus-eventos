@@ -8,6 +8,7 @@ import {
   OlhinhoGlobal,
   ValoresSensiveisProvider,
 } from "@/components/admin/valores-sensiveis";
+import { valoresLiberados } from "@/lib/valores-auth";
 
 interface AdminShellProps {
   userEmail: string;
@@ -15,9 +16,10 @@ interface AdminShellProps {
 }
 
 /** As abas da barra (e qual acende em cada página) estão em admin-nav.tsx. */
-export function AdminShell({ userEmail, children }: AdminShellProps) {
+export async function AdminShell({ userEmail, children }: AdminShellProps) {
+  const liberado = await valoresLiberados();
   return (
-    <ValoresSensiveisProvider>
+    <ValoresSensiveisProvider liberado={liberado}>
     <div className="min-h-screen">
       <header className="sticky top-0 z-40 border-b border-border/60 bg-white/85 backdrop-blur-md print:hidden">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">

@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/lib/utils";
+import { valoresLiberados } from "@/lib/valores-auth";
 import { AdminEventosTabbed, type AdminEventoItem } from "./eventos-tabbed";
 import { MetricasCompactas, type MetricaItem } from "../dashboard/metricas-compactas";
 
@@ -100,10 +101,11 @@ export default async function AdminEventosPage() {
   }
   const publicados = (eventos ?? []).filter((e) => e.status === "publicado").length;
   const receitaAtivos = proximos.reduce((s, ev) => s + (receitaPorEvento.get(ev.id) ?? 0), 0);
+  const liberado = await valoresLiberados();
   const metricas: MetricaItem[] = [
     { titulo: "Eventos publicados", valor: `${publicados} de ${(eventos ?? []).length}`, icone: "calendario" },
-    { titulo: "Ingressos vendidos", valor: ingressosVendidos.toString(), icone: "ingresso", sensivel: true },
-    { titulo: "Receita (eventos ativos)", valor: formatCurrency(receitaAtivos), icone: "carteira", sensivel: true },
+    { titulo: "Ingressos vendidos", valor: liberado ? ingressosVendidos.toString() : null, icone: "ingresso", sensivel: true },
+    { titulo: "Receita (eventos ativos)", valor: liberado ? formatCurrency(receitaAtivos) : null, icone: "carteira", sensivel: true },
   ];
 
   return (

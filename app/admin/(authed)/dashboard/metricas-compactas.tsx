@@ -20,7 +20,8 @@ const ICONES = {
 
 export interface MetricaItem {
   titulo: string;
-  valor: string;
+  /** null = trancado (sem a senha o servidor não manda o valor). */
+  valor: string | null;
   icone: keyof typeof ICONES;
   /** Sensível = entra oculto; revela pelo olhinho. */
   sensivel?: boolean;
@@ -50,7 +51,7 @@ export function MetricasCompactas({ metricas }: { metricas: MetricaItem[] }) {
                 {m.titulo}
               </span>
               <span className="text-sm font-extrabold tabular-nums text-amadeus-blue">
-                {m.sensivel ? <ValorSensivel valor={m.valor} /> : m.valor}
+                {m.sensivel ? <ValorSensivel valor={m.valor} moeda={m.icone === "carteira"} /> : m.valor}
               </span>
             </div>
           );

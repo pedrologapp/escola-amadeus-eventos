@@ -56,7 +56,7 @@ const statusBadge: Record<InscricaoStatus, { label: string; className: string }>
 
 type Aba = "todas" | "pagas" | "pendentes" | "canceladas";
 
-export function CobrancasTable({ cobrancas }: { cobrancas: CobrancaRow[] }) {
+export function CobrancasTable({ cobrancas, liberado = false }: { cobrancas: CobrancaRow[]; liberado?: boolean }) {
   const [aba, setAba] = useState<Aba>("todas");
   const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
 
@@ -240,7 +240,7 @@ export function CobrancasTable({ cobrancas }: { cobrancas: CobrancaRow[] }) {
                     </div>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right font-semibold tabular-nums">
-                    {formatCurrency(Number(c.valor_total ?? c.valor))}
+                    {liberado ? formatCurrency(Number(c.valor_total ?? c.valor)) : "R$ ••••"}
                     <div className="text-xs font-normal text-muted-foreground">
                       {c.metodo_cobranca === "pix" && "PIX"}
                       {c.metodo_cobranca === "cartao" &&

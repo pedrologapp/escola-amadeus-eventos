@@ -63,7 +63,7 @@ function normalizar(texto: string) {
     .toLowerCase();
 }
 
-export function InscricoesTable({ inscricoes }: { inscricoes: InscricaoRow[] }) {
+export function InscricoesTable({ inscricoes, liberado = false }: { inscricoes: InscricaoRow[]; liberado?: boolean }) {
   const [aba, setAba] = useState<Aba>("todas");
   const [busca, setBusca] = useState("");
   const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
@@ -242,7 +242,7 @@ export function InscricoesTable({ inscricoes }: { inscricoes: InscricaoRow[] }) 
                       )}
                     </td>
                     <td className="py-3 pr-4 tabular-nums">
-                      {formatCurrency(Number(i.valor_total))}
+                      {liberado ? formatCurrency(Number(i.valor_total)) : "R$ ••••"}
                     </td>
                     <td className="py-3 pr-4">
                       {i.metodo_pagamento === "pix"

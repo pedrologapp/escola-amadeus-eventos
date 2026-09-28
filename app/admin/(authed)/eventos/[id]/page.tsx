@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { valoresLiberados } from "@/lib/valores-auth";
 import { calcEstoquePorTipo } from "@/lib/estoque";
 import {
   getLoteAtivo,
@@ -102,6 +103,7 @@ export default async function EventoDetailPage({ params }: PageProps) {
   const totalPendentes = lista.filter(
     (i) => i.status_pagamento === "pendente",
   ).length;
+  const liberado = await valoresLiberados();
   const receita = lista
     .filter((i) => i.status_pagamento === "pago")
     .reduce((sum, i) => sum + Number(i.valor_total ?? 0), 0);
@@ -195,7 +197,7 @@ export default async function EventoDetailPage({ params }: PageProps) {
         />
         <MetricCard
           label="Receita confirmada"
-          value={formatCurrency(receita)}
+          value={liberado ? formatCurrency(receita) : "R$ ••••"}
           icon={Wallet}
         />
       </section>
@@ -394,6 +396,7 @@ export default async function EventoDetailPage({ params }: PageProps) {
           </CardHeader>
           <CardContent>
             <InscricoesTable
+                liberado={liberado}
               inscricoes={lista.map((i) => {
                 const aluno = i.aluno as unknown as
                   | { nome_completo: string; serie: string; turma: string }
@@ -412,7 +415,7 @@ export default async function EventoDetailPage({ params }: PageProps) {
                   id: i.id,
                   responsavel_nome: i.responsavel_nome,
                   telefone: i.telefone,
-                  valor_total: Number(i.valor_total),
+                  valor_total: liberado ? Number(i.valor_total) : 0,
                   total_senhas: totalSenhas,
                   senhas_detalhe: senhasDetalhe,
                   status_pagamento: i.status_pagamento,

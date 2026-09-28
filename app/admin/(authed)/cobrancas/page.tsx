@@ -11,6 +11,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/lib/utils";
 import { ValorSensivel } from "@/components/admin/valores-sensiveis";
+import { valoresLiberados } from "@/lib/valores-auth";
 import { CobrancasTable, type CobrancaRow } from "./cobrancas-table";
 
 export default async function CobrancasPage() {
@@ -60,6 +61,8 @@ export default async function CobrancasPage() {
     aluno_nome: c.aluno_nome ?? null,
   }));
 
+  // Sem a senha, os valores nem vão para o navegador (zerados aqui, "R$ ••••" na tela).
+  const liberado = await valoresLiberados();
   const totalPago = lista
     .filter((c) => c.status_pagamento === "pago")
     .reduce((sum, c) => sum + Number(c.valor_total ?? c.valor), 0);
@@ -77,7 +80,7 @@ export default async function CobrancasPage() {
             ) : (
               <>
                 {lista.length} cobrança{lista.length === 1 ? "" : "s"} ·{" "}
-                <ValorSensivel valor={formatCurrency(totalPago)} /> recebido
+                <ValorSensivel valor={liberado ? formatCurrency(totalPago) : null} /> recebido
               </>
             )}
           </p>
@@ -102,7 +105,7 @@ export default async function CobrancasPage() {
         </Card>
       ) : (
         <Card className="mt-8 overflow-hidden p-0">
-          <CobrancasTable cobrancas={lista} />
+          <CobrancasTable cobrancas={liberado ? lista : lista.map((c) => ({ ...c, valor: 0, valor_total: 0 }))} liberado={liberado} />
         </Card>
       )}
     </div>
