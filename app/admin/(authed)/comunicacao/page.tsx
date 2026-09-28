@@ -1,4 +1,4 @@
-import { Cake, MessageSquareHeart } from "lucide-react";
+import { Cake, MessageCircleWarning, MessageSquareHeart } from "lucide-react";
 import { ModuloCard, type Modulo } from "@/components/admin/modulo-card";
 
 /**
@@ -14,6 +14,13 @@ const MODULOS: Modulo[] = [
     titulo: "Aniversários",
     descricao: "Aniversariantes de hoje e dos próximos dias, e se o cartão foi enviado no WhatsApp.",
     selo: "Automático · 7h",
+  },
+  {
+    href: "/admin/comunicacao/whatsapp",
+    icone: MessageCircleWarning,
+    titulo: "WhatsApp",
+    descricao: "Mensagens que chegaram no WhatsApp da escola e ainda esperam resposta, por assunto e importância.",
+    selo: "Só leitura",
   },
   {
     href: "/admin/enquete",
