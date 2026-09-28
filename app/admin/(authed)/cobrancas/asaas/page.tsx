@@ -196,7 +196,7 @@ export default async function RecebimentosAsaasPage({ searchParams }: { searchPa
           </table>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          Até 08/09/2026 os dados são da conta antiga do Asaas (bloqueada); depois, da conta atual. Valores brutos (antes da taxa do Asaas). Cartão parcelado: o Asaas confirma todas as parcelas na hora e cada uma entra na conta no seu mês; as que ainda vão cair aparecem em “Cartão a cair”.
+          Soma as duas contas do Asaas: a atual (desde 08/09/2026) e a antiga (bloqueada, onde ainda caem parcelas de livros e cartões antigos). Valores brutos (antes da taxa do Asaas). Cartão parcelado: o Asaas confirma todas as parcelas na hora e cada uma entra na conta no seu mês; as que ainda vão cair aparecem em “Cartão a cair”.
         </p>
       </section>
     </div>

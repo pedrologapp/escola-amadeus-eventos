@@ -10,9 +10,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * Nunca muda status_pagamento: quem marca "pago" e manda a confirmação no
  * WhatsApp continua sendo o fluxo do n8n.
  *
- * Conta: só a conta ATUAL do Asaas (ASAAS_API_KEY). A antiga foi bloqueada e
- * a escola trocou de conta em 08/09/2026; o que veio dela está guardado com
- * conta = "antiga" (migration 0038).
+ * Contas: a ATUAL (ASAAS_API_KEY, desde 08/09/2026) e a ANTIGA (ASAAS_API_KEY_ANTIGA,
+ * opcional) — foi bloqueada mas ainda recebe parcelas de livros e cartões
+ * antigos. Cada recebimento guarda de qual conta veio (migration 0038).
  */
 
 const API = "https://www.asaas.com/api/v3";
@@ -36,9 +36,17 @@ interface Pagamento {
 
 const espera = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-async function asaas<T>(caminho: string): Promise<{ ok: boolean; status: number; json: T | null }> {
-  const chave = process.env.ASAAS_API_KEY;
-  if (!chave) throw new Error("ASAAS_API_KEY não configurada na Vercel.");
+/** Conta atual (desde 08/09/2026) e a antiga (bloqueada, mas ainda recebe parcelas de livros e cartões antigos). */
+function contas() {
+  const lista = [
+    { conta: "atual", chave: process.env.ASAAS_API_KEY },
+    { conta: "antiga", chave: process.env.ASAAS_API_KEY_ANTIGA },
+  ].filter((c): c is { conta: string; chave: string } => !!c.chave);
+  if (!lista.some((c) => c.conta === "atual")) throw new Error("ASAAS_API_KEY não configurada na Vercel.");
+  return lista;
+}
+
+async function asaas<T>(caminho: string, chave: string): Promise<{ ok: boolean; status: number; json: T | null }> {
   for (let tentativa = 0; tentativa < 4; tentativa++) {
     try {
       const r = await fetch(API + caminho, { headers: { access_token: chave, "User-Agent": "amadeus-admin" }, cache: "no-store" });
@@ -52,10 +60,10 @@ async function asaas<T>(caminho: string): Promise<{ ok: boolean; status: number;
   return { ok: false, status: 0, json: null };
 }
 
-async function listar(filtro: string): Promise<Pagamento[]> {
+async function listar(filtro: string, chave: string): Promise<Pagamento[]> {
   const todos: Pagamento[] = [];
   for (let offset = 0; offset < 20000; offset += 100) {
-    const r = await asaas<{ data: Pagamento[]; hasMore: boolean }>(`/payments?${filtro}&limit=100&offset=${offset}`);
+    const r = await asaas<{ data: Pagamento[]; hasMore: boolean }>(`/payments?${filtro}&limit=100&offset=${offset}`, chave);
     if (!r.ok || !r.json) throw new Error(`Asaas respondeu ${r.status} ao listar pagamentos.`);
     todos.push(...r.json.data);
     if (!r.json.hasMore) break;
@@ -75,6 +83,19 @@ function categoriaExterna(p: Pagamento): string {
   return antes.length > 40 ? "Outros" : antes;
 }
 
+/** Situação de uma cobrança: procura na conta atual e na antiga; "REMOVIDA" se não existe (ou foi apagada) em nenhuma. */
+async function situacao(payId: string): Promise<string | null> {
+  let achou: string | null = null;
+  for (const { chave } of contas()) {
+    const r = await asaas<{ status: string; deleted?: boolean }>(`/payments/${payId}`, chave);
+    if (r.status === 404) continue;
+    if (!r.ok || !r.json) return null; // falha de rede: não conclui nada
+    if (!r.json.deleted) return r.json.status;
+    achou = "REMOVIDA";
+  }
+  return achou ?? "REMOVIDA";
+}
+
 export interface ResultadoConferencia {
   ok: boolean;
   erro?: string;
@@ -86,16 +107,18 @@ export async function conferirComAsaas(): Promise<ResultadoConferencia> {
   const db = createAdminClient();
   try {
     // 1) Tudo que entrou. Na 1ª vez desde o início do ano; depois, os últimos 60 dias.
-    const { count } = await db.from("asaas_recebimentos").select("id", { count: "exact", head: true });
-    const desde = count ? new Date(Date.now() - 60 * 864e5).toISOString().slice(0, 10) : INICIO;
-    const recebidos = [
-      ...(await listar(`status=RECEIVED&paymentDate[ge]=${desde}`)),
-      // Cartão confirmado ainda sem crédito e recebido em dinheiro são poucos: sem filtro de data.
-      ...(await listar("status=CONFIRMED")),
-      ...(await listar("status=RECEIVED_IN_CASH")),
-    ];
     const { data: insc } = await db.from("inscricoes").select("id");
     const ids = new Set((insc ?? []).map((i) => i.id as string));
+    let total = 0;
+    for (const { conta, chave } of contas()) {
+    const { count } = await db.from("asaas_recebimentos").select("id", { count: "exact", head: true }).eq("conta", conta);
+    const desde = count ? new Date(Date.now() - 60 * 864e5).toISOString().slice(0, 10) : INICIO;
+    const recebidos = [
+      ...(await listar(`status=RECEIVED&paymentDate[ge]=${desde}`, chave)),
+      // Cartão confirmado ainda sem crédito e recebido em dinheiro são poucos: sem filtro de data.
+      ...(await listar("status=CONFIRMED", chave)),
+      ...(await listar("status=RECEIVED_IN_CASH", chave)),
+    ];
     const linhas = recebidos.map((p) => {
       const ref = p.externalReference ?? "";
       const origem = ref.startsWith("avulsa_") ? "avulsa" : ids.has(ref) ? "evento" : "externo";
@@ -113,7 +136,7 @@ export async function conferirComAsaas(): Promise<ResultadoConferencia> {
         origem,
         categoria: origem === "avulsa" ? "Cobrança avulsa" : origem === "evento" ? "Eventos" : categoriaExterna(p),
         parcela: p.installmentNumber ?? null,
-        conta: "atual", // a antiga (bloqueada, até 08/09) ficou só no histórico
+        conta,
         atualizado_em: new Date().toISOString(),
       };
     });
@@ -122,8 +145,10 @@ export async function conferirComAsaas(): Promise<ResultadoConferencia> {
       if (error) throw new Error(error.message);
     }
     // Estornados saem da lista de recebidos.
-    const estornados = await listar(`status=REFUNDED&dateCreated[ge]=${INICIO}`).catch(() => [] as Pagamento[]);
+    const estornados = await listar(`status=REFUNDED&dateCreated[ge]=${INICIO}`, chave).catch(() => [] as Pagamento[]);
     if (estornados.length) await db.from("asaas_recebimentos").delete().in("id", estornados.map((p) => p.id));
+    total += linhas.length;
+    }
 
     // 2) Cobranças avulsas: quanto já entrou (soma das parcelas) e situação das que não foram pagas.
     let conferidas = 0;
@@ -141,8 +166,7 @@ export async function conferirComAsaas(): Promise<ResultadoConferencia> {
         asaas_conferido_em: new Date().toISOString(),
       };
       if (c.status_pagamento !== "pago") {
-        const r = await asaas<{ status: string; deleted?: boolean }>(`/payments/${c.asaas_payment_id}`);
-        upd.asaas_status = r.status === 404 || r.json?.deleted ? "REMOVIDA" : r.json?.status ?? null;
+        upd.asaas_status = await situacao(c.asaas_payment_id as string);
         conferidas++;
         await espera(120);
       } else {
@@ -159,15 +183,14 @@ export async function conferirComAsaas(): Promise<ResultadoConferencia> {
       .not("asaas_payment_id", "is", null);
     for (const i of pend ?? []) {
       if (i.asaas_status === "REMOVIDA") continue;
-      const r = await asaas<{ status: string; deleted?: boolean }>(`/payments/${i.asaas_payment_id}`);
-      const st = r.status === 404 || r.json?.deleted ? "REMOVIDA" : r.json?.status ?? null;
+      const st = await situacao(i.asaas_payment_id as string);
       await db.from("inscricoes").update({ asaas_status: st, asaas_conferido_em: new Date().toISOString() }).eq("id", i.id);
       conferidas++;
       await espera(120);
     }
 
-    await db.from("asaas_conferencias").insert({ recebimentos: linhas.length, pendentes_conferidas: conferidas });
-    return { ok: true, recebimentos: linhas.length, pendentesConferidas: conferidas };
+    await db.from("asaas_conferencias").insert({ recebimentos: total, pendentes_conferidas: conferidas });
+    return { ok: true, recebimentos: total, pendentesConferidas: conferidas };
   } catch (e) {
     const erro = (e as Error).message.slice(0, 300);
     await db.from("asaas_conferencias").insert({ erro });
