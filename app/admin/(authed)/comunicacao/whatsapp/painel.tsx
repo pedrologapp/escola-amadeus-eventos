@@ -61,6 +61,23 @@ function quando(iso: string | null, curto = false) {
 }
 
 /** Sábado, domingo ou fora do horário (antes das 7h, depois das 18h). */
+/**
+ * Sem resposta há muito tempo (direção, 28/09/2026): 5 horas ou mais, ou
+ * chegou num dia e virou o dia sem resposta. Devolve o texto do selo.
+ */
+const DIA = (t: number) => new Date(t).toLocaleDateString("pt-BR", { timeZone: "America/Fortaleza" });
+function atraso(c: { status: string; ultima_da_escola: boolean; aguardando_desde: string | null; ultima_msg_em: string | null }, agora: number) {
+  if (c.status !== "aguardando" || c.ultima_da_escola) return null;
+  const iso = c.aguardando_desde ?? c.ultima_msg_em;
+  if (!iso) return null;
+  const desde = Date.parse(iso);
+  const h = Math.floor((agora - desde) / 3600000);
+  if (h >= 24) return `sem resposta há ${Math.floor(h / 24)} dia${h >= 48 ? "s" : ""}`;
+  if (h >= 5) return `sem resposta há ${h}h`;
+  if (DIA(desde) !== DIA(agora)) return "sem resposta desde ontem";
+  return null;
+}
+
 function foraDoHorario(iso: string | null) {
   if (!iso) return false;
   const d = new Date(iso);
@@ -232,6 +249,7 @@ function Linha({ c, agora, aberta, abrir }: { c: Conversa; agora: number; aberta
   const esperando = c.status === "aguardando";
   const iso = esperando ? c.aguardando_desde ?? c.ultima_msg_em : c.ultima_msg_em;
   const fechado = foraDoHorario(iso);
+  const atrasada = atraso(c, agora);
   // No computador tudo numa linha; no celular quebra em nome/hora, resumo e botões (nada fica por cima).
   return (
     <li className={`${aberta ? "bg-amadeus-blue-50/30" : esperando && c.ultima_da_escola ? "bg-emerald-50/50" : ""} ${esperando && c.ultima_da_escola ? "border-l-4 border-l-emerald-500" : ""}`}>
@@ -240,6 +258,9 @@ function Linha({ c, agora, aberta, abrir }: { c: Conversa; agora: number; aberta
           <span className="flex min-w-0 items-center gap-2 lg:w-56 lg:shrink-0">
             <span className={`size-2.5 shrink-0 rounded-full ${PONTO[imp]}`} title={ROTULO[imp]} />
             <span className="min-w-0 flex-1 truncate font-semibold" title={[telLegivel(c.telefone), c.vinculo].filter(Boolean).join(" · ")}>{c.nome_cadastro || c.contato || telLegivel(c.telefone)}</span>
+            {atrasada && (
+              <span className="shrink-0 rounded-md bg-orange-500 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white" title={`Chegou ${quando(c.aguardando_desde ?? c.ultima_msg_em)}`}>{atrasada}</span>
+            )}
             {c.urgente && (
               <span className="shrink-0 rounded-md bg-red-600 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white" title={c.alertado_em ? "Avisado no grupo Amadeus - Direção" : undefined}>urgente</span>
             )}
@@ -349,7 +370,7 @@ export function PainelWhatsApp({ aguardando, fechadas, contatos, assuntos, gerad
   }, [router]);
 
   const ordenadas = [...aguardando].sort(
-    (a, b) => Number(!!b.urgente) - Number(!!a.urgente) || ORDEM[a.importancia ?? "media"] - ORDEM[b.importancia ?? "media"] || Date.parse(a.aguardando_desde ?? "") - Date.parse(b.aguardando_desde ?? ""),
+    (a, b) => Number(!!b.urgente) - Number(!!a.urgente) || Number(!!atraso(b, geradoEm)) - Number(!!atraso(a, geradoEm)) || ORDEM[a.importancia ?? "media"] - ORDEM[b.importancia ?? "media"] || Date.parse(a.aguardando_desde ?? "") - Date.parse(b.aguardando_desde ?? ""),
   );
   // Quem já foi respondido (pelo painel ou pelo celular da escola) sai de "Precisam de resposta"
   // e espera em "Já respondidas" até alguém marcar como concluída.
@@ -363,6 +384,7 @@ export function PainelWhatsApp({ aguardando, fechadas, contatos, assuntos, gerad
       router.refresh();
     });
   const nAlta = aguardando.filter((c) => c.importancia === "alta" && !c.ultima_da_escola).length;
+  const nAtrasadas = aguardando.filter((c) => atraso(c, geradoEm)).length;
   const hora = new Date(geradoEm).toLocaleTimeString("pt-BR", { timeZone: "America/Fortaleza", hour: "2-digit", minute: "2-digit" });
 
   const abas = [
@@ -377,6 +399,9 @@ export function PainelWhatsApp({ aguardando, fechadas, contatos, assuntos, gerad
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
         <span><b className="text-red-700">{nAlta}</b> importante{nAlta === 1 ? "" : "s"}</span>
         <span><b className="text-amadeus-blue">{semResposta}</b> sem resposta</span>
+        {nAtrasadas > 0 && (
+          <span className="rounded-md bg-orange-100 px-2 py-0.5 text-orange-800"><b>{nAtrasadas}</b> há 5h ou mais (ou desde ontem)</span>
+        )}
         {assuntos.length > 0 && (
           <span className="text-muted-foreground">Semana: {assuntos.slice(0, 5).map(([a, n]) => `${a} ${n}`).join(" · ")}</span>
         )}

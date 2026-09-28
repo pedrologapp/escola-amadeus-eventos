@@ -115,7 +115,11 @@ export function EditorCartaz({ fatos, modo = "evento" }: { fatos: FatosEvento; m
       notas: l.notas,
       publicoTitulo: l.publicoTitulo,
       publico: l.publico,
+      itensTitulo: l.itensTitulo || "O que está incluso",
       itens: l.itens,
+      observacoesTitulo: "Não esqueça",
+      observacoes: l.observacoes,
+      fotoPos: "titulo",
       valores: detalhe === "detalhado" ? l.valores : [],
       ondeTitulo: l.ondeTitulo || fatos.local || "",
       ondeLinhas: l.ondeLinhas,
@@ -236,7 +240,20 @@ export function EditorCartaz({ fatos, modo = "evento" }: { fatos: FatosEvento; m
               <Campo rotulo="Público (título)" valor={edicao.publicoTitulo} onChange={(v) => muda({ publicoTitulo: v })} />
               <Campo rotulo="Público (um por linha)" valor={edicao.publico.join("\n")} onChange={(v) => muda({ publico: linhas(v, 4) })} linhasTexto={2} />
             </div>
-            <Campo rotulo="Destaques / atividades (um por linha, até 6)" valor={edicao.itens.join("\n")} onChange={(v) => muda({ itens: v.split("\n").slice(0, 6) })} linhasTexto={4} />
+            <div className="rounded-lg border border-border p-3">
+              <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+                <Campo rotulo="Título dos cartões" valor={edicao.itensTitulo ?? "O que está incluso"} onChange={(v) => muda({ itensTitulo: v })} />
+                <Campo rotulo="Itens (um por linha, até 6)" valor={edicao.itens.join("\n")} onChange={(v) => muda({ itens: v.split("\n").slice(0, 6) })} linhasTexto={4} />
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">Ex.: O que está incluso, Programação, Pauta. Deixe o título vazio para não aparecer.</p>
+            </div>
+            <div className="rounded-lg bg-[#FFF6D6] p-3">
+              <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+                <Campo rotulo="Título do bilhete" valor={edicao.observacoesTitulo ?? "Não esqueça"} onChange={(v) => muda({ observacoesTitulo: v })} />
+                <Campo rotulo="Observações (uma por linha, até 8)" valor={(edicao.observacoes ?? []).join("\n")} onChange={(v) => muda({ observacoes: v.split("\n").slice(0, 8) })} linhasTexto={4} />
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">O que a família precisa saber ou levar: garrafinha, lanche, farda, protetor solar, autorização... Aparece num bilhete amarelo com caixinhas de marcar. O encarte se ajusta para caber tudo.</p>
+            </div>
             {formato !== "quadrado" && (
               <Campo
                 rotulo="Valores (um por linha, ex.: Aluno = R$ 80,00)"
@@ -262,9 +279,18 @@ export function EditorCartaz({ fatos, modo = "evento" }: { fatos: FatosEvento; m
             {foto && (
               <div className="space-y-2 rounded-lg border border-border p-3">
                 <label className="flex items-center gap-2 font-semibold">
-                  <input type="checkbox" checked={usarFoto} onChange={(e) => setUsarFoto(e.target.checked)} /> Colocar a foto no cartaz (moldura de polaroid)
+                  <input type="checkbox" checked={usarFoto} onChange={(e) => setUsarFoto(e.target.checked)} /> Colocar a foto no cartaz
                 </label>
-                {usarFoto && <Campo rotulo="Legenda da foto" valor={edicao.legendaFoto} onChange={(v) => muda({ legendaFoto: v })} />}
+                {usarFoto && (
+                  <>
+                    <div className="flex flex-wrap gap-2">
+                      {([["titulo", "Ao lado do título (canto direito)"], ["polaroid", "Junto dos itens (polaroid)"]] as const).map(([v, t]) => (
+                        <button key={v} type="button" onClick={() => muda({ fotoPos: v })} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${(edicao.fotoPos ?? "polaroid") === v ? "border-amadeus-blue bg-amadeus-blue-50 text-amadeus-blue" : "border-border text-muted-foreground hover:border-amadeus-blue/50"}`}>{t}</button>
+                      ))}
+                    </div>
+                    <Campo rotulo="Legenda da foto (opcional)" valor={edicao.legendaFoto} onChange={(v) => muda({ legendaFoto: v })} />
+                  </>
+                )}
               </div>
             )}
             <a href={url(final, true)} className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 font-bold text-white hover:bg-emerald-700">

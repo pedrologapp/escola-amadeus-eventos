@@ -115,7 +115,9 @@ export interface LeituraCaderno {
   notas: { v: string; r: string }[];
   publicoTitulo: string;
   publico: string[];
+  itensTitulo: string;
   itens: string[];
+  observacoes: string[];
   valores: { rotulo: string; valor: string }[];
   ondeTitulo: string;
   ondeLinhas: string[];
@@ -155,10 +157,10 @@ export async function lerFotoParaCartaz(entrada: {
         "Escreva em português do Brasil, sem emojis, frases curtas. " +
         "Campos: etiqueta (1 palavra em maiúsculas: CONVITE, PASSEIO, EVENTO, FESTA, AVISO...); titulo + tituloMarca (o título dividido em duas partes; a segunda é grifada de amarelo, ex.: 'Dia das Crianças' + 'no Viva Park'); " +
         "chamada (até 70 caracteres) + chamadaForte (continuação em negrito, até 50); notas: até 2 post-its {v: valor grande curto, r: rótulo pequeno} — o 1º é a data (v '15/10/2026', r o dia da semana), o 2º o horário (v '7h30', r 'SAÍDA DA ESCOLA' ou 'NA ESCOLA'); " +
-        "publicoTitulo ('Para as famílias de', 'Para os alunos do') + publico (séries/segmentos, até 4); itens: o que tem/atividades/o que inclui, até 6, cada um com até 26 caracteres; " +
+        "publicoTitulo ('Para as famílias de', 'Para os alunos do') + publico (séries/segmentos, até 4); itensTitulo (rótulo dos cartões: 'O que está incluso' quando forem coisas incluídas no valor; 'Programação', 'Atividades' ou 'Pauta' conforme o caso) + itens: até 6, cada um com até 26 caracteres; observacoes: o que a família PRECISA saber ou levar (ex.: 'Levar garrafinha com água', 'Levar o lanche', 'Ir de farda', 'Protetor solar', prazos de inscrição, autorização assinada), até 8, cada uma com até 34 caracteres, só se estiver no texto/imagem/cadastro; " +
         "valores: [{rotulo, valor}] até 4 (ex.: {'Aluno','R$ 80,00'}); ondeTitulo (nome do lugar) + ondeLinhas (até 2 linhas: cidade, observação de saída/retorno). " +
         (entrada.detalhe === "conciso" ? "Nível CONCISO: itens no máximo 3 e valores vazio. " : "") +
-        'Responda SÓ JSON: {"tipoFoto":"...","etiqueta":"...","titulo":"...","tituloMarca":"...","chamada":"...","chamadaForte":"...","notas":[{"v":"...","r":"..."}],"publicoTitulo":"...","publico":["..."],"itens":["..."],"valores":[{"rotulo":"...","valor":"..."}],"ondeTitulo":"...","ondeLinhas":["..."],"legendaFoto":"..."}',
+        'Responda SÓ JSON: {"tipoFoto":"...","etiqueta":"...","titulo":"...","tituloMarca":"...","chamada":"...","chamadaForte":"...","notas":[{"v":"...","r":"..."}],"publicoTitulo":"...","publico":["..."],"itensTitulo":"...","itens":["..."],"observacoes":["..."],"valores":[{"rotulo":"...","valor":"..."}],"ondeTitulo":"...","ondeLinhas":["..."],"legendaFoto":"..."}',
       messages: [
         {
           role: "user",
@@ -187,7 +189,9 @@ export async function lerFotoParaCartaz(entrada: {
         notas: (Array.isArray(j.notas) ? j.notas : []).slice(0, 2).map((n) => ({ v: String(n?.v ?? "").slice(0, 16), r: String(n?.r ?? "").slice(0, 22) })),
         publicoTitulo: String(j.publicoTitulo ?? "").slice(0, 30),
         publico: lista(j.publico, 4),
+        itensTitulo: String(j.itensTitulo ?? "O que está incluso").slice(0, 26),
         itens: lista(j.itens, 6),
+        observacoes: lista(j.observacoes, 8).map((o) => o.slice(0, 44)),
         valores: (Array.isArray(j.valores) ? j.valores : []).slice(0, 4).map((v) => ({ rotulo: String(v?.rotulo ?? "").slice(0, 20), valor: String(v?.valor ?? "").slice(0, 16) })),
         ondeTitulo: String(j.ondeTitulo ?? "").slice(0, 40),
         ondeLinhas: lista(j.ondeLinhas, 2),

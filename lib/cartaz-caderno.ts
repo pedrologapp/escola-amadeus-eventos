@@ -22,13 +22,17 @@ export interface EspecCaderno {
   notas: Nota[]; // até 2 post-its: data e hora/local
   publicoTitulo: string; // "Para as famílias de"
   publico: string[]; // pílulas
-  itens: string[]; // o que tem / atividades (cartões com legenda)
+  itensTitulo?: string; // rótulo dos cartões ("O que está incluso"); "" esconde
+  itens: string[]; // o que está incluso / atividades (cartões com legenda)
+  observacoesTitulo?: string; // "Não esqueça"
+  observacoes?: string[]; // bilhete com caixinhas: "Levar garrafinha", "Levar o lanche"...
   valores: Valor[];
   ondeTitulo: string; // "Viva Park"
   ondeLinhas: string[];
   qrRotulo: string; // "INSCRIÇÃO"
   link: string | null;
   foto: string | null; // só se for FOTO de verdade (não flyer)
+  fotoPos?: "polaroid" | "titulo"; // junto dos cartões ou ao lado do título (canto direito)
   legendaFoto: string;
 }
 
