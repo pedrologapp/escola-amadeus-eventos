@@ -26,6 +26,8 @@ type Conversa = {
   status: string;
 };
 
+const seteDiasAtras = () => new Date(Date.now() - 7 * 864e5).toISOString();
+
 const ORDEM = { alta: 0, media: 1, baixa: 2 } as const;
 const SELO = {
   alta: "bg-red-50 text-red-700",
@@ -81,7 +83,7 @@ function Linha({ c }: { c: Conversa }) {
 export default async function WhatsAppPage({ searchParams }: { searchParams: Promise<{ ver?: string }> }) {
   const { ver } = await searchParams;
   const db = createAdminClient();
-  const semana = new Date(Date.now() - 7 * 864e5).toISOString();
+  const semana = seteDiasAtras();
   const [{ data: aguardando }, { data: fechadas }, { data: eventos }] = await Promise.all([
     db.from("whatsapp_conversas").select("*").eq("status", "aguardando").eq("ultima_da_escola", false),
     db.from("whatsapp_conversas").select("*").in("status", ["resolvida", "ignorada", "respondida"]).gte("atualizado_em", semana).order("atualizado_em", { ascending: false }).limit(30),
