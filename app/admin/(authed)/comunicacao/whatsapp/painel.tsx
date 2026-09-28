@@ -40,6 +40,27 @@ function tempo(iso: string | null, agora: number) {
   if (h < 24) return `${h} h`;
   return `${Math.round(h / 24)} d`;
 }
+/** "sábado, 27/09 · 14:32" — o dia da semana ajuda a ver o que chegou com a escola fechada. */
+function quando(iso: string | null, curto = false) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const tz = { timeZone: "America/Fortaleza" } as const;
+  const dia = d.toLocaleDateString("pt-BR", { ...tz, weekday: curto ? "short" : "long" }).replace(".", "");
+  const data = d.toLocaleDateString("pt-BR", { ...tz, day: "2-digit", month: "2-digit" });
+  const hora = d.toLocaleTimeString("pt-BR", { ...tz, hour: "2-digit", minute: "2-digit" });
+  return curto ? `${dia} ${data} ${hora}` : `${dia}, ${data} · ${hora}`;
+}
+
+/** Sábado, domingo ou fora do horário (antes das 7h, depois das 18h). */
+function foraDoHorario(iso: string | null) {
+  if (!iso) return false;
+  const d = new Date(iso);
+  const p = new Intl.DateTimeFormat("en-US", { timeZone: "America/Fortaleza", weekday: "short", hour: "numeric", hour12: false }).formatToParts(d);
+  const dia = p.find((x) => x.type === "weekday")?.value;
+  const h = Number(p.find((x) => x.type === "hour")?.value) % 24;
+  return dia === "Sat" || dia === "Sun" || h < 7 || h >= 18;
+}
+
 const telLegivel = (t: string | null) => {
   const d = (t ?? "").replace(/^55/, "");
   return d.length >= 10 ? `(${d.slice(0, 2)}) ${d.slice(2, -4)}-${d.slice(-4)}` : t ?? "";
@@ -78,56 +99,78 @@ function Responder({ c, fechar }: { c: Conversa; fechar: () => void }) {
     }
   };
 
+  const iniciais = (c.contato || "?").split(/\s+/).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("");
+  const baloes = (c.ultimo_texto ?? "").split("\n").map((t) => t.trim()).filter(Boolean);
+  const hora = quando(c.ultima_msg_em);
+
   return (
-    <div className="space-y-3 border-t border-border/60 bg-muted/20 px-4 py-3 text-sm">
-      {c.ultimo_texto && (
-        <div className="max-h-40 overflow-y-auto whitespace-pre-wrap rounded-lg border border-border/60 bg-white p-2.5 text-[13px]">
-          {c.ultimo_texto}
-        </div>
-      )}
-      {c.precisa_acao && c.acao && <p className="font-semibold text-amadeus-blue">→ {c.acao}</p>}
-      <div className="flex flex-wrap gap-1.5">
-        {PRONTAS.map((p) => (
-          <button key={p} type="button" onClick={() => setTexto(p)} className="rounded-md bg-white px-2 py-1 text-xs text-muted-foreground ring-1 ring-border hover:text-amadeus-blue">
-            {p}
-          </button>
-        ))}
-      </div>
-      <textarea
-        value={texto}
-        onChange={(e) => setTexto(e.target.value)}
-        rows={3}
-        placeholder="Escreva a resposta…"
-        className="w-full rounded-lg border border-border bg-white px-3 py-2 outline-none focus:border-amadeus-blue"
-      />
-      <div className="flex flex-wrap items-center gap-2">
-        <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold ring-1 ring-border hover:text-amadeus-blue">
-          <Paperclip className="size-3.5" /> {arquivo ? "Trocar arquivo" : "Anexar arquivo"}
-          <input type="file" className="hidden" onChange={(e) => setArquivo(e.target.files?.[0] ?? null)} />
-        </label>
-        {arquivo && (
-          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-            {arquivo.name}
-            <button type="button" onClick={() => setArquivo(null)} aria-label="Tirar arquivo"><X className="size-3.5" /></button>
+    <div className="border-t border-border/60 p-3 sm:p-4">
+      {/* Janela no estilo do WhatsApp: a conversa como o pai mandou, e a resposta embaixo. */}
+      <div className="mx-auto max-w-2xl overflow-hidden rounded-2xl border border-border/60 shadow-sm">
+        <div className="flex items-center gap-3 bg-[#075E54] px-4 py-2.5 text-white">
+          <span className="grid size-9 place-items-center rounded-full bg-white/20 text-sm font-bold">{iniciais}</span>
+          <span className="min-w-0">
+            <span className="block truncate font-semibold">{c.contato || telLegivel(c.telefone)}</span>
+            <span className="block text-xs opacity-80">{telLegivel(c.telefone)}{c.assunto ? ` · ${c.assunto}` : ""}</span>
           </span>
-        )}
-        <span className="ml-auto flex items-center gap-2">
-          {c.telefone && (
-            <a href={`https://wa.me/${c.telefone}`} target="_blank" rel="noreferrer" className="text-xs font-semibold text-muted-foreground hover:text-amadeus-blue">
-              Abrir no WhatsApp
-            </a>
+          <button type="button" onClick={fechar} className="ml-auto rounded-full p-1.5 hover:bg-white/15" aria-label="Fechar"><X className="size-4" /></button>
+        </div>
+
+        <div className="max-h-72 space-y-1.5 overflow-y-auto bg-[#EFEAE2] px-4 py-4">
+          {baloes.length ? (
+            baloes.map((b, i) => (
+              <div key={i} className="max-w-[85%] rounded-lg rounded-tl-none bg-white px-3 py-1.5 text-[13.5px] text-slate-800 shadow-sm">
+                {b}
+                {i === baloes.length - 1 && <span className="ml-3 float-right mt-1.5 text-[10px] text-slate-400">{hora}</span>}
+              </div>
+            ))
+          ) : (
+            <p className="text-center text-xs text-slate-500">A mensagem não está mais guardada. Resumo: {c.resumo}</p>
           )}
-          <button
-            type="button"
-            disabled={enviando || (!texto.trim() && !arquivo)}
-            onClick={enviar}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-40"
-          >
-            {enviando ? <Loader2 className="size-3.5 animate-spin" /> : <Send className="size-3.5" />} Enviar
-          </button>
-        </span>
+          {c.precisa_acao && c.acao && (
+            <p className="pt-2 text-center"><span className="rounded-md bg-[#FFF5C4] px-2 py-1 text-[11px] text-slate-700">Sugestão: {c.acao}</span></p>
+          )}
+        </div>
+
+        <div className="space-y-2 bg-[#F0F2F5] px-3 py-2.5">
+          <div className="flex flex-wrap gap-1.5">
+            {PRONTAS.map((p) => (
+              <button key={p} type="button" onClick={() => setTexto(p)} className="rounded-full bg-white px-2.5 py-1 text-[11px] text-slate-600 ring-1 ring-slate-200 hover:text-[#075E54]">
+                {p}
+              </button>
+            ))}
+          </div>
+          {arquivo && (
+            <span className="inline-flex items-center gap-1 rounded-lg bg-white px-2 py-1 text-xs text-slate-600 ring-1 ring-slate-200">
+              <Paperclip className="size-3.5" /> {arquivo.name}
+              <button type="button" onClick={() => setArquivo(null)} aria-label="Tirar arquivo"><X className="size-3.5" /></button>
+            </span>
+          )}
+          <div className="flex items-end gap-2">
+            <label className="grid size-10 shrink-0 cursor-pointer place-items-center rounded-full text-slate-500 hover:bg-white" title="Anexar arquivo">
+              <Paperclip className="size-5" />
+              <input type="file" className="hidden" onChange={(e) => setArquivo(e.target.files?.[0] ?? null)} />
+            </label>
+            <textarea
+              value={texto}
+              onChange={(e) => setTexto(e.target.value)}
+              rows={1}
+              placeholder="Digite a resposta"
+              className="max-h-32 min-h-10 flex-1 resize-y rounded-2xl border-0 bg-white px-4 py-2.5 text-sm outline-none ring-1 ring-slate-200 focus:ring-[#25D366]"
+            />
+            <button
+              type="button"
+              disabled={enviando || (!texto.trim() && !arquivo)}
+              onClick={enviar}
+              title="Enviar pelo WhatsApp da escola"
+              className="grid size-10 shrink-0 place-items-center rounded-full bg-[#00A884] text-white hover:bg-[#008F72] disabled:opacity-40"
+            >
+              {enviando ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+            </button>
+          </div>
+          {erro && <p className="text-xs text-red-700">{erro}</p>}
+        </div>
       </div>
-      {erro && <p className="text-xs text-red-700">{erro}</p>}
     </div>
   );
 }
@@ -145,7 +188,19 @@ function Linha({ c, agora, aberta, alternar }: { c: Conversa; agora: number; abe
           <span className="w-40 shrink-0 truncate font-semibold" title={telLegivel(c.telefone)}>{c.contato || telLegivel(c.telefone)}</span>
           <span className="hidden w-32 shrink-0 truncate text-xs text-amadeus-blue sm:inline">{c.assunto}</span>
           <span className="min-w-0 flex-1 truncate text-muted-foreground">{c.resumo}</span>
-          <span className="w-12 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
+          {(() => {
+            const iso = esperando ? c.aguardando_desde ?? c.ultima_msg_em : c.ultima_msg_em;
+            const fechado = foraDoHorario(iso);
+            return (
+              <span
+                className={`hidden w-44 shrink-0 text-right text-xs tabular-nums sm:inline ${fechado ? "text-amber-700" : "text-muted-foreground"}`}
+                title={fechado ? "Chegou com a escola fechada (fim de semana ou fora do horário)" : undefined}
+              >
+                {fechado && "● "}{quando(iso, true)} · {tempo(iso, agora)}
+              </span>
+            );
+          })()}
+          <span className="w-10 shrink-0 text-right text-xs tabular-nums text-muted-foreground sm:hidden">
             {tempo(esperando ? c.aguardando_desde ?? c.ultima_msg_em : c.ultima_msg_em, agora)}
           </span>
           <ChevronDown className={`size-4 shrink-0 text-muted-foreground transition-transform ${aberta ? "rotate-180" : ""}`} />
@@ -235,7 +290,7 @@ export function PainelWhatsApp({ aguardando, fechadas, assuntos, geradoEm }: {
         </ul>
       )}
       <p className="mt-3 text-xs text-muted-foreground">
-        Clique na linha para ver a mensagem e responder. ✓ e ⊘ só organizam a lista: não enviam nada.
+        Clique na linha para ver a mensagem e responder. ✓ e ⊘ só organizam a lista: não enviam nada. <span className="text-amber-700">●</span> = chegou com a escola fechada (fim de semana ou fora do horário).
       </p>
     </div>
   );
