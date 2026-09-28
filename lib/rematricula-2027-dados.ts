@@ -122,6 +122,7 @@ export interface Leitura {
   descontoPagamento: number | null;
   pagamentosAte05: number;
   irmaos: { nome: string; serie: string }[];
+  pendencias: Pendencia[];
 }
 
 interface Titulo {
@@ -135,6 +136,33 @@ interface Titulo {
   parcela_cobranca: string;
   nome_servico: string;
   situacao_titulo: string;
+  situacao_no_agente?: string | null; // "isaac: Em aberto", "isaac: Liquidado"...
+}
+
+export interface Pendencia {
+  servico: string;
+  vencimento: string; // AAAA-MM-DD
+  valor: number;
+}
+
+/**
+ * Pendências financeiras (o "Não rematriculável (há pendências financeiras)"
+ * do Isaac, que a API do Activesoft não expõe): parcelas vencidas que ainda
+ * estão EM ABERTO NO ISAAC. O status do próprio Activesoft não serve: muitas
+ * parcelas aparecem abertas lá mas já estão "isaac: Liquidado".
+ * Títulos sem Isaac (antigos) contam se estiverem abertos no Activesoft.
+ */
+function pendenciasFinanceiras(titulos: Titulo[]): Pendencia[] {
+  const hoje = new Date().toLocaleDateString("en-CA", { timeZone: "America/Fortaleza" });
+  return titulos
+    .filter((t) => {
+      if (t.dt_vencimento.slice(0, 10) >= hoje) return false;
+      const agente = (t.situacao_no_agente ?? "").toLowerCase();
+      if (agente.startsWith("isaac")) return /em aberto|parcial|vencid|atras/.test(agente);
+      return t.situacao_titulo === "ABE";
+    })
+    .map((t) => ({ servico: t.nome_servico, vencimento: t.dt_vencimento.slice(0, 10), valor: t.valor_documento }))
+    .sort((a, b) => a.vencimento.localeCompare(b.vencimento));
 }
 
 async function descontosDoAluno(id: number): Promise<string[]> {
@@ -160,9 +188,9 @@ async function descontosDoAluno(id: number): Promise<string[]> {
   return saida;
 }
 
-type LeituraBoleto = Omit<Leitura, "tetoAtual" | "descontoBoleto" | "descontoPagamento" | "pagamentosAte05" | "irmaos">;
+type LeituraBoleto = Omit<Leitura, "tetoAtual" | "descontoBoleto" | "descontoPagamento" | "pagamentosAte05" | "irmaos" | "pendencias">;
 
-async function lerBoleto(id: number): Promise<(LeituraBoleto & { mensais: Titulo[] }) | null> {
+async function lerBoleto(id: number): Promise<(LeituraBoleto & { mensais: Titulo[]; todos: Titulo[] }) | null> {
   const alunos = await listarAlunos();
   const aluno = alunos.find((a) => a.id === id);
   if (!aluno) return null;
@@ -180,7 +208,7 @@ async function lerBoleto(id: number): Promise<(LeituraBoleto & { mensais: Titulo
   const daSerie = todasMensais.filter((t) => serieCanonica(t.nome_servico) === aluno.serie);
   const mensais = daSerie.length ? daSerie : todasMensais;
   const serie2027 = aluno.serie ? proximaSerie(aluno.serie) : null;
-  const vazio = { aluno, serie2027, descontos, alternativa: undefined, mensais };
+  const vazio = { aluno, serie2027, descontos, alternativa: undefined, mensais, todos: (boletos.resultados ?? []).filter((t) => t.situacao_titulo !== "CAN") };
 
   if (mensais.length === 0) {
     const outras = de2026.filter((t) => /^Mensalidade/i.test(t.nome_servico));
@@ -363,7 +391,7 @@ async function irmaosDoAluno(id: number, alunos: AlunoBusca[]): Promise<{ nome: 
 export async function lerAluno(id: number): Promise<Leitura | null> {
   const [l, alunos] = await Promise.all([lerBoleto(id), listarAlunos()]);
   if (!l) return null;
-  const { mensais, ...resto } = l;
+  const { mensais, todos, ...resto } = l;
   const seg = l.aluno.serie ? segmentoDe(l.aluno.serie) : null;
   const tetoAtual = seg ? TABELA_2026[seg] : null;
   const pag = descontoNoPagamento(mensais);
@@ -377,5 +405,6 @@ export async function lerAluno(id: number): Promise<Leitura | null> {
     descontoPagamento: pag.valor,
     pagamentosAte05: pag.n,
     irmaos,
+    pendencias: pendenciasFinanceiras(todos),
   };
 }
