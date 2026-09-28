@@ -123,6 +123,7 @@ function Responder({ c, fechar, modo, responder }: { c: Conversa; fechar: () => 
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [confirmarEnvio, setConfirmarEnvio] = useState(false);
 
   const enviar = async () => {
     if (!texto.trim() && !arquivo) return;
@@ -226,7 +227,7 @@ function Responder({ c, fechar, modo, responder }: { c: Conversa; fechar: () => 
             <button
               type="button"
               disabled={enviando || (!texto.trim() && !arquivo)}
-              onClick={enviar}
+              onClick={() => setConfirmarEnvio(true)}
               title="Enviar pelo WhatsApp da escola"
               className="grid size-10 shrink-0 place-items-center rounded-full bg-[#00A884] text-white hover:bg-[#008F72] disabled:opacity-40"
             >
@@ -234,6 +235,14 @@ function Responder({ c, fechar, modo, responder }: { c: Conversa; fechar: () => 
             </button>
           </div>
           {erro && <p className="text-xs text-red-700">{erro}</p>}
+          {confirmarEnvio && (
+            <Confirmar titulo="Enviar esta resposta?" botao="Sim, enviar" cor="verde" ok={() => { setConfirmarEnvio(false); enviar(); }} cancelar={() => setConfirmarEnvio(false)}>
+              <p>Vai sair agora pelo WhatsApp da escola para <b className="text-foreground">{c.nome_cadastro || c.contato || telLegivel(c.telefone)}</b> ({telLegivel(c.telefone)}).</p>
+              {texto.trim() && <p className="max-h-40 overflow-y-auto whitespace-pre-wrap rounded-lg bg-[#D9FDD3] px-3 py-2 text-[13px] text-foreground">{texto.trim()}</p>}
+              {arquivo && <p className="flex items-center gap-1.5 text-foreground"><Paperclip className="size-3.5" /> {arquivo.name}</p>}
+              <p>Depois de enviada, a mensagem não pode ser desfeita por aqui.</p>
+            </Confirmar>
+          )}
         </div>}
       </div>
     </div>
@@ -242,10 +251,41 @@ function Responder({ c, fechar, modo, responder }: { c: Conversa; fechar: () => 
 
 type Modo = "ver" | "responder";
 
+/** Pop-up de confirmação: todo botão que envia ou muda a lista pergunta antes (direção, 28/09/2026). */
+function Confirmar({ titulo, children, botao, cor = "azul", ok, cancelar }: {
+  titulo: string;
+  children: React.ReactNode;
+  botao: string;
+  cor?: "azul" | "verde" | "cinza";
+  ok: () => void;
+  cancelar: () => void;
+}) {
+  useEffect(() => {
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && cancelar();
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, [cancelar]);
+  const fundo = cor === "verde" ? "bg-[#00A884] hover:bg-[#008F72]" : cor === "cinza" ? "bg-slate-600 hover:bg-slate-700" : "bg-amadeus-blue hover:opacity-90";
+  return (
+    <div className="fixed inset-0 z-[100] grid place-items-center bg-black/40 p-4" onClick={cancelar}>
+      <div role="dialog" aria-modal="true" className="w-full max-w-sm rounded-2xl bg-white p-5 text-left shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <p className="font-bold text-amadeus-blue">{titulo}</p>
+        <div className="mt-2 space-y-2 text-sm text-muted-foreground">{children}</div>
+        <div className="mt-5 flex justify-end gap-2">
+          <button type="button" onClick={cancelar} className="rounded-lg px-3 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted">Cancelar</button>
+          <button type="button" autoFocus onClick={ok} className={`rounded-lg px-4 py-2 text-sm font-bold text-white ${fundo}`}>{botao}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Linha({ c, agora, aberta, abrir }: { c: Conversa; agora: number; aberta: Modo | null; abrir: (m: Modo | null) => void }) {
   const [pendente, iniciar] = useTransition();
   const imp = c.importancia ?? "media";
-  const marcar = (s: "resolvida" | "ignorada" | "aguardando") => iniciar(async () => { await marcarConversa(c.chat_id, s); });
+  const [pergunta, setPergunta] = useState<"resolvida" | "ignorada" | "aguardando" | null>(null);
+  const marcar = (s: "resolvida" | "ignorada" | "aguardando") => { setPergunta(null); iniciar(async () => { await marcarConversa(c.chat_id, s); }); };
+  const nome = c.nome_cadastro || c.contato || telLegivel(c.telefone);
   const esperando = c.status === "aguardando";
   const iso = esperando ? c.aguardando_desde ?? c.ultima_msg_em : c.ultima_msg_em;
   const fechado = foraDoHorario(iso);
@@ -294,16 +334,33 @@ function Linha({ c, agora, aberta, abrir }: { c: Conversa; agora: number; aberta
               <Loader2 className="size-4 animate-spin text-muted-foreground" />
             ) : esperando ? (
               <>
-                <button type="button" onClick={() => marcar("resolvida")} title="Tira da lista (não envia nada)" className="inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50"><Check className="size-3.5" /> Marcar como concluída</button>
-                <button type="button" onClick={() => marcar("ignorada")} title="Ignorar (não envia nada)" className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"><EyeOff className="size-4" /></button>
+                <button type="button" onClick={() => setPergunta("resolvida")} title="Tira da lista (não envia nada)" className="inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50"><Check className="size-3.5" /> Marcar como concluída</button>
+                <button type="button" onClick={() => setPergunta("ignorada")} title="Ignorar: para mensagens que não precisam de resposta (não envia nada)" className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-muted-foreground hover:bg-muted"><EyeOff className="size-3.5" /> Ignorar</button>
               </>
             ) : (
-              <button type="button" onClick={() => marcar("aguardando")} title="Reabrir" className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"><RotateCcw className="size-4" /></button>
+              <button type="button" onClick={() => setPergunta("aguardando")} title="Reabrir" className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"><RotateCcw className="size-4" /></button>
             )}
           </span>
         </span>
       </div>
       {aberta && <Responder c={c} modo={aberta} fechar={() => abrir(null)} responder={() => abrir("responder")} />}
+      {pergunta === "resolvida" && (
+        <Confirmar titulo="Marcar como concluída?" botao="Sim, concluir" cor="verde" ok={() => marcar("resolvida")} cancelar={() => setPergunta(null)}>
+          <p>A conversa com <b className="text-foreground">{nome}</b> sai da lista e vai para “Concluídas”.</p>
+          <p>Nada é enviado para a pessoa. Se ela mandar mensagem nova, a conversa volta.</p>
+        </Confirmar>
+      )}
+      {pergunta === "ignorada" && (
+        <Confirmar titulo="Ignorar esta conversa?" botao="Sim, ignorar" cor="cinza" ok={() => marcar("ignorada")} cancelar={() => setPergunta(null)}>
+          <p>Use para mensagens que não precisam de resposta (propaganda, “ok”, “obrigado”).</p>
+          <p>A conversa com <b className="text-foreground">{nome}</b> sai da lista e nada é enviado. Se ela mandar mensagem nova, a conversa volta.</p>
+        </Confirmar>
+      )}
+      {pergunta === "aguardando" && (
+        <Confirmar titulo="Reabrir a conversa?" botao="Sim, reabrir" ok={() => marcar("aguardando")} cancelar={() => setPergunta(null)}>
+          <p>A conversa com <b className="text-foreground">{nome}</b> volta para a lista de aguardando resposta.</p>
+        </Confirmar>
+      )}
     </li>
   );
 }
@@ -362,6 +419,7 @@ export function PainelWhatsApp({ aguardando, fechadas, contatos, assuntos, gerad
   const [aberta, setAberta] = useState<{ id: string; modo: Modo } | null>(null);
   const [atualizando, iniciar] = useTransition();
   const [nova, setNova] = useState(false);
+  const [confirmarTodas, setConfirmarTodas] = useState(false);
 
   // Atualiza sozinho a cada minuto (a leitura do WhatsApp roda a cada 5), sem perder o que está sendo escrito.
   useEffect(() => {
@@ -431,9 +489,14 @@ export function PainelWhatsApp({ aguardando, fechadas, contatos, assuntos, gerad
       {aba === "respondidas" && respondidas.length > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-2 border-x border-border/60 bg-emerald-50/60 px-4 py-2 text-xs text-emerald-900">
           <span>Já receberam resposta (pelo painel ou pelo celular da escola). Confira e marque como concluída para tirar da lista.</span>
-          <button type="button" disabled={atualizando} onClick={concluirRespondidas} className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2.5 py-1 font-bold text-white hover:bg-emerald-700 disabled:opacity-50">
+          <button type="button" disabled={atualizando} onClick={() => setConfirmarTodas(true)} className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2.5 py-1 font-bold text-white hover:bg-emerald-700 disabled:opacity-50">
             <Check className="size-3.5" /> Concluir todas ({respondidas.length})
           </button>
+          {confirmarTodas && (
+            <Confirmar titulo={`Concluir as ${respondidas.length} conversas já respondidas?`} botao="Sim, concluir todas" cor="verde" ok={() => { setConfirmarTodas(false); concluirRespondidas(); }} cancelar={() => setConfirmarTodas(false)}>
+              <p>Todas saem da lista e vão para “Concluídas”. Nada é enviado para ninguém.</p>
+            </Confirmar>
+          )}
         </div>
       )}
 
