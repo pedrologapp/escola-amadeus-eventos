@@ -134,6 +134,9 @@ export interface Simulacao {
 export const DESCONTO_IRMAO = 20;
 export const ACRESCIMO_DIA_06_A_10 = 10; // do dia 06 ao 10 paga a cheia − 10
 export const PARCELAS_MATRICULA = 5;
+/** Plano de pagamento que a secretaria seleciona no Activesoft para concluir a matrícula: a cheia − R$ 50. */
+export const DESCONTO_PLANO_ACTIVESOFT = 50;
+export const planoActivesoft = (c: { cheia: number }) => c.cheia - DESCONTO_PLANO_ACTIVESOFT;
 
 /**
  * Veterano e novato partem do mesmo teto: o da tabela de 2026 do segmento

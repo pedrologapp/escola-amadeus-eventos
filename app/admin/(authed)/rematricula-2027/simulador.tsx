@@ -9,7 +9,9 @@ import {
   DEPOIS_DO_PRAZO,
   DESCONTO_IRMAO,
   MODOS_LIVRO,
+  DESCONTO_PLANO_ACTIVESOFT,
   PARCELAS_MATRICULA,
+  planoActivesoft,
   REAJUSTE,
   origemDaCheia,
   trocaDeSegmento,
@@ -486,6 +488,14 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                   Fechando no prazo, a família economiza <b className="text-amadeus-blue">{reais(economiaNoAno(sim, modo))}</b> no ano.
                   {" "}Todos os descontos valem só pagando até o dia 05.
                 </p>
+                <div className="mt-4 rounded-xl border border-border/60 bg-white p-3 text-sm">
+                  <p className="font-bold text-amadeus-blue">Plano de pagamento no Activesoft</p>
+                  <p className="mt-1 text-muted-foreground">Valor para selecionar ao concluir a matrícula (mensalidade cheia − {reais(DESCONTO_PLANO_ACTIVESOFT)}):</p>
+                  <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1">
+                    <span>Fechando até {PRAZO_PROMOCAO}: <b className="tabular-nums">{reais(planoActivesoft(sim.promo))}</b></span>
+                    <span>A partir de {DEPOIS_DO_PRAZO}: <b className="tabular-nums">{reais(planoActivesoft(sim.depois))}</b></span>
+                  </div>
+                </div>
                 <div className="mt-5 flex flex-wrap gap-3">
                   <a href={linkCarta} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-amadeus-blue px-4 py-2.5 text-sm font-bold text-white hover:opacity-90">
                     <Printer className="size-4" /> Imprimir carta para a família
