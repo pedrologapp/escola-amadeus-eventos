@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { carregarContatos, chaveTelefone, type Contato } from "@/lib/whatsapp-contatos";
 import { PainelWhatsApp, type Conversa } from "./painel";
 
 /**
@@ -18,10 +19,18 @@ export default async function WhatsAppPage() {
   const geradoEm = agora();
   const semana = new Date(geradoEm - 7 * 864e5).toISOString();
   const [{ data: aguardando }, { data: fechadas }, { data: eventos }] = await Promise.all([
-    db.from("whatsapp_conversas").select("*").eq("status", "aguardando").eq("ultima_da_escola", false),
-    db.from("whatsapp_conversas").select("*").in("status", ["resolvida", "ignorada", "respondida"]).gte("atualizado_em", semana).order("atualizado_em", { ascending: false }).limit(50),
+    // Fica na lista até alguém marcar "Resolvido", mesmo depois de respondida.
+    db.from("whatsapp_conversas").select("*").eq("status", "aguardando"),
+    db.from("whatsapp_conversas").select("*").in("status", ["resolvida", "ignorada"]).gte("atualizado_em", semana).order("atualizado_em", { ascending: false }).limit(50),
     db.from("whatsapp_eventos").select("assunto").eq("da_escola", false).gte("em", semana),
   ]);
+  const contatos: Contato[] = await carregarContatos().catch(() => []);
+  const vinculo = new Map(contatos.map((c) => [chaveTelefone(c.telefone), c]));
+  const comVinculo = (l: Conversa[]) =>
+    l.map((c) => {
+      const v = vinculo.get(chaveTelefone(c.telefone));
+      return { ...c, vinculo: v?.vinculo ?? null, nome_cadastro: v?.nome ?? null };
+    });
   const cont = new Map<string, number>();
   for (const e of eventos ?? []) if (e.assunto) cont.set(e.assunto, (cont.get(e.assunto) ?? 0) + 1);
 
@@ -35,8 +44,9 @@ export default async function WhatsAppPage() {
         <ShieldCheck className="size-4" /> O sistema só lê e organiza. Mensagem só sai quando alguém da equipe escreve e clica em enviar.
       </p>
       <PainelWhatsApp
-        aguardando={(aguardando ?? []) as Conversa[]}
-        fechadas={(fechadas ?? []) as Conversa[]}
+        aguardando={comVinculo((aguardando ?? []) as Conversa[])}
+        fechadas={comVinculo((fechadas ?? []) as Conversa[])}
+        contatos={contatos}
         assuntos={[...cont.entries()].sort((a, b) => b[1] - a[1])}
         geradoEm={geradoEm}
       />

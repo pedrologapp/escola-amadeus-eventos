@@ -8,16 +8,22 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
+import { formatCurrency } from "@/lib/utils";
 import { AdminEventosTabbed, type AdminEventoItem } from "./eventos-tabbed";
+import { MetricasCompactas, type MetricaItem } from "../dashboard/metricas-compactas";
 
 export default async function AdminEventosPage() {
   const supabase = await createClient();
-  const { data: eventos, error } = await supabase
-    .from("eventos")
-    .select(
-      "id, slug, nome, data_evento, hora_evento, hora_fim, local, imagem_capa_url, cor_tematica, status, inscricoes(count)",
-    )
-    .order("data_evento", { ascending: false });
+  const [{ data: eventos, error }, { data: pagas }] = await Promise.all([
+    supabase
+      .from("eventos")
+      .select(
+        "id, slug, nome, data_evento, hora_evento, hora_fim, local, imagem_capa_url, cor_tematica, status, inscricoes(count)",
+      )
+      .order("data_evento", { ascending: false }),
+    // Ingressos e receita (antes ficavam na Visão geral).
+    supabase.from("inscricoes").select("evento_id, valor_total, itens").eq("status_pagamento", "pago"),
+  ]);
 
   if (error) {
     return (
@@ -86,6 +92,20 @@ export default async function AdminEventosPage() {
 
   const total = proximos.length + concluidos.length + rascunhos.length;
 
+  let ingressosVendidos = 0;
+  const receitaPorEvento = new Map<string, number>();
+  for (const i of pagas ?? []) {
+    ingressosVendidos += ((i.itens as { qtd?: number }[] | null) ?? []).reduce((s, it) => s + (it.qtd ?? 0), 0);
+    if (i.evento_id) receitaPorEvento.set(i.evento_id, (receitaPorEvento.get(i.evento_id) ?? 0) + Number(i.valor_total ?? 0));
+  }
+  const publicados = (eventos ?? []).filter((e) => e.status === "publicado").length;
+  const receitaAtivos = proximos.reduce((s, ev) => s + (receitaPorEvento.get(ev.id) ?? 0), 0);
+  const metricas: MetricaItem[] = [
+    { titulo: "Eventos publicados", valor: `${publicados} de ${(eventos ?? []).length}`, icone: "calendario" },
+    { titulo: "Ingressos vendidos", valor: ingressosVendidos.toString(), icone: "ingresso", sensivel: true },
+    { titulo: "Receita (eventos ativos)", valor: formatCurrency(receitaAtivos), icone: "carteira", sensivel: true },
+  ];
+
   return (
     <div className="container mx-auto px-4 py-10">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -117,11 +137,16 @@ export default async function AdminEventosPage() {
         </div>
       </header>
 
-      <AdminEventosTabbed
-        proximos={proximos}
-        concluidos={concluidos}
-        rascunhos={rascunhos}
-      />
+      <section className="mt-8 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_19rem]">
+        <div className="order-last min-w-0 lg:order-none">
+          <AdminEventosTabbed
+            proximos={proximos}
+            concluidos={concluidos}
+            rascunhos={rascunhos}
+          />
+        </div>
+        <MetricasCompactas metricas={metricas} />
+      </section>
     </div>
   );
 }

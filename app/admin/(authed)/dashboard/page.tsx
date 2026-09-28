@@ -1,187 +1,91 @@
 import Link from "next/link";
-import { CalendarPlus, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { ArrowRight, Calculator, CalendarDays, MessageCircleWarning, type LucideIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { formatCurrency } from "@/lib/utils";
-import {
-  DashboardEventosList,
-  type DashboardEventoItem,
-} from "./eventos-list";
-import { MetricasCompactas, type MetricaItem } from "./metricas-compactas";
+import { createAdminClient } from "@/lib/supabase/admin";
 
-const LIMITE_POR_ABA = 5;
+/**
+ * Visão geral: atalhos rápidos para o que a direção mais usa. Os números de
+ * ingressos e receita ficam na aba Eventos (pedido da direção, 28/09/2026).
+ */
+export const dynamic = "force-dynamic";
+
+function Atalho({ href, icone: Icone, titulo, descricao, destaque, extra }: {
+  href: string;
+  icone: LucideIcon;
+  titulo: string;
+  descricao: string;
+  destaque?: { valor: string; rotulo: string; alerta?: boolean };
+  extra?: { href: string; rotulo: string };
+}) {
+  return (
+    <div className="flex flex-col rounded-2xl border border-border/60 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+      <Link href={href} className="flex flex-1 flex-col">
+        <span className="flex items-start justify-between gap-3">
+          <span className="grid size-11 place-items-center rounded-xl bg-amadeus-blue-50 text-amadeus-blue">
+            <Icone className="size-5" />
+          </span>
+          {destaque && (
+            <span className="text-right">
+              <span className={`block text-2xl font-extrabold leading-none ${destaque.alerta ? "text-red-600" : "text-amadeus-blue"}`}>{destaque.valor}</span>
+              <span className="text-xs text-muted-foreground">{destaque.rotulo}</span>
+            </span>
+          )}
+        </span>
+        <span className="mt-4 text-lg font-extrabold text-amadeus-blue">{titulo}</span>
+        <span className="mt-1 text-sm text-muted-foreground">{descricao}</span>
+      </Link>
+      <span className="mt-4 flex items-center justify-between gap-2 text-sm font-semibold">
+        <Link href={href} className="inline-flex items-center gap-1 text-amadeus-blue">Abrir <ArrowRight className="size-4" /></Link>
+        {extra && <Link href={extra.href} className="text-muted-foreground hover:text-amadeus-blue">{extra.rotulo}</Link>}
+      </span>
+    </div>
+  );
+}
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
-
-  const [publicadosRes, totalEventosRes, ingressosRes, eventosRes] =
-    await Promise.all([
-      supabase
-        .from("eventos")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "publicado"),
-      supabase.from("eventos").select("id", { count: "exact", head: true }),
-      supabase
-        .from("inscricoes")
-        .select("evento_id, valor_total, itens")
-        .eq("status_pagamento", "pago"),
-      supabase
-        .from("eventos")
-        .select("id, nome, data_evento, status")
-        .in("status", ["publicado", "encerrado"])
-        .order("data_evento", { ascending: false }),
-    ]);
-
-  const eventosPublicados = publicadosRes.count ?? 0;
-  const totalEventos = totalEventosRes.count ?? 0;
-
-  // Mapas de ingressos e receita por evento + total geral de ingressos
-  const ingressosPorEvento = new Map<string, number>();
-  const receitaPorEvento = new Map<string, number>();
-  let ingressosVendidos = 0;
-  for (const i of ingressosRes.data ?? []) {
-    const itens = (i.itens as { qtd?: number }[] | null) ?? [];
-    const qtdInscricao = itens.reduce((s, it) => s + (it.qtd ?? 0), 0);
-    ingressosVendidos += qtdInscricao;
-    if (i.evento_id) {
-      ingressosPorEvento.set(
-        i.evento_id,
-        (ingressosPorEvento.get(i.evento_id) ?? 0) + qtdInscricao,
-      );
-      receitaPorEvento.set(
-        i.evento_id,
-        (receitaPorEvento.get(i.evento_id) ?? 0) + Number(i.valor_total ?? 0),
-      );
-    }
-  }
-
-  // Particiona eventos
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-
-  const proximosAll: DashboardEventoItem[] = [];
-  const concluidosAll: DashboardEventoItem[] = [];
-
-  for (const ev of eventosRes.data ?? []) {
-    const item: DashboardEventoItem = {
-      id: ev.id,
-      nome: ev.nome,
-      data_evento: ev.data_evento,
-      status: ev.status as "rascunho" | "publicado" | "encerrado",
-      ingressos_vendidos: ingressosPorEvento.get(ev.id) ?? 0,
-    };
-    const dataEv = new Date(`${ev.data_evento}T00:00:00`);
-    if (dataEv < hoje || ev.status === "encerrado") {
-      concluidosAll.push(item);
-    } else {
-      proximosAll.push(item);
-    }
-  }
-
-  // Ordenação: próximos do mais cedo pro mais tarde; concluídos do mais recente pro mais antigo
-  proximosAll.sort(
-    (a, b) =>
-      new Date(a.data_evento).getTime() - new Date(b.data_evento).getTime(),
-  );
-  concluidosAll.sort(
-    (a, b) =>
-      new Date(b.data_evento).getTime() - new Date(a.data_evento).getTime(),
-  );
-
-  const proximos = proximosAll.slice(0, LIMITE_POR_ABA);
-  const concluidos = concluidosAll.slice(0, LIMITE_POR_ABA);
-
-  // Receita dos eventos ativos (publicados e ainda não acontecidos)
-  const receitaEventosAtivos = proximosAll.reduce(
-    (sum, ev) => sum + (receitaPorEvento.get(ev.id) ?? 0),
-    0,
-  );
-
-  const metricas: MetricaItem[] = [
-    {
-      titulo: "Eventos publicados",
-      valor: `${eventosPublicados} de ${totalEventos}`,
-      icone: "calendario",
-    },
-    {
-      titulo: "Ingressos vendidos",
-      valor: ingressosVendidos.toString(),
-      icone: "ingresso",
-      sensivel: true,
-    },
-    {
-      titulo: "Receita (eventos ativos)",
-      valor: formatCurrency(receitaEventosAtivos),
-      icone: "carteira",
-      sensivel: true,
-    },
-  ];
-
-  const semEventos = proximosAll.length === 0 && concluidosAll.length === 0;
+  const hoje = new Date().toLocaleDateString("en-CA", { timeZone: "America/Fortaleza" });
+  const [{ data: proximos }, { data: conversas }] = await Promise.all([
+    supabase.from("eventos").select("nome, data_evento").eq("status", "publicado").gte("data_evento", hoje).order("data_evento").limit(1),
+    createAdminClient().from("whatsapp_conversas").select("importancia").eq("status", "aguardando").eq("ultima_da_escola", false), // só as sem resposta
+  ]);
+  const aguardando = (conversas ?? []).filter((c) => c.importancia !== "baixa").length;
+  const importantes = (conversas ?? []).filter((c) => c.importancia === "alta").length;
+  const prox = proximos?.[0];
+  const dataProx = prox ? new Date(`${prox.data_evento}T12:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : null;
 
   return (
     <div className="container mx-auto px-4 py-10">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-amadeus-blue sm:text-4xl">
-            Visão geral
-          </h1>
-          <p className="mt-1 text-muted-foreground">
-            Acompanhe os eventos, inscrições e a arrecadação da escola.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline">
-            <Link href="/admin/eventos/importar">
-              <Sparkles />
-              Importar de aviso
-            </Link>
-          </Button>
-          <Button asChild>
-            <Link href="/admin/eventos/novo">
-              <CalendarPlus />
-              Novo evento
-            </Link>
-          </Button>
-        </div>
-      </header>
+      <h1 className="text-3xl font-extrabold tracking-tight text-amadeus-blue sm:text-4xl">Visão geral</h1>
+      <p className="mt-1 text-muted-foreground">Atalhos para o dia a dia.</p>
 
-      <section className="mt-8 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_19rem]">
-        <div className="order-last lg:order-none">
-        {semEventos ? (
-          <Card>
-            <CardContent className="pb-10">
-              <div className="grid place-items-center rounded-2xl border-2 border-dashed border-amadeus-blue/20 bg-amadeus-blue-50/40 py-16">
-                <div className="max-w-md text-center">
-                  <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-white text-amadeus-blue shadow-float">
-                    <Sparkles className="size-6" />
-                  </div>
-                  <h3 className="mt-5 text-xl font-extrabold text-amadeus-blue">
-                    Vamos criar o primeiro evento?
-                  </h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Em menos de 5 minutos você publica um evento completo:
-                    fotos, tipos de ingresso, valores e restrições por série.
-                  </p>
-                  <Button asChild className="mt-6">
-                    <Link href="/admin/eventos/novo">
-                      <CalendarPlus />
-                      Criar meu primeiro evento
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <DashboardEventosList
-            proximos={proximos}
-            concluidos={concluidos}
-          />
-        )}
-        </div>
-        <MetricasCompactas metricas={metricas} />
+      <section className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <Atalho
+          href="/admin/rematricula-2027"
+          icone={Calculator}
+          titulo="Rematrícula 2027"
+          descricao="Simular a mensalidade, imprimir ou mandar a carta para a família."
+          extra={{ href: "/admin/rematricula-2027/valores", rotulo: "Tabela de valores" }}
+        />
+        <Atalho
+          href="/admin/comunicacao/whatsapp"
+          icone={MessageCircleWarning}
+          titulo="WhatsApp da escola"
+          descricao="Mensagens que esperam resposta, por assunto e importância."
+          destaque={{
+            valor: String(aguardando),
+            rotulo: importantes ? `${importantes} importante${importantes > 1 ? "s" : ""}` : "aguardando",
+            alerta: importantes > 0,
+          }}
+        />
+        <Atalho
+          href="/admin/eventos"
+          icone={CalendarDays}
+          titulo="Eventos"
+          descricao={prox ? `Próximo: ${prox.nome}` : "Nenhum evento publicado pela frente."}
+          destaque={dataProx ? { valor: dataProx, rotulo: "próximo" } : undefined}
+          extra={{ href: "/admin/eventos/novo", rotulo: "Novo evento" }}
+        />
       </section>
     </div>
   );

@@ -143,19 +143,19 @@ export async function processarLote(msgs: MensagemVista[]): Promise<{ novas: num
     const base = { chat_id: m.chatId, contato: m.nome ?? atual?.contato ?? null, telefone, ultima_msg_id: m.id, ultima_msg_em: em, atualizado_em: new Date().toISOString() };
 
     if (m.fromMe) {
-      // A escola respondeu: sai da lista de aguardando.
+      // A escola respondeu. Se a conversa estava na lista, CONTINUA nela (só sai quando alguém
+      // marca "Resolvido" — direção, 28/09/2026), agora marcada como respondida.
       await db.from("whatsapp_eventos").upsert({ msg_id: m.id, chat_id: m.chatId, da_escola: true, em });
       await db.from("whatsapp_conversas").upsert({
         ...base,
         ultima_da_escola: true,
-        aguardando_desde: null,
         msgs_sem_resposta: 0,
-        ultimo_texto: null,
-        status: atual && atual.status === "aguardando" ? "respondida" : atual?.status ?? "respondida",
+        status: atual?.status ?? "respondida",
       });
       continue;
     }
 
+    // Ainda sem resposta da escola desde a última mensagem do contato.
     const ainda = atual && atual.status === "aguardando" && !atual.ultima_da_escola;
     let cls: Classificacao;
     try {

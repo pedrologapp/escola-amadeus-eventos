@@ -8,6 +8,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * Ações do painel do WhatsApp. Marcar resolvido/ignorar não envia nada.
  * Responder envia pelo WhatsApp da escola SÓ quando uma pessoa da equipe
  * escreve e clica em enviar (nunca automático).
+ *
+ * A conversa só sai da lista quando alguém marca "Resolvido" (direção,
+ * 28/09/2026): responder não tira da lista, só marca como respondida.
  */
 
 const BUCKET = "whatsapp-anexos";
@@ -44,7 +47,9 @@ export async function prepararAnexo(nome: string) {
 }
 
 export async function enviarResposta(entrada: {
-  chatId: string;
+  chatId?: string | null;
+  telefone?: string | null; // mensagem nova para quem ainda não tem conversa
+  nome?: string | null;
   texto: string;
   anexo?: { path: string; nome: string; tipo: string } | null;
 }): Promise<{ ok: boolean; erro?: string }> {
@@ -52,7 +57,9 @@ export async function enviarResposta(entrada: {
   if (!user) return { ok: false, erro: "Sessão expirada. Entre de novo no admin." };
   const texto = entrada.texto.trim();
   if (!texto && !entrada.anexo) return { ok: false, erro: "Escreva a mensagem ou escolha um arquivo." };
-  if (!/^\d{10,15}@c\.us$/.test(entrada.chatId)) return { ok: false, erro: "Conversa inválida." };
+  const telefone = (entrada.telefone ?? "").replace(/\D/g, "");
+  if (entrada.chatId && !/^\d{10,15}@c\.us$/.test(entrada.chatId)) return { ok: false, erro: "Conversa inválida." };
+  if (!entrada.chatId && telefone.length < 12) return { ok: false, erro: "Número inválido." };
   const chave = process.env.WEBHOOK_CONFIRM_SECRET;
   if (!chave) return { ok: false, erro: "WEBHOOK_CONFIRM_SECRET não configurada no servidor." };
 
@@ -66,35 +73,39 @@ export async function enviarResposta(entrada: {
 
   let status: "enviado" | "erro" = "erro";
   let detalhe = "";
+  let chatUsado = entrada.chatId ?? `${telefone}@c.us`;
   try {
     const r = await fetch(WEBHOOK, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-amadeus-chave": chave },
       body: JSON.stringify({
-        chatId: entrada.chatId,
+        chatId: entrada.chatId ?? "",
+        telefone,
         texto,
         tipo: !arquivo ? "texto" : arquivo.tipo.startsWith("image/") ? "imagem" : "arquivo",
         arquivo,
       }),
       signal: AbortSignal.timeout(60_000),
     });
-    const j = (await r.json().catch(() => ({}))) as { ok?: boolean; detalhe?: string };
+    const j = (await r.json().catch(() => ({}))) as { ok?: boolean; detalhe?: string; status?: string; chatId?: string };
     status = r.ok && j.ok ? "enviado" : "erro";
-    detalhe = j.detalhe || (r.ok ? "" : `HTTP ${r.status}`);
+    detalhe = j.status === "sem_whatsapp" ? "esse número não tem WhatsApp" : j.detalhe || (r.ok ? "" : `HTTP ${r.status}`);
+    if (j.chatId) chatUsado = j.chatId;
   } catch (e) {
     detalhe = (e as Error).message;
   }
 
   await db.from("whatsapp_respostas").insert({
-    chat_id: entrada.chatId, texto: texto || null, arquivo_nome: arquivo?.nome ?? null,
+    chat_id: chatUsado, texto: texto || null, arquivo_nome: arquivo?.nome ?? null,
     status, detalhe: detalhe || null, enviado_por: user.email ?? null,
   });
   if (status !== "enviado") return { ok: false, erro: `Não foi enviado${detalhe ? ` (${detalhe.slice(0, 120)})` : ""}.` };
 
-  await db.from("whatsapp_conversas").update({
-    status: "respondida", ultima_da_escola: true, aguardando_desde: null, msgs_sem_resposta: 0,
-    ultimo_texto: null, atualizado_em: new Date().toISOString(),
-  }).eq("chat_id", entrada.chatId);
+  // Continua na lista (só sai com "Resolvido"); fica marcada como respondida.
+  const agora = new Date().toISOString();
+  if (entrada.chatId) {
+    await db.from("whatsapp_conversas").update({ ultima_da_escola: true, msgs_sem_resposta: 0, atualizado_em: agora }).eq("chat_id", entrada.chatId);
+  }
   revalidatePath("/admin/comunicacao/whatsapp");
   return { ok: true };
 }

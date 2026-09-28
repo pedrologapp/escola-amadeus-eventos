@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ChevronDown, EyeOff, Loader2, Paperclip, RefreshCw, RotateCcw, Send, X } from "lucide-react";
+import { Check, Copy, EyeOff, Loader2, Paperclip, PenSquare, RefreshCw, RotateCcw, Search, Send, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { enviarResposta, marcarConversa, prepararAnexo } from "./actions";
 
@@ -19,8 +19,13 @@ export type Conversa = {
   acao: string | null;
   resumo: string | null;
   ultimo_texto: string | null;
+  ultima_da_escola: boolean;
   status: string;
+  vinculo?: string | null; // "Responsável de Maria (3º Ano)" — do Activesoft
+  nome_cadastro?: string | null;
 };
+
+export type ContatoAgenda = { nome: string; telefone: string; vinculo: string };
 
 const PONTO = { alta: "bg-red-500", media: "bg-amber-400", baixa: "bg-slate-300" } as const;
 const ROTULO = { alta: "Importante", media: "Normal", baixa: "Baixa" } as const;
@@ -66,7 +71,33 @@ const telLegivel = (t: string | null) => {
   return d.length >= 10 ? `(${d.slice(0, 2)}) ${d.slice(2, -4)}-${d.slice(-4)}` : t ?? "";
 };
 
+/** Cartão do perfil: nome, número (com copiar) e de quem é no cadastro. */
+function Perfil({ c, fechar }: { c: Pick<Conversa, "contato" | "telefone" | "vinculo" | "nome_cadastro">; fechar: () => void }) {
+  const [copiado, setCopiado] = useState(false);
+  const tel = telLegivel(c.telefone);
+  return (
+    <div className="absolute left-3 top-14 z-30 w-72 rounded-xl border border-border bg-white p-4 text-sm text-slate-800 shadow-xl">
+      <button type="button" onClick={fechar} className="absolute right-2 top-2 rounded-md p-1 text-muted-foreground hover:bg-muted" aria-label="Fechar"><X className="size-4" /></button>
+      <p className="pr-6 text-base font-bold">{c.nome_cadastro || c.contato || "Sem nome"}</p>
+      {c.nome_cadastro && c.contato && c.contato !== c.nome_cadastro && <p className="text-xs text-muted-foreground">No WhatsApp: {c.contato}</p>}
+      <p className="mt-2 flex items-center gap-2 font-semibold tabular-nums">
+        {tel}
+        <button
+          type="button"
+          onClick={async () => { await navigator.clipboard.writeText(tel); setCopiado(true); setTimeout(() => setCopiado(false), 1500); }}
+          className="rounded-md p-1 text-muted-foreground hover:bg-muted"
+          title="Copiar número"
+        >
+          {copiado ? <Check className="size-3.5 text-emerald-600" /> : <Copy className="size-3.5" />}
+        </button>
+      </p>
+      <p className="mt-2 text-xs text-muted-foreground">{c.vinculo || "Número não encontrado no cadastro do Activesoft."}</p>
+    </div>
+  );
+}
+
 function Responder({ c, fechar, modo, responder }: { c: Conversa; fechar: () => void; modo: "ver" | "responder"; responder: () => void }) {
+  const [perfil, setPerfil] = useState(false);
   const [texto, setTexto] = useState("");
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -89,7 +120,7 @@ function Responder({ c, fechar, modo, responder }: { c: Conversa; fechar: () => 
         if (error) throw new Error(error.message);
         anexo = { path: p.path, nome: arquivo.name, tipo: arquivo.type };
       }
-      const r = await enviarResposta({ chatId: c.chat_id, texto, anexo });
+      const r = await enviarResposta(c.chat_id ? { chatId: c.chat_id, texto, anexo } : { telefone: c.telefone, nome: c.contato, texto, anexo });
       if (!r.ok) throw new Error(r.erro);
       fechar();
     } catch (e) {
@@ -106,13 +137,14 @@ function Responder({ c, fechar, modo, responder }: { c: Conversa; fechar: () => 
   return (
     <div className="border-t border-border/60 p-3 sm:p-4">
       {/* Janela no estilo do WhatsApp: a conversa como o pai mandou, e a resposta embaixo. */}
-      <div className="mx-auto max-w-2xl overflow-hidden rounded-2xl border border-border/60 shadow-sm">
+      <div className="relative mx-auto max-w-2xl overflow-hidden rounded-2xl border border-border/60 shadow-sm">
+        {perfil && <Perfil c={c} fechar={() => setPerfil(false)} />}
         <div className="flex items-center gap-3 bg-[#075E54] px-4 py-2.5 text-white">
-          <span className="grid size-9 place-items-center rounded-full bg-white/20 text-sm font-bold">{iniciais}</span>
-          <span className="min-w-0">
+          <button type="button" onClick={() => setPerfil(!perfil)} className="grid size-9 shrink-0 place-items-center rounded-full bg-white/20 text-sm font-bold hover:bg-white/30" title="Ver perfil">{iniciais}</button>
+          <button type="button" onClick={() => setPerfil(!perfil)} className="min-w-0 text-left" title="Ver perfil">
             <span className="block truncate font-semibold">{c.contato || telLegivel(c.telefone)}</span>
-            <span className="block text-xs opacity-80">{telLegivel(c.telefone)}{c.assunto ? ` · ${c.assunto}` : ""}</span>
-          </span>
+            <span className="block truncate text-xs opacity-80">{c.vinculo || telLegivel(c.telefone)}{c.assunto ? ` · ${c.assunto}` : ""}</span>
+          </button>
           <button type="button" onClick={fechar} className="ml-auto rounded-full p-1.5 hover:bg-white/15" aria-label="Fechar"><X className="size-4" /></button>
         </div>
 
@@ -125,7 +157,7 @@ function Responder({ c, fechar, modo, responder }: { c: Conversa; fechar: () => 
               </div>
             ))
           ) : (
-            <p className="text-center text-xs text-slate-500">A mensagem não está mais guardada. Resumo: {c.resumo}</p>
+            c.chat_id ? <p className="text-center text-xs text-slate-500">A mensagem aparece na próxima leitura do WhatsApp (até 5 min). Resumo: {c.resumo}</p> : <p className="text-center text-xs text-slate-500">Nova conversa. Escreva a mensagem abaixo.</p>
           )}
           {c.precisa_acao && c.acao && (
             <p className="pt-2 text-center"><span className="rounded-md bg-[#FFF5C4] px-2 py-1 text-[11px] text-slate-700">Sugestão: {c.acao}</span></p>
@@ -189,50 +221,51 @@ function Linha({ c, agora, aberta, abrir }: { c: Conversa; agora: number; aberta
   const imp = c.importancia ?? "media";
   const marcar = (s: "resolvida" | "ignorada" | "aguardando") => iniciar(async () => { await marcarConversa(c.chat_id, s); });
   const esperando = c.status === "aguardando";
+  const iso = esperando ? c.aguardando_desde ?? c.ultima_msg_em : c.ultima_msg_em;
+  const fechado = foraDoHorario(iso);
+  // No computador tudo numa linha; no celular quebra em nome/hora, resumo e botões (nada fica por cima).
   return (
     <li className={aberta ? "bg-amadeus-blue-50/30" : ""}>
-      <div className="flex items-center gap-3 px-4 py-2 text-sm">
-        <span className={`size-2.5 shrink-0 rounded-full ${PONTO[imp]}`} title={ROTULO[imp]} />
-        <button type="button" onClick={() => abrir(aberta ? null : "ver")} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-          <span className="w-40 shrink-0 truncate font-semibold" title={telLegivel(c.telefone)}>{c.contato || telLegivel(c.telefone)}</span>
-          <span className="hidden w-32 shrink-0 truncate text-xs text-amadeus-blue sm:inline">{c.assunto}</span>
-          <span className="min-w-0 flex-1 truncate text-muted-foreground">{c.resumo}</span>
-          {(() => {
-            const iso = esperando ? c.aguardando_desde ?? c.ultima_msg_em : c.ultima_msg_em;
-            const fechado = foraDoHorario(iso);
-            return (
-              <span
-                className={`hidden w-44 shrink-0 text-right text-xs tabular-nums sm:inline ${fechado ? "text-amber-700" : "text-muted-foreground"}`}
-                title={fechado ? "Chegou com a escola fechada (fim de semana ou fora do horário)" : undefined}
-              >
-                {fechado && "● "}{quando(iso, true)} · {tempo(iso, agora)}
-              </span>
-            );
-          })()}
-          <span className="w-10 shrink-0 text-right text-xs tabular-nums text-muted-foreground sm:hidden">
-            {tempo(esperando ? c.aguardando_desde ?? c.ultima_msg_em : c.ultima_msg_em, agora)}
+      <div className="flex flex-col gap-1.5 px-4 py-2.5 text-sm lg:flex-row lg:items-center lg:gap-3 lg:py-2">
+        <button type="button" onClick={() => abrir(aberta ? null : "ver")} className="flex min-w-0 flex-1 flex-col gap-0.5 text-left lg:flex-row lg:items-center lg:gap-3">
+          <span className="flex min-w-0 items-center gap-2 lg:w-56 lg:shrink-0">
+            <span className={`size-2.5 shrink-0 rounded-full ${PONTO[imp]}`} title={ROTULO[imp]} />
+            <span className="min-w-0 flex-1 truncate font-semibold" title={[telLegivel(c.telefone), c.vinculo].filter(Boolean).join(" · ")}>{c.nome_cadastro || c.contato || telLegivel(c.telefone)}</span>
+            {c.status === "aguardando" && c.ultima_da_escola && (
+              <span className="shrink-0 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold uppercase text-emerald-700">respondida</span>
+            )}
+            <span className={`shrink-0 text-xs tabular-nums lg:hidden ${fechado ? "text-amber-700" : "text-muted-foreground"}`}>
+              {fechado && "● "}{quando(iso, true)}
+            </span>
           </span>
-          <ChevronDown className={`size-4 shrink-0 text-muted-foreground transition-transform ${aberta ? "rotate-180" : ""}`} />
+          <span className="truncate pl-4.5 text-xs text-amadeus-blue lg:w-32 lg:shrink-0 lg:pl-0">{c.assunto}</span>
+          <span className="line-clamp-2 pl-4.5 text-muted-foreground lg:line-clamp-1 lg:min-w-0 lg:flex-1 lg:pl-0">{c.resumo}</span>
+          <span
+            className={`hidden shrink-0 text-right text-xs tabular-nums lg:inline lg:w-44 ${fechado ? "text-amber-700" : "text-muted-foreground"}`}
+            title={fechado ? "Chegou com a escola fechada (fim de semana ou fora do horário)" : undefined}
+          >
+            {fechado && "● "}{quando(iso, true)} · {tempo(iso, agora)}
+          </span>
         </button>
-        <span className="flex shrink-0 items-center gap-1 text-xs font-semibold">
+        <span className="flex shrink-0 items-center gap-1 pl-4.5 text-xs font-semibold lg:pl-0">
           <button type="button" onClick={() => abrir(aberta === "ver" ? null : "ver")} className={`rounded-md px-2 py-1 ${aberta === "ver" ? "bg-amadeus-blue text-white" : "text-amadeus-blue hover:bg-amadeus-blue-50"}`}>
             Ver mensagem
           </button>
           <button type="button" onClick={() => abrir(aberta === "responder" ? null : "responder")} className={`rounded-md px-2 py-1 ${aberta === "responder" ? "bg-[#00A884] text-white" : "text-[#008F72] hover:bg-emerald-50"}`}>
             Responder
           </button>
-        </span>
-        <span className="flex shrink-0 items-center gap-1">
-          {pendente ? (
-            <Loader2 className="size-4 animate-spin text-muted-foreground" />
-          ) : esperando ? (
-            <>
-              <button type="button" onClick={() => marcar("resolvida")} title="Resolvido (não envia nada)" className="rounded-md p-1.5 text-emerald-700 hover:bg-emerald-50"><Check className="size-4" /></button>
-              <button type="button" onClick={() => marcar("ignorada")} title="Ignorar (não envia nada)" className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"><EyeOff className="size-4" /></button>
-            </>
-          ) : (
-            <button type="button" onClick={() => marcar("aguardando")} title="Reabrir" className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"><RotateCcw className="size-4" /></button>
-          )}
+          <span className="ml-auto flex items-center gap-1 lg:ml-1">
+            {pendente ? (
+              <Loader2 className="size-4 animate-spin text-muted-foreground" />
+            ) : esperando ? (
+              <>
+                <button type="button" onClick={() => marcar("resolvida")} title="Resolvido (não envia nada)" className="rounded-md p-1.5 text-emerald-700 hover:bg-emerald-50"><Check className="size-4" /></button>
+                <button type="button" onClick={() => marcar("ignorada")} title="Ignorar (não envia nada)" className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"><EyeOff className="size-4" /></button>
+              </>
+            ) : (
+              <button type="button" onClick={() => marcar("aguardando")} title="Reabrir" className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"><RotateCcw className="size-4" /></button>
+            )}
+          </span>
         </span>
       </div>
       {aberta && <Responder c={c} modo={aberta} fechar={() => abrir(null)} responder={() => abrir("responder")} />}
@@ -240,9 +273,52 @@ function Linha({ c, agora, aberta, abrir }: { c: Conversa; agora: number; aberta
   );
 }
 
-export function PainelWhatsApp({ aguardando, fechadas, assuntos, geradoEm }: {
+/** "Nova mensagem": busca na agenda (responsáveis e colaboradores) e abre a janela para escrever. */
+function NovaMensagem({ contatos, fechar }: { contatos: ContatoAgenda[]; fechar: () => void }) {
+  const [busca, setBusca] = useState("");
+  const [escolhido, setEscolhido] = useState<ContatoAgenda | null>(null);
+  const sem = (x: string) => x.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+  const q = sem(busca.trim());
+  const digitos = busca.replace(/\D/g, "");
+  const achados = q.length < 2 ? [] : contatos.filter((c) => sem(c.nome).includes(q) || sem(c.vinculo).includes(q) || (digitos.length >= 4 && c.telefone.includes(digitos))).slice(0, 8);
+  if (escolhido) {
+    const c: Conversa = {
+      chat_id: "", contato: escolhido.nome, telefone: escolhido.telefone, ultima_msg_em: null, aguardando_desde: null, msgs_sem_resposta: 0,
+      assunto: null, importancia: null, precisa_acao: false, acao: null, resumo: null, ultimo_texto: null, ultima_da_escola: true,
+      status: "respondida", vinculo: escolhido.vinculo, nome_cadastro: escolhido.nome,
+    };
+    return <Responder c={c} modo="responder" fechar={fechar} responder={() => {}} />;
+  }
+  return (
+    <div className="mt-4 rounded-2xl border border-border/60 bg-white p-4">
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <input autoFocus value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Nome do responsável, do aluno ou número" className="w-full rounded-xl border border-border py-2 pl-9 pr-3 text-sm outline-none focus:border-amadeus-blue" />
+        </div>
+        <button type="button" onClick={fechar} className="rounded-md p-2 text-muted-foreground hover:bg-muted" aria-label="Fechar"><X className="size-4" /></button>
+      </div>
+      {achados.length > 0 && (
+        <ul className="mt-2 divide-y divide-border/60">
+          {achados.map((c) => (
+            <li key={c.telefone}>
+              <button type="button" onClick={() => setEscolhido(c)} className="flex w-full flex-col px-2 py-2 text-left text-sm hover:bg-amadeus-blue-50 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                <span className="font-semibold">{c.nome}</span>
+                <span className="text-xs text-muted-foreground">{c.vinculo} · {telLegivel(c.telefone)}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {q.length >= 2 && achados.length === 0 && <p className="mt-2 text-sm text-muted-foreground">Ninguém encontrado na agenda.</p>}
+    </div>
+  );
+}
+
+export function PainelWhatsApp({ aguardando, fechadas, contatos, assuntos, geradoEm }: {
   aguardando: Conversa[];
   fechadas: Conversa[];
+  contatos: ContatoAgenda[];
   assuntos: [string, number][];
   geradoEm: number;
 }) {
@@ -250,6 +326,7 @@ export function PainelWhatsApp({ aguardando, fechadas, assuntos, geradoEm }: {
   const [aba, setAba] = useState<"importantes" | "todas" | "fechadas">("importantes");
   const [aberta, setAberta] = useState<{ id: string; modo: Modo } | null>(null);
   const [atualizando, iniciar] = useTransition();
+  const [nova, setNova] = useState(false);
 
   // Atualiza sozinho a cada minuto (a leitura do WhatsApp roda a cada 5), sem perder o que está sendo escrito.
   useEffect(() => {
@@ -261,8 +338,9 @@ export function PainelWhatsApp({ aguardando, fechadas, assuntos, geradoEm }: {
     (a, b) => ORDEM[a.importancia ?? "media"] - ORDEM[b.importancia ?? "media"] || Date.parse(a.aguardando_desde ?? "") - Date.parse(b.aguardando_desde ?? ""),
   );
   const importantes = ordenadas.filter((c) => c.importancia !== "baixa");
+  const semResposta = aguardando.filter((c) => !c.ultima_da_escola).length;
   const lista = aba === "importantes" ? importantes : aba === "todas" ? ordenadas : fechadas;
-  const nAlta = aguardando.filter((c) => c.importancia === "alta").length;
+  const nAlta = aguardando.filter((c) => c.importancia === "alta" && !c.ultima_da_escola).length;
   const hora = new Date(geradoEm).toLocaleTimeString("pt-BR", { timeZone: "America/Fortaleza", hour: "2-digit", minute: "2-digit" });
 
   const abas = [
@@ -275,22 +353,27 @@ export function PainelWhatsApp({ aguardando, fechadas, assuntos, geradoEm }: {
     <div className="mt-5">
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
         <span><b className="text-red-700">{nAlta}</b> importante{nAlta === 1 ? "" : "s"}</span>
-        <span><b className="text-amadeus-blue">{ordenadas.length}</b> aguardando</span>
+        <span><b className="text-amadeus-blue">{semResposta}</b> sem resposta</span>
         {assuntos.length > 0 && (
           <span className="text-muted-foreground">Semana: {assuntos.slice(0, 5).map(([a, n]) => `${a} ${n}`).join(" · ")}</span>
         )}
-        <button type="button" onClick={() => iniciar(() => router.refresh())} className="ml-auto inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-amadeus-blue">
+        <button type="button" onClick={() => setNova(!nova)} className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-[#00A884] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#008F72]">
+          <PenSquare className="size-3.5" /> Nova mensagem
+        </button>
+        <button type="button" onClick={() => iniciar(() => router.refresh())} className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-amadeus-blue">
           <RefreshCw className={`size-3.5 ${atualizando ? "animate-spin" : ""}`} /> Atualizado às {hora}
         </button>
       </div>
 
-      <div className="mt-4 flex gap-1 border-b border-border/60">
+      {nova && <NovaMensagem contatos={contatos} fechar={() => setNova(false)} />}
+
+      <div className="mt-4 flex gap-1 overflow-x-auto border-b border-border/60">
         {abas.map((a) => (
           <button
             key={a.id}
             type="button"
             onClick={() => setAba(a.id)}
-            className={`-mb-px border-b-2 px-3 py-2 text-sm font-semibold ${aba === a.id ? "border-amadeus-blue text-amadeus-blue" : "border-transparent text-muted-foreground hover:text-amadeus-blue"}`}
+            className={`-mb-px shrink-0 whitespace-nowrap border-b-2 px-3 py-2 text-sm font-semibold ${aba === a.id ? "border-amadeus-blue text-amadeus-blue" : "border-transparent text-muted-foreground hover:text-amadeus-blue"}`}
           >
             {a.rotulo} <span className="ml-1 rounded-full bg-muted px-1.5 text-xs">{a.n}</span>
           </button>

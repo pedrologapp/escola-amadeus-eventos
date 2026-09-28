@@ -32,7 +32,7 @@ function token() {
   return t;
 }
 
-async function buscar(caminho: string, revalidar: number | false = false): Promise<unknown> {
+export async function buscar(caminho: string, revalidar: number | false = false): Promise<unknown> {
   const pedir = () =>
     fetch(`${HOST}/${caminho}`, {
       headers: { Authorization: `Bearer ${token()}`, Accept: "application/json" },
