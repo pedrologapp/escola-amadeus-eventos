@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { avisarDirecao, telLegivel } from "@/lib/whatsapp-grupo";
 
 /**
  * Ações do painel do WhatsApp. Marcar resolvido/ignorar não envia nada.
@@ -104,7 +105,17 @@ export async function enviarResposta(entrada: {
   // Continua na lista (só sai com "Resolvido"); fica marcada como respondida.
   const agora = new Date().toISOString();
   if (entrada.chatId) {
-    await db.from("whatsapp_conversas").update({ ultima_da_escola: true, msgs_sem_resposta: 0, atualizado_em: agora }).eq("chat_id", entrada.chatId);
+    const quem = (user.email ?? "equipe").split("@")[0];
+    const { data: conv } = await db.from("whatsapp_conversas").select("contato, telefone, alertado_em, respondido_em").eq("chat_id", entrada.chatId).maybeSingle();
+    await db.from("whatsapp_conversas").update({
+      ultima_da_escola: true, msgs_sem_resposta: 0, atualizado_em: agora,
+      ...(conv && !conv.respondido_em ? { respondido_por: quem, respondido_em: agora } : {}),
+    }).eq("chat_id", entrada.chatId);
+    // Se o grupo da direção tinha sido avisado, conta que já foi respondida (ninguém responde por cima).
+    if (conv?.alertado_em && !conv.respondido_em) {
+      const hora = new Date(agora).toLocaleTimeString("pt-BR", { timeZone: "America/Fortaleza", hour: "2-digit", minute: "2-digit" });
+      await avisarDirecao(`Já respondida por ${quem} às ${hora}: ${conv.contato || telLegivel(conv.telefone)}.`);
+    }
   }
   revalidatePath("/admin/comunicacao/whatsapp");
   return { ok: true };

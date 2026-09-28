@@ -2,6 +2,8 @@ import "server-only";
 
 import Anthropic from "@anthropic-ai/sdk";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { avisarDirecao, LINK_PAINEL, quandoLegivel, telLegivel } from "@/lib/whatsapp-grupo";
+import { carregarContatos, chaveTelefone } from "@/lib/whatsapp-contatos";
 
 /**
  * Monitoramento do WhatsApp da escola — SÓ LEITURA. Nada aqui envia ou
@@ -51,6 +53,7 @@ interface Classificacao {
   precisa_acao: boolean;
   acao: string;
   resumo: string;
+  urgente: boolean;
 }
 
 const MODELO = "claude-haiku-4-5-20251001";
@@ -74,6 +77,7 @@ async function classificar(m: MensagemVista, contexto: string | null): Promise<C
       precisa_acao: true,
       acao: `Ouvir/ver o ${tipoDeMidia(m)} enviado`,
       resumo: `Enviou ${tipoDeMidia(m)} sem texto.`,
+      urgente: false,
     };
   }
   const chave = process.env.ANTHROPIC_API_KEY;
@@ -88,7 +92,12 @@ async function classificar(m: MensagemVista, contexto: string | null): Promise<C
       `Assuntos possíveis: ${ASSUNTOS.join(", ")}. ` +
       "Importância: 'alta' para reclamação, saúde/segurança do aluno, problema de pagamento, prazo, ou pergunta direta que espera resposta hoje; " +
       "'media' para pedidos e dúvidas comuns; 'baixa' para 'ok', 'obrigado', emojis, cumprimentos e avisos que não pedem nada. " +
-      "Responda SÓ um JSON: {\"assunto\":\"...\",\"importancia\":\"alta|media|baixa\",\"precisa_acao\":true|false,\"acao\":\"o que a escola precisa fazer, em até 10 palavras, ou vazio\",\"resumo\":\"o que a pessoa quer, em até 18 palavras\"}. " +
+      "URGENTE é outra coisa, bem mais rara, e deve ser false na imensa maioria das mensagens. Só marque urgente=true quando for sério de verdade: " +
+      "saúde ou segurança do aluno (acidente, passou mal, machucado, sumiu, não chegou em casa, briga com agressão, suspeita de abuso ou bullying grave); " +
+      "menção a advogado, processo, Procon, polícia, Conselho Tutelar ou denúncia; ameaça de tirar o filho da escola; " +
+      "algo que exige ação da escola HOJE para não virar problema (ex.: pessoa não autorizada vai buscar a criança). " +
+      "Reclamação comum, insatisfação, dúvida de boleto, pedido de documento, atraso ou falta simples NÃO são urgentes. " +
+      "Responda SÓ um JSON: {\"assunto\":\"...\",\"importancia\":\"alta|media|baixa\",\"urgente\":true|false,\"precisa_acao\":true|false,\"acao\":\"o que a escola precisa fazer, em até 10 palavras, ou vazio\",\"resumo\":\"o que a pessoa quer, em até 18 palavras\"}. " +
       "No resumo, não repita telefones nem dados de documentos.",
     messages: [
       {
@@ -108,6 +117,7 @@ async function classificar(m: MensagemVista, contexto: string | null): Promise<C
     precisa_acao: !!c.precisa_acao,
     acao: String(c.acao ?? "").slice(0, 120),
     resumo: String(c.resumo ?? "").slice(0, 240),
+    urgente: c.urgente === true,
   };
 }
 
@@ -125,6 +135,7 @@ export async function processarLote(msgs: MensagemVista[]): Promise<{ novas: num
     .in("chat_id", individuais.map((m) => m.chatId));
   const porChat = new Map((atuais ?? []).map((c) => [c.chat_id as string, c]));
 
+  let contatos: Awaited<ReturnType<typeof carregarContatos>> | null = null;
   let novas = 0;
   let classificadas = 0;
   let erros = 0;
@@ -146,12 +157,17 @@ export async function processarLote(msgs: MensagemVista[]): Promise<{ novas: num
       // A escola respondeu. Se a conversa estava na lista, CONTINUA nela (só sai quando alguém
       // marca "Resolvido" — direção, 28/09/2026), agora marcada como respondida.
       await db.from("whatsapp_eventos").upsert({ msg_id: m.id, chat_id: m.chatId, da_escola: true, em });
+      const avisada = atual?.alertado_em && !atual?.respondido_em && !atual?.ultima_da_escola;
       await db.from("whatsapp_conversas").upsert({
         ...base,
         ultima_da_escola: true,
         msgs_sem_resposta: 0,
         status: atual?.status ?? "respondida",
+        ...(avisada ? { respondido_em: em, respondido_por: atual?.respondido_por ?? "WhatsApp da escola" } : {}),
       });
+      if (avisada) {
+        await avisarDirecao(`Já respondida pelo WhatsApp da escola: ${atual.contato || telLegivel(telefone)} (${quandoLegivel(em)}).`);
+      }
       continue;
     }
 
@@ -163,9 +179,10 @@ export async function processarLote(msgs: MensagemVista[]): Promise<{ novas: num
       classificadas++;
     } catch {
       erros++;
-      cls = { assunto: "Outros", importancia: "media", precisa_acao: true, acao: "Ler a mensagem", resumo: "Não foi possível classificar." };
+      cls = { assunto: "Outros", importancia: "media", precisa_acao: true, acao: "Ler a mensagem", resumo: "Não foi possível classificar.", urgente: false };
     }
     // Mantém a maior importância enquanto a conversa segue sem resposta.
+    if (cls.urgente) cls.importancia = "alta";
     const importancia =
       ainda && PESO[atual.importancia as Importancia] > PESO[cls.importancia] ? (atual.importancia as Importancia) : cls.importancia;
     await db.from("whatsapp_eventos").upsert({
@@ -189,7 +206,28 @@ ${t}` : t).slice(-2000);
       })(),
       status: "aguardando",
       resolvido_em: null,
+      urgente: cls.urgente || (ainda ? !!atual.urgente : false),
+      ...(ainda ? {} : { alertado_em: null, respondido_em: null, respondido_por: null }),
     });
+
+    // Aviso no grupo "Amadeus - Direção": só urgente/sério e uma vez por rodada sem resposta.
+    if (cls.urgente && !(ainda && atual.alertado_em)) {
+      if (!contatos) contatos = await carregarContatos().catch(() => []);
+      const cad = contatos.find((c) => chaveTelefone(c.telefone) === chaveTelefone(telefone));
+      const quem = [cad?.nome || m.nome || telLegivel(telefone), cad?.vinculo ? `(${cad.vinculo})` : null].filter(Boolean).join(" ");
+      const ok = await avisarDirecao(
+        [
+          "*Mensagem séria no WhatsApp da escola*",
+          `De: ${quem} · ${telLegivel(telefone)}`,
+          `Assunto: ${cls.assunto}`,
+          `Resumo: ${cls.resumo}`,
+          `Chegou: ${quandoLegivel(em)}`,
+          "",
+          `Antes de responder, veja no painel se alguém já respondeu: ${LINK_PAINEL}`,
+        ].join("\n"),
+      );
+      if (ok) await db.from("whatsapp_conversas").update({ alertado_em: new Date().toISOString() }).eq("chat_id", m.chatId);
+    }
   }
   return { novas, classificadas, erros };
 }

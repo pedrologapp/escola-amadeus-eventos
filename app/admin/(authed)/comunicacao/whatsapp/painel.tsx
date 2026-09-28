@@ -21,6 +21,10 @@ export type Conversa = {
   ultimo_texto: string | null;
   ultima_da_escola: boolean;
   status: string;
+  urgente?: boolean;
+  alertado_em?: string | null;
+  respondido_por?: string | null;
+  respondido_em?: string | null;
   vinculo?: string | null; // "Responsável de Maria (3º Ano)" — do Activesoft
   nome_cadastro?: string | null;
 };
@@ -171,6 +175,11 @@ function Responder({ c, fechar, modo, responder }: { c: Conversa; fechar: () => 
             </button>
           </div>
         )}
+        {c.ultima_da_escola && c.chat_id && (
+          <p className="bg-amber-50 px-3 py-2 text-center text-xs font-semibold text-amber-900">
+            Já respondida{c.respondido_por ? ` por ${c.respondido_por}` : ""}{c.respondido_em ? ` (${quando(c.respondido_em)})` : ""}. Confira antes de responder de novo.
+          </p>
+        )}
         {modo === "responder" && <div className="space-y-2 bg-[#F0F2F5] px-3 py-2.5">
           <div className="flex flex-wrap gap-1.5">
             {PRONTAS.map((p) => (
@@ -231,8 +240,13 @@ function Linha({ c, agora, aberta, abrir }: { c: Conversa; agora: number; aberta
           <span className="flex min-w-0 items-center gap-2 lg:w-56 lg:shrink-0">
             <span className={`size-2.5 shrink-0 rounded-full ${PONTO[imp]}`} title={ROTULO[imp]} />
             <span className="min-w-0 flex-1 truncate font-semibold" title={[telLegivel(c.telefone), c.vinculo].filter(Boolean).join(" · ")}>{c.nome_cadastro || c.contato || telLegivel(c.telefone)}</span>
+            {c.urgente && (
+              <span className="shrink-0 rounded-md bg-red-600 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white" title={c.alertado_em ? "Avisado no grupo Amadeus - Direção" : undefined}>urgente</span>
+            )}
             {c.status === "aguardando" && c.ultima_da_escola && (
-              <span className="shrink-0 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold uppercase text-emerald-700">respondida</span>
+              <span className="shrink-0 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold uppercase text-emerald-700" title={c.respondido_por ? `Respondida por ${c.respondido_por}` : undefined}>
+                respondida{c.respondido_por ? ` · ${c.respondido_por}` : ""}
+              </span>
             )}
             <span className={`shrink-0 text-xs tabular-nums lg:hidden ${fechado ? "text-amber-700" : "text-muted-foreground"}`}>
               {fechado && "● "}{quando(iso, true)}
@@ -335,7 +349,7 @@ export function PainelWhatsApp({ aguardando, fechadas, contatos, assuntos, gerad
   }, [router]);
 
   const ordenadas = [...aguardando].sort(
-    (a, b) => ORDEM[a.importancia ?? "media"] - ORDEM[b.importancia ?? "media"] || Date.parse(a.aguardando_desde ?? "") - Date.parse(b.aguardando_desde ?? ""),
+    (a, b) => Number(!!b.urgente) - Number(!!a.urgente) || ORDEM[a.importancia ?? "media"] - ORDEM[b.importancia ?? "media"] || Date.parse(a.aguardando_desde ?? "") - Date.parse(b.aguardando_desde ?? ""),
   );
   const importantes = ordenadas.filter((c) => c.importancia !== "baixa");
   const semResposta = aguardando.filter((c) => !c.ultima_da_escola).length;
