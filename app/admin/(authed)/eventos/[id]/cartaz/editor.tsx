@@ -40,7 +40,7 @@ function Passo({ n, titulo, children }: { n: number; titulo: string; children: R
 
 // No domínio do admin (admin.eventos...) tudo que não é /admin é redirecionado, então
 // a imagem precisa vir do domínio do site, onde a rota de desenho mora.
-const SITE = (process.env.NEXT_PUBLIC_SITE_URL || "https://eventos.escolaamadeus.com").replace(//$/, "");
+const SITE = (process.env.NEXT_PUBLIC_SITE_URL || "https://eventos.escolaamadeus.com").replace(/\/+$/, "");
 const url = (e: EspecCartaz, baixar = false) => `${SITE}/api/eventos/cartaz?d=${codificar(e)}${baixar ? "&baixar=1" : "&escala=0.45"}`;
 
 export function EditorCartaz({ fatos }: { fatos: FatosEvento }) {
