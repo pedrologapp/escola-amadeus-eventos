@@ -12,7 +12,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * escola não guarda histórico, então só enxergamos a última mensagem de
  * cada conversa em cada leitura — suficiente para saber se o pai está
  * esperando resposta. Guardamos assunto, importância e resumo; o texto da
- * mensagem não é gravado (LGPD).
+ * mensagem só fica guardado enquanto a conversa espera resposta, para quem
+ * for responder pelo painel; é apagado quando a conversa é respondida ou
+ * resolvida (LGPD).
  */
 
 export const ASSUNTOS = [
@@ -142,6 +144,7 @@ export async function processarLote(msgs: MensagemVista[]): Promise<{ novas: num
         ultima_da_escola: true,
         aguardando_desde: null,
         msgs_sem_resposta: 0,
+        ultimo_texto: null,
         status: atual && atual.status === "aguardando" ? "respondida" : atual?.status ?? "respondida",
       });
       continue;
@@ -172,6 +175,12 @@ export async function processarLote(msgs: MensagemVista[]): Promise<{ novas: num
       precisa_acao: cls.precisa_acao || (ainda ? !!atual.precisa_acao : false),
       acao: cls.acao || (ainda ? atual.acao : null),
       resumo: ainda && atual.resumo ? `${atual.resumo} / ${cls.resumo}`.slice(-400) : cls.resumo,
+      // Texto só enquanto espera resposta (para quem for responder); apagado ao responder/resolver.
+      ultimo_texto: (() => {
+        const t = m.body.trim() || `[${tipoDeMidia(m)}]`;
+        return (ainda && atual.ultimo_texto ? `${atual.ultimo_texto}
+${t}` : t).slice(-2000);
+      })(),
       status: "aguardando",
       resolvido_em: null,
     });
