@@ -2,9 +2,9 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Copy, Loader2, Printer, Search, Send, UserPlus } from "lucide-react";
+import { Check, Copy, Eye, Loader2, Printer, Search, Send, UserPlus } from "lucide-react";
 import type { AlunoBusca, Leitura, Responsavel } from "@/lib/rematricula-2027-dados";
-import { enviarCarta, type Destino, type ResultadoEnvio } from "./actions";
+import { enviarCarta, previaCarta, type Destino, type ResultadoEnvio } from "./actions";
 import {
   DEPOIS_DO_PRAZO,
   DESCONTO_IRMAO,
@@ -22,9 +22,11 @@ import {
   livroAVista,
   reais,
   simular,
+  condicaoAVista,
   type Condicao,
   type ModoLivro,
   type NomeSerie,
+  type TipoCarta,
 } from "@/lib/rematricula-2027";
 
 const semAcento = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
@@ -93,6 +95,46 @@ function Coluna({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; mo
   );
 }
 
+/** Pagamento à vista: matrícula + 11 mensalidades cheias com 10%, sem e com os livros. */
+function ColunaAVista({ titulo, c, destaque }: { titulo: string; c: Condicao; destaque?: boolean }) {
+  const v = condicaoAVista(c);
+  const fio = destaque ? "border-white/20" : "border-border/60";
+  const cor = destaque ? "text-amadeus-yellow" : "text-amadeus-blue";
+  return (
+    <div className={`rounded-2xl p-5 ${destaque ? "bg-amadeus-blue text-white" : "border border-border/60 bg-white"}`}>
+      <p className={`text-xs font-bold uppercase tracking-widest ${destaque ? "text-amadeus-yellow" : "text-muted-foreground"}`}>{titulo}</p>
+      <div className="mt-4 space-y-1.5">
+        <Linha rotulo="Matrícula + 11 mensalidades" valor={v.ano} forte />
+        <p className="text-xs opacity-75">12 × {reais(v.mensalidade)}</p>
+        <Linha rotulo="Desconto à vista (10%)" valor={v.desconto} menos />
+      </div>
+      <div className={`mt-3 border-t pt-3 ${fio}`}>
+        <p className="text-sm font-bold">À vista, sem os livros</p>
+        <p className={`text-3xl font-extrabold ${cor}`}>{reais(v.semLivro)}</p>
+      </div>
+      <div className={`mt-3 border-t pt-3 ${fio}`}>
+        <Linha rotulo="Livros à vista" valor={v.livro} />
+        <p className="text-xs opacity-75">12 × {reais(c.livro)} = {reais(v.livro12x)}, com 10%</p>
+      </div>
+      <div className={`mt-3 border-t pt-3 ${fio}`}>
+        <p className="text-sm font-bold">À vista, com os livros</p>
+        <p className={`text-3xl font-extrabold ${cor}`}>{reais(v.comLivro)}</p>
+      </div>
+    </div>
+  );
+}
+
+function linhasAVista(c: Condicao) {
+  const v = condicaoAVista(c);
+  return [
+    `Matrícula + 11 mensalidades: ${reais(v.ano)} (12 × ${reais(v.mensalidade)})`,
+    `Desconto à vista (10%): − ${reais(v.desconto)}`,
+    `*À vista, sem os livros: ${reais(v.semLivro)}*`,
+    `Livros à vista: ${reais(v.livro)} (12 × ${reais(c.livro)} com 10%)`,
+    `*À vista, com os livros: ${reais(v.comLivro)}*`,
+  ];
+}
+
 /** Linhas de uma condição no texto do WhatsApp. */
 function linhasTexto(c: Condicao, modo: ModoLivro) {
   const l = [`Mensalidade cheia: ${reais(c.cheia)}`, `Fidelidade (até o dia 05): − ${reais(c.fidelidade)}`];
@@ -112,6 +154,7 @@ export interface EnvioFeito {
   responsavel: string | null;
   telefone: string;
   status: string;
+  detalhe?: string | null;
   created_at: string;
 }
 
@@ -124,15 +167,24 @@ const SELO_ENVIO: Record<string, { texto: string; classe: string }> = {
   erro: { texto: "Erro", classe: "bg-red-50 text-red-700" },
 };
 
-function EnviarWhatsApp({ responsaveis, envios, enviar }: {
+/**
+ * Envio pelo WhatsApp da escola. "Folder + carta" manda as duas mensagens;
+ * "Só o folder" manda só a apresentação com o link (para quem vai receber os
+ * valores por telefone). Com `soFolder` fixo, é o envio avulso, sem aluno.
+ */
+function EnviarWhatsApp({ responsaveis, envios, enviar, rotuloCarta, soFolder: soFolderFixo }: {
   responsaveis: Responsavel[];
   envios: EnvioFeito[];
-  enviar: (destinos: Destino[]) => Promise<{ ok: boolean; erro?: string; resultados: ResultadoEnvio[] }>;
+  enviar: (destinos: Destino[], soFolder: boolean) => Promise<{ ok: boolean; erro?: string; resultados: ResultadoEnvio[] }>;
+  rotuloCarta?: string;
+  soFolder?: boolean;
 }) {
   const [marcados, setMarcados] = useState<Set<string>>(new Set());
   const [outro, setOutro] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [retorno, setRetorno] = useState<{ erro?: string; resultados: ResultadoEnvio[] } | null>(null);
+  const [soFolderEscolhido, setSoFolder] = useState(false);
+  const soFolder = soFolderFixo || soFolderEscolhido;
   const jaRecebeu = new Set(envios.filter((e) => e.status === "enviado").map((e) => e.telefone));
 
   const destinos: Destino[] = [
@@ -142,12 +194,13 @@ function EnviarWhatsApp({ responsaveis, envios, enviar }: {
 
   const disparar = async () => {
     const repetidos = destinos.filter((d) => jaRecebeu.has(d.telefone.replace(/\D/g, "")));
-    const aviso = repetidos.length ? `\n\n${repetidos.length} desse(s) número(s) já recebeu a carta antes.` : "";
-    if (!window.confirm(`Enviar a apresentação e a carta para ${destinos.length} número(s) pelo WhatsApp da escola?${aviso}`)) return;
+    const aviso = repetidos.length ? `\n\n${repetidos.length} desse(s) número(s) já recebeu mensagem antes.` : "";
+    const oque = soFolder ? "só o folder digital (sem valores)" : `a apresentação e a ${rotuloCarta ?? "carta com os valores"}`;
+    if (!window.confirm(`Enviar ${oque} para ${destinos.length} número(s) pelo WhatsApp da escola?${aviso}`)) return;
     setEnviando(true);
     setRetorno(null);
     try {
-      setRetorno(await enviar(destinos));
+      setRetorno(await enviar(destinos, soFolder));
     } catch (e) {
       setRetorno({ erro: (e as Error).message, resultados: [] });
     } finally {
@@ -156,10 +209,29 @@ function EnviarWhatsApp({ responsaveis, envios, enviar }: {
   };
 
   return (
-    <div className="mt-6 rounded-2xl border border-border/60 bg-white p-5">
-      <p className="flex items-center gap-2 text-sm font-bold text-amadeus-blue"><Send className="size-4" /> Enviar pelo WhatsApp da escola</p>
-      <p className="mt-1 text-xs text-muted-foreground">
-        Vão duas mensagens: a apresentação da escola com o folder digital e, em seguida, a imagem da carta com os valores.
+    <div className={`${soFolderFixo ? "" : "mt-6 "}rounded-2xl border border-border/60 bg-white p-5`}>
+      <p className="flex items-center gap-2 text-sm font-bold text-amadeus-blue"><Send className="size-4" /> {soFolderFixo ? "Enviar só o folder digital" : "Enviar pelo WhatsApp da escola"}</p>
+      {!soFolderFixo && (
+        <div className="mt-3 flex flex-wrap gap-2 text-sm">
+          {[
+            { v: false, t: `Folder + ${rotuloCarta ?? "carta com os valores"}` },
+            { v: true, t: "Só o folder (sem valores)" },
+          ].map((o) => (
+            <button
+              key={String(o.v)}
+              type="button"
+              onClick={() => setSoFolder(o.v)}
+              className={`rounded-xl px-3 py-1.5 font-semibold ${soFolderEscolhido === o.v ? "bg-amadeus-blue text-white" : "bg-amadeus-blue-50/70 text-amadeus-blue hover:bg-amadeus-blue-50"}`}
+            >
+              {o.t}
+            </button>
+          ))}
+        </div>
+      )}
+      <p className="mt-2 text-xs text-muted-foreground">
+        {soFolder
+          ? "Vai uma mensagem só: a apresentação da escola com o folder digital. Os valores a família recebe por outro caminho (ex.: pelo telefone)."
+          : `Vão duas mensagens: a apresentação da escola com o folder digital e, em seguida, a imagem da ${rotuloCarta ?? "carta com os valores"}.`}
       </p>
 
       {responsaveis.length > 0 && (
@@ -219,11 +291,36 @@ function EnviarWhatsApp({ responsaveis, envios, enviar }: {
                 <span className="text-muted-foreground">{quando(e.created_at)}</span>
                 <span>{e.responsavel ?? "Outro número"} · {telLegivel(e.telefone)}</span>
                 <span className={`rounded-md px-1.5 py-0.5 text-xs font-bold ${(SELO_ENVIO[e.status] ?? SELO_ENVIO.erro).classe}`}>{(SELO_ENVIO[e.status] ?? SELO_ENVIO.erro).texto}</span>
+                {e.detalhe && /^(só o folder|à vista)/.test(e.detalhe) && <span className="text-xs text-muted-foreground">{e.detalhe.split(" · ")[0]}</span>}
               </li>
             ))}
           </ul>
         </div>
       )}
+    </div>
+  );
+}
+
+/** Só o folder para um número avulso, sem escolher aluno (ex.: família que vai receber os valores por telefone). */
+function FolderAvulso() {
+  const [nome, setNome] = useState("");
+  return (
+    <div className="max-w-xl space-y-3 rounded-2xl border border-emerald-200 bg-emerald-50/40 p-4">
+      <label className="block max-w-xs text-sm font-semibold">
+        Nome da criança <span className="font-normal text-muted-foreground">(opcional)</span>
+        <input value={nome} onChange={(e) => setNome(e.target.value)} className="mt-1 w-full rounded-xl border border-border bg-white px-3 py-2 font-normal outline-none focus:border-amadeus-blue" />
+      </label>
+      <p className="text-xs text-muted-foreground">
+        {nome.trim() ? `A mensagem começa com "Olá, família de ${nome.trim().split(/\s+/)[0]}!".` : 'Sem nome, a mensagem começa com "Olá, família!".'}
+      </p>
+      <EnviarWhatsApp
+        soFolder
+        responsaveis={[]}
+        envios={[]}
+        enviar={(destinos) =>
+          enviarCarta({ alunoId: null, nome: nome.trim(), serie: "", desconto: 0, irmao: false, modo: "com", somenteFolder: true, destinos })
+        }
+      />
     </div>
   );
 }
@@ -243,6 +340,9 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
   const [serie, setSerie] = useState<NomeSerie | "">(leitura?.serie2027 ?? "");
   const [copiado, setCopiado] = useState(false);
   const [modo, setModo] = useState<ModoLivro>("com");
+  const [tipo, setTipo] = useState<TipoCarta>("mensal");
+  const [soFolderAberto, setSoFolderAberto] = useState(false);
+  const [abrindoPrevia, setAbrindoPrevia] = useState(false);
   const [descPag, setDescPag] = useState<string>(String(leitura?.descontoPagamento ?? 0));
   const [irmao, setIrmao] = useState(false);
   const [manterDesconto, setManterDesconto] = useState(true);
@@ -289,7 +389,51 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
       })}`
     : "";
 
-  const texto = sim
+  const dadosCarta = sim
+    ? {
+        alunoId: novato ? null : leitura!.aluno.id,
+        nome,
+        serie: sim.serie2027,
+        desconto,
+        irmao,
+        serieAtual,
+        base: baseMesmoSegmento,
+        modo,
+        tipo,
+      }
+    : null;
+
+  const verImagem = async () => {
+    if (!dadosCarta) return;
+    // A aba abre antes do await para o navegador não bloquear o pop-up.
+    const aba = window.open("about:blank", "_blank");
+    setAbrindoPrevia(true);
+    try {
+      const r = await previaCarta(dadosCarta);
+      if (r.url && aba) aba.location.href = r.url;
+      else { aba?.close(); window.alert(r.erro ?? "Não consegui gerar a imagem."); }
+    } finally {
+      setAbrindoPrevia(false);
+    }
+  };
+
+  const texto = sim && tipo === "avista"
+    ? [
+        `Olá! Seguem os valores de 2027 de *${nome}* (${sim.serie2027}) para pagamento *à vista*, com 10% de desconto:`,
+        "",
+        `*Fechando até ${PRAZO_PROMOCAO}*`,
+        ...linhasAVista(sim.promo),
+        "",
+        `*A partir de ${DEPOIS_DO_PRAZO}*`,
+        ...linhasAVista(sim.depois),
+        "",
+        "À vista é o pagamento único do ano (matrícula + 11 mensalidades). Não acumula com outros descontos.",
+        "",
+        `Conheça tudo o que vem em 2027: ${URL_FOLDER}`,
+        "",
+        "_Centro Educacional Amadeus_",
+      ].join("\n")
+    : sim
     ? [
         `Olá! Seguem os valores de 2027 de *${nome}* (${sim.serie2027}):`,
         "",
@@ -349,8 +493,17 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
         >
           <UserPlus className="size-4" /> Simular como novato
         </button>
+        <button
+          type="button"
+          onClick={() => setSoFolderAberto((v) => !v)}
+          className={`inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-semibold ${soFolderAberto ? "bg-emerald-600 text-white" : "bg-emerald-50 text-emerald-800 hover:bg-emerald-100"}`}
+        >
+          <Send className="size-4" /> Enviar só o folder
+        </button>
         {carregando && <span className="inline-flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Lendo o Activesoft…</span>}
       </div>
+
+      {soFolderAberto && <FolderAvulso />}
 
       {ativo && (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
@@ -485,6 +638,36 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
           <div>
             {sim ? (
               <>
+                <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
+                  <span className="font-semibold text-muted-foreground">Condição:</span>
+                  {([
+                    { v: "mensal", t: "Mensal" },
+                    { v: "avista", t: "À vista (10%)" },
+                  ] as const).map((o) => (
+                    <button
+                      key={o.v}
+                      type="button"
+                      onClick={() => setTipo(o.v)}
+                      className={`rounded-xl px-3 py-1.5 font-semibold ${tipo === o.v ? "bg-amadeus-yellow text-amadeus-blue" : "bg-amber-50 text-amber-900 hover:bg-amber-100"}`}
+                    >
+                      {o.t}
+                    </button>
+                  ))}
+                </div>
+                {tipo === "avista" ? (
+                  <>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <ColunaAVista titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} destaque />
+                      <ColunaAVista titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} />
+                    </div>
+                    <p className="mt-3 text-sm text-muted-foreground">
+                      Matrícula + 11 mensalidades pela mensalidade cheia, com 10% de desconto. Não soma Fidelidade, desconto da família nem de irmão.
+                      {" "}Fechando no prazo, com os livros, a família economiza{" "}
+                      <b className="text-amadeus-blue">{reais(condicaoAVista(sim.depois).comLivro - condicaoAVista(sim.promo).comLivro)}</b>.
+                    </p>
+                  </>
+                ) : (
+                <>
                 <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
                   <span className="font-semibold text-muted-foreground">Mostrar:</span>
                   {MODOS_LIVRO.map((m) => (
@@ -506,6 +689,8 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                   Fechando no prazo, a família economiza <b className="text-amadeus-blue">{reais(economiaNoAno(sim, modo))}</b> no ano.
                   {" "}Todos os descontos valem só pagando até o dia 05.
                 </p>
+                </>
+                )}
                 <div className="mt-4 rounded-xl border border-border/60 bg-white p-3 text-sm">
                   <p className="font-bold text-amadeus-blue">Plano de pagamento no Activesoft</p>
                   <p className="mt-1 text-muted-foreground">Valor para selecionar ao concluir a matrícula (mensalidade cheia − {reais(DESCONTO_PLANO_ACTIVESOFT)}):</p>
@@ -515,9 +700,14 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                   </div>
                 </div>
                 <div className="mt-5 flex flex-wrap gap-3">
-                  <a href={linkCarta} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-amadeus-blue px-4 py-2.5 text-sm font-bold text-white hover:opacity-90">
-                    <Printer className="size-4" /> Imprimir carta para a família
-                  </a>
+                  <button type="button" onClick={verImagem} disabled={abrindoPrevia} className="inline-flex items-center gap-2 rounded-xl bg-amadeus-blue px-4 py-2.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-60">
+                    {abrindoPrevia ? <Loader2 className="size-4 animate-spin" /> : <Eye className="size-4" />} Ver a imagem que vai no WhatsApp
+                  </button>
+                  {tipo === "mensal" && (
+                    <a href={linkCarta} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-bold text-amadeus-blue hover:bg-amadeus-blue-50">
+                      <Printer className="size-4" /> Imprimir carta para a família
+                    </a>
+                  )}
                   <button type="button" onClick={copiar} className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-bold text-amadeus-blue hover:bg-amadeus-blue-50">
                     {copiado ? <Check className="size-4" /> : <Copy className="size-4" />}
                     {copiado ? "Copiado" : "Copiar texto para o WhatsApp"}
@@ -526,19 +716,8 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                 <EnviarWhatsApp
                   responsaveis={novato ? [] : responsaveis}
                   envios={novato ? [] : envios}
-                  enviar={(destinos) =>
-                    enviarCarta({
-                      alunoId: novato ? null : leitura!.aluno.id,
-                      nome,
-                      serie: sim.serie2027,
-                      desconto,
-                      irmao,
-                      serieAtual,
-                      base: baseMesmoSegmento,
-                      modo,
-                      destinos,
-                    })
-                  }
+                  rotuloCarta={tipo === "avista" ? "carta do pagamento à vista" : "carta com os valores"}
+                  enviar={(destinos, soFolder) => enviarCarta({ ...dadosCarta!, somenteFolder: soFolder, destinos })}
                 />
               </>
             ) : (

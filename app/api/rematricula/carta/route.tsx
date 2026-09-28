@@ -8,6 +8,7 @@ import {
   PRAZO_PROMOCAO,
   SEGMENTO_NOME,
   URL_FOLDER,
+  condicaoAVista,
   economiaNoAno,
   livroAVista,
   naSerie,
@@ -101,6 +102,49 @@ function Cartao({ titulo, c, modo, destaque, troca }: { titulo: string; c: Condi
   );
 }
 
+/** Carta à vista: o ano inteiro com 10%, sem e com os livros. Nenhum outro desconto entra. */
+function CartaoAVista({ titulo, c, destaque }: { titulo: string; c: Condicao; destaque?: boolean }) {
+  const v = condicaoAVista(c);
+  const cor = destaque ? "#FFFFFF" : TINTA;
+  const realce = destaque ? AMARELO : AZUL;
+  const fio = destaque ? "rgba(255,255,255,.24)" : "rgba(23,34,61,.16)";
+  const legenda = { fontSize: pt(8.4), opacity: 0.72, marginTop: 2 } as const;
+  const bloco = { display: "flex", flexDirection: "column", marginTop: mm(2), paddingTop: mm(2), borderTop: `2px solid ${fio}` } as const;
+  const linha = (rotulo: string, valor: number, o: { forte?: boolean; menos?: boolean } = {}) => (
+    <div style={{ display: "flex", justifyContent: "space-between", fontSize: pt(10.5), padding: `${mm(0.55)}px 0`, fontWeight: o.forte ? 800 : 400, color: cor }}>
+      <span>{rotulo}</span>
+      <span>{`${o.menos ? "− " : ""}${reais(valor)}`}</span>
+    </div>
+  );
+  return (
+    <div
+      style={{
+        flex: 1, display: "flex", flexDirection: "column", borderRadius: mm(6), padding: `${mm(5)}px ${mm(6.5)}px ${mm(4.5)}px`,
+        background: destaque ? AZUL : "rgba(255,255,255,.55)", border: `3px solid ${destaque ? AZUL : "rgba(23,34,61,.16)"}`, color: cor,
+      }}
+    >
+      <div style={{ fontSize: pt(8.4), fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: destaque ? AMARELO : CINZA, marginBottom: mm(2.5) }}>
+        {titulo}
+      </div>
+      {linha("Matrícula + 11 mensalidades", v.ano, { forte: true })}
+      <div style={legenda}>{`12 × ${reais(v.mensalidade)}`}</div>
+      {linha("Desconto à vista (10%)", v.desconto, { menos: true })}
+      <div style={bloco}>
+        <div style={{ fontSize: pt(9.6), fontWeight: 800 }}>À vista, sem os livros</div>
+        <div style={{ fontFamily: "Fraunces", fontSize: pt(26), color: realce, marginTop: 2, letterSpacing: -1 }}>{reais(v.semLivro)}</div>
+      </div>
+      <div style={bloco}>
+        {linha("Livros à vista", v.livro)}
+        <div style={legenda}>{`12 × ${reais(c.livro)} = ${reais(v.livro12x)}, com 10% de desconto`}</div>
+      </div>
+      <div style={bloco}>
+        <div style={{ fontSize: pt(9.6), fontWeight: 800 }}>À vista, com os livros</div>
+        <div style={{ fontFamily: "Fraunces", fontSize: pt(26), color: realce, marginTop: 2, letterSpacing: -1 }}>{reais(v.comLivro)}</div>
+      </div>
+    </div>
+  );
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = req.nextUrl;
   const d = lerLinkDaCarta(searchParams.get("p"), searchParams.get("s"));
@@ -109,6 +153,10 @@ export async function GET(req: NextRequest) {
   const sim = simular(d.serie, d.veterano ? d.desconto : 0, d.irmao, d.veterano ? d.base ?? null : null);
   const veterano = d.veterano;
   const primeiro = primeiroNome(d.nome);
+  const avista = d.tipo === "avista";
+  const economia = avista
+    ? condicaoAVista(sim.depois).comLivro - condicaoAVista(sim.promo).comLivro
+    : economiaNoAno(sim, d.modo);
   const [r400, r500, r700, r800, f600, qr] = await Promise.all([
     fonte(origin, "DMSans-400.woff"),
     fonte(origin, "DMSans-500.woff"),
@@ -138,27 +186,49 @@ export async function GET(req: NextRequest) {
         <div style={{ marginTop: mm(2), fontFamily: "Fraunces", fontSize: pt(27), lineHeight: 1.05, color: AZUL, letterSpacing: -1, maxWidth: mm(165), flexShrink: 0 }}>{d.nome}</div>
         <div style={{ marginTop: mm(4), fontSize: pt(12), lineHeight: 1.5, color: CINZA, maxWidth: mm(160), flexShrink: 0 }}>
           {`Em 2027, ${primeiro} ${veterano ? "segue com a gente" : "começa com a gente"} ${naSerie(d.serie)}. ${
-            veterano ? "Preparamos os valores do ano que vem a partir do que a sua família já investe hoje." : "Preparamos aqui os valores do ano que vem."
+            avista
+              ? "Preparamos aqui os valores do ano para pagamento à vista, com 10% de desconto."
+              : veterano ? "Preparamos os valores do ano que vem a partir do que a sua família já investe hoje." : "Preparamos aqui os valores do ano que vem."
           }`}
         </div>
         <div style={{ display: "flex", alignItems: "center", marginTop: mm(4), fontSize: pt(9.5), fontWeight: 700, color: CINZA }}>
           <span style={{ background: AZUL, color: AMARELO, fontWeight: 800, padding: `${mm(1.2)}px ${mm(3.5)}px`, borderRadius: 99, marginRight: mm(2) }}>{d.serie}</span>
           {`${SEGMENTO_NOME[sim.segmento]} · 2027`}
+          {avista && (
+            <span style={{ marginLeft: mm(3), border: `2px solid ${OURO}`, color: OURO, fontWeight: 800, padding: `${mm(0.9)}px ${mm(3.5)}px`, borderRadius: 99 }}>
+              Pagamento à vista · 10% de desconto
+            </span>
+          )}
         </div>
 
         <div style={{ display: "flex", gap: mm(5), marginTop: mm(4.5), alignItems: "flex-start", flexShrink: 0 }}>
-          <Cartao titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} modo={d.modo} destaque />
-          <Cartao titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} modo={d.modo} />
+          {avista ? (
+            <>
+              <CartaoAVista titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} destaque />
+              <CartaoAVista titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} />
+            </>
+          ) : (
+            <>
+              <Cartao titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} modo={d.modo} destaque />
+              <Cartao titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} modo={d.modo} />
+            </>
+          )}
         </div>
 
         <div style={{ display: "flex", flexWrap: "wrap", marginTop: mm(5), fontSize: pt(12), lineHeight: 1.45 }}>
-          {`Fechando até ${PRAZO_PROMOCAO}, a sua família economiza `}
-          <span style={{ color: OURO, fontWeight: 800 }}>{reais(economiaNoAno(sim, d.modo))}</span>
-          {" ao longo de 2027."}
+          {`Fechando até ${PRAZO_PROMOCAO}${avista ? ", com os livros," : ""} a sua família economiza `}
+          <span style={{ color: OURO, fontWeight: 800 }}>{reais(economia)}</span>
+          {avista ? "." : "\u00A0ao longo de 2027."}
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", marginTop: mm(4), fontSize: pt(9.6), lineHeight: 1.6, color: CINZA }}>
-                    {d.modo === "com" && (
+          {avista && (
+            <div style={{ display: "flex", flexWrap: "wrap" }}>
+              {"•  "}<span style={{ color: TINTA, fontWeight: 700 }}>À vista:</span>
+              {" pagamento único do ano (matrícula + 11 mensalidades) com 10% de desconto. Não acumula com outros descontos."}
+            </div>
+          )}
+          {(avista || d.modo === "com") && (
             <div style={{ display: "flex" }}>
               {"•  "}<span style={{ color: TINTA, fontWeight: 700 }}>Livros:</span>
               {` até ${PRAZO_PROMOCAO}, o livro sai pelo valor atual, sem o reajuste de 2027. À vista, 10% de desconto.`}

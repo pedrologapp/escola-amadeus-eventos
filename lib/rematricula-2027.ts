@@ -39,8 +39,9 @@ export const URL_FOLDER = "https://eventos.escolaamadeus.com/folder";
  */
 export const WEBHOOK_ENVIO = "https://n8n.escolaamadeus.com/webhook/rematricula-carta";
 
+/** Sem nome (só o folder para um número avulso): "Olá, família!". */
 export const textoApresentacao = (primeiro: string) =>
-  `Olá, família de *${primeiro}*! Aqui é o Centro Educacional Amadeus.
+  `Olá, família${primeiro ? ` de *${primeiro}*` : ""}! Aqui é o Centro Educacional Amadeus.
 
 Há 30 anos, aqui cada aluno importa. Preparamos um folder digital para vocês conhecerem a escola por dentro: as etapas, o novo material, os projetos, os esportes e os espaços.
 
@@ -185,6 +186,33 @@ export function origemDaCheia(serieAtual: string | null | undefined, serie2027: 
 
 /** Livro à vista: as 12 parcelas com 10% de desconto (74 → R$ 799,20, 142 → R$ 1.533,60, como no flyer). */
 export const livroAVista = (parcela: number) => Math.round(parcela * 12 * 0.9 * 100) / 100;
+
+/**
+ * Pagamento à vista do ano (pedido de 28/09/2026): matrícula + 11 mensalidades,
+ * todas pela mensalidade cheia, com 10% de desconto. Não soma Fidelidade,
+ * desconto da família nem de irmão: só os 10%. Os livros à vista também têm 10%.
+ */
+export const DESCONTO_A_VISTA = 0.1;
+export type TipoCarta = "mensal" | "avista";
+export const tipoCartaValido = (v: unknown): TipoCarta => (v === "avista" ? "avista" : "mensal");
+export interface CondicaoAVista {
+  mensalidade: number; // a cheia
+  ano: number; // matrícula + 11 mensalidades = 12 × cheia
+  desconto: number; // 10% do ano
+  semLivro: number; // o ano à vista
+  livro12x: number; // 12 × parcela do livro
+  livro: number; // livro à vista (12x − 10%)
+  comLivro: number;
+}
+const centavos = (v: number) => Math.round(v * 100) / 100;
+export function condicaoAVista(c: Condicao): CondicaoAVista {
+  const ano = c.cheia * 12;
+  const desconto = centavos(ano * DESCONTO_A_VISTA);
+  const semLivro = centavos(ano - desconto);
+  const livro = livroAVista(c.livro);
+  return { mensalidade: c.cheia, ano, desconto, semLivro, livro12x: c.livro * 12, livro, comLivro: centavos(semLivro + livro) };
+}
+export const legendaAVista = (primeiro: string) => `Os valores de 2027 à vista para ${primeiro}.`;
 
 /**
  * A carta tem três partes: mensalidade (Fidelidade em destaque, a cheia

@@ -36,7 +36,7 @@ export default async function RematriculaPage({ searchParams }: { searchParams: 
         responsaveisDoAluno(id).catch(() => []),
         createAdminClient()
           .from("rematricula_envios")
-          .select("responsavel, telefone, status, created_at")
+          .select("responsavel, telefone, status, detalhe, created_at")
           .eq("aluno_id", id)
           .order("created_at", { ascending: false })
           .limit(20),

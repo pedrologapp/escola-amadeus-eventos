@@ -54,7 +54,7 @@ const responder = (name, pos, codigo, corpoJson) => node(name, "n8n-nodes-base.r
 
 const nodes = [
   node("Instruções", "n8n-nodes-base.stickyNote", 1, [-560, -300], {
-    content: "## REMATRÍCULA 2027 · ENVIAR CARTA\n\nChamado pelo admin (Campanhas → Rematrícula 2027 → Enviar pelo WhatsApp), um número por vez.\n\n1. Confere a chave do cabeçalho.\n2. Acha o número no WhatsApp (sem e com o 9).\n3. Manda a apresentação da escola com o link do folder.\n4. Manda a imagem da carta com os valores.\n5. Responde o resultado; o site registra em `rematricula_envios`.\n\nGerado por docs/n8n/gerar-workflow-rematricula.mjs",
+    content: "## REMATRÍCULA 2027 · ENVIAR CARTA\n\nChamado pelo admin (Campanhas → Rematrícula 2027 → Enviar pelo WhatsApp), um número por vez.\n\n1. Confere a chave do cabeçalho.\n2. Acha o número no WhatsApp (sem e com o 9).\n3. Manda a apresentação da escola com o link do folder.\n4. Manda a imagem da carta com os valores (sem \"imagem\" no corpo = só o folder, para aqui).\n5. Responde o resultado; o site registra em `rematricula_envios`.\n\nGerado por docs/n8n/gerar-workflow-rematricula.mjs",
     height: 360, width: 460,
   }),
   node("Webhook", "n8n-nodes-base.webhook", 2, [-520, 160], {
@@ -90,14 +90,23 @@ const nodes = [
 }`,
     caption: `={{ ${corpo("texto")} }}`,
   }, { credentials: CRED.waha, onError: "continueRegularOutput" }),
-  node("Esperar 4s", "n8n-nodes-base.wait", 1.1, [1460, 80], { amount: 4, unit: "seconds" }, { webhookId: "4e3a0000-0000-4000-8000-0000000000ab" }),
-  node("Enviar Carta", "@devlikeapro/n8n-nodes-waha.WAHA", 202502, [1680, 80], {
+  // Só o folder (sem valores): o admin manda "imagem" vazia e o fluxo para depois da apresentação.
+  node("Tem carta?", "n8n-nodes-base.if", 2.2, [1460, 80], {
+    conditions: {
+      options: { caseSensitive: true, leftValue: "", typeValidation: "loose", version: 2 },
+      conditions: [{ id: "temcarta", leftValue: `={{ ${corpo("imagem")} || '' }}`, rightValue: "", operator: { type: "string", operation: "notEmpty", singleValue: true } }],
+      combinator: "and",
+    },
+    options: {},
+  }),
+  node("Esperar 4s", "n8n-nodes-base.wait", 1.1, [1680, 80], { amount: 4, unit: "seconds" }, { webhookId: "4e3a0000-0000-4000-8000-0000000000ab" }),
+  node("Enviar Carta", "@devlikeapro/n8n-nodes-waha.WAHA", 202502, [1900, 80], {
     resource: "Chatting", operation: "Send Image", session: "=amadeus",
     chatId: "={{ $('Usar sem 9').isExecuted ? $('Usar sem 9').first().json.chatId : $('Usar com 9').first().json.chatId }}",
     file: `={\n  "mimetype": "image/png",\n  "filename": "valores-2027.png",\n  "url": "{{ ${corpo("imagem")} }}"\n}`,
     caption: `={{ ${corpo("legenda")} || '' }}`,
   }, { credentials: CRED.waha, onError: "continueRegularOutput" }),
-  responder("Resultado", [1900, 80], 200,
+  responder("Resultado", [2120, 80], 200,
     "={{ (() => { const a = $('Enviar Apresentação').first().json; const c = $json; const erro = a.error || c.error; return { ok: !erro, status: erro ? 'erro' : 'enviado', detalhe: erro ? JSON.stringify(erro).slice(0, 300) : '' }; })() }}"),
 ];
 
@@ -109,7 +118,7 @@ const ligacoes = [
   liga("Existe sem 9?", "Usar sem 9", 0), liga("Existe sem 9?", "Check Com 9", 1),
   liga("Check Com 9", "Existe com 9?"), liga("Existe com 9?", "Usar com 9", 0), liga("Existe com 9?", "Sem WhatsApp", 1),
   liga("Usar sem 9", "Enviar Apresentação"), liga("Usar com 9", "Enviar Apresentação"),
-  liga("Enviar Apresentação", "Esperar 4s"), liga("Esperar 4s", "Enviar Carta"), liga("Enviar Carta", "Resultado"),
+  liga("Enviar Apresentação", "Tem carta?"), liga("Tem carta?", "Esperar 4s", 0), liga("Tem carta?", "Resultado", 1), liga("Esperar 4s", "Enviar Carta"), liga("Enviar Carta", "Resultado"),
 ];
 const connections = {};
 for (const { de, para, saida } of ligacoes) {

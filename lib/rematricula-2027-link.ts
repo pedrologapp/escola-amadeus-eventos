@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createHmac, timingSafeEqual } from "node:crypto";
-import type { ModoLivro, NomeSerie } from "@/lib/rematricula-2027";
+import type { ModoLivro, NomeSerie, TipoCarta } from "@/lib/rematricula-2027";
 
 /**
  * Link assinado da imagem da carta (/api/rematricula/carta). A imagem tem
@@ -19,6 +19,7 @@ export interface DadosCarta {
   base?: number | null; // mesmo segmento: mensalidade de hoje (a cheia = base + reajuste)
   serieAtual?: string | null; // para explicar a troca de segmento
   modo: ModoLivro;
+  tipo?: TipoCarta; // "avista": o ano inteiro com 10% (sem os outros descontos); falta = mensal
   data: string; // "27 de setembro de 2026", como sai no rodapé
 }
 
