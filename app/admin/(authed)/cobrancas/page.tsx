@@ -12,6 +12,9 @@ import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/lib/utils";
 import { BotaoMostrarValores, ValorSensivel } from "@/components/admin/valores-sensiveis";
 import { valoresLiberados } from "@/lib/valores-auth";
+import { after } from "next/server";
+import { conferirSeAntigo } from "@/lib/asaas-conferencia";
+import { AbasCobrancas } from "./abas";
 import { CobrancasTable, type CobrancaRow } from "./cobrancas-table";
 
 export default async function CobrancasPage() {
@@ -19,7 +22,7 @@ export default async function CobrancasPage() {
   const { data: cobrancas, error } = await supabase
     .from("cobrancas_avulsas")
     .select(
-      "id, descricao, valor, valor_total, metodo_cobranca, parcelas, repassar_juros, responsavel_nome, telefone, status_pagamento, payment_url, created_at, link_enviado_em, link_erro, confirmacao_enviada_em, confirmacao_erro, aluno_nome, alunos(nome_completo, serie, turma)",
+      "id, descricao, valor, valor_total, metodo_cobranca, parcelas, repassar_juros, responsavel_nome, telefone, status_pagamento, payment_url, created_at, link_enviado_em, link_erro, confirmacao_enviada_em, confirmacao_erro, aluno_nome, asaas_status, asaas_recebido, asaas_confirmado, asaas_parcelas_pagas, asaas_parcelas_total, alunos(nome_completo, serie, turma)",
     )
     .order("created_at", { ascending: false })
     .limit(200);
@@ -59,17 +62,25 @@ export default async function CobrancasPage() {
     confirmacao_erro: c.confirmacao_erro ?? null,
     aluno: (c.alunos as unknown as CobrancaRow["aluno"]) ?? null,
     aluno_nome: c.aluno_nome ?? null,
+    asaas_status: c.asaas_status ?? null,
+    asaas_recebido: c.asaas_recebido === null ? null : Number(c.asaas_recebido),
+    asaas_confirmado: c.asaas_confirmado === null ? null : Number(c.asaas_confirmado),
+    asaas_parcelas_pagas: c.asaas_parcelas_pagas ?? null,
+    asaas_parcelas_total: c.asaas_parcelas_total ?? null,
   }));
 
   // Sem a senha, os valores nem vão para o navegador (zerados aqui, "R$ ••••" na tela).
   const liberado = await valoresLiberados();
-  const totalPago = lista
-    .filter((c) => c.status_pagamento === "pago")
-    .reduce((sum, c) => sum + Number(c.valor_total ?? c.valor), 0);
+  // Vendido x o que já entrou na conta (cartão parcelado cai mês a mês).
+  const pagas = lista.filter((c) => c.status_pagamento === "pago");
+  const totalPago = pagas.reduce((sum, c) => sum + Number(c.valor_total ?? c.valor), 0);
+  const naConta = pagas.reduce((sum, c) => sum + Number(c.asaas_recebido ?? c.valor_total ?? c.valor), 0);
+  after(conferirSeAntigo);
 
   return (
     <div className="container mx-auto px-4 py-10">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <AbasCobrancas atual="avulsas" />
+      <header className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-amadeus-blue sm:text-4xl">
             Cobranças avulsas
@@ -80,7 +91,8 @@ export default async function CobrancasPage() {
             ) : (
               <>
                 {lista.length} cobrança{lista.length === 1 ? "" : "s"} ·{" "}
-                <ValorSensivel valor={liberado ? formatCurrency(totalPago) : null} /> recebido
+                <ValorSensivel valor={liberado ? formatCurrency(totalPago) : null} /> pago ·{" "}
+                <ValorSensivel valor={liberado ? formatCurrency(naConta) : null} /> já na conta
               </>
             )}
           </p>

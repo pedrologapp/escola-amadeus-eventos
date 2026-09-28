@@ -33,6 +33,12 @@ export interface CobrancaRow {
   aluno: { nome_completo: string; serie: string; turma: string } | null;
   /** Nome digitado à mão quando o aluno não está cadastrado. */
   aluno_nome: string | null;
+  /** Conferência com o Asaas (lib/asaas-conferencia): situação e quanto já entrou. */
+  asaas_status?: string | null;
+  asaas_recebido?: number | null;
+  asaas_confirmado?: number | null;
+  asaas_parcelas_pagas?: number | null;
+  asaas_parcelas_total?: number | null;
 }
 
 const statusBadge: Record<InscricaoStatus, { label: string; className: string }> =
@@ -191,9 +197,16 @@ export function CobrancasTable({ cobrancas, liberado = false }: { cobrancas: Cob
           </thead>
           <tbody>
             {lista.map((c) => {
+              // Pendente aqui mas apagada/vencida/paga lá no Asaas: mostra a situação real.
               const badge =
-                statusBadge[c.status_pagamento as InscricaoStatus] ??
-                statusBadge.pendente;
+                c.status_pagamento === "pendente" && c.asaas_status === "REMOVIDA"
+                  ? { label: "Cancelada no Asaas", className: "bg-gray-100 text-gray-600 border-gray-300" }
+                  : c.status_pagamento === "pendente" && c.asaas_status === "OVERDUE"
+                    ? { label: "Vencida", className: "bg-orange-100 text-orange-800 border-orange-300" }
+                    : c.status_pagamento === "pendente" && ["RECEIVED", "CONFIRMED"].includes(c.asaas_status ?? "")
+                      ? { label: "Paga no Asaas", className: "bg-sky-100 text-sky-800 border-sky-300" }
+                      : statusBadge[c.status_pagamento as InscricaoStatus] ?? statusBadge.pendente;
+              const parcelado = c.status_pagamento === "pago" && (c.asaas_parcelas_total ?? 1) > 1;
               return (
                 <tr
                   key={c.id}
@@ -249,6 +262,12 @@ export function CobrancasTable({ cobrancas, liberado = false }: { cobrancas: Cob
                       {(c.metodo_cobranca === "aberto" || !c.metodo_cobranca) &&
                         "Link aberto"}
                     </div>
+                    {parcelado && (
+                      <div className="mt-1 text-xs font-normal text-sky-800" title="No cartão o Asaas confirma todas as parcelas na hora e o dinheiro cai na conta mês a mês.">
+                        <ValorSensivel valor={liberado ? formatCurrency(Number(c.asaas_recebido ?? 0)) : null} /> na conta ·{" "}
+                        {c.asaas_parcelas_pagas ?? 0} de {c.asaas_parcelas_total} parcelas
+                      </div>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <span

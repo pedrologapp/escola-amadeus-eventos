@@ -34,6 +34,8 @@ export interface InscricaoRow {
   total_senhas: number;
   senhas_detalhe: string;
   status_pagamento: "pendente" | "pago" | "cancelado" | "estornado";
+  /** Situação no Asaas (lib/asaas-conferencia): "REMOVIDA" = cobrança apagada lá. */
+  asaas_status?: string | null;
   metodo_pagamento: "pix" | "cartao" | "dinheiro";
   parcelas: number;
   created_at: string;
@@ -205,7 +207,12 @@ export function InscricoesTable({ inscricoes, liberado = false }: { inscricoes: 
             </thead>
             <tbody>
               {lista.map((i) => {
-                const st = statusInscricao[i.status_pagamento] ?? statusInscricao.pendente;
+                const st =
+                  i.status_pagamento === "pendente" && i.asaas_status === "REMOVIDA"
+                    ? { label: "Cancelada no Asaas", variant: "muted" as const }
+                    : i.status_pagamento === "pendente" && i.asaas_status === "OVERDUE"
+                      ? { label: "Vencida", variant: "warning" as const }
+                      : statusInscricao[i.status_pagamento] ?? statusInscricao.pendente;
                 return (
                   <tr key={i.id} className="border-b border-border/40 last:border-0">
                     <td className="py-3 pr-2">

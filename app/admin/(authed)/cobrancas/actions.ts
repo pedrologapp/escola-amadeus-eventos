@@ -336,3 +336,17 @@ export async function excluirCobrancasCanceladas(
   revalidatePath("/admin/cobrancas");
   return { ok: true, excluidas: alvos.length };
 }
+
+/** Botão "Conferir com o Asaas agora": só lê o Asaas e atualiza as nossas telas. */
+export async function conferirAsaasAgora(): Promise<{ ok: boolean; erro?: string; recebimentos?: number }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, erro: "Sua sessão expirou. Faça login novamente." };
+  const { conferirComAsaas } = await import("@/lib/asaas-conferencia");
+  const r = await conferirComAsaas();
+  revalidatePath("/admin/cobrancas");
+  revalidatePath("/admin/cobrancas/asaas");
+  return { ok: r.ok, erro: r.erro, recebimentos: r.recebimentos };
+}

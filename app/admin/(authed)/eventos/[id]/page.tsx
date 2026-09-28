@@ -64,7 +64,7 @@ export default async function EventoDetailPage({ params }: PageProps) {
   const { data: inscricoes } = await supabase
     .from("inscricoes")
     .select(
-      "id, responsavel_nome, email, telefone, valor_total, itens, status_pagamento, metodo_pagamento, parcelas, created_at, aluno_id, confirmacao_enviada_em, confirmacao_erro, qrcode_enviado_em, qrcode_erro, aluno:alunos(nome_completo, serie, turma)",
+      "id, responsavel_nome, email, telefone, valor_total, itens, status_pagamento, metodo_pagamento, parcelas, created_at, aluno_id, confirmacao_enviada_em, confirmacao_erro, qrcode_enviado_em, qrcode_erro, asaas_status, aluno:alunos(nome_completo, serie, turma)",
     )
     .eq("evento_id", id)
     .order("created_at", { ascending: false });
@@ -423,6 +423,7 @@ export default async function EventoDetailPage({ params }: PageProps) {
                   total_senhas: totalSenhas,
                   senhas_detalhe: senhasDetalhe,
                   status_pagamento: i.status_pagamento,
+                  asaas_status: i.asaas_status ?? null,
                   metodo_pagamento: i.metodo_pagamento,
                   parcelas: i.parcelas,
                   created_at: i.created_at,
