@@ -34,6 +34,8 @@ export function carregarFontes() {
     fontes = Promise.all([
       new FontFace("Ralton", "url(/fonts/marca/ralton-black.otf)").load(),
       new FontFace("Scrib", "url(/fonts/marca/scrib-sans.otf)").load(),
+      new FontFace("PainelFraunces", "url(/fonts/Fraunces-700.woff)", { weight: "700" }).load(),
+      new FontFace("PainelDM", "url(/fonts/DMSans-800.woff)", { weight: "800" }).load(),
     ]).then((fs) => fs.forEach((f) => document.fonts.add(f)));
   }
   return fontes;
