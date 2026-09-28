@@ -66,7 +66,7 @@ const telLegivel = (t: string | null) => {
   return d.length >= 10 ? `(${d.slice(0, 2)}) ${d.slice(2, -4)}-${d.slice(-4)}` : t ?? "";
 };
 
-function Responder({ c, fechar, modo }: { c: Conversa; fechar: () => void; modo: "ver" | "responder" }) {
+function Responder({ c, fechar, modo, responder }: { c: Conversa; fechar: () => void; modo: "ver" | "responder"; responder: () => void }) {
   const [texto, setTexto] = useState("");
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -132,6 +132,13 @@ function Responder({ c, fechar, modo }: { c: Conversa; fechar: () => void; modo:
           )}
         </div>
 
+        {modo === "ver" && (
+          <div className="flex justify-end bg-[#F0F2F5] px-3 py-2.5">
+            <button type="button" onClick={responder} className="inline-flex items-center gap-1.5 rounded-full bg-[#00A884] px-4 py-2 text-xs font-bold text-white hover:bg-[#008F72]">
+              <Send className="size-3.5" /> Responder
+            </button>
+          </div>
+        )}
         {modo === "responder" && <div className="space-y-2 bg-[#F0F2F5] px-3 py-2.5">
           <div className="flex flex-wrap gap-1.5">
             {PRONTAS.map((p) => (
@@ -228,7 +235,7 @@ function Linha({ c, agora, aberta, abrir }: { c: Conversa; agora: number; aberta
           )}
         </span>
       </div>
-      {aberta && <Responder c={c} modo={aberta} fechar={() => abrir(null)} />}
+      {aberta && <Responder c={c} modo={aberta} fechar={() => abrir(null)} responder={() => abrir("responder")} />}
     </li>
   );
 }
