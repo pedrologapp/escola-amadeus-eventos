@@ -21,7 +21,19 @@ export function PainelFotos({ link, enviadas, faltam, total }: { link: string; e
   const [busca, setBusca] = useState("");
   const [copiado, setCopiado] = useState<"link" | "texto" | "faltam" | null>(null);
 
-  const texto = `Oi, equipe Amadeus! Estamos preparando uma surpresa e precisamos de uma ajudinha: uma foto de quando vocês eram crianças.\n\nÉ só abrir o link, selecionar o seu nome e enviar a foto:\n${link}`;
+  const texto = [
+    "Olá, equipe Amadeus!",
+    "",
+    "*Como é bom ser criança...!*",
+    "",
+    "Estamos preparando uma surpresa e queremos ver como cada um de vocês era quando criança.",
+    "",
+    "É rapidinho: abra o link, *selecione o seu nome* e *envie uma foto sua de quando era criança*.",
+    "",
+    link,
+    "",
+    "Contamos com todos!",
+  ].join("\n");
   const copiar = async (o: "link" | "texto" | "faltam", t: string) => {
     await navigator.clipboard.writeText(t);
     setCopiado(o);
@@ -53,6 +65,21 @@ export function PainelFotos({ link, enviadas, faltam, total }: { link: string; e
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Andamento</p>
           <p className="mt-1 text-3xl font-extrabold text-amadeus-blue">{pct}%</p>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full bg-amadeus-yellow" style={{ width: `${pct}%` }} /></div>
+        </div>
+      </div>
+
+      <div className="grid gap-4 rounded-2xl border border-border/60 bg-white p-4 md:grid-cols-[220px_minmax(0,1fr)]">
+        <div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/criancaamadeus/banner.png" alt="Banner Como é bom ser criança" className="w-full rounded-xl border border-border/60" />
+          <a href="/criancaamadeus/banner.png" download="banner-crianca-amadeus.png" className={`${botao} mt-2 w-full justify-center`}>
+            <Download className="size-4" /> Baixar o banner
+          </a>
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-amadeus-blue">Mensagem para os grupos</p>
+          <p className="mt-1 text-xs text-muted-foreground">Mande primeiro o banner e depois cole a mensagem (ou cole a mensagem como legenda do banner).</p>
+          <pre className="mt-2 whitespace-pre-wrap rounded-xl bg-muted/40 p-3 font-sans text-sm">{texto}</pre>
         </div>
       </div>
 

@@ -45,7 +45,7 @@ const TRACOS: Traco[] = [
   { d: "M150 70 c-20 0 -22 -26 -2 -28 c2 -22 36 -24 40 -4 c20 -6 30 20 12 32 z", cor: AZUL, w: 4, fill: "#1D4FA014" },
   { d: "M420 70 q10 -12 20 0 q10 -12 20 0 M470 100 q8 -10 16 0 q8 -10 16 0", cor: MARINHO, w: 4 },
   // estrelinhas
-  { d: "M260 50 v18 M251 59 h18 M720 250 v16 M712 258 h16", cor: AMARELO, w: 4 },
+  { d: "M260 50 v18 M251 59 h18 M702 250 v16 M694 258 h16", cor: AMARELO, w: 4 },
 ];
 
 export function DesenhoInfancia({ className }: { className?: string }) {

@@ -10,6 +10,13 @@ export const metadata: Metadata = {
   title: "Como é bom ser criança",
   description: "Procure seu nome e envie uma foto sua de quando era criança.",
   robots: { index: false, follow: false },
+  // Prévia do link no WhatsApp: o desenho da página (public/criancaamadeus, gerado por scripts/gerar-banner-criancaamadeus.cjs).
+  openGraph: {
+    title: "Como é bom ser criança...!",
+    description: "Selecione o seu nome e envie uma foto sua de quando era criança.",
+    images: [{ url: "https://eventos.escolaamadeus.com/criancaamadeus/og.png", width: 1200, height: 630 }],
+    type: "website",
+  },
 };
 
 /**
