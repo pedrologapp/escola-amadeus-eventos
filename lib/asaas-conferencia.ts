@@ -179,8 +179,11 @@ export async function conferirComAsaas(): Promise<ResultadoConferencia> {
 export async function conferirSeAntigo() {
   if (!process.env.ASAAS_API_KEY) return;
   const db = createAdminClient();
-  const { data } = await db.from("asaas_conferencias").select("em").order("em", { ascending: false }).limit(1).maybeSingle();
+  // Conta a última que deu certo; "em andamento" só segura por 10 minutos (evita duas ao mesmo tempo).
+  const { data } = await db.from("asaas_conferencias").select("em").is("erro", null).order("em", { ascending: false }).limit(1).maybeSingle();
   if (data && Date.now() - Date.parse(data.em as string) < 12 * 3600e3) return;
+  const { data: rodando } = await db.from("asaas_conferencias").select("em").eq("erro", "em andamento").order("em", { ascending: false }).limit(1).maybeSingle();
+  if (rodando && Date.now() - Date.parse(rodando.em as string) < 10 * 60e3) return;
   // Marca antes para duas abas abertas não rodarem juntas.
   await db.from("asaas_conferencias").insert({ erro: "em andamento" });
   await conferirComAsaas();
