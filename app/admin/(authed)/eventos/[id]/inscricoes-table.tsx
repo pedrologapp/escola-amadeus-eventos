@@ -212,7 +212,9 @@ export function InscricoesTable({ inscricoes, liberado = false }: { inscricoes: 
                     ? { label: "Cancelada no Asaas", variant: "muted" as const }
                     : i.status_pagamento === "pendente" && i.asaas_status === "OVERDUE"
                       ? { label: "Vencida", variant: "warning" as const }
-                      : statusInscricao[i.status_pagamento] ?? statusInscricao.pendente;
+                      : i.status_pagamento === "pendente" && ["RECEIVED", "CONFIRMED"].includes(i.asaas_status ?? "")
+                        ? { label: "Paga no Asaas", variant: "success" as const }
+                        : statusInscricao[i.status_pagamento] ?? statusInscricao.pendente;
                 return (
                   <tr key={i.id} className="border-b border-border/40 last:border-0">
                     <td className="py-3 pr-2">
