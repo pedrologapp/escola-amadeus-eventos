@@ -47,6 +47,20 @@ export async function POST(req: NextRequest) {
   const { cobrancaId, status, asaasPaymentId } = parsed.data;
   const admin = createAdminClient();
 
+  // Já paga: responde 409 para o n8n PARAR antes de mandar a confirmação de novo.
+  // No cartão o Asaas avisa na aprovação (CONFIRMED) e de novo quando a 1ª parcela
+  // cai (RECEIVED); sem isso o pai recebia duas confirmações (direção, 28/09/2026).
+  if (status === "pago") {
+    const { data: atual } = await admin
+      .from("cobrancas_avulsas")
+      .select("status_pagamento")
+      .eq("id", cobrancaId)
+      .maybeSingle();
+    if (atual?.status_pagamento === "pago") {
+      return NextResponse.json({ ok: false, duplicado: true, error: "Cobrança já estava paga." }, { status: 409 });
+    }
+  }
+
   const updatePayload: {
     status_pagamento: typeof status;
     asaas_payment_id?: string;
