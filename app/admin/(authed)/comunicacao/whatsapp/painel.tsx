@@ -455,21 +455,39 @@ export function PainelWhatsApp({ aguardando, fechadas, contatos, assuntos, gerad
 
   return (
     <div className="mt-5">
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-        <span><b className="text-red-700">{nAlta}</b> importante{nAlta === 1 ? "" : "s"}</span>
-        <span><b className="text-amadeus-blue">{semResposta}</b> sem resposta</span>
-        {nAtrasadas > 0 && (
-          <span className="rounded-md bg-orange-100 px-2 py-0.5 text-orange-800"><b>{nAtrasadas}</b> há 5h ou mais (ou desde ontem)</span>
-        )}
+      {/* Resumo em cartões: o que pede atenção agora. */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        {[
+          { n: nAlta, rotulo: nAlta === 1 ? "importante" : "importantes", cor: nAlta ? "text-red-700" : "text-slate-400", fundo: nAlta ? "border-red-200 bg-red-50" : "border-border/60 bg-white" },
+          { n: semResposta, rotulo: "sem resposta", cor: semResposta ? "text-amadeus-blue" : "text-slate-400", fundo: "border-border/60 bg-white" },
+          { n: nAtrasadas, rotulo: "há 5h ou mais", cor: nAtrasadas ? "text-orange-700" : "text-slate-400", fundo: nAtrasadas ? "border-orange-200 bg-orange-50" : "border-border/60 bg-white" },
+        ].map((c) => (
+          <div key={c.rotulo} className={`rounded-2xl border px-3 py-2.5 sm:px-4 sm:py-3 ${c.fundo}`}>
+            <p className={`text-2xl font-extrabold leading-none tabular-nums sm:text-3xl ${c.cor}`}>{c.n}</p>
+            <p className="mt-1 text-xs font-semibold text-muted-foreground sm:text-sm">{c.rotulo}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
         {assuntos.length > 0 && (
-          <span className="text-muted-foreground">Semana: {assuntos.slice(0, 5).map(([a, n]) => `${a} ${n}`).join(" · ")}</span>
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
+            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Assuntos da semana</span>
+            {assuntos.slice(0, 5).map(([a, n]) => (
+              <span key={a} className="rounded-full bg-amadeus-blue-50 px-2.5 py-0.5 text-xs font-semibold text-amadeus-blue">
+                {a} <span className="text-amadeus-blue/60">{n}</span>
+              </span>
+            ))}
+          </div>
         )}
-        <button type="button" onClick={() => setNova(!nova)} className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-[#00A884] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#008F72]">
-          <PenSquare className="size-3.5" /> Nova mensagem
-        </button>
-        <button type="button" onClick={() => iniciar(() => router.refresh())} className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-amadeus-blue">
-          <RefreshCw className={`size-3.5 ${atualizando ? "animate-spin" : ""}`} /> Atualizado às {hora}
-        </button>
+        <span className="ml-auto flex items-center gap-3">
+          <button type="button" onClick={() => iniciar(() => router.refresh())} className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-amadeus-blue">
+            <RefreshCw className={`size-3.5 ${atualizando ? "animate-spin" : ""}`} /> Atualizado às {hora}
+          </button>
+          <button type="button" onClick={() => setNova(!nova)} className="inline-flex items-center gap-1.5 rounded-lg bg-[#00A884] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#008F72]">
+            <PenSquare className="size-3.5" /> Nova mensagem
+          </button>
+        </span>
       </div>
 
       {nova && <NovaMensagem contatos={contatos} fechar={() => setNova(false)} />}

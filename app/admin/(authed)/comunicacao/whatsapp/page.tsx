@@ -39,10 +39,15 @@ export default async function WhatsAppPage() {
       <Link href="/admin/comunicacao" className="inline-flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-amadeus-blue">
         <ArrowLeft className="size-4" /> Comunicação
       </Link>
-      <h1 className="mt-2 text-2xl font-extrabold text-amadeus-blue">WhatsApp da escola</h1>
-      <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
-        <ShieldCheck className="size-4" /> O sistema só lê e organiza. Mensagem só sai quando alguém da equipe escreve e clica em enviar.
-      </p>
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <h1 className="text-2xl font-extrabold text-amadeus-blue">WhatsApp da escola</h1>
+        <span
+          className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800"
+          title="O sistema só lê e organiza. Mensagem só sai quando alguém da equipe escreve e clica em enviar."
+        >
+          <ShieldCheck className="size-3.5" /> Nada é enviado sozinho
+        </span>
+      </div>
       <PainelWhatsApp
         aguardando={comVinculo((aguardando ?? []) as Conversa[])}
         fechadas={comVinculo((fechadas ?? []) as Conversa[])}
