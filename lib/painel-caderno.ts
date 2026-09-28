@@ -160,7 +160,9 @@ function bandeirinhas(ctx: CanvasRenderingContext2D, W: number, m: number, R: Rn
 }
 
 /** Título no estilo do encarte: rótulo pequeno, título Fraunces com marca-texto na última linha, etiqueta amarela. */
-export function textoCaderno(ctx: CanvasRenderingContext2D, z: Zona, t: TextosCaderno, f: FundoCaderno, logo: HTMLImageElement | undefined, logoW: number) {
+export function textoCaderno(ctx: CanvasRenderingContext2D, z: Zona, t: TextosCaderno, f: FundoCaderno, logo: HTMLImageElement | undefined, logoW: number, alinhar: "esq" | "centro" = "esq") {
+  // x de um item de largura w, conforme o alinhamento escolhido
+  const xDe = (w: number) => (alinhar === "centro" ? z.x + (z.w - w) / 2 : z.x);
   const pre = t.l1.trim().toUpperCase(), dest = t.dest.trim() || "Nome do evento", pos = t.l3.trim();
   const quebra = (F: number) => {
     ctx.font = `700 ${F}px "PainelFraunces"`;
@@ -203,22 +205,25 @@ export function textoCaderno(ctx: CanvasRenderingContext2D, z: Zona, t: TextosCa
       // no fundo escuro o logo vai num cartão branco, como um adesivo
       ctx.fillStyle = "#FFFFFF";
       ctx.beginPath();
-      ctx.roundRect(z.x - logoW * 0.1, y - logoW * 0.08, logoW * 1.2, logoH + logoW * 0.16, logoW * 0.12);
+      ctx.roundRect(xDe(logoW) - logoW * 0.1, y - logoW * 0.08, logoW * 1.2, logoH + logoW * 0.16, logoW * 0.12);
       ctx.fill();
     }
-    ctx.drawImage(logo, z.x, y, logoW, logoH);
+    ctx.drawImage(logo, xDe(logoW), y, logoW, logoH);
     y += logoH + F * 0.3;
   }
   if (pre) {
     const tam = F * 0.2;
     ctx.font = `800 ${tam}px "PainelDM"`;
     ctx.letterSpacing = `${tam * 0.18}px`;
-    ctx.fillStyle = f.pre;
-    ctx.fillText(pre, z.x, y + tam);
     const w = ctx.measureText(pre).width;
+    // centralizado: tracinho dos dois lados; à esquerda: só depois
+    const x0 = alinhar === "centro" ? xDe(w) : z.x;
+    ctx.fillStyle = f.pre;
+    ctx.fillText(pre, x0, y + tam);
     ctx.fillStyle = "#FFB000";
     ctx.beginPath();
-    ctx.roundRect(z.x + w + tam * 0.8, y + tam * 0.45, tam * 3, tam * 0.28, tam * 0.14);
+    ctx.roundRect(x0 + w + tam * 0.8, y + tam * 0.45, tam * 3, tam * 0.28, tam * 0.14);
+    if (alinhar === "centro") ctx.roundRect(x0 - tam * 3.8, y + tam * 0.45, tam * 3, tam * 0.28, tam * 0.14);
     ctx.fill();
     ctx.letterSpacing = "0px";
     y += tam * 1.9;
@@ -229,10 +234,10 @@ export function textoCaderno(ctx: CanvasRenderingContext2D, z: Zona, t: TextosCa
     const w = ctx.measureText(l).width;
     if ((ultima || r.ls.length === 1) && f.marcador) {
       ctx.fillStyle = f.marcador;
-      ctx.fillRect(z.x - F * 0.06, y + F * 0.5, w + F * 0.12, F * 0.42);
+      ctx.fillRect(xDe(w) - F * 0.06, y + F * 0.5, w + F * 0.12, F * 0.42);
     }
     ctx.fillStyle = ultima ? f.destaque : f.titulo;
-    ctx.fillText(l, z.x, y + F * 0.82);
+    ctx.fillText(l, xDe(w), y + F * 0.82);
     y += F * 1.02;
   });
   if (pos) {
@@ -242,7 +247,7 @@ export function textoCaderno(ctx: CanvasRenderingContext2D, z: Zona, t: TextosCa
     ctx.letterSpacing = `${tam * 0.12}px`;
     const txt = pos.toUpperCase(), w = ctx.measureText(txt).width;
     ctx.save();
-    ctx.translate(z.x + (w + tam * 1.4) / 2, y + tam * 1.05);
+    ctx.translate(xDe(w + tam * 1.4) + (w + tam * 1.4) / 2, y + tam * 1.05);
     ctx.rotate(-0.035);
     ctx.fillStyle = "#FFB000";
     ctx.beginPath();
@@ -256,8 +261,31 @@ export function textoCaderno(ctx: CanvasRenderingContext2D, z: Zona, t: TextosCa
   ctx.restore();
 }
 
+/**
+ * Desenha um elemento: ícone da biblioteca ou desenho criado pela IA
+ * ("ia:<n>", imagem SVG em `extras`). O desenho da IA ganha o mesmo tremido
+ * de giz dos ícones: duas passadas leves deslocadas por baixo da principal.
+ */
+export function desenharElemento(ctx: CanvasRenderingContext2D, id: string, x: number, y: number, s: number, R: Rng, giro: number, extras?: Map<string, HTMLImageElement>) {
+  if (!id.startsWith("ia:")) return desenharIcone(ctx, id, x, y, s, R, giro);
+  const img = extras?.get(id);
+  if (!img) return;
+  const prop = img.width && img.height ? img.width / img.height : 1;
+  const w = prop >= 1 ? s : s * prop, h = prop >= 1 ? s / prop : s;
+  ctx.save();
+  ctx.translate(x, y);
+  if (giro) ctx.rotate(giro);
+  for (let i = 0; i < 2; i++) {
+    ctx.globalAlpha = 0.25;
+    ctx.drawImage(img, -w / 2 + (R() - 0.5) * s * 0.012, -h / 2 + (R() - 0.5) * s * 0.012, w, h);
+  }
+  ctx.globalAlpha = 1;
+  ctx.drawImage(img, -w / 2, -h / 2, w, h);
+  ctx.restore();
+}
+
 /** Polaroid branca com fita e um desenho grande. */
-function polaroid(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, giro: number, icone: string, R: Rng, fitaCor: string, fundoFoto: string) {
+function polaroid(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, giro: number, icone: string, R: Rng, fitaCor: string, fundoFoto: string, extras?: Map<string, HTMLImageElement>) {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(giro);
@@ -269,13 +297,13 @@ function polaroid(ctx: CanvasRenderingContext2D, x: number, y: number, s: number
   ctx.shadowColor = "transparent";
   ctx.fillStyle = fundoFoto;
   ctx.fillRect(-s * 0.44, -s * 0.44, s * 0.88, s * 0.88);
-  desenharIcone(ctx, icone, 0, 0, s * 0.7, R);
+  desenharElemento(ctx, icone, 0, 0, s * (icone.startsWith("ia:") ? 0.82 : 0.7), R, 0, extras);
   fita(ctx, 0, -s / 2, s * 0.42, (R() - 0.5) * 0.3, fitaCor);
   ctx.restore();
 }
 
 /** Desenho solto na folha (ou num adesivo branco, se o fundo for colorido). */
-export function solto(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, icone: string, R: Rng, adesivo: boolean) {
+export function solto(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, icone: string, R: Rng, adesivo: boolean, extras?: Map<string, HTMLImageElement>) {
   if (adesivo) {
     ctx.save();
     ctx.shadowColor = "rgba(0,0,0,.18)";
@@ -286,17 +314,54 @@ export function solto(ctx: CanvasRenderingContext2D, x: number, y: number, s: nu
     ctx.fill();
     ctx.restore();
   }
-  desenharIcone(ctx, icone, x, y, s * (adesivo ? 0.78 : 1), R, (R() - 0.5) * 0.4);
+  desenharElemento(ctx, icone, x, y, s * (adesivo ? 0.78 : 1), R, (R() - 0.5) * 0.4, extras);
 }
 
 const FOTOS = ["#FFF3C4", "#DCEBFA", "#FCE1EC", "#DFF3DA"];
 const FITAS = ["rgba(255,192,64,.88)", "rgba(127,178,230,.88)", "rgba(232,111,166,.75)", "rgba(63,166,107,.7)"];
 
-export function desenharCaderno(ctx: CanvasRenderingContext2D, c: ComposicaoCaderno, W: number, H: number, t: TextosCaderno, logo: HTMLImageElement | undefined, icones: string[], fundoId: string) {
+export type PosicaoTexto = "cima" | "meio" | "baixo";
+export type Alinhamento = "esq" | "centro";
+
+export interface OpcoesCaderno {
+  posicao?: PosicaoTexto;
+  alinhar?: Alinhamento;
+  extras?: Map<string, HTMLImageElement>; // desenhos da IA
+}
+
+/**
+ * Distribui polaroids e desenhos soltos numa zona. Zona larga: fotos lado a
+ * lado; zona alta ou quadrada: fotos em diagonal.
+ */
+function ilustrar(ctx: CanvasRenderingContext2D, zi: Zona, cards: string[], soltos: string[], R: Rng, adesivo: boolean, semente: number, extras?: Map<string, HTMLImageElement>) {
+  const k = Math.min(zi.w, zi.h);
+  const razao = zi.w / zi.h;
+  const slots =
+    razao > 2.6
+      ? { cards: [[0.3, 0.5, 0.78, -0.06], [0.62, 0.52, 0.72, 0.05]], soltos: [[0.08, 0.3, 0.3], [0.9, 0.3, 0.3], [0.9, 0.78, 0.26], [0.08, 0.8, 0.26]] }
+      : razao > 1.7
+        ? { cards: [[0.28, 0.46, 0.62, -0.07], [0.68, 0.54, 0.56, 0.06]], soltos: [[0.92, 0.16, 0.22], [0.08, 0.1, 0.2], [0.94, 0.86, 0.2], [0.48, 0.1, 0.16]] }
+        : razao < 0.6
+          ? { cards: [[0.5, 0.3, 0.7, -0.06], [0.5, 0.7, 0.66, 0.05]], soltos: [[0.18, 0.08, 0.3], [0.84, 0.5, 0.26], [0.2, 0.94, 0.26], [0.86, 0.95, 0.2]] }
+          : { cards: [[0.33, 0.4, 0.56, -0.07], [0.7, 0.62, 0.5, 0.06]], soltos: [[0.84, 0.14, 0.24], [0.12, 0.86, 0.22], [0.92, 0.94, 0.16], [0.5, 0.95, 0.15]] };
+  const usar = cards.length === 1 ? [[0.5, 0.5, Math.min(0.8, slots.cards[0][2] * 1.15), -0.04]] : slots.cards;
+  cards.slice(0, usar.length).forEach((ic, i) => {
+    const [x, y, s, g] = usar[i];
+    polaroid(ctx, zi.x + x * zi.w, zi.y + y * zi.h, s * k, g, ic, R, FITAS[i % FITAS.length], FOTOS[(i + semente) % FOTOS.length], extras);
+  });
+  soltos.slice(0, slots.soltos.length).forEach((ic, i) => {
+    const [x, y, s] = slots.soltos[i];
+    solto(ctx, zi.x + x * zi.w, zi.y + y * zi.h, s * k, ic, R, adesivo, extras);
+  });
+}
+
+export function desenharCaderno(ctx: CanvasRenderingContext2D, c: ComposicaoCaderno, W: number, H: number, t: TextosCaderno, logo: HTMLImageElement | undefined, icones: string[], fundoId: string, op: OpcoesCaderno = {}) {
   const f = fundoPorId(fundoId);
   const m = Math.min(W, H);
   const R = rng(c.id.length * 97 + 13);
   const forma = W >= H * 1.35 ? "largo" : H >= W * 1.35 ? "alto" : "quad";
+  const posicao = op.posicao ?? (forma === "largo" ? "meio" : "cima");
+  const alinhar = op.alinhar ?? "esq";
   ctx.clearRect(0, 0, W, H);
   pintarFundo(ctx, f, W, H, m, R);
   const margem = f.papel ? (forma === "alto" ? W * 0.14 : Math.min(W * 0.08, m * 0.3)) : m * 0.06;
@@ -304,39 +369,60 @@ export function desenharCaderno(ctx: CanvasRenderingContext2D, c: ComposicaoCade
   if (c.topo === "bandeirinhas") bandeirinhas(ctx, W, m, R);
   const topo = c.topo ? m * 0.2 : 0;
 
-  // zonas: texto e ilustração
+  // área útil (dentro da margem e abaixo das bandeirinhas)
   const pad = m * 0.07;
-  let zt: Zona, zi: Zona;
-  if (forma === "largo") {
-    zt = { x: margem + pad, y: topo + pad, w: W * 0.56 - margem - pad, h: H - topo - pad * 2 };
-    zi = { x: W * 0.58, y: topo + pad * 0.6, w: W * 0.4, h: H - topo - pad * 1.2 };
-  } else if (forma === "alto") {
-    zt = { x: margem + pad * 0.6, y: topo + pad, w: W - margem - pad * 1.4, h: H * 0.44 - topo };
-    zi = { x: margem, y: H * 0.46, w: W - margem - pad * 0.4, h: H * 0.52 };
+  const U: Zona = { x: margem + pad * 0.6, y: topo + pad * 0.6, w: W - margem - pad * 1.2, h: H - topo - pad * 1.2 };
+  let zt: Zona;
+  let zis: Zona[];
+  if (posicao === "meio") {
+    if (forma === "largo" && alinhar === "esq") {
+      // o layout clássico: texto à esquerda, desenhos à direita
+      zt = { x: U.x + pad * 0.4, y: U.y + pad * 0.4, w: U.w * 0.55, h: U.h - pad * 0.8 };
+      zis = [{ x: U.x + U.w * 0.6, y: U.y, w: U.w * 0.4, h: U.h }];
+    } else if (forma === "largo") {
+      // centralizado: texto no meio, desenhos dos dois lados
+      zt = { x: U.x + U.w * 0.27, y: U.y + pad * 0.4, w: U.w * 0.46, h: U.h - pad * 0.8 };
+      zis = [{ x: U.x, y: U.y, w: U.w * 0.25, h: U.h }, { x: U.x + U.w * 0.75, y: U.y, w: U.w * 0.25, h: U.h }];
+    } else {
+      // em pé ou quadrado: faixa de desenhos em cima e embaixo, texto no meio
+      zt = { x: U.x + pad * 0.3, y: U.y + U.h * 0.3, w: U.w - pad * 0.6, h: U.h * 0.4 };
+      zis = [{ x: U.x, y: U.y, w: U.w, h: U.h * 0.28 }, { x: U.x, y: U.y + U.h * 0.72, w: U.w, h: U.h * 0.28 }];
+    }
   } else {
-    zt = { x: margem + pad, y: topo + pad, w: W * 0.66 - margem, h: H * 0.52 - topo };
-    zi = { x: W * 0.3, y: H * 0.52, w: W * 0.68, h: H * 0.46 };
+    // em cima ou embaixo: faixa de texto e faixa de desenhos
+    const frac = forma === "largo" ? 0.5 : forma === "alto" ? 0.44 : 0.5;
+    const faixaTexto = U.h * frac, faixaDes = U.h - faixaTexto;
+    const yT = posicao === "cima" ? U.y : U.y + faixaDes;
+    const yD = posicao === "cima" ? U.y + faixaTexto : U.y;
+    zt = { x: U.x + pad * 0.3, y: yT + pad * 0.2, w: U.w - pad * 0.6, h: faixaTexto - pad * 0.4 };
+    zis = [{ x: U.x, y: yD, w: U.w, h: faixaDes }];
   }
 
-  // ilustração: 2 polaroids com os primeiros desenhos; os outros soltos
-  const k = Math.min(zi.w, zi.h);
-  const slots =
-    zi.w / zi.h > 1.7
-      ? { cards: [[0.28, 0.46, 0.62, -0.07], [0.68, 0.54, 0.56, 0.06]], soltos: [[0.92, 0.16, 0.22], [0.08, 0.1, 0.2], [0.94, 0.86, 0.2], [0.48, 0.1, 0.16]] }
-      : { cards: [[0.33, 0.4, 0.56, -0.07], [0.7, 0.62, 0.5, 0.06]], soltos: [[0.84, 0.14, 0.24], [0.12, 0.86, 0.22], [0.92, 0.94, 0.16], [0.5, 0.95, 0.15]] };
+  // desenhos: os 2 primeiros em polaroid; o resto solto, repartido entre as zonas
   const sel = icones.length ? icones : c.icones;
   const [a, b, ...resto] = sel;
-  slots.cards.forEach(([x, y, s, g], i) => {
-    const ic = i === 0 ? a : b;
-    if (ic) polaroid(ctx, zi.x + x * zi.w, zi.y + y * zi.h, s * k, g, ic, R, FITAS[i % FITAS.length], FOTOS[(i + c.id.length) % FOTOS.length]);
-  });
-  resto.slice(0, slots.soltos.length).forEach((ic, i) => {
-    const [x, y, s] = slots.soltos[i];
-    solto(ctx, zi.x + x * zi.w, zi.y + y * zi.h, s * k, ic, R, !f.papel);
-  });
+  if (zis.length === 1) ilustrar(ctx, zis[0], [a, b].filter(Boolean), resto, R, !f.papel, c.id.length, op.extras);
+  else {
+    const meio = Math.ceil(resto.length / 2);
+    ilustrar(ctx, zis[0], [a].filter(Boolean), resto.slice(0, meio), R, !f.papel, c.id.length, op.extras);
+    ilustrar(ctx, zis[1], [b].filter(Boolean), resto.slice(meio), R, !f.papel, c.id.length + 1, op.extras);
+  }
 
-  // estrelinhas e coraçõezinhos perto do título
-  if (sel.includes("estrela") && forma === "largo") solto(ctx, zt.x + zt.w * 0.96, zt.y + zt.h * 0.1, m * 0.09, "estrela", R, !f.papel);
-
-  textoCaderno(ctx, zt, t, f, logo, m * (forma === "alto" ? 0.3 : 0.22));
+  // Deitado com a frase em cima/embaixo: faixa baixa, então o logo vai ao lado da frase (empilhado, ela ficaria miúda).
+  if (forma === "largo" && posicao !== "meio" && logo) {
+    const lw = Math.min(zt.h * 0.85 * (logo.width / logo.height), W * 0.12), lh = lw / (logo.width / logo.height);
+    const lx = zt.x, ly = zt.y + (zt.h - lh) / 2;
+    if (f.escuro) {
+      ctx.fillStyle = "#FFFFFF";
+      ctx.beginPath();
+      ctx.roundRect(lx - lw * 0.1, ly - lw * 0.08, lw * 1.2, lh + lw * 0.16, lw * 0.12);
+      ctx.fill();
+    }
+    ctx.drawImage(logo, lx, ly, lw, lh);
+    const desloc = lw + m * 0.08;
+    const zt2 = alinhar === "centro" ? { ...zt, x: zt.x + desloc, w: zt.w - desloc * 2 } : { ...zt, x: zt.x + desloc, w: zt.w - desloc };
+    textoCaderno(ctx, zt2, t, f, undefined, 0, alinhar);
+    return;
+  }
+  textoCaderno(ctx, zt, t, f, logo, m * (forma === "alto" ? 0.3 : 0.22), alinhar);
 }
