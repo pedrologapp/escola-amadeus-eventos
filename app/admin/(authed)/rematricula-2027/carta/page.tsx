@@ -51,6 +51,7 @@ function Cartao({ titulo, c, modo, destaque, troca }: { titulo: string; c: Condi
       <Linha rotulo="Fidelidade" valor={c.fidelidade} menos />
       {c.desconto > 0 && <Linha rotulo="Desconto" valor={c.desconto} menos />}
       {c.irmao > 0 && <Linha rotulo="Desconto de irmão" valor={c.irmao} menos />}
+      {c.extra > 0 && <Linha rotulo="Desconto especial" valor={c.extra} menos />}
       <div className="bloco destaque-linha">
         <p className="bloco-titulo">Pagando até o dia 05</p>
         <span className={`valor ${fraunces.className}`}>{reais(c.ate05)}</span>
@@ -86,13 +87,14 @@ function Cartao({ titulo, c, modo, destaque, troca }: { titulo: string; c: Condi
 export default async function CartaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ base?: string; atual?: string; aluno?: string; desconto?: string; irmao?: string; serie?: string; nome?: string; livro?: string }>;
+  searchParams: Promise<{ base?: string; atual?: string; aluno?: string; desconto?: string; irmao?: string; extra?: string; serie?: string; nome?: string; livro?: string }>;
 }) {
   const sp = await searchParams;
   const modo = modoLivroValido(sp.livro);
   const serie = SERIES.find((s) => s.nome === sp.serie)?.nome as NomeSerie | undefined;
   const desconto = Math.max(0, Number(sp.desconto) || 0);
   const irmao = sp.irmao === "1";
+  const extra = Math.max(0, Number(sp.extra) || 0);
   let nome = sp.nome?.trim() ?? "";
   if (sp.aluno && /^\d+$/.test(sp.aluno)) {
     const alunos = await listarAlunos().catch(() => []);
@@ -105,7 +107,7 @@ export default async function CartaPage({
   }
 
   const base = veterano && Number(sp.base) > 0 ? Number(sp.base) : null;
-  const sim = simular(serie, veterano ? desconto : 0, irmao, base);
+  const sim = simular(serie, veterano ? desconto : 0, irmao, base, extra);
   const primeiro = primeiroNome(nome);
   const qr = await QRCode.toString(URL_FOLDER, {
     type: "svg",

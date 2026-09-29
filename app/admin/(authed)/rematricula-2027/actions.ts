@@ -27,12 +27,12 @@ export interface ResultadoEnvio {
 }
 
 /** Dados da carta a partir do que veio da tela (novato não leva desconto nem base). */
-function dadosDaCarta(entrada: { alunoId: number | null; nome: string; serie: NomeSerie; desconto: number; irmao: boolean; serieAtual?: string | null; base?: number | null; modo: string; tipo?: string }) {
+function dadosDaCarta(entrada: { alunoId: number | null; nome: string; serie: NomeSerie; desconto: number; irmao: boolean; extra?: number; serieAtual?: string | null; base?: number | null; modo: string; tipo?: string }) {
   const data = new Date().toLocaleDateString("pt-BR", { timeZone: "America/Fortaleza", day: "2-digit", month: "long", year: "numeric" });
   const veterano = entrada.alunoId !== null;
   return {
     nome: entrada.nome, serie: entrada.serie, veterano, desconto: veterano ? entrada.desconto : 0,
-    irmao: !!entrada.irmao, serieAtual: entrada.serieAtual ?? null, base: veterano ? entrada.base ?? null : null,
+    irmao: !!entrada.irmao, extra: Math.max(0, Number(entrada.extra) || 0), serieAtual: entrada.serieAtual ?? null, base: veterano ? entrada.base ?? null : null,
     modo: modoLivroValido(entrada.modo), tipo: tipoCartaValido(entrada.tipo), data,
   };
 }
@@ -41,7 +41,7 @@ const origemDoSite = () => process.env.NEXT_PUBLIC_SITE_URL ?? "https://eventos.
 
 /** Link assinado da imagem da carta, para a equipe ver antes de enviar. */
 export async function previaCarta(entrada: {
-  alunoId: number | null; nome: string; serie: string; desconto: number; irmao: boolean;
+  alunoId: number | null; nome: string; serie: string; desconto: number; irmao: boolean; extra?: number;
   serieAtual?: string | null; base?: number | null; modo: string; tipo?: string;
 }): Promise<{ ok: boolean; url?: string; erro?: string }> {
   const supabase = await createClient();
@@ -64,6 +64,7 @@ export async function enviarCarta(entrada: {
   serie: string;
   desconto: number;
   irmao: boolean;
+  extra?: number; // desconto especial concedido pela direção
   serieAtual?: string | null;
   base?: number | null;
   modo: string;
@@ -79,7 +80,7 @@ export async function enviarCarta(entrada: {
   const nome = entrada.nome.trim();
   const soFolder = !!entrada.somenteFolder;
   if (!soFolder && (!serie || !nome)) return { ok: false, erro: "Faltam o nome ou a série de 2027.", resultados: [] };
-  if (!(entrada.desconto >= 0)) return { ok: false, erro: "Desconto inválido.", resultados: [] };
+  if (!(entrada.desconto >= 0) || (entrada.extra !== undefined && !(entrada.extra >= 0))) return { ok: false, erro: "Desconto inválido.", resultados: [] };
   const chave = process.env.WEBHOOK_CONFIRM_SECRET;
   if (!chave) return { ok: false, erro: "WEBHOOK_CONFIRM_SECRET não está configurada no servidor.", resultados: [] };
 

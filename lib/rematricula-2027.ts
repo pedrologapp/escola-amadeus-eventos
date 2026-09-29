@@ -117,6 +117,7 @@ export interface Condicao {
   fidelidade: number; // R$ 20
   desconto: number; // o que a família já tem hoje (no boleto + no pagamento)
   irmao: number; // R$ 20 se a direção marcar
+  extra: number; // desconto especial que a direção concede (veterano ou novato)
   ate05: number; // mensalidade real pagando até o dia 05
   ate10: number;
   livro: number;
@@ -143,9 +144,11 @@ export const planoActivesoft = (c: { cheia: number }) => c.cheia - DESCONTO_PLAN
  * Veterano e novato partem do mesmo teto: o da tabela de 2026 do segmento
  * de 2027 (Grupo V → 1º ano parte de 490; 5º → 6º de 510) + 50 até 30/10 ou
  * + 60 depois. É igual à tabela do novato do flyer (570/580, 540/550, 560/570).
- * O desconto da família (novato: 0) entra só pagando até o dia 05.
+ * O desconto da família (novato: 0) entra só pagando até o dia 05. O desconto
+ * especial (extra) é o que a direção decide dar na conversa com a família; segue
+ * a mesma regra: só pagando até o dia 05.
  */
-export function simular(serie2027: NomeSerie, desconto = 0, irmao = false, base: number | null = null): Simulacao {
+export function simular(serie2027: NomeSerie, desconto = 0, irmao = false, base: number | null = null, extra = 0): Simulacao {
   const segmento = segmentoDe(serie2027)!;
   const l = LIVRO[segmento];
   const cond = (reajuste: number, livro: number): Condicao => {
@@ -154,9 +157,10 @@ export function simular(serie2027: NomeSerie, desconto = 0, irmao = false, base:
     const cheia = (base !== null && base > 0 ? base : TABELA_2026[segmento]) + reajuste;
     const d = Math.max(0, desconto);
     const i = irmao ? DESCONTO_IRMAO : 0;
-    const ate05 = Math.max(0, cheia - FIDELIDADE - d - i);
+    const x = Math.max(0, extra);
+    const ate05 = Math.max(0, cheia - FIDELIDADE - d - i - x);
     return {
-      cheia, fidelidade: FIDELIDADE, desconto: d, irmao: i, ate05,
+      cheia, fidelidade: FIDELIDADE, desconto: d, irmao: i, extra: x, ate05,
       ate10: cheia - (FIDELIDADE - ACRESCIMO_DIA_06_A_10),
       livro, totalAte05: ate05 + livro, totalCheio: cheia + livro, matricula: cheia,
     };

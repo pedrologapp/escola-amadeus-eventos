@@ -70,6 +70,7 @@ function Cartao({ titulo, c, modo, destaque, troca }: { titulo: string; c: Condi
       {linha("Fidelidade", c.fidelidade, { menos: true })}
       {c.desconto > 0 && linha("Desconto", c.desconto, { menos: true })}
       {c.irmao > 0 && linha("Desconto de irmão", c.irmao, { menos: true })}
+      {c.extra > 0 && linha("Desconto especial", c.extra, { menos: true })}
       <div style={bloco}>
         <div style={{ fontSize: pt(9.6), fontWeight: 800 }}>Pagando até o dia 05</div>
         <div style={{ fontFamily: "Fraunces", fontSize: pt(28), color: realce, marginTop: 2, letterSpacing: -1 }}>{reais(c.ate05)}</div>
@@ -150,7 +151,7 @@ export async function GET(req: NextRequest) {
   const d = lerLinkDaCarta(searchParams.get("p"), searchParams.get("s"));
   if (!d) return new Response("Link inválido ou vencido.", { status: 404 });
 
-  const sim = simular(d.serie, d.veterano ? d.desconto : 0, d.irmao, d.veterano ? d.base ?? null : null);
+  const sim = simular(d.serie, d.veterano ? d.desconto : 0, d.irmao, d.veterano ? d.base ?? null : null, d.extra ?? 0);
   const veterano = d.veterano;
   const primeiro = primeiroNome(d.nome);
   const avista = d.tipo === "avista";

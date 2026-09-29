@@ -62,6 +62,7 @@ function Coluna({ titulo, c, modo, destaque }: { titulo: string; c: Condicao; mo
         <Linha rotulo="Fidelidade (até o dia 05)" valor={c.fidelidade} menos />
         {c.desconto > 0 && <Linha rotulo="Desconto" valor={c.desconto} menos />}
         {c.irmao > 0 && <Linha rotulo="Desconto de irmão" valor={c.irmao} menos />}
+        {c.extra > 0 && <Linha rotulo="Desconto especial" valor={c.extra} menos />}
       </div>
       <div className={`mt-3 border-t pt-3 ${fio}`}>
         <p className="text-sm font-bold">Pagando até o dia 05</p>
@@ -140,6 +141,7 @@ function linhasTexto(c: Condicao, modo: ModoLivro) {
   const l = [`Mensalidade cheia: ${reais(c.cheia)}`, `Fidelidade (até o dia 05): − ${reais(c.fidelidade)}`];
   if (c.desconto) l.push(`Desconto: − ${reais(c.desconto)}`);
   if (c.irmao) l.push(`Desconto de irmão: − ${reais(c.irmao)}`);
+  if (c.extra) l.push(`Desconto especial: − ${reais(c.extra)}`);
   l.push(`*Mensalidade pagando até o dia 05: ${reais(c.ate05)}*`);
   if (modo === "com") {
     l.push(`Livros: 12x ${reais(c.livro)} (ou ${reais(livroAVista(c.livro))} à vista)`);
@@ -346,6 +348,7 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
   const [descPag, setDescPag] = useState<string>(String(leitura?.descontoPagamento ?? 0));
   const [irmao, setIrmao] = useState(false);
   const [manterDesconto, setManterDesconto] = useState(true);
+  const [extraTxt, setExtraTxt] = useState(""); // desconto especial concedido pela direção
 
   const achados = useMemo(() => {
     const q = semAcento(busca.trim());
@@ -373,10 +376,11 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
   const abaixoDoTeto = troca && teto !== null && Number.isFinite(baseNum) ? Math.max(0, teto - (baseNum ?? teto)) : 0;
   const descontoPag = novato ? 0 : Math.max(0, Number(descPag.replace(",", ".")) || 0);
   const desconto = manterDesconto ? descontoPag : 0;
+  const extra = Math.max(0, Number(extraTxt.replace(",", ".")) || 0);
   const serieAtual = novato ? null : leitura?.aluno.serie ?? null;
   const pronto = ativo && serie && nome && (novato || (Number.isFinite(baseNum) && (baseNum ?? 0) > 0));
   const baseMesmoSegmento = !novato && !troca && Number.isFinite(baseNum) ? baseNum : null;
-  const sim = pronto ? simular(serie as NomeSerie, desconto, irmao, baseMesmoSegmento) : null;
+  const sim = pronto ? simular(serie as NomeSerie, desconto, irmao, baseMesmoSegmento, extra) : null;
 
   const linkCarta = sim
     ? `/admin/rematricula-2027/carta?${new URLSearchParams({
@@ -385,6 +389,7 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
         desconto: String(desconto),
         ...(baseMesmoSegmento !== null ? { base: String(baseMesmoSegmento) } : {}),
         ...(irmao ? { irmao: "1" } : {}),
+        ...(extra > 0 ? { extra: String(extra) } : {}),
         livro: modo,
       })}`
     : "";
@@ -396,6 +401,7 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
         serie: sim.serie2027,
         desconto,
         irmao,
+        extra,
         serieAtual,
         base: baseMesmoSegmento,
         modo,
@@ -621,6 +627,15 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                 </div>
               </>
             )}
+
+            {/* Desconto especial: o que a direção decide dar na conversa com a família (veterano ou novato) */}
+            <div className="space-y-2 rounded-xl border-2 border-amadeus-yellow/70 bg-amadeus-yellow-50/60 p-3 text-sm">
+              <label className="flex items-center justify-between gap-2 font-semibold">
+                <span>Desconto especial <span className="font-normal text-muted-foreground">(R$ por mês)</span></span>
+                <input inputMode="decimal" value={extraTxt} onChange={(e) => setExtraTxt(e.target.value)} placeholder="0,00" className="w-24 rounded-lg border border-border bg-white px-2 py-1 text-right font-bold outline-none focus:border-amadeus-blue" />
+              </label>
+              <p className="text-xs text-muted-foreground">Desconto que a direção concede a esta família, somado aos outros. Sai na carta como “Desconto especial” e, como os demais, vale pagando até o dia 05. Não entra na carta à vista.</p>
+            </div>
 
             <label className="block text-sm font-semibold">
               Série em 2027
