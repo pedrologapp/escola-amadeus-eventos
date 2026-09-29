@@ -1,0 +1,143 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Escola Amadeus//Semana da Crianca 2026//PT-BR
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Semana da Criança · Amadeus
+BEGIN:VEVENT
+UID:semanadacrianca-20261006@escolaamadeus.com
+DTSTAMP:20260929T120000Z
+DTSTART;VALUE=DATE:20261006
+DTEND;VALUE=DATE:20261007
+SUMMARY:🎈 Culminância do Projeto Educação Financeira
+DESCRIPTION:Abrir o cofrinho…\n\nSemana da Criança · Educação Infan
+ til · Escola Amadeus\nhttps://www.escolaamadeus.com/semanadacrianca
+LOCATION:Escola Amadeus
+TRANSP:TRANSPARENT
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Amanhã: Culminância do Projeto Educação Financeira
+TRIGGER:-PT6H
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:semanadacrianca-20261007@escolaamadeus.com
+DTSTAMP:20260929T120000Z
+DTSTART;VALUE=DATE:20261007
+DTEND;VALUE=DATE:20261008
+SUMMARY:🎈 Brinquedo não estruturado
+DESCRIPTION:Levar um objeto identificado com o nome (caixa de papelão\, 
+ potes\, rolinhos\, tampinhas\, tecidos\, colher de pau\, tubos…).\n\nS
+ emana da Criança · Educação Infantil · Escola Amadeus\nhttps://www.
+ escolaamadeus.com/semanadacrianca
+LOCATION:Escola Amadeus
+TRANSP:TRANSPARENT
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Amanhã: Brinquedo não estruturado
+TRIGGER:-PT6H
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:semanadacrianca-20261008@escolaamadeus.com
+DTSTAMP:20260929T120000Z
+DTSTART;VALUE=DATE:20261008
+DTEND;VALUE=DATE:20261009
+SUMMARY:🎈 Cineminha na escola
+DESCRIPTION:Não esquecer a pipoquinha!\n\nSemana da Criança · Educaç
+ ão Infantil · Escola Amadeus\nhttps://www.escolaamadeus.com/semanadacr
+ ianca
+LOCATION:Escola Amadeus
+TRANSP:TRANSPARENT
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Amanhã: Cineminha na escola
+TRIGGER:-PT6H
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:semanadacrianca-20261009@escolaamadeus.com
+DTSTAMP:20260929T120000Z
+DTSTART;VALUE=DATE:20261009
+DTEND;VALUE=DATE:20261010
+SUMMARY:🎈 Baile à fantasia
+DESCRIPTION:As crianças poderão vir fantasiadas. Os pais que desejarem 
+ também poderão vir buscar seus filhos fantasiados.\n\nSemana da Crian
+ ça · Educação Infantil · Escola Amadeus\nhttps://www.escolaamadeus.
+ com/semanadacrianca
+LOCATION:Escola Amadeus
+TRANSP:TRANSPARENT
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Amanhã: Baile à fantasia
+TRIGGER:-PT6H
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:semanadacrianca-20261012@escolaamadeus.com
+DTSTAMP:20260929T120000Z
+DTSTART;VALUE=DATE:20261012
+DTEND;VALUE=DATE:20261013
+SUMMARY:🎈 Feriado: não haverá aula
+DESCRIPTION:Feriado.\n\nSemana da Criança · Educação Infantil · Esco
+ la Amadeus\nhttps://www.escolaamadeus.com/semanadacrianca
+LOCATION:Escola Amadeus
+TRANSP:TRANSPARENT
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Amanhã: Feriado: não haverá aula
+TRIGGER:-PT6H
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:semanadacrianca-20261014@escolaamadeus.com
+DTSTAMP:20260929T120000Z
+DTSTART;VALUE=DATE:20261014
+DTEND;VALUE=DATE:20261015
+SUMMARY:🎈 Culminância da Educação Financeira
+DESCRIPTION:Levar o brinquedo escolhido para mostrar aos colegas e contar
+  como foi.\n\nSemana da Criança · Educação Infantil · Escola Amadeu
+ s\nhttps://www.escolaamadeus.com/semanadacrianca
+LOCATION:Escola Amadeus
+TRANSP:TRANSPARENT
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Amanhã: Culminância da Educação Financeira
+TRIGGER:-PT6H
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:semanadacrianca-20261015@escolaamadeus.com
+DTSTAMP:20260929T120000Z
+DTSTART:20261015T160000Z
+DTEND:20261015T200000Z
+SUMMARY:🎈 Passeio ao Viva Park (13h às 17h)
+DESCRIPTION:Para as crianças que aderiram ao ingresso. Neste dia não ha
+ verá aula.\n\nSemana da Criança · Educação Infantil · Escola Amade
+ us\nhttps://www.escolaamadeus.com/semanadacrianca
+LOCATION:Escola Amadeus
+TRANSP:TRANSPARENT
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Amanhã: Passeio ao Viva Park (13h às 17h)
+TRIGGER:-PT18H
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:semanadacrianca-20261016@escolaamadeus.com
+DTSTAMP:20260929T120000Z
+DTSTART;VALUE=DATE:20261016
+DTEND;VALUE=DATE:20261017
+SUMMARY:🎈 Não haverá aula
+DESCRIPTION:Compensação do feriado do Dia do Professor (15/10).\n\nSema
+ na da Criança · Educação Infantil · Escola Amadeus\nhttps://www.esc
+ olaamadeus.com/semanadacrianca
+LOCATION:Escola Amadeus
+TRANSP:TRANSPARENT
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Amanhã: Não haverá aula
+TRIGGER:-PT6H
+END:VALARM
+END:VEVENT
+END:VCALENDAR
