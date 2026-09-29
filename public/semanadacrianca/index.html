@@ -82,6 +82,9 @@
   .mais b { color: var(--mar); }
   .mais .cofre { float: right; width: 84px; height: 76px; margin: -8px -4px 0 6px; }
 
+  .agenda .item-check { margin-top: 4px; padding: 6px 8px; border-radius: 14px; background: #FFF1A8; }
+  .agenda .mini-check { display: grid; place-items: center; font: 900 26px/1 Nunito, sans-serif; color: #E86FA6; background: #fff; }
+
   /* checklist (penúltima página): o que levar em cada dia; o pai marca e fica guardado no celular dele */
   .check-p .miolo { justify-content: safe center; }
   .check-p h2 { font: 700 42px/.95 Caveat, cursive; color: var(--mar); }
@@ -178,8 +181,9 @@
   paginas.push(`<div class="face agenda-p"><div class="sombra"></div><div class="miolo">
       <h2>Anote na agenda da família</h2>
       <p class="sub">A programação, dia a dia:</p>
-      <ul class="agenda">${DIAS.map((d, i) => `<li data-ir="${i + 2}" style="--c:${d.cor}"><div class="mini">${ILU[d.ilu]()}</div><div><b>${d.data}</b><span>${d.t}</span></div></li>`).join('')}</ul>
-      <p class="toque">Toque num dia para ir direto a ele.</p>
+      <ul class="agenda">${DIAS.map((d, i) => `<li data-ir="${i + 2}" style="--c:${d.cor}"><div class="mini">${ILU[d.ilu]()}</div><div><b>${d.data}</b><span>${d.t}</span></div></li>`).join('')}
+        <li data-ir="${DIAS.length + 2}" class="item-check" style="--c:${C.ros}"><div class="mini mini-check">✓</div><div><b>Checklist da família</b><span>O que levar em cada dia</span></div></li></ul>
+      <p class="toque">Toque num item para ir direto a ele.</p>
       <div class="num">1</div></div></div>`);
   DIAS.forEach((d, i) => paginas.push(`<div class="face dia" style="--c:${d.cor}"><div class="sombra"></div><div class="miolo">
       <div class="data">${d.data}</div>
