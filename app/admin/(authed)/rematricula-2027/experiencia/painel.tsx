@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { BellRing, Download, Loader2, Send, Trash2, UserPlus, Users } from "lucide-react";
+import { BadgeCheck, BellRing, Download, Loader2, Send, Trash2, UserPlus, Users } from "lucide-react";
 import {
+  confirmarLembrete,
   enviarExperiencia,
   incluirContatos,
   lembreteAgora,
@@ -19,6 +20,7 @@ export interface ContatoExp {
   serie: string | null;
   origem: string;
   lembrar: boolean;
+  lembrete_confirmado: boolean;
   convite_em: string | null;
   lembrete_em: string | null;
   criado_em: string;
@@ -90,7 +92,11 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
   const [retornoLembrete, setRetornoLembrete] = useState<{ erro?: string; resultados: ResultadoExp[] } | null>(null);
   const [ocupado, iniciar] = useTransition();
 
-  const pendentesLembrete = contatos.filter((c) => c.lembrar && c.convite_em && !c.lembrete_em).length;
+  // Lembrete: só vai para quem foi confirmado na lista; mexeu no "Lembrar?" depois, precisa confirmar de novo.
+  const confirmados = contatos.filter((c) => c.lembrete_confirmado && !c.lembrete_em);
+  const pendentesLembrete = confirmados.length;
+  const aConfirmar = contatos.filter((c) => !c.lembrete_em && c.lembrar !== c.lembrete_confirmado);
+  const vaoReceber = contatos.filter((c) => c.lembrar && !c.lembrete_em);
   const selecionados = contatos.filter((c) => marcados.has(c.telefone));
   const nomeEncarte = escolha === "os_dois" ? "os dois encartes" : escolha === "original" ? "o encarte original" : "o convite “Mãe, pai”";
 
@@ -214,6 +220,7 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
                       <td className="py-2.5 pr-3">{c.lembrete_em ? <span className={`rounded-md px-1.5 py-0.5 text-xs font-bold ${SELO.enviado}`}>{dia(c.lembrete_em)}</span> : <span className="text-xs text-muted-foreground">—</span>}</td>
                       <td className="py-2.5 pr-3">
                         <input type="checkbox" className="size-4 accent-[#083078]" checked={c.lembrar} disabled={ocupado} onChange={(e) => iniciar(() => marcarLembrar(c.telefone, e.target.checked))} />
+                        {c.lembrete_confirmado && !c.lembrete_em && <span className="ml-2 text-xs font-bold text-emerald-700">confirmado</span>}
                       </td>
                       <td className="py-2.5 text-right">
                         <button type="button" aria-label="Tirar da lista" disabled={ocupado} onClick={() => window.confirm(`Tirar ${tel(c.telefone)} da lista?`) && iniciar(() => removerContato(c.telefone))} className="text-muted-foreground hover:text-red-600">
@@ -230,7 +237,7 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
       </div>
 
       <div className="space-y-6">
-        {/* Lembrete da véspera */}
+        {/* Lembrete da véspera: só sai para a lista confirmada */}
         <section className="rounded-2xl border border-border/60 bg-white p-5">
           <p className="flex items-center gap-2 text-sm font-bold text-amadeus-blue"><BellRing className="size-4" /> Lembrete da véspera</p>
           <label className="mt-3 flex cursor-pointer items-center gap-3 text-sm">
@@ -238,13 +245,42 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
             <span><b>Automático</b> na sexta, 09/10, às 9h</span>
           </label>
           <p className="mt-2 text-xs text-muted-foreground">
-            Vai para quem recebeu o encarte e está com “Lembrar?” marcado. Mensagem: “é amanhã, sábado (10/10), às 14h…” com o convite e o mapa.
-            {" "}<b className="text-amadeus-blue">{pendentesLembrete}</b> na fila agora.
+            Só vai para a lista que você <b>confirmar</b> aqui. Mensagem: “é amanhã, sábado (10/10), às 14h…” com o convite e o mapa.
           </p>
+
+          <div className="mt-4 rounded-xl bg-amadeus-blue-50/50 p-3">
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Vai receber · {confirmados.length} confirmado{confirmados.length === 1 ? "" : "s"}</p>
+            {confirmados.length === 0 ? (
+              <p className="mt-1 text-sm text-muted-foreground">Ninguém confirmado ainda: nada sai na sexta.</p>
+            ) : (
+              <ul className="mt-2 space-y-1 text-sm">
+                {confirmados.map((c) => (
+                  <li key={c.telefone} className="flex items-center gap-2"><BadgeCheck className="size-4 text-emerald-600" />{c.crianca ?? c.responsavel ?? "(sem nome)"} <span className="text-muted-foreground">· {tel(c.telefone)}</span></li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {aConfirmar.length > 0 && (
+            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm">
+              <p className="font-semibold text-amber-900">{aConfirmar.length} mudança{aConfirmar.length === 1 ? "" : "s"} esperando sua confirmação</p>
+              <p className="mt-1 text-xs text-amber-900/80">Confira a coluna “Lembrar?” na lista. Ao confirmar, recebem o lembrete estes {vaoReceber.length}:</p>
+              <ul className="mt-1 text-xs text-amber-900/80">{vaoReceber.map((c) => <li key={c.telefone}>• {c.crianca ?? c.responsavel ?? "(sem nome)"} · {tel(c.telefone)}</li>)}</ul>
+              <button
+                type="button"
+                disabled={ocupado}
+                onClick={() => window.confirm(`Confirmar: o lembrete da sexta vai para ${vaoReceber.length} número(s)?`) && iniciar(() => confirmarLembrete())}
+                className="mt-3 inline-flex items-center gap-2 rounded-xl bg-amadeus-blue px-3 py-2 text-sm font-bold text-white disabled:opacity-40"
+              >
+                <BadgeCheck className="size-4" /> Confirmar lista ({vaoReceber.length})
+              </button>
+            </div>
+          )}
+
           <button
             type="button"
             disabled={ocupado || pendentesLembrete === 0}
-            onClick={() => window.confirm(`Mandar o lembrete AGORA para ${pendentesLembrete} número(s)?`) && iniciar(async () => setRetornoLembrete(await lembreteAgora()))}
+            onClick={() => window.confirm(`Mandar o lembrete AGORA para os ${pendentesLembrete} confirmado(s)?`) && iniciar(async () => setRetornoLembrete(await lembreteAgora()))}
             className="mt-3 inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-sm font-bold text-amadeus-blue hover:bg-amadeus-blue-50 disabled:opacity-40"
           >
             <BellRing className="size-4" /> Enviar lembrete agora

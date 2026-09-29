@@ -64,9 +64,22 @@ export async function incluirContatos(lista: { telefone: string; responsavel?: s
   return { ok: true, incluidos: n };
 }
 
+/** Marcar/desmarcar alguém tira a confirmação dele: a lista precisa ser confirmada de novo. */
 export async function marcarLembrar(telefone: string, lembrar: boolean) {
   if (!(await quem())) return;
-  await createAdminClient().from("experiencia_contatos").update({ lembrar, atualizado_em: new Date().toISOString() }).eq("telefone", limparTelefone(telefone));
+  await createAdminClient()
+    .from("experiencia_contatos")
+    .update({ lembrar, lembrete_confirmado: false, atualizado_em: new Date().toISOString() })
+    .eq("telefone", limparTelefone(telefone));
+  revalidatePath(CAMINHO);
+}
+
+/** "Confirmar lista": quem está marcado agora é quem recebe o lembrete da véspera. */
+export async function confirmarLembrete() {
+  if (!(await quem())) return;
+  const admin = createAdminClient();
+  await admin.from("experiencia_contatos").update({ lembrete_confirmado: true }).eq("lembrar", true);
+  await admin.from("experiencia_contatos").update({ lembrete_confirmado: false }).eq("lembrar", false);
   revalidatePath(CAMINHO);
 }
 

@@ -114,13 +114,12 @@ export async function enviarLembrete(telefone: string, crianca: string | null, e
   return { telefone, ...r };
 }
 
-/** Quem ainda vai receber o lembrete: marcado para lembrar, recebeu encarte e ainda não foi lembrado. */
+/** Quem vai receber o lembrete: só quem o Pedro CONFIRMOU na lista e ainda não foi lembrado. */
 export async function pendentesDoLembrete() {
   const { data } = await createAdminClient()
     .from("experiencia_contatos")
     .select("telefone, crianca")
-    .eq("lembrar", true)
-    .not("convite_em", "is", null)
+    .eq("lembrete_confirmado", true)
     .is("lembrete_em", null)
     .order("criado_em");
   return data ?? [];

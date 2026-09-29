@@ -282,7 +282,7 @@ function EnviarWhatsApp({ responsaveis, envios, enviar, rotuloCarta, soFolder: s
           {comExperiencia && (
             <div className="mt-3">
               <EscolhaEncarte valor={encarteExp} mudar={setEncarteExp} />
-              <p className="mt-2 text-xs text-muted-foreground">Os números entram na lista da Experiência e recebem o lembrete na sexta (09/10) às 9h.</p>
+              <p className="mt-2 text-xs text-muted-foreground">Os números entram na lista da Experiência. O lembrete da sexta (09/10) só vai depois que você confirmar a lista na aba Experiência Amadeus.</p>
             </div>
           )}
         </div>
