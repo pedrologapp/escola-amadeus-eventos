@@ -45,7 +45,12 @@ function angulos(quantidade: number, deslocamento: number): number[] {
   return Array.from({ length: quantidade }, (_, i) => deslocamento + i * passo);
 }
 
-export default function FolderCliente() {
+/**
+ * semValores: a versão pública do folder (/conheca, linkada no portal e na TV).
+ * Mostra a escola inteira, mas no lugar dos valores de 2027 convida a falar
+ * com a escola; os valores só vão para quem conversa com a equipe.
+ */
+export default function FolderCliente({ semValores = false }: { semValores?: boolean }) {
   const [segmento, setSegmento] = useState<SegmentoId | null>(null);
   const [etapa, setEtapa] = useState(-1);
 
@@ -108,7 +113,7 @@ export default function FolderCliente() {
       </div>
 
       <Capa aoTocar={irPara} escolhido={segmento} />
-      <SecaoManifesto aoTocar={irPara} />
+      <SecaoManifesto aoTocar={irPara} semValores={semValores} />
       <SecaoSegmento escolhido={segmento} aoEscolher={irPara} aoTocar={irPara} />
       <SecaoVideo segmento={segmento} aoEscolher={setSegmento} aoTocar={irPara} />
       <SecaoLivro aoTocar={irPara} />
@@ -141,7 +146,11 @@ export default function FolderCliente() {
         aoTocar={irPara}
       />
       <SecaoSomos aoTocar={irPara} />
-      <SecaoValores escolhido={escolhido} aoEscolher={setSegmento} aoTocar={irPara} />
+      {semValores ? (
+        <SecaoPecaValores escolhido={escolhido} aoTocar={irPara} />
+      ) : (
+        <SecaoValores escolhido={escolhido} aoEscolher={setSegmento} aoTocar={irPara} />
+      )}
       <SecaoConversa escolhido={escolhido} aoTocar={irPara} />
     </div>
   );
@@ -415,7 +424,7 @@ function Continuar({
 /* O poema abre o folder, respondendo a pergunta que a capa deixou no ar.
    O "Continuar" logo abaixo existe pra ninguém se sentir preso: um minuto e
    meio é muito pra quem ainda não sabe o que é essa página. */
-function SecaoManifesto({ aoTocar }: { aoTocar: (alvo: string) => void }) {
+function SecaoManifesto({ aoTocar, semValores }: { aoTocar: (alvo: string) => void; semValores?: boolean }) {
   if (!MANIFESTO) return null;
 
   return (
@@ -434,8 +443,8 @@ function SecaoManifesto({ aoTocar }: { aoTocar: (alvo: string) => void }) {
         </h2>
         <p className="mt-3 text-[0.95rem] leading-relaxed text-[#FAF7F0]/68">
           É aqui que você vê a escola inteira: como a gente ensina, o que seu
-          filho ou filha vive além da aula, os espaços, os esportes e os valores
-          de 2027. Comece pelo vídeo.
+          filho ou filha vive além da aula, os espaços{semValores ? " e os esportes" : ", os esportes e os valores de 2027"}.
+          Comece pelo vídeo.
         </p>
 
         {/* poster evita o retângulo preto antes de o pai apertar play, e
@@ -1387,6 +1396,63 @@ function SecaoValores({
 
       {/* Aqui o pai já viu tudo e já viu o preço. O único caminho que
           sobra é falar com gente de verdade, então só existe um botão. */}
+      <Continuar alvo="conversa" escuro aoTocar={aoTocar} rotulo="Vamos conversar?" />
+    </Secao>
+  );
+}
+
+/* Versão pública (sem valores): no lugar do investimento, o convite para
+   pedir os valores à escola, com a etapa que o pai escolheu já na mensagem. */
+function SecaoPecaValores({
+  escolhido,
+  aoTocar,
+}: {
+  escolhido: ReturnType<typeof acharSegmento> | null;
+  aoTocar: (alvo: string) => void;
+}) {
+  const texto = `Olá! Vi o folder do Amadeus e gostaria de saber os valores de 2027${escolhido ? `, para ${escolhido.nome}` : ""}.`;
+  return (
+    <Secao id="valores" escuro>
+      <div className="flex flex-1 flex-col justify-center">
+        <Etiqueta escuro>Investimento 2027</Etiqueta>
+        <h2 className="mt-2 font-serif text-[2.1rem] font-semibold leading-[1.08] text-[#FAF7F0]">
+          Quer saber os <span className="text-[#E8B44C]">valores de 2027</span>?
+        </h2>
+        <p className="mt-3 text-[0.95rem] leading-relaxed text-[#FAF7F0]/68">
+          Nossa equipe apresenta os valores, o material didático e as condições especiais com a simulação certinha
+          para o seu filho ou filha. É só chamar no WhatsApp.
+        </p>
+
+        <span className="mt-6 flex items-start gap-3">
+          <Confere />
+          <span className="flex-1 text-[0.9rem] leading-relaxed text-[#FAF7F0]/78">
+            Condição especial para quem matricular ou renovar até <b className="text-[#FAF7F0]">{PRAZO_ANTECIPADA}</b>.
+          </span>
+        </span>
+        <span className="mt-3 flex items-start gap-3">
+          <Confere />
+          <span className="flex-1 text-[0.9rem] leading-relaxed text-[#FAF7F0]/78">
+            Mensalidade Fidelidade: desconto todo mês pagando até o <b className="text-[#FAF7F0]">dia {DIA_FIDELIDADE}</b>.
+          </span>
+        </span>
+        <span className="mt-3 flex items-start gap-3">
+          <Confere />
+          <span className="flex-1 text-[0.9rem] leading-relaxed text-[#FAF7F0]/78">
+            Os tablets são adquiridos pela escola. Você não paga por eles.
+          </span>
+        </span>
+
+        <a
+          href={`https://wa.me/${CONTATO.whatsapp}?text=${encodeURIComponent(texto)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-8 flex min-h-[3.5rem] items-center justify-center gap-2 rounded-full bg-[#FAF7F0] px-6 text-[0.95rem] font-bold text-[#0B1733]"
+        >
+          <IconeWhatsapp />
+          Quero saber os valores
+        </a>
+      </div>
+
       <Continuar alvo="conversa" escuro aoTocar={aoTocar} rotulo="Vamos conversar?" />
     </Secao>
   );

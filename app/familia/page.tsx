@@ -81,7 +81,7 @@ export default async function PortalFamilia() {
           <nav className="ml-auto hidden items-center gap-5 text-sm font-semibold text-white/85 sm:flex">
             <a href="#eventos" className="hover:text-white">Eventos</a>
             {d.agenda.length > 0 && <a href="#agenda" className="hover:text-white">Agenda</a>}
-            <Link href="/folder" className="hover:text-white">Matrículas 2027</Link>
+            <Link href="/conheca" className="hover:text-white">Matrículas 2027</Link>
             <a href={zap} target="_blank" rel="noreferrer" className="rounded-full bg-amadeus-yellow px-4 py-1.5 font-bold text-amadeus-blue hover:brightness-105">Fale com a escola</a>
           </nav>
           <a href={zap} target="_blank" rel="noreferrer" className="ml-auto rounded-full bg-amadeus-yellow px-3 py-1.5 text-xs font-bold text-amadeus-blue sm:hidden">WhatsApp</a>
@@ -170,7 +170,7 @@ export default async function PortalFamilia() {
           <h2 className={titulo}>Atalhos</h2>
           <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
             {[
-              { href: "/folder", icone: "📘", t: "Folder 2027", s: "tudo sobre o próximo ano" },
+              { href: "/conheca", icone: "📘", t: "Conheça o Amadeus", s: "o folder digital de 2027" },
               { href: zap, icone: "💬", t: "Falar com a secretaria", s: "WhatsApp (84) 9 8145-0229", fora: true },
               { href: "https://pesquisa.escolaamadeus.com/escolar", icone: "⭐", t: "Sua opinião", s: "pesquisa de satisfação", fora: true },
               { href: "https://www.instagram.com/escolaamadeus/", icone: "📸", t: "Instagram", s: "@escolaamadeus", fora: true },

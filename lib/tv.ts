@@ -193,7 +193,7 @@ async function montarRoteiro(hoje: string): Promise<RoteiroTv> {
   const [nivers, evento, qrFolder, qrPesquisa] = await Promise.all([
     aniversariantes(hoje).catch(() => []),
     proximoEvento(hoje).catch(() => null),
-    qr("https://eventos.escolaamadeus.com/folder"),
+    qr("https://www.escolaamadeus.com/conheca"), // folder SEM valores (público)
     qr("https://pesquisa.escolaamadeus.com/escolar"),
   ]);
 

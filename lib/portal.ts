@@ -74,7 +74,7 @@ async function montar(hoje: string): Promise<PortalDados> {
   return {
     hoje,
     eventos: [...(futuros ?? []).map((e) => ev(e, false)), ...(passados ?? []).map((e) => ev(e, true)).filter((e) => e.midias.length).slice(0, COMO_FOI_MAX)],
-    promo: hoje <= PRAZO_PROMO ? { prazo: PRAZO_PROMO, link: "/folder" } : null,
+    promo: hoje <= PRAZO_PROMO ? { prazo: PRAZO_PROMO, link: "/conheca" } : null, // sem valores: público
     lembretes: [...valem.filter((i) => i.tipo === "aviso"), ...valem.filter((i) => i.tipo === "recado")].map((i) => ({
       titulo: i.titulo,
       texto: i.texto,
