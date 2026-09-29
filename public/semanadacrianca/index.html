@@ -85,10 +85,6 @@
   .agenda .item-check { margin-top: 4px; padding: 6px 8px; border-radius: 14px; background: #FFF1A8; }
   .agenda .mini-check { display: grid; place-items: center; font: 900 26px/1 Nunito, sans-serif; color: #E86FA6; background: #fff; }
 
-  /* botão: salvar todas as datas no calendário do celular (.ics) */
-  .salvar-cal { margin-top: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 16px; border-radius: 14px; background: var(--mar); color: #fff; font-weight: 800; font-size: 15px; text-decoration: none; box-shadow: 0 4px 0 rgba(0,0,0,.15); }
-  .salvar-cal small { display: block; font-weight: 600; font-size: 12px; opacity: .85; }
-  .salvar-cal:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,.15); }
 
   /* checklist (penúltima página): o que levar em cada dia; o pai marca e fica guardado no celular dele */
   .check-p .miolo { justify-content: safe center; }
@@ -118,7 +114,9 @@
   .fim .voltar { margin-top: 14px; border: 0; cursor: pointer; font: 700 22px Caveat, cursive; padding: 6px 18px; border-radius: 99px; background: #EEF3FF; color: var(--mar); }
 
   /* topo: voltar para a capa (some quando já está na capa) */
-  .barra-topo { flex: none; width: 100%; max-width: 460px; height: 40px; display: flex; align-items: center; }
+  .barra-topo { flex: none; width: 100%; max-width: 460px; height: 40px; display: flex; align-items: center; justify-content: space-between; }
+  .barra-topo .cal { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px 5px 7px; border-radius: 99px; background: #fff; color: var(--mar); font: 800 13.5px Nunito, sans-serif; text-decoration: none; box-shadow: 0 3px 10px rgba(60,40,10,.12); margin-left: auto; }
+  .barra-topo .cal svg { width: 24px; height: 24px; }
   .barra-topo button { border: 0; cursor: pointer; padding: 7px 14px; border-radius: 99px; background: #fff; color: var(--mar); font: 800 13.5px Nunito, sans-serif; box-shadow: 0 3px 10px rgba(60,40,10,.12); transition: opacity .3s; }
   .barra-topo button.escondido { opacity: 0; pointer-events: none; }
 
@@ -141,7 +139,7 @@
 </head>
 <body>
   <main class="palco">
-    <div class="barra-topo"><button id="inicio" type="button">← Voltar para o início</button></div>
+    <div class="barra-topo"><button id="inicio" type="button">← Voltar para o início</button><a class="cal" href="/semanadacrianca/semana-da-crianca.ics" aria-label="Salvar as datas no calendário do celular"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3" fill="#fff" stroke="#083078" stroke-width="2"/><path d="M3.5 9.5h17" stroke="#083078" stroke-width="2"/><path d="M8 3v4M16 3v4" stroke="#083078" stroke-width="2" stroke-linecap="round"/><path d="M12 12.5v5M9.5 15h5" stroke="#E86FA6" stroke-width="2.2" stroke-linecap="round"/></svg><span>Salvar datas</span></a></div>
     <div class="livro" id="livro"></div>
     <nav class="nav">
       <button id="ant" aria-label="Página anterior">‹</button>
@@ -158,7 +156,7 @@
   // Programação revisada pela coordenação do Infantil (29/09): entraram 06/10, 12/10 e 16/10; mudaram 09/10 e 15/10.
   const DIAS = [
     { cor: C.azul, data: 'Terça, 06/10', ilu: 'cofrinho', t: 'Culminância do Projeto Educação Financeira',
-      p: 'Abrir o cofrinho…' },
+      p: 'Com a família, a criança abre o <b>cofrinho</b> e compra o seu sonho! 📸 Gravem esse momento e <b>marquem a escola no Instagram</b>!' },
     { cor: C.rox, data: 'Quarta, 07/10', ilu: 'caixa', t: 'Brinquedo não estruturado', sub: 'imaginação solta!',
       p: 'A caixa vira casinha, o pote vira tambor, o rolinho vira telefone… <b>Qualquer objeto pode virar uma grande brincadeira!</b>',
       bilhete: ['Não esqueça!', 'Um objeto <b>identificado com o nome</b>: caixa de papelão, potes, rolinhos, tampinhas, tecidos, colher de pau, tubos…'] },
@@ -194,7 +192,6 @@
       <p class="sub">A programação, dia a dia:</p>
       <ul class="agenda">${DIAS.map((d, i) => `<li data-ir="${i + 2}" style="--c:${d.cor}"><div class="mini">${ILU[d.ilu]()}</div><div><b>${d.data}</b><span>${d.t}</span></div></li>`).join('')}
         <li data-ir="${DIAS.length + 2}" class="item-check" style="--c:${C.ros}"><div class="mini mini-check">✓</div><div><b>Checklist da família</b><span>O que levar em cada dia</span></div></li></ul>
-      <a class="salvar-cal" href="/semanadacrianca/semana-da-crianca.ics">📅 <span>Salvar no calendário do celular<small>todas as datas, com lembrete na véspera</small></span></a>
       <p class="toque">Toque num item para ir direto a ele.</p>
       <div class="num">1</div></div></div>`);
   DIAS.forEach((d, i) => paginas.push(`<div class="face dia" style="--c:${d.cor}"><div class="sombra"></div><div class="miolo">
@@ -219,7 +216,6 @@
       <p class="sub">Toque para marcar o que já está separado:</p>
       <ul class="checklist">${CHECK.map(c => `<li><button type="button" class="check" data-check="${c.id}" style="--c:${c.cor}"><div class="caixa">${certinho}</div><div><b>${c.data}</b><span>${c.txt}</span></div></button></li>`).join('')}</ul>
       <div class="sem-aula"><strong>Não haverá aula</strong>Seg 12/10 (feriado) · Qui 15/10 (dia do passeio) · Sex 16/10 (compensação do Dia do Professor)</div>
-      <a class="salvar-cal" href="/semanadacrianca/semana-da-crianca.ics">📅 <span>Salvar no calendário do celular<small>todas as datas, com lembrete na véspera</small></span></a>
       <div class="num">${DIAS.length + 2}</div></div></div>`);
   paginas.push(`<div class="face fim"><div class="sombra"></div><div class="miolo">
       <div class="desenho">${ILU.arco()}</div>
