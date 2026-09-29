@@ -3,6 +3,7 @@ import { ChevronLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { EditorPainel } from "./editor";
 import { EditorCena } from "./cena";
+import { EditorBanner } from "./banner";
 
 /**
  * Painel decorativo de evento (29/09/2026): diferente do encarte, que
@@ -15,8 +16,9 @@ export const dynamic = "force-dynamic";
 
 export default async function PainelPage({ searchParams }: { searchParams: Promise<{ evento?: string; modo?: string }> }) {
   const { evento, modo: modoParam } = await searchParams;
-  // "cena" = a ilustração é o painel (padrão); "caderno" = fotos coladas + peças da marca
-  const modo = modoParam === "caderno" ? "caderno" : "cena";
+  // "banner" = ilustração 3D + frase em letra 3D, o estilo dos painéis que a escola já usa (padrão);
+  // "cena" = desenho em traço; "caderno" = fotos coladas + peças da marca
+  const modo = modoParam === "caderno" ? "caderno" : modoParam === "cena" ? "cena" : "banner";
   let doEvento: { l1: string; dest: string; l3: string } | null = null;
   let inicial = { l1: "vem aí o", dest: "Dia das Crianças", l3: "12 de outubro" };
   let voltar = { href: "/admin/eventos", texto: "Voltar para eventos" };
@@ -42,7 +44,7 @@ export default async function PainelPage({ searchParams }: { searchParams: Promi
         Painel é a arte grande que decora o evento (entrada, palco, pátio). Escolha a medida em centímetros, o texto e o estilo. O PDF sai no tamanho real para a gráfica.
       </p>
       <nav className="mt-5 flex flex-wrap gap-2">
-        {([["cena", "Cena ilustrada", "a ilustração é o painel"], ["caderno", "Caderno com fotos e peças da marca", ""]] as const).map(([v, t, sub]) => (
+        {([["banner", "Banner colorido", "ilustração 3D + frase"], ["cena", "Cena ilustrada", "desenho em traço"], ["caderno", "Caderno com fotos e peças da marca", ""]] as const).map(([v, t, sub]) => (
           <Link
             key={v}
             href={`/admin/eventos/painel?modo=${v}${evento ? `&evento=${evento}` : ""}`}
@@ -52,7 +54,13 @@ export default async function PainelPage({ searchParams }: { searchParams: Promi
           </Link>
         ))}
       </nav>
-      {modo === "cena" ? <EditorCena inicial={doEvento ?? { l1: "", dest: "", l3: "" }} /> : <EditorPainel inicial={inicial} />}
+      {modo === "banner" ? (
+        <EditorBanner inicial={doEvento ?? { l1: "", dest: "", l3: "" }} />
+      ) : modo === "cena" ? (
+        <EditorCena inicial={doEvento ?? { l1: "", dest: "", l3: "" }} />
+      ) : (
+        <EditorPainel inicial={inicial} />
+      )}
     </div>
   );
 }
