@@ -1,4 +1,4 @@
-import { Cake, MessageCircleWarning, MessageSquareHeart } from "lucide-react";
+import { Cake, MessageCircleWarning, MessageSquareHeart, Tv } from "lucide-react";
 import { ModuloCard, type Modulo } from "@/components/admin/modulo-card";
 
 /**
@@ -8,6 +8,13 @@ import { ModuloCard, type Modulo } from "@/components/admin/modulo-card";
 export const metadata = { title: "Comunicação · Admin Amadeus" };
 
 const MODULOS: Modulo[] = [
+  {
+    href: "/admin/comunicacao/tv",
+    icone: Tv,
+    titulo: "TV Amadeus",
+    descricao: "O que passa na TV da recepção: avisos, recados, agenda, aniversariantes e eventos, em loop.",
+    selo: "Novo",
+  },
   {
     href: "/admin/comunicacao/aniversarios",
     icone: Cake,
