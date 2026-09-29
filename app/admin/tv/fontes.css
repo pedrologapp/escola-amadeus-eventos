@@ -1,0 +1,7 @@
+/* Fontes da marca usadas na TV, no portal e nos editores do admin da TV. */
+@font-face { font-family: Ralton; src: url(/fonts/marca/ralton-black.otf); font-display: swap; }
+@font-face { font-family: Scrib; src: url(/fonts/marca/scrib-sans.otf); font-display: swap; }
+@font-face { font-family: Caveat; src: url(/fonts/Caveat-Bold.ttf); font-weight: 700; font-display: swap; }
+.f-ralton { font-family: Ralton, sans-serif; }
+.f-scrib { font-family: Scrib, sans-serif; }
+.f-caveat { font-family: Caveat, cursive; font-weight: 700; }

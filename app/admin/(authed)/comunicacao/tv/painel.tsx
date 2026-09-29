@@ -4,8 +4,12 @@ import { useRef, useState, useTransition } from "react";
 import { ArrowDown, ArrowUp, ExternalLink, Eye, EyeOff, Loader2, Pencil, Plus, RefreshCw, Save, Trash2, X } from "lucide-react";
 import type { BlocoTv, ItemTv, TipoItem } from "@/lib/tv";
 import { apagarItem, ativarItem, salvarBlocos, salvarItem, type ItemForm } from "./actions";
+import { EditorAgenda, EditorAvisos, EditorRecados } from "./editores";
 
-const VAZIO: ItemForm = { tipo: "aviso", titulo: "", texto: "", icone: "", data: "", inicio: "", fim: "" };
+/** Estes três têm editor próprio, no formato de como aparecem; o formulário de baixo é para o resto. */
+const COM_EDITOR: TipoItem[] = ["aviso", "recado", "agenda"];
+
+const VAZIO: ItemForm = { tipo: "frase", titulo: "", texto: "", icone: "", data: "", inicio: "", fim: "" };
 
 const dataBr = (iso: string | null) => (iso ? `${iso.slice(8)}/${iso.slice(5, 7)}` : "");
 
@@ -33,7 +37,9 @@ export function PainelTv({
   const [ok, setOk] = useState<string | null>(null);
   const [blocos, setBlocos] = useState(blocosIniciais);
   const [mudouBlocos, setMudouBlocos] = useState(false);
-  const [abertos, setAbertos] = useState<Record<string, boolean>>({ aviso: true, recado: true, agenda: true });
+  const [abertos, setAbertos] = useState<Record<string, boolean>>({});
+  const [pedidoNovo, setPedidoNovo] = useState<Record<string, number>>({ aviso: 0, recado: 0 });
+  const outros = tipos.filter((t) => !COM_EDITOR.includes(t.id));
   const [pendente, comecar] = useTransition();
   const previa = useRef<HTMLIFrameElement>(null);
   const formRef = useRef<HTMLDivElement>(null);
@@ -61,6 +67,11 @@ export function PainelTv({
   };
 
   const colocar = (t: TipoItem) => {
+    if (COM_EDITOR.includes(t)) {
+      setPedidoNovo((p) => ({ ...p, [t]: (p[t] ?? 0) + 1 }));
+      document.getElementById(`ed-${t}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
     setF({ ...VAZIO, tipo: t });
     setOk(null);
     setErro(null);
@@ -93,9 +104,9 @@ export function PainelTv({
   const totalSeg = blocos.filter((b) => b.ativo).reduce((s, b) => s + b.segundos, 0);
 
   return (
-    <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-      {/* esquerda: a TV rodando e os blocos */}
-      <div className="space-y-4">
+    <div className="mt-6 space-y-6">
+      {/* topo: a TV rodando e os blocos */}
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <section className="rounded-2xl border border-border/60 bg-white p-4">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-sm font-extrabold text-amadeus-blue">A TV agora</h2>
@@ -148,31 +159,26 @@ export function PainelTv({
         </section>
       </div>
 
-      {/* direita: colocar coisas na TV */}
-      <div className="space-y-4">
-        <section className="rounded-2xl border border-border/60 bg-white p-4">
-          <h2 className="text-sm font-extrabold text-amadeus-blue">O que é com vocês</h2>
-          <p className="text-xs text-muted-foreground">Estes blocos só passam se alguém da escola colocar o conteúdo. O resto a TV faz sozinha.</p>
-          <ul className="mt-3 grid gap-2 sm:grid-cols-3">
-            {([["avisos", "aviso"], ["recados", "recado"], ["agenda", "agenda"]] as [string, TipoItem][]).map(([bloco, t]) => {
-              const n = t === "agenda" ? itens.filter((i) => i.tipo === "agenda" && i.ativo && (i.data ?? "") >= hoje).length : itens.filter((i) => i.tipo === t && situacao(i, hoje).cor.includes("emerald")).length;
-              return (
-                <li key={bloco} className={`rounded-xl border p-3 ${n ? "border-emerald-200 bg-emerald-50/50" : "border-amber-200 bg-amber-50/60"}`}>
-                  <p className="text-sm font-bold text-amadeus-blue">{nomes[bloco]?.nome}</p>
-                  <p className={`text-xs font-semibold ${n ? "text-emerald-700" : "text-amber-800"}`}>{n ? `${n} ${t === "agenda" ? "marcado(s) daqui pra frente" : "no ar"}` : "nada no ar, não aparece na TV"}</p>
-                  <button type="button" onClick={() => colocar(t)} className="mt-2 inline-flex items-center gap-1 rounded-lg bg-amadeus-blue px-2.5 py-1 text-xs font-bold text-white"><Plus className="size-3.5" /> Colocar</button>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
+      {/* o que é com vocês: no formato de como aparece */}
+      <div>
+        <h2 className="text-lg font-extrabold text-amadeus-blue">O que é com vocês</h2>
+        <p className="text-sm text-muted-foreground">Avisos, recados e agenda só aparecem se alguém da escola colocar. Mude direto no desenho: clique no que quer mudar ou no + para pôr algo novo.</p>
+        <div className="mt-3 grid gap-4 xl:grid-cols-2">
+          <EditorAvisos itens={itens} hoje={hoje} onMudou={recarregar} abrirNovo={pedidoNovo.aviso ?? 0} />
+          <EditorRecados itens={itens} hoje={hoje} onMudou={recarregar} abrirNovo={pedidoNovo.recado ?? 0} />
+        </div>
+        <div className="mt-4"><EditorAgenda itens={itens} hoje={hoje} onMudou={recarregar} /></div>
+      </div>
+
+      {/* frases, curiosidades e datas: formulário + listas */}
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <section ref={formRef} className="rounded-2xl border-2 border-amadeus-yellow bg-amadeus-yellow-50/60 p-4">
           <div className="flex items-center gap-2">
-            <h2 className="text-sm font-extrabold text-amadeus-blue">{f.id ? "Alterar" : "Colocar na TV"}</h2>
+            <h2 className="text-sm font-extrabold text-amadeus-blue">{f.id ? "Alterar" : "Frases, curiosidades e datas comemorativas"}</h2>
             {f.id && <button type="button" onClick={() => setF({ ...VAZIO, tipo: f.tipo })} className={`${btn} ml-auto`}><X className="size-4" /> cancelar alteração</button>}
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
-            {tipos.map((t) => (
+            {outros.map((t) => (
               <button key={t.id} type="button" disabled={!!f.id} onClick={() => muda({ tipo: t.id })} className={chip(f.tipo === t.id)}>{t.nome}</button>
             ))}
           </div>
@@ -205,7 +211,8 @@ export function PainelTv({
           </div>
         </section>
 
-        {tipos.map((t) => {
+        <div className="space-y-4">
+        {outros.map((t) => {
           const lista = itens.filter((i) => i.tipo === t.id).sort((a, b) => (t.id === "agenda" || t.id === "comemoracao" ? (a.data ?? "").slice(t.id === "comemoracao" ? 5 : 0).localeCompare((b.data ?? "").slice(t.id === "comemoracao" ? 5 : 0)) : 0));
           const aberto = abertos[t.id];
           return (
@@ -239,6 +246,7 @@ export function PainelTv({
             </section>
           );
         })}
+        </div>
       </div>
     </div>
   );
