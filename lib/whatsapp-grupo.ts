@@ -11,7 +11,13 @@ export const GRUPO_DIRECAO = "120363412798001506@g.us"; // "Amadeus - Direção"
 const WEBHOOK = "https://n8n.escolaamadeus.com/webhook/whatsapp-responder";
 export const LINK_PAINEL = "https://admin.eventos.escolaamadeus.com/comunicacao/whatsapp";
 
+// DESLIGADO a pedido do Pedro (29/09/2026): nenhum aviso vai para o grupo da direção
+// (nem "mensagem importante", nem "já respondida"). O painel continua marcando tudo normalmente.
+// Para religar, trocar para true.
+const AVISOS_LIGADOS = false;
+
 export async function avisarDirecao(texto: string): Promise<boolean> {
+  if (!AVISOS_LIGADOS) return false;
   const chave = process.env.WEBHOOK_CONFIRM_SECRET;
   if (!chave) return false;
   try {
