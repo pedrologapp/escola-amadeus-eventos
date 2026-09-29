@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Download, FileDown, Loader2, Sparkles, X } from "lucide-react";
+import { Download, FileDown, Loader2, Sparkles, Wand2, X } from "lucide-react";
 import { COMPOSICOES, MARCA_30, MEDIDAS, type Composicao } from "@/lib/paineis";
 import { carregarFontes, desenhar, imagem, pdfComJpeg, pixelsPorCm, recursos, type Textos } from "@/lib/painel-desenho";
 import { CADERNOS, FUNDOS, desenharCaderno, type Alinhamento, type ComposicaoCaderno, type PosicaoTexto } from "@/lib/painel-caderno";
 import { ICONES } from "@/lib/painel-icones";
-import { desenharComIa } from "./actions";
+import { desenharComIa, sugerirPainel, type SugestaoPainel } from "./actions";
 
 /**
  * Montagem do painel em etapas (29/09/2026): tema → fundo → frase → onde fica
@@ -113,6 +113,10 @@ export function EditorPainel({ inicial }: { inicial: Textos }) {
   const [pedido, setPedido] = useState("");
   const [criando, setCriando] = useState(false);
   const [erroIa, setErroIa] = useState<string | null>(null);
+  const [tema, setTema] = useState("");
+  const [sugestoes, setSugestoes] = useState<SugestaoPainel[]>([]);
+  const [sugerindo, setSugerindo] = useState(false);
+  const [erroSug, setErroSug] = useState<string | null>(null);
   const [gerando, setGerando] = useState<"pdf" | "jpg" | "zap" | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [largura, setLargura] = useState(700);
@@ -141,24 +145,47 @@ export function EditorPainel({ inicial }: { inicial: Textos }) {
     mudar({ icones: tem ? cad.icones.filter((x) => x !== id) : cad.icones.length >= MAX_ICONES ? cad.icones : [...cad.icones, id] });
   };
 
-  const criarDesenho = async () => {
+  const criarDesenho = async (texto = pedido, base?: string[]) => {
     setErroIa(null);
     setCriando(true);
     try {
-      const r = await desenharComIa(pedido);
+      const r = await desenharComIa(texto);
       if (!r.ok) throw new Error(r.erro);
       const url = URL.createObjectURL(new Blob([r.svg], { type: "image/svg+xml" }));
       const img = await imagem(url);
       const id = `ia:${Date.now()}`;
-      setDesenhosIa((d) => [...d, { id, pedido, img, url }]);
+      setDesenhosIa((d) => [...d, { id, pedido: texto, img, url }]);
       // entra direto como primeiro desenho (vai para a polaroid principal)
-      mudar({ icones: [id, ...cad.icones.filter((x) => x !== id)].slice(0, MAX_ICONES) });
+      setPecas(null);
+      setCad((c) => ({ ...c, icones: [id, ...(base ?? c.icones).filter((x) => x !== id)].slice(0, MAX_ICONES) }));
       setPedido("");
     } catch (e) {
       setErroIa((e as Error).message);
     } finally {
       setCriando(false);
     }
+  };
+
+  const sugerir = async () => {
+    setErroSug(null);
+    setSugerindo(true);
+    try {
+      const r = await sugerirPainel(tema);
+      if (!r.ok) throw new Error(r.erro);
+      setSugestoes(r.sugestoes);
+    } catch (e) {
+      setErroSug((e as Error).message);
+    } finally {
+      setSugerindo(false);
+    }
+  };
+  const escolhaDaSugestao = (s: SugestaoPainel): Escolha => ({ tipo: "caderno", c: cad.c, icones: s.icones, fundo: s.fundo, posicao: s.posicao, alinhar: s.alinhar });
+  const usarSugestao = (s: SugestaoPainel) => {
+    setPecas(null);
+    setT({ l1: s.texto.l1, dest: s.texto.dest, l3: s.texto.l3 });
+    setCad({ ...cad, icones: s.icones, fundo: s.fundo, posicao: s.posicao, alinhar: s.alinhar });
+    // o desenho sob medida é feito agora (leva uns 40 s) e entra na polaroid principal
+    if (s.desenho) criarDesenho(s.desenho, s.icones);
   };
 
   const gerar = async (tipo: "pdf" | "jpg" | "zap") => {
@@ -195,7 +222,37 @@ export function EditorPainel({ inicial }: { inicial: Textos }) {
     <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
       {/* etapas */}
       <div className="space-y-4">
-        <Passo n={1} titulo="Comece por um tema" dica="Opcional: traz fundo e desenhos prontos, e você muda o que quiser depois.">
+        <section className="rounded-2xl border-2 border-amadeus-yellow bg-amadeus-yellow-50 p-4">
+          <p className="flex items-center gap-2 text-sm font-extrabold text-amadeus-blue"><Wand2 className="size-4" /> Diga o tema e a IA monta 3 sugestões</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">Escreva do seu jeito: “Dia do Professor”, “festa da família dia 15 de maio”, “feira de ciências do Fund. 2”. Depois é só escolher e ajustar.</p>
+          <div className="mt-2 flex gap-2">
+            <input value={tema} onChange={(e) => setTema(e.target.value)} onKeyDown={(e) => e.key === "Enter" && tema.trim().length >= 3 && !sugerindo && sugerir()} placeholder="Tema do painel" className={campo} />
+            <button type="button" disabled={sugerindo || tema.trim().length < 3} onClick={sugerir} className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-amadeus-blue px-3 py-2 text-sm font-bold text-white disabled:opacity-50">
+              {sugerindo ? <Loader2 className="size-4 animate-spin" /> : <Wand2 className="size-4" />} {sugerindo ? "Pensando…" : "Sugerir"}
+            </button>
+          </div>
+          {erroSug && <p className="mt-2 text-xs text-red-700">{erroSug}</p>}
+          {sugestoes.length > 0 && (
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
+              {sugestoes.map((s, i) => (
+                <div key={i} className="flex flex-col rounded-xl bg-white p-2">
+                  <div className="flex h-[100px] items-center justify-center rounded-lg bg-[repeating-conic-gradient(#eef2fb_0_25%,transparent_0_50%)] bg-[length:12px_12px]">
+                    <Previa e={escolhaDaSugestao(s)} t={s.texto} l={l} a={a} larg={200} alt={90} extras={extras} />
+                  </div>
+                  <p className="mt-2 text-sm font-bold text-amadeus-blue">{s.nome}</p>
+                  <p className="text-xs leading-snug text-muted-foreground">{s.porque}</p>
+                  {s.desenho && <p className="mt-1 text-xs text-amadeus-blue">+ desenho novo: “{s.desenho}”</p>}
+                  <button type="button" onClick={() => usarSugestao(s)} disabled={criando} className="mt-auto rounded-lg bg-amadeus-blue px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50" style={{ marginTop: 8 }}>
+                    Usar esta
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          {criando && <p className="mt-2 flex items-center gap-2 text-xs font-semibold text-amadeus-blue"><Loader2 className="size-3.5 animate-spin" /> Fazendo o desenho novo… (uns 40 segundos)</p>}
+        </section>
+
+        <Passo n={1} titulo="Ou comece por um modelo" dica="Opcional: traz fundo e desenhos prontos, e você muda o que quiser depois.">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {CADERNOS.map((c) => (
               <button key={c.id} type="button" onClick={() => mudar({ c, icones: c.icones, fundo: c.fundo })} className={chip(!pecas && cad.c.id === c.id)}>
@@ -242,7 +299,7 @@ export function EditorPainel({ inicial }: { inicial: Textos }) {
             <p className="text-xs text-muted-foreground">Escreva do seu jeito o que quer ver. A IA desenha no mesmo estilo dos outros (leva uns 40 segundos).</p>
             <div className="mt-2 flex gap-2">
               <input value={pedido} onChange={(e) => setPedido(e.target.value)} onKeyDown={(e) => e.key === "Enter" && pedido.trim().length >= 3 && !criando && criarDesenho()} placeholder="Ex.: crianças dançando quadrilha" className={campo} />
-              <button type="button" disabled={criando || pedido.trim().length < 3} onClick={criarDesenho} className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-amadeus-blue px-3 py-2 text-sm font-bold text-white disabled:opacity-50">
+              <button type="button" disabled={criando || pedido.trim().length < 3} onClick={() => criarDesenho()} className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-amadeus-blue px-3 py-2 text-sm font-bold text-white disabled:opacity-50">
                 {criando ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />} {criando ? "Desenhando…" : "Desenhar"}
               </button>
             </div>

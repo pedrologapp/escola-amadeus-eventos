@@ -95,3 +95,74 @@ export async function desenharComIa(pedido: string): Promise<{ ok: true; svg: st
     return { ok: false, erro: `Não consegui falar com a IA agora (${(e as Error).message.slice(0, 120)}).` };
   }
 }
+
+/* ------------------------------------------------------------------------ */
+/* "Sugerir a partir do tema": 3 painéis completos a partir de uma frase.    */
+/* ------------------------------------------------------------------------ */
+
+export interface SugestaoPainel {
+  nome: string; // "Delicado e floral"
+  porque: string; // uma frase explicando a ideia
+  fundo: string; // id em FUNDOS
+  posicao: "cima" | "meio" | "baixo";
+  alinhar: "esq" | "centro";
+  texto: { l1: string; dest: string; l3: string };
+  icones: string[]; // ids da biblioteca (até 5)
+  desenho: string | null; // pedido para um desenho novo feito pela IA (opcional)
+}
+
+export async function sugerirPainel(tema: string): Promise<{ ok: true; sugestoes: SugestaoPainel[] } | { ok: false; erro: string }> {
+  const { data: { user } } = await (await createClient()).auth.getUser();
+  if (!user) return { ok: false, erro: "Sessão expirada. Entre de novo no admin." };
+  const pedido = String(tema ?? "").trim().slice(0, 300);
+  if (pedido.length < 3) return { ok: false, erro: "Escreva o tema do painel." };
+  const chave = process.env.ANTHROPIC_API_KEY;
+  if (!chave) return { ok: false, erro: "A chave da IA não está configurada no servidor." };
+
+  const { ICONES } = await import("@/lib/painel-icones");
+  const { FUNDOS } = await import("@/lib/painel-caderno");
+  const idsIcones = new Set(ICONES.map((i) => i.id));
+  const idsFundos = new Set(FUNDOS.map((f) => f.id));
+  const hoje = new Date().toLocaleDateString("pt-BR", { timeZone: "America/Fortaleza", day: "numeric", month: "long", year: "numeric" });
+
+  const sistema = `Você é diretor de arte de uma escola brasileira (Centro Educacional Amadeus, Educação Infantil ao 9º ano) e monta painéis de decoração de eventos no estilo "caderno ilustrado": folha de caderno ou fundo colorido, frase grande com marca-texto, etiqueta amarela e desenhos em traço de giz colados como polaroid.
+Hoje é ${hoje}.
+
+A partir do tema, proponha 3 painéis BEM DIFERENTES entre si (clima, fundo e posição da frase diferentes), todos adequados para escola e famílias.
+
+Responda SOMENTE com JSON válido, sem markdown, neste formato:
+{"sugestoes":[{"nome":"2 a 4 palavras","porque":"uma frase curta sobre a ideia","fundo":"id","posicao":"cima|meio|baixo","alinhar":"esq|centro","texto":{"l1":"linha de cima curta (ou vazia)","dest":"frase principal, curta (até ~5 palavras)","l3":"etiqueta curta (data, público ou chamada)"},"icones":["id","id"],"desenho":"pedido de um desenho novo em até 12 palavras, ou null"}]}
+
+Regras:
+- "fundo" só destes ids: ${FUNDOS.map((f) => `${f.id} (${f.nome})`).join(", ")}.
+- "icones": de 3 a 5 ids, só destes: ${ICONES.map((i) => `${i.id} (${i.nome})`).join(", ")}. O primeiro vai em destaque numa polaroid.
+- "desenho": use quando nenhum ícone da lista representa bem o tema (ex.: "professora lendo para crianças sentadas no chão"). Descreva uma cena simples e alegre, com crianças quando fizer sentido. Pelo menos 1 das 3 sugestões deve ter desenho.
+- Não invente data, horário ou local: só coloque se estiverem no tema. Sem data, use em "l3" algo como o público ("para toda a família") ou uma chamada curta.
+- Português do Brasil, tom caloroso de escola, sem emojis. "l1" em minúsculas soa bem ("vem aí o", "festa do").`;
+
+  try {
+    const r = await new Anthropic({ apiKey: chave }).messages.create({
+      model: "claude-sonnet-5",
+      max_tokens: 2500,
+      system: sistema,
+      messages: [{ role: "user", content: `Tema do painel: "${pedido}"` }],
+    });
+    const bruto = r.content.map((c) => (c.type === "text" ? c.text : "")).join("");
+    const json = JSON.parse(bruto.slice(bruto.indexOf("{"), bruto.lastIndexOf("}") + 1)) as { sugestoes?: Partial<SugestaoPainel>[] };
+    const limpa = (s: unknown, max: number) => String(s ?? "").replace(/\s+/g, " ").trim().slice(0, max);
+    const sugestoes: SugestaoPainel[] = (json.sugestoes ?? []).slice(0, 3).map((s) => ({
+      nome: limpa(s.nome, 40) || "Sugestão",
+      porque: limpa(s.porque, 160),
+      fundo: idsFundos.has(String(s.fundo)) ? String(s.fundo) : "papel",
+      posicao: s.posicao === "cima" || s.posicao === "baixo" ? s.posicao : "meio",
+      alinhar: s.alinhar === "centro" ? "centro" : "esq",
+      texto: { l1: limpa(s.texto?.l1, 40), dest: limpa(s.texto?.dest, 60) || pedido.slice(0, 40), l3: limpa(s.texto?.l3, 50) },
+      icones: [...new Set((s.icones ?? []).map(String).filter((i) => idsIcones.has(i)))].slice(0, 5),
+      desenho: s.desenho ? limpa(s.desenho, 120) || null : null,
+    }));
+    if (!sugestoes.length) return { ok: false, erro: "A IA não conseguiu sugerir agora. Tente de novo." };
+    return { ok: true, sugestoes };
+  } catch (e) {
+    return { ok: false, erro: `Não consegui falar com a IA agora (${(e as Error).message.slice(0, 120)}).` };
+  }
+}
