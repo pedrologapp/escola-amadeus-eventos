@@ -117,6 +117,11 @@
   .fim .logo { height: 50px; margin-top: 18px; }
   .fim .voltar { margin-top: 14px; border: 0; cursor: pointer; font: 700 22px Caveat, cursive; padding: 6px 18px; border-radius: 99px; background: #EEF3FF; color: var(--mar); }
 
+  /* topo: voltar para a capa (some quando já está na capa) */
+  .barra-topo { flex: none; width: 100%; max-width: 460px; height: 40px; display: flex; align-items: center; }
+  .barra-topo button { border: 0; cursor: pointer; padding: 7px 14px; border-radius: 99px; background: #fff; color: var(--mar); font: 800 13.5px Nunito, sans-serif; box-shadow: 0 3px 10px rgba(60,40,10,.12); transition: opacity .3s; }
+  .barra-topo button.escondido { opacity: 0; pointer-events: none; }
+
   /* navegação: grande e no alcance do polegar */
   .nav { flex: none; width: 100%; max-width: 460px; display: flex; align-items: center; justify-content: space-between; padding: 12px 4px max(12px, env(safe-area-inset-bottom)); }
   .nav button { width: 56px; height: 56px; border-radius: 50%; border: 0; cursor: pointer; background: #fff; color: var(--mar); font-size: 28px; font-weight: 900; box-shadow: 0 6px 14px rgba(60,40,10,.16); transition: transform .15s, opacity .2s; }
@@ -136,6 +141,7 @@
 </head>
 <body>
   <main class="palco">
+    <div class="barra-topo"><button id="inicio" type="button">← Voltar para o início</button></div>
     <div class="livro" id="livro"></div>
     <nav class="nav">
       <button id="ant" aria-label="Página anterior">‹</button>
@@ -237,6 +243,7 @@
     els.forEach((el, i) => { el.classList.toggle('virada', i < atual); el.style.zIndex = i < atual ? i + 1 : N - i + 10; });
     [...$('bol').children].forEach((b, i) => b.classList.toggle('on', i === atual));
     $('ant').disabled = atual === 0; $('prox').disabled = atual === N - 1;
+    $('inicio').classList.toggle('escondido', atual === 0);
   }
   let ocupado = false;
   function ir(novo) {
@@ -254,11 +261,13 @@
       el.classList.toggle('virada', indo);
       [...$('bol').children].forEach((b, i) => b.classList.toggle('on', i === atual));
       $('ant').disabled = atual === 0; $('prox').disabled = atual === N - 1;
+      $('inicio').classList.toggle('escondido', atual === 0);
     });
     setTimeout(() => { el.classList.remove('virando', 'volta'); pintar(); ocupado = false; }, 980);
   }
   $('prox').onclick = () => ir(atual + 1);
   $('ant').onclick = () => ir(atual - 1);
+  $('inicio').onclick = () => ir(0);
   $('volta').onclick = e => { e.stopPropagation(); ir(0); };
   livro.querySelectorAll('[data-ir]').forEach(li => li.onclick = e => { e.stopPropagation(); ir(+li.dataset.ir); });
   // Checklist: o que o pai marcou fica guardado só no celular dele (se o navegador deixar).
