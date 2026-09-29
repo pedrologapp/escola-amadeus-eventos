@@ -167,7 +167,7 @@ const horaLocal = () => Number(new Date().toLocaleString("en-US", { timeZone: FU
 export function roteiroDoDia(): Promise<RoteiroTv> {
   const hoje = hojeLocal();
   const turno = horaLocal() >= 7 ? "dia" : "madrugada";
-  return unstable_cache(() => montarRoteiro(hoje), ["tv-roteiro", hoje, turno], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })();
+  return unstable_cache(() => montarRoteiro(hoje), ["tv-roteiro", "v2", hoje, turno], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })();
 }
 
 export const ETIQUETA_TV = "tv";

@@ -89,5 +89,5 @@ async function montar(hoje: string): Promise<PortalDados> {
 /** Guardado como o roteiro da TV: refeito quando o admin da TV muda algo, e a cada 10 min (eventos). */
 export function dadosPortal(): Promise<PortalDados> {
   const hoje = hojeLocal();
-  return unstable_cache(() => montar(hoje), ["portal", hoje], { tags: [ETIQUETA_TV], revalidate: 600 })();
+  return unstable_cache(() => montar(hoje), ["portal", "v2", hoje], { tags: [ETIQUETA_TV], revalidate: 600 })();
 }
