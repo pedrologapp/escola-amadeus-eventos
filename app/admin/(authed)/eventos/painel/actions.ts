@@ -63,9 +63,11 @@ function limparSvg(bruto: string): string | null {
     if (n === "svg") {
       if (!limpos.some((x) => x.startsWith("xmlns="))) limpos.push('xmlns="http://www.w3.org/2000/svg"');
       if (!limpos.some((x) => x.startsWith("viewBox="))) limpos.push('viewBox="0 0 400 400"');
-      // tamanho explícito: sem isso o navegador desenha o SVG em 300 × 150
+      // tamanho explícito (proporção do viewBox): sem isso o navegador desenha o SVG em 300 × 150
       const semTamanho = limpos.filter((x) => !x.startsWith("width=") && !x.startsWith("height="));
-      saida += `<svg ${semTamanho.join(" ")} width="800" height="800">`;
+      const vb = (semTamanho.find((x) => x.startsWith("viewBox=")) ?? "").match(/[d.]+/g)?.map(Number) ?? [0, 0, 400, 400];
+      const esc = 1600 / Math.max(vb[2] || 400, vb[3] || 400);
+      saida += `<svg ${semTamanho.join(" ")} width="${Math.round((vb[2] || 400) * esc)}" height="${Math.round((vb[3] || 400) * esc)}">`;
       continue;
     }
     saida += `<${n} ${limpos.join(" ")}${autoFecha ? "/" : ""}>`;
@@ -162,6 +164,50 @@ Regras:
     }));
     if (!sugestoes.length) return { ok: false, erro: "A IA não conseguiu sugerir agora. Tente de novo." };
     return { ok: true, sugestoes };
+  } catch (e) {
+    return { ok: false, erro: `Não consegui falar com a IA agora (${(e as Error).message.slice(0, 120)}).` };
+  }
+}
+
+/* ------------------------------------------------------------------------ */
+/* "Cena ilustrada": uma cena panorâmica inteira feita pela IA.             */
+/* ------------------------------------------------------------------------ */
+
+const VIEWBOX_CENA = { largo: "0 0 1200 420", quad: "0 0 1000 620", alto: "0 0 800 900" } as const;
+
+const estiloCena = (viewBox: string) => `Você é ilustrador de livros infantis e desenha CENAS para painéis de decoração de uma escola brasileira (Centro Educacional Amadeus).
+Estilo SEMPRE igual ao exemplo: desenho em traço colorido de giz, fofo, simples, alegre, bem composto — traço limpo, curvas suaves.
+
+Regras:
+- Responda SOMENTE com um <svg>…</svg>, sem texto antes ou depois.
+- <svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}">. Fundo transparente (nada de retângulo de fundo, nada de céu pintado).
+- Só <g>, <path>, <circle>, <ellipse>, <rect>, <line>, <polyline>, <polygon>. Sem texto, sem gradiente, filtro, <defs>, <image>, <style>.
+- Contornos: stroke 5 a 7, stroke-linecap e stroke-linejoin "round". Traço: #083078, #1D4FA0, #E0524C, #FFB000, #F28C28, #3FA66B, #E86FA6, #8A5A2B, #7B5EA7.
+- Preenchimentos suaves: #FFE08A, #F9C6DC, #CFE3F7, #CDEBC8, #F7B9B3, #FBD0A6, #DCCEF0, #FFF6DD, #FFFFFF; pele variada: #F3D7B5, #D9A77A, #8D5A3B.
+- Cena de ponta a ponta: uma linha de chão ondulada atravessando toda a largura perto da base, e os elementos distribuídos pela largura toda, com respiro no alto.
+- 8 a 14 elementos; quando houver pessoas, crianças com estatura de criança (cabeça redonda, olhos de pontinho, sorriso, roupa em formas simples), em ação, variando tons de pele e cabelos.
+- No máximo ~120 elementos. Nada cortado nas bordas laterais.
+
+Exemplo do estilo:
+${EXEMPLO_DESENHO}`;
+
+export async function desenharCenaIa(pedido: string, formato: "largo" | "quad" | "alto"): Promise<{ ok: true; svg: string } | { ok: false; erro: string }> {
+  const { data: { user } } = await (await createClient()).auth.getUser();
+  if (!user) return { ok: false, erro: "Sessão expirada. Entre de novo no admin." };
+  const texto = String(pedido ?? "").trim().slice(0, 300);
+  if (texto.length < 3) return { ok: false, erro: "Descreva a cena que você quer." };
+  const chave = process.env.ANTHROPIC_API_KEY;
+  if (!chave) return { ok: false, erro: "A chave da IA não está configurada no servidor." };
+  try {
+    const r = await new Anthropic({ apiKey: chave }).messages.create({
+      model: MODELO,
+      max_tokens: 16000,
+      system: estiloCena(VIEWBOX_CENA[formato] ?? VIEWBOX_CENA.largo),
+      messages: [{ role: "user", content: `Cena: ${texto}. Desenhe no estilo descrito. Responda só com o <svg>.` }],
+    });
+    const svg = limparSvg(r.content.map((c) => (c.type === "text" ? c.text : "")).join(""));
+    if (!svg) return { ok: false, erro: "A IA não conseguiu desenhar essa cena agora. Tente descrever de outro jeito." };
+    return { ok: true, svg };
   } catch (e) {
     return { ok: false, erro: `Não consegui falar com a IA agora (${(e as Error).message.slice(0, 120)}).` };
   }
