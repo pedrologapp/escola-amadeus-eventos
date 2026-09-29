@@ -169,7 +169,7 @@ export default async function PortalFamilia() {
               { href: "/folder", icone: "📘", t: "Folder 2027", s: "tudo sobre o próximo ano" },
               { href: zap, icone: "💬", t: "Falar com a secretaria", s: "WhatsApp (84) 9 8145-0229", fora: true },
               { href: "https://pesquisa.escolaamadeus.com/escolar", icone: "⭐", t: "Sua opinião", s: "pesquisa de satisfação", fora: true },
-              { href: "#eventos", icone: "🎟️", t: "Eventos", s: "inscrições e pagamentos" },
+              { href: "https://www.instagram.com/escolaamadeus/", icone: "📸", t: "Instagram", s: "@escolaamadeus", fora: true },
             ].map((a) => (
               <a key={a.t} href={a.href} {...(a.fora ? { target: "_blank", rel: "noreferrer" } : {})} className="rounded-2xl bg-white p-4 shadow-sm transition hover:-translate-y-0.5">
                 <span className="text-2xl">{a.icone}</span>
