@@ -129,9 +129,10 @@ export async function enviarCarta(entrada: {
       detalhe: [soFolder ? "só o folder" : dados?.tipo === "avista" ? "à vista" : null, r.detalhe].filter(Boolean).join(" · ") || null,
       enviado_por: user.email ?? null,
     });
-    // Família nova (sem aluno no Activesoft) que recebeu: entra na lista da Experiência para a escola não perder o contato.
-    if (entrada.alunoId === null && r.status === "enviado") {
-      await guardarContato({ telefone: d.telefone, responsavel: d.nome, crianca: nome || null, serie: serie ?? null, origem: "novato" });
+    // Quem recebeu o folder pelo WhatsApp (família nova, ou "só o folder" para qualquer um) entra na lista da
+    // Experiência, para a escola não perder o contato. Carta de veterano com valores não entra.
+    if (r.status === "enviado" && (entrada.alunoId === null || soFolder)) {
+      await guardarContato({ telefone: d.telefone, responsavel: d.nome, crianca: nome || null, serie: serie ?? null, origem: entrada.alunoId === null ? "novato" : "simulador" });
     }
   }
   return { ok: true, resultados };
