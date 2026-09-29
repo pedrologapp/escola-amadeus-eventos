@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
-import { BLOCOS, TIPOS, hojeLocal, lerItensEBlocos } from "@/lib/tv";
+import { BLOCOS, TIPOS, hojeLocal, lerItensEBlocos, roteiroDoDia } from "@/lib/tv";
 import { PainelTv } from "./painel";
 
 /**
@@ -12,7 +12,10 @@ export const metadata = { title: "TV Amadeus · Admin Amadeus" };
 export const dynamic = "force-dynamic";
 
 export default async function TvAdminPage() {
-  const { itens, blocos } = await lerItensEBlocos();
+  const [{ itens, blocos }, roteiro] = await Promise.all([lerItensEBlocos(), roteiroDoDia()]);
+  // quantas telas cada bloco tem hoje (0 = não passa hoje)
+  const hojePassa: Record<string, number> = {};
+  for (const c of roteiro.cenas) hojePassa[c.id] = (hojePassa[c.id] ?? 0) + 1;
   return (
     <div className="container mx-auto px-4 py-6">
       <Link href="/admin/comunicacao" className="inline-flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-amadeus-blue">
@@ -23,7 +26,7 @@ export default async function TvAdminPage() {
         O que passa na TV da recepção. Ela monta o roteiro de novo a cada volta: aniversariantes do dia, próximo evento e prazo da
         rematrícula entram sozinhos; o que vocês colocarem aqui aparece na volta seguinte e sai sozinho quando passar a data.
       </p>
-      <PainelTv itens={itens} blocos={blocos} nomes={BLOCOS} tipos={TIPOS} hoje={hojeLocal()} />
+      <PainelTv itens={itens} blocos={blocos} nomes={BLOCOS} tipos={TIPOS} hoje={hojeLocal()} hojePassa={hojePassa} />
     </div>
   );
 }

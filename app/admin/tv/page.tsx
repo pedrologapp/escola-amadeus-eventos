@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { montarRoteiro } from "@/lib/tv";
+import { roteiroDoDia } from "@/lib/tv";
 import { PlayerTv } from "./player";
 
 /**
@@ -19,7 +19,7 @@ export default async function TvPage({ searchParams }: { searchParams: Promise<{
   } = await supabase.auth.getUser();
   if (!user) redirect("/admin/login");
   const { previa, cena, t } = await searchParams;
-  const roteiro = await montarRoteiro();
+  const roteiro = await roteiroDoDia();
   // ?cena=3&t=5 congela a cena 3 no segundo 5 (para conferir uma cena)
   const congelada = cena ? { cena: Math.max(0, Number(cena) - 1), t: Number(t ?? 6) } : null;
   return <PlayerTv roteiro={roteiro} previa={previa === "1"} congelada={congelada} />;

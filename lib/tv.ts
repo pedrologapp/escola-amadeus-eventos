@@ -1,5 +1,6 @@
 import "server-only";
 
+import { unstable_cache } from "next/cache";
 import QRCode from "qrcode";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -24,16 +25,17 @@ export const TIPOS: { id: TipoItem; nome: string; dica: string }[] = [
   { id: "comemoracao", nome: "Data comemorativa", dica: "Aparece na saudação naquele dia, todo ano." },
 ];
 
-export const BLOCOS: Record<string, { nome: string; origem: string }> = {
+/** equipe = só passa se alguém da escola colocar o conteúdo; tipo = o que se cadastra para ele. */
+export const BLOCOS: Record<string, { nome: string; origem: string; equipe?: TipoItem }> = {
   saudacao: { nome: "Saudação", origem: "Bom dia/tarde/noite, data e a comemoração do dia" },
   aniversariantes: { nome: "Aniversariantes", origem: "Automático: quem faz aniversário hoje (Activesoft)" },
-  avisos: { nome: "Avisos em destaque", origem: "Cadastrados aqui; cada aviso é uma tela" },
-  recados: { nome: "Recados da coordenação", origem: "Cadastrados aqui" },
+  avisos: { nome: "Avisos em destaque", origem: "Cada aviso é uma tela inteira", equipe: "aviso" },
+  recados: { nome: "Recados da coordenação", origem: "Lembretes curtos para pais e alunos", equipe: "recado" },
   evento: { nome: "Próximo evento", origem: "Automático: o próximo evento publicado, com contagem" },
   promo: { nome: "Matrícula antecipada", origem: "Automático: some sozinho depois do prazo" },
-  agenda: { nome: "Agenda da semana", origem: "Cadastrada aqui" },
-  sabia: { nome: "Você sabia?", origem: "Gira sozinho, uma por dia" },
-  frase: { nome: "Frase do dia", origem: "Gira sozinha, uma por dia" },
+  agenda: { nome: "Agenda da semana", origem: "Provas, passeios, reuniões de cada dia", equipe: "agenda" },
+  sabia: { nome: "Você sabia?", origem: "Gira sozinho, um por dia (já tem uma lista pronta)", equipe: "curiosidade" },
+  frase: { nome: "Frase do dia", origem: "Gira sozinha, uma por dia (já tem uma lista pronta)", equipe: "frase" },
   qr: { nome: "QR codes para os pais", origem: "Folder 2027 e pesquisa de satisfação" },
   formatura: { nome: "Formatura 5º ano", origem: "Tela fixa com o aviãozinho" },
   fim: { nome: "Encerramento", origem: "Logo dos 30 anos" },
@@ -153,9 +155,25 @@ async function proximoEvento(hoje: string) {
 
 const qr = (url: string) => QRCode.toString(url, { type: "svg", margin: 1, color: { dark: "#12307A", light: "#FFFFFF" } });
 
-/** Monta as cenas da volta de agora. */
-export async function montarRoteiro(): Promise<RoteiroTv> {
+const horaLocal = () => Number(new Date().toLocaleString("en-US", { timeZone: FUSO, hour: "numeric", hour12: false })) % 24;
+
+/**
+ * O roteiro do dia fica pronto e guardado: é gerado uma vez de madrugada e
+ * de novo às 7h (quando a rotina dos aniversários grava quem faz anos hoje),
+ * e na hora em que alguém muda algo no admin (etiqueta "tv"). A TV pede o
+ * roteiro a cada volta, mas recebe o guardado, sem ir ao banco. As contagens
+ * ("faltam 16 dias") e o relógio são feitos na própria TV.
+ */
+export function roteiroDoDia(): Promise<RoteiroTv> {
   const hoje = hojeLocal();
+  const turno = horaLocal() >= 7 ? "dia" : "madrugada";
+  return unstable_cache(() => montarRoteiro(hoje), ["tv-roteiro", hoje, turno], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })();
+}
+
+export const ETIQUETA_TV = "tv";
+
+/** Monta as cenas do dia. */
+async function montarRoteiro(hoje: string): Promise<RoteiroTv> {
   const { itens, blocos } = await lerItensEBlocos();
   const valem = itens.filter((i) => valeHoje(i, hoje));
   const de = (t: TipoItem) => valem.filter((i) => i.tipo === t);

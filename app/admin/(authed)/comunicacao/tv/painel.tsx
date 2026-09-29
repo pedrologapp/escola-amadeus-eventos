@@ -19,13 +19,14 @@ function situacao(i: ItemTv, hoje: string): { txt: string; cor: string } {
 }
 
 export function PainelTv({
-  itens, blocos: blocosIniciais, nomes, tipos, hoje,
+  itens, blocos: blocosIniciais, nomes, tipos, hoje, hojePassa,
 }: {
   itens: ItemTv[];
   blocos: BlocoTv[];
-  nomes: Record<string, { nome: string; origem: string }>;
+  nomes: Record<string, { nome: string; origem: string; equipe?: TipoItem }>;
   tipos: { id: TipoItem; nome: string; dica: string }[];
   hoje: string;
+  hojePassa: Record<string, number>;
 }) {
   const [f, setF] = useState<ItemForm>(VAZIO);
   const [erro, setErro] = useState<string | null>(null);
@@ -56,6 +57,13 @@ export function PainelTv({
   const editar = (i: ItemTv) => {
     setF({ id: i.id, tipo: i.tipo, titulo: i.titulo, texto: i.texto, icone: i.icone ?? "", data: i.data ?? "", inicio: i.inicio ?? "", fim: i.fim ?? "" });
     setOk(null);
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const colocar = (t: TipoItem) => {
+    setF({ ...VAZIO, tipo: t });
+    setOk(null);
+    setErro(null);
     formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
@@ -118,9 +126,14 @@ export function PainelTv({
               <li key={b.id} className={`flex items-center gap-3 py-2 ${b.ativo ? "" : "opacity-50"}`}>
                 <span className="w-5 text-right text-xs font-bold text-muted-foreground">{i + 1}</span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold text-amadeus-blue">{nomes[b.id]?.nome ?? b.id}</p>
+                  <p className="flex flex-wrap items-center gap-1.5 text-sm font-bold text-amadeus-blue">
+                    {nomes[b.id]?.nome ?? b.id}
+                    <span className={`rounded-full px-1.5 text-[10px] font-extrabold uppercase ${nomes[b.id]?.equipe ? "bg-amadeus-yellow-50 text-amber-800" : "bg-sky-50 text-sky-700"}`}>{nomes[b.id]?.equipe ? "vocês colocam" : "automático"}</span>
+                    {b.ativo && <span className={`text-[11px] font-semibold ${hojePassa[b.id] ? "text-emerald-700" : "text-muted-foreground"}`}>{hojePassa[b.id] ? (hojePassa[b.id] > 1 ? `passa hoje (${hojePassa[b.id]} telas)` : "passa hoje") : "vazio hoje, é pulado"}</span>}
+                  </p>
                   <p className="truncate text-xs text-muted-foreground">{nomes[b.id]?.origem}</p>
                 </div>
+                {nomes[b.id]?.equipe && <button type="button" onClick={() => colocar(nomes[b.id].equipe!)} className={`${btn} text-amadeus-blue`}><Plus className="size-4" /> colocar</button>}
                 <label className="flex items-center gap-1 text-xs text-muted-foreground">
                   <input type="number" min={4} max={60} value={b.segundos} onChange={(e) => mudaBloco(b.id, { segundos: Number(e.target.value) || 4 })} className="w-14 rounded-lg border border-border px-2 py-1 text-right text-sm font-bold text-foreground" /> s
                 </label>
@@ -137,6 +150,22 @@ export function PainelTv({
 
       {/* direita: colocar coisas na TV */}
       <div className="space-y-4">
+        <section className="rounded-2xl border border-border/60 bg-white p-4">
+          <h2 className="text-sm font-extrabold text-amadeus-blue">O que é com vocês</h2>
+          <p className="text-xs text-muted-foreground">Estes blocos só passam se alguém da escola colocar o conteúdo. O resto a TV faz sozinha.</p>
+          <ul className="mt-3 grid gap-2 sm:grid-cols-3">
+            {([["avisos", "aviso"], ["recados", "recado"], ["agenda", "agenda"]] as [string, TipoItem][]).map(([bloco, t]) => {
+              const n = t === "agenda" ? itens.filter((i) => i.tipo === "agenda" && i.ativo && (i.data ?? "") >= hoje).length : itens.filter((i) => i.tipo === t && situacao(i, hoje).cor.includes("emerald")).length;
+              return (
+                <li key={bloco} className={`rounded-xl border p-3 ${n ? "border-emerald-200 bg-emerald-50/50" : "border-amber-200 bg-amber-50/60"}`}>
+                  <p className="text-sm font-bold text-amadeus-blue">{nomes[bloco]?.nome}</p>
+                  <p className={`text-xs font-semibold ${n ? "text-emerald-700" : "text-amber-800"}`}>{n ? `${n} ${t === "agenda" ? "marcado(s) daqui pra frente" : "no ar"}` : "nada no ar, não aparece na TV"}</p>
+                  <button type="button" onClick={() => colocar(t)} className="mt-2 inline-flex items-center gap-1 rounded-lg bg-amadeus-blue px-2.5 py-1 text-xs font-bold text-white"><Plus className="size-3.5" /> Colocar</button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
         <section ref={formRef} className="rounded-2xl border-2 border-amadeus-yellow bg-amadeus-yellow-50/60 p-4">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-extrabold text-amadeus-blue">{f.id ? "Alterar" : "Colocar na TV"}</h2>
@@ -150,7 +179,7 @@ export function PainelTv({
           <p className="mt-2 text-xs text-muted-foreground">{tipo.dica}</p>
           <div className="mt-3 grid gap-2">
             <div className="flex gap-2">
-              <input value={f.icone} onChange={(e) => muda({ icone: e.target.value })} placeholder="😀" title="Um emoji (opcional). No Windows: tecla Windows + ponto" className={`${campo} w-16 text-center text-lg`} />
+              <input value={f.icone} onChange={(e) => muda({ icone: e.target.value })} placeholder="😀" title="Um emoji (opcional). No Windows: tecla Windows + ponto" className={`${campo.replace("w-full ", "")} w-16 shrink-0 text-center text-lg`} />
               <input value={f.titulo} onChange={(e) => muda({ titulo: e.target.value })} placeholder={f.tipo === "aviso" ? "Título grande. Ex.: Arena Arbória" : f.tipo === "frase" ? "Ex.: Ler é *viajar* sem sair do *lugar*" : f.tipo === "curiosidade" ? "Ex.: O polvo tem *três corações*" : f.tipo === "agenda" ? "Ex.: Simulado do 9º ano" : f.tipo === "comemoracao" ? "Ex.: Dia do Professor" : "Ex.: Traga a garrafinha com nome"} className={`${campo} font-bold`} />
             </div>
             {f.tipo === "aviso" && <input value={f.texto} onChange={(e) => muda({ texto: e.target.value })} placeholder="Texto de baixo. Ex.: O resultado sai na quinta-feira, 01/10!" className={campo} />}

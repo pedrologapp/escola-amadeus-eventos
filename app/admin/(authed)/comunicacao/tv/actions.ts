@@ -1,11 +1,17 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import type { BlocoTv, TipoItem } from "@/lib/tv";
+import { ETIQUETA_TV, type BlocoTv, type TipoItem } from "@/lib/tv";
 
 /** O que a equipe cadastra para a TV e a ordem/tempo dos blocos. */
+
+/** Refaz o roteiro guardado do dia (a TV pega na próxima volta) e a tela do admin. */
+function mudou() {
+  revalidateTag(ETIQUETA_TV, { expire: 0 });
+  revalidatePath("/admin/comunicacao/tv");
+}
 
 type Resultado = { ok: true } | { ok: false; erro: string };
 
@@ -48,7 +54,7 @@ export async function salvarItem(f: ItemForm): Promise<Resultado> {
   const db = createAdminClient();
   const { error } = f.id ? await db.from("tv_itens").update(linha).eq("id", f.id) : await db.from("tv_itens").insert(linha);
   if (error) return { ok: false, erro: error.message };
-  revalidatePath("/admin/comunicacao/tv");
+  mudou();
   return { ok: true };
 }
 
@@ -56,7 +62,7 @@ export async function ativarItem(id: string, ativo: boolean): Promise<Resultado>
   if (!(await logado())) return { ok: false, erro: "Sessão expirada. Entre de novo." };
   const { error } = await createAdminClient().from("tv_itens").update({ ativo }).eq("id", id);
   if (error) return { ok: false, erro: error.message };
-  revalidatePath("/admin/comunicacao/tv");
+  mudou();
   return { ok: true };
 }
 
@@ -64,7 +70,7 @@ export async function apagarItem(id: string): Promise<Resultado> {
   if (!(await logado())) return { ok: false, erro: "Sessão expirada. Entre de novo." };
   const { error } = await createAdminClient().from("tv_itens").delete().eq("id", id);
   if (error) return { ok: false, erro: error.message };
-  revalidatePath("/admin/comunicacao/tv");
+  mudou();
   return { ok: true };
 }
 
@@ -73,6 +79,6 @@ export async function salvarBlocos(blocos: BlocoTv[]): Promise<Resultado> {
   const linhas = blocos.map((b, i) => ({ id: b.id, ativo: !!b.ativo, ordem: i + 1, segundos: Math.max(4, Math.min(60, Math.round(b.segundos))) }));
   const { error } = await createAdminClient().from("tv_blocos").upsert(linhas);
   if (error) return { ok: false, erro: error.message };
-  revalidatePath("/admin/comunicacao/tv");
+  mudou();
   return { ok: true };
 }
