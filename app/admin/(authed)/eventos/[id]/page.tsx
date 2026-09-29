@@ -32,6 +32,7 @@ import {
 import { formatDateTimeBrt } from "@/lib/utils";
 import { InscricoesTable } from "./inscricoes-table";
 import { SenhaGateButton } from "./senha-gate-button";
+import { ComoFoi } from "./como-foi";
 
 const statusConfig: Record<
   string,
@@ -54,7 +55,7 @@ export default async function EventoDetailPage({ params }: PageProps) {
   const { data: evento } = await supabase
     .from("eventos")
     .select(
-      "id, slug, nome, descricao_curta, data_evento, hora_evento, hora_fim, local, imagem_capa_url, cor_tematica, series_permitidas, turmas_permitidas, metodos_pagamento, max_parcelas, prazo_inscricao, status, mostrar_estoque_publico, tipos_ingresso(id, nome, preco, descricao, ordem, max_ingressos, lotes)",
+      "id, slug, nome, descricao_curta, data_evento, hora_evento, hora_fim, local, imagem_capa_url, cor_tematica, series_permitidas, turmas_permitidas, metodos_pagamento, max_parcelas, prazo_inscricao, status, mostrar_estoque_publico, imagens_galeria, mostrar_como_foi, tipos_ingresso(id, nome, preco, descricao, ordem, max_ingressos, lotes)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -389,6 +390,24 @@ export default async function EventoDetailPage({ params }: PageProps) {
                 </div>
               );
             })}
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* Como foi: fotos e vídeos para o Portal da Família */}
+      <section className="mt-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Como foi</CardTitle>
+            <CardDescription>Fotos e vídeos do evento para o Portal da Família (www.escolaamadeus.com).</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ComoFoi
+              eventoId={evento.id}
+              midias={((evento.imagens_galeria as string[] | null) ?? []).filter(Boolean)}
+              mostrar={!!evento.mostrar_como_foi}
+              passou={new Date(`${evento.data_evento}T23:59:59`) < new Date()}
+            />
           </CardContent>
         </Card>
       </section>

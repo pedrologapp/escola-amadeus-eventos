@@ -3,7 +3,11 @@ import "server-only";
 import { unstable_cache } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CONTATO } from "@/lib/folder-config";
-import { ETIQUETA_TV, PRAZO_PROMO, diasDaSemana, hojeLocal, lerItensEBlocos, valeHoje } from "@/lib/tv";
+import { ETIQUETA_TV, PRAZO_PROMO, diasDaSemana, hojeLocal, lerItensEBlocos, somaDias, valeHoje } from "@/lib/tv";
+
+/** Evento que passou só aparece com fotos/vídeos ligados, até esses dias depois, no máximo estes tantos. */
+const COMO_FOI_DIAS = 45;
+const COMO_FOI_MAX = 2;
 
 /**
  * Portal da Família (29/09/2026): a página que o www.escolaamadeus.com vai
@@ -22,6 +26,7 @@ export interface EventoPortal {
   capa: string | null;
   prazo: string | null; // prazo de inscrição (ISO)
   passou: boolean;
+  midias: string[];
 }
 
 export interface PortalDados {
@@ -44,12 +49,13 @@ async function montar(hoje: string): Promise<PortalDados> {
       .order("data_evento")
       .limit(6),
     db.from("eventos")
-      .select("slug, nome, data_evento, hora_evento, local, imagem_capa_url, prazo_inscricao")
+      .select("slug, nome, data_evento, hora_evento, local, imagem_capa_url, prazo_inscricao, imagens_galeria")
       .eq("status", "publicado")
+      .eq("mostrar_como_foi", true)
       .lt("data_evento", hoje)
-      .not("imagem_capa_url", "is", null)
+      .gte("data_evento", somaDias(hoje, -COMO_FOI_DIAS))
       .order("data_evento", { ascending: false })
-      .limit(2),
+      .limit(6),
   ]);
   const ev = (e: Record<string, unknown>, passou: boolean): EventoPortal => ({
     slug: String(e.slug),
@@ -60,13 +66,14 @@ async function montar(hoje: string): Promise<PortalDados> {
     capa: (e.imagem_capa_url as string | null) ?? null,
     prazo: (e.prazo_inscricao as string | null) ?? null,
     passou,
+    midias: ((e.imagens_galeria as string[] | null) ?? []).filter(Boolean),
   });
   const valem = itens.filter((i) => valeHoje(i, hoje));
   const dias = diasDaSemana(hoje);
   const agendaItens = itens.filter((i) => i.tipo === "agenda" && i.ativo && i.data && dias.includes(i.data));
   return {
     hoje,
-    eventos: [...(futuros ?? []).map((e) => ev(e, false)), ...(passados ?? []).map((e) => ev(e, true))],
+    eventos: [...(futuros ?? []).map((e) => ev(e, false)), ...(passados ?? []).map((e) => ev(e, true)).filter((e) => e.midias.length).slice(0, COMO_FOI_MAX)],
     promo: hoje <= PRAZO_PROMO ? { prazo: PRAZO_PROMO, link: "/folder" } : null,
     lembretes: [...valem.filter((i) => i.tipo === "aviso"), ...valem.filter((i) => i.tipo === "recado")].map((i) => ({
       titulo: i.titulo,

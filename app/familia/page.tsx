@@ -22,16 +22,20 @@ const DIAS_CURTOS = ["Seg", "Ter", "Qua", "Qui", "Sex"];
 const dataLonga = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString("pt-BR", { day: "numeric", month: "long" });
 const diasEntre = (de: string, ate: string) => Math.round((Date.parse(`${ate}T12:00:00Z`) - Date.parse(`${de}T12:00:00Z`)) / 864e5);
 
+const VIDEO = /\.(mp4|mov|webm|m4v)(\?|$)/i;
+
 function CartaoEvento({ e, hoje }: { e: EventoPortal; hoje: string }) {
   const prazo = e.prazo ? e.prazo.slice(0, 10) : null;
   const aberto = !e.passou && (!prazo || prazo >= hoje);
   const falta = diasEntre(hoje, e.data);
+  // evento que passou mostra a 1ª foto do "como foi" (vídeo não serve de miniatura)
+  const miniatura = (e.passou ? e.midias.find((m) => !VIDEO.test(m)) : null) ?? e.capa;
   return (
-    <Link href={`/eventos/${e.slug}`} className={`flex gap-3 rounded-2xl bg-white p-2.5 shadow-[0_6px_16px_rgba(27,59,124,.1)] transition hover:-translate-y-0.5 ${e.passou ? "opacity-80" : ""}`}>
+    <Link href={e.passou ? `/como-foi/${e.slug}` : `/eventos/${e.slug}`} className="flex gap-3 rounded-2xl bg-white p-2.5 shadow-[0_6px_16px_rgba(27,59,124,.1)] transition hover:-translate-y-0.5">
       <div className="relative size-24 shrink-0 overflow-hidden rounded-xl bg-amadeus-blue-50">
-        {e.capa ? (
+        {miniatura ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={e.capa} alt="" className={`size-full object-cover ${e.passou ? "grayscale-[.5]" : ""}`} />
+          <img src={miniatura} alt="" className="size-full object-cover" />
         ) : (
           <div className="flex size-full flex-col items-center justify-center text-amadeus-blue">
             <span className="f-ralton text-3xl leading-none">{e.data.slice(8)}</span>
@@ -46,7 +50,7 @@ function CartaoEvento({ e, hoje }: { e: EventoPortal; hoje: string }) {
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           {e.passou ? (
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">Ver como foi</span>
+            <span className="rounded-full bg-amadeus-blue px-3 py-1 text-xs font-bold text-white">📸 Veja como foi ({e.midias.length})</span>
           ) : aberto ? (
             <span className="rounded-full bg-amadeus-yellow px-3 py-1 text-xs font-bold text-amadeus-blue">Fazer inscrição</span>
           ) : (
