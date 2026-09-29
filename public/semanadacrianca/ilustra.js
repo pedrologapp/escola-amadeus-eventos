@@ -141,6 +141,37 @@
       [est(190, 30, 8) + est(150, 50, 5), C.ama, 3.5],
     ], 'Desenho de roda-gigante e escorregador'),
 
+    // 12/10 feriado: casinha com a família em casa, sol e coração
+    casa: () => desenho('0 0 220 200', [
+      ['M12 184 C70 178 150 190 208 182', C.verde, 4],
+      ['M54 182 V104 H150 V182', C.mar, 5, '#08307812'],
+      ['M40 108 L102 54 L164 108', C.ver, 6, f(C.ver, '33')],
+      ['M88 182 V144 H116 V182', C.ama, 5, f(C.ama, '44')],
+      ['M66 118 h20 v20 h-20 z M76 118 v20 M66 128 h20 M122 118 h20 v20 h-20 z M132 118 v20 M122 128 h20', C.azul, 4],
+      ['M132 76 V52 h12 v34', C.mar2, 5],
+      ['M142 44 c6 -8 -4 -12 2 -20 M150 42 c6 -8 -4 -12 2 -20', C.cel, 3],
+      [circ(186, 44, 16), C.ama, 5, f(C.ama, '40')],
+      ['M186 18v-8 M186 70v8 M160 44h-8 M212 44h6', C.ama, 4],
+      ['M32 60 c-6 -8 -18 2 -8 12 l8 6 l8 -6 c10 -10 -2 -20 -8 -12', C.ros, 4, f(C.ros, '55')],
+      [est(26, 130, 6) + est(196, 130, 6), C.ama, 3.5],
+    ], 'Desenho de casinha com sol: feriado em casa'),
+
+    // 16/10 compensação do Dia do Professor: livro aberto, maçã e lápis
+    professor: () => desenho('0 0 220 200', [
+      ['M12 184 C70 178 150 190 208 182', C.verde, 4],
+      ['M30 150 C60 136 90 140 110 154 C130 140 160 136 190 150 V176 C160 162 130 166 110 180 C90 166 60 162 30 176 Z', C.azul, 5, f(C.azul, '22')],
+      ['M110 154 V180', C.azul, 4],
+      ['M48 156 C62 150 80 150 94 158 M48 166 C62 160 80 160 94 168 M126 158 C140 150 158 150 172 156', C.azul, 2.5],
+      [circ(112, 96, 32), C.ver, 5, f(C.ver, '44')],
+      ['M112 64 C112 52 118 46 126 42', C.mar2, 5],
+      ['M118 58 C128 46 146 48 150 56 C138 62 126 62 118 58 Z', C.verde, 4, f(C.verde, '55')],
+      ['M96 88 q6 -8 12 -2', '#FFFFFF', 4],
+      ['M166 60 L196 120', C.ama, 10],
+      ['M196 120 l3 12 l-9 -8', C.mar2, 4],
+      ['M160 50 l6 10', C.ros, 10],
+      [est(40, 60, 8) + est(60, 110, 5), C.ama, 3.5],
+    ], 'Desenho de livro aberto, maçã e lápis'),
+
     // fim: arco-íris com nuvens e corações
     arco: () => desenho('0 0 220 140', [
       ['M24 116 C28 20 192 20 196 116', C.ver, 8],

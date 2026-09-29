@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Semana da Criança · Infantil</title>
-<meta name="description" content="Programação da Semana da Criança da Educação Infantil, de 07 a 15 de outubro.">
+<meta name="description" content="Programação da Semana da Criança da Educação Infantil, de 06 a 16 de outubro.">
 <meta property="og:title" content="Semana da Criança · Educação Infantil">
-<meta property="og:description" content="07 a 15 de outubro: vire as páginas e veja a programação de cada dia.">
+<meta property="og:description" content="06 a 16 de outubro: vire as páginas e veja a programação de cada dia.">
 <meta property="og:image" content="https://www.escolaamadeus.com/semanadacrianca/banner.jpg">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="675"><meta property="og:url" content="https://www.escolaamadeus.com/semanadacrianca"><meta name="theme-color" content="#FAF7F0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -57,11 +57,11 @@
   .agenda-p .miolo { justify-content: safe center; }
   .agenda-p h2 { font: 700 42px/.95 Caveat, cursive; color: var(--mar); }
   .agenda-p .sub { margin-top: 6px; font-size: 15px; }
-  .agenda { list-style: none; margin-top: 16px; display: grid; gap: 10px; }
-  .agenda li { display: grid; grid-template-columns: 64px 1fr; gap: 12px; align-items: center; cursor: pointer; }
-  .agenda .mini { width: 64px; height: 58px; border-radius: 14px; background: color-mix(in srgb, var(--c) 10%, #fff); border: 2px dashed color-mix(in srgb, var(--c) 45%, #fff); padding: 3px; }
-  .agenda b { display: block; font: 700 22px/1 Caveat, cursive; color: var(--c); }
-  .agenda span { font-weight: 800; font-size: 15px; line-height: 1.15; color: var(--mar); }
+  .agenda { list-style: none; margin-top: 12px; display: grid; gap: 7px; }
+  .agenda li { display: grid; grid-template-columns: 52px 1fr; gap: 12px; align-items: center; cursor: pointer; }
+  .agenda .mini { width: 52px; height: 46px; border-radius: 14px; background: color-mix(in srgb, var(--c) 10%, #fff); border: 2px dashed color-mix(in srgb, var(--c) 45%, #fff); padding: 3px; }
+  .agenda b { display: block; font: 700 20px/1 Caveat, cursive; color: var(--c); }
+  .agenda span { font-weight: 800; font-size: 14px; line-height: 1.15; color: var(--mar); }
   .agenda-p .toque { margin-top: 14px; font-size: 13px; opacity: .7; }
 
   /* página do dia */
@@ -123,7 +123,10 @@
   const C = ILU.C;
   const $ = id => document.getElementById(id);
 
+  // Programação revisada pela coordenação do Infantil (29/09): entraram 06/10, 12/10 e 16/10; mudaram 09/10 e 15/10.
   const DIAS = [
+    { cor: C.azul, data: 'Terça, 06/10', ilu: 'cofrinho', t: 'Culminância do Projeto Educação Financeira',
+      p: 'Abrir o cofrinho…' },
     { cor: C.rox, data: 'Quarta, 07/10', ilu: 'caixa', t: 'Brinquedo não estruturado', sub: 'imaginação solta!',
       p: 'A caixa vira casinha, o pote vira tambor, o rolinho vira telefone… <b>Qualquer objeto pode virar uma grande brincadeira!</b>',
       bilhete: ['Não esqueça!', 'Um objeto <b>identificado com o nome</b>: caixa de papelão, potes, rolinhos, tampinhas, tecidos, colher de pau, tubos…'] },
@@ -131,14 +134,17 @@
       p: 'Uma sessão especial de cinema, com direito a escurinho e muita emoção.',
       bilhete: ['Não esqueça!', 'A <b>pipoquinha</b>! 🍿'] },
     { cor: C.ros, data: 'Sexta, 09/10', ilu: 'fantasia', t: 'Baile à fantasia', sub: 'hoje eu sou quem eu quiser!',
-      p: 'Hora de escolher a fantasia, soltar a imaginação e virar o personagem preferido.',
-      bilhete: ['Venha…', '<b>fantasiado</b>, do jeitinho que escolher!'],
-      mais: 'Dia do <b>Projeto de Educação Financeira</b>: cada criança, com a família, abre o <b>cofrinho</b> e compra o seu sonho de curto prazo.<br>📸 Gravem esse momento e <b>marquem a escola no Instagram</b>!' },
+      p: 'Neste dia, as crianças poderão vir <b>fantasiadas</b> para participar desse momento especial. E os pais que desejarem também poderão vir buscar seus filhos fantasiados. Fiquem à vontade para entrar na brincadeira e juntos fazer aquele registro.' },
+    { cor: C.cel, data: 'Segunda, 12/10', ilu: 'casa', t: 'Feriado',
+      bilhete: ['Atenção!', 'Não haverá aula.'] },
     { cor: C.verde, data: 'Quarta, 14/10', ilu: 'presente', t: 'Culminância da Educação Financeira', sub: 'o sonho realizado!',
       p: 'Chegou o grande dia de compartilhar as conquistas com os colegas.',
       bilhete: ['Não esqueça!', 'O <b>brinquedo escolhido</b> com o cofrinho, para mostrar e contar como foi.'] },
     { cor: C.lar, data: 'Quinta, 15/10', ilu: 'parque', t: 'Passeio ao Viva Park', sub: 'partiu parque!',
-      p: 'Para as crianças que aderiram ao ingresso, chegou o dia de aproveitar esse passeio superespecial!' },
+      p: 'Para as crianças que aderiram ao ingresso, chegou o dia de aproveitar esse passeio superespecial!',
+      bilhete: ['Atenção!', '⏰ <b>Das 13h às 17h.</b> Neste dia não haverá aula.'] },
+    { cor: C.mar, data: 'Sexta, 16/10', ilu: 'professor', t: 'Não haverá aula',
+      p: 'Este dia será destinado à compensação do feriado do <b>Dia do Professor</b> (15/10).' },
   ];
 
   const cores = [C.ver, C.lar, C.ama, C.verde, C.azul, C.rox, C.ros];
@@ -148,20 +154,20 @@
       <div class="selo">EDUCAÇÃO INFANTIL</div>
       <h1>Semana da<span class="grande">${[...'Criança'].map((l, i) => `<span style="color:${cores[i]};animation-delay:${i * .12}s">${l}</span>`).join('')}</span></h1>
       <div class="desenho">${ILU.capa()}</div>
-      <div class="datas">07 a 15 de outubro</div>
+      <div class="datas">06 a 16 de outubro</div>
       <p class="intro">Mamãe e papai, preparem a criançada! Uma programação cheia de brincadeiras, descobertas e muita diversão.</p>
       <div class="virar">vire a página →</div></div></div>`);
   paginas.push(`<div class="face agenda-p"><div class="sombra"></div><div class="miolo">
       <h2>Anote na agenda da família</h2>
-      <p class="sub">Uma surpresa diferente a cada dia:</p>
+      <p class="sub">A programação, dia a dia:</p>
       <ul class="agenda">${DIAS.map((d, i) => `<li data-ir="${i + 2}" style="--c:${d.cor}"><div class="mini">${ILU[d.ilu]()}</div><div><b>${d.data}</b><span>${d.t}</span></div></li>`).join('')}</ul>
       <p class="toque">Toque num dia para ir direto a ele.</p>
       <div class="num">1</div></div></div>`);
   DIAS.forEach((d, i) => paginas.push(`<div class="face dia" style="--c:${d.cor}"><div class="sombra"></div><div class="miolo">
       <div class="data">${d.data}</div>
       <div class="desenho">${ILU[d.ilu]()}</div>
-      <h2>${d.t}</h2><div class="sub">${d.sub}</div>
-      <p>${d.p}</p>
+      <h2>${d.t}</h2>${d.sub ? `<div class="sub">${d.sub}</div>` : ""}
+      ${d.p ? `<p>${d.p}</p>` : ""}
       ${d.bilhete ? `<div class="bilhete"><strong>${d.bilhete[0]}</strong>${d.bilhete[1]}</div>` : ''}
       ${d.mais ? `<div class="mais"><div class="cofre">${ILU.cofrinho()}</div><strong>E tem mais!</strong>${d.mais}</div>` : ''}
       <div class="num">${i + 2}</div></div></div>`));
