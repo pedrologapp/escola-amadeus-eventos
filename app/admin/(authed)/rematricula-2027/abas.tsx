@@ -1,10 +1,11 @@
 import Link from "next/link";
 
 /** Abas da rematrícula: o simulador (vai para o pai) e a tabela de consulta (só da equipe). */
-export function AbasRematricula({ ativa }: { ativa: "simulador" | "valores" }) {
+export function AbasRematricula({ ativa }: { ativa: "simulador" | "valores" | "experiencia" }) {
   const abas = [
     { id: "simulador", href: "/admin/rematricula-2027", rotulo: "Simulador" },
     { id: "valores", href: "/admin/rematricula-2027/valores", rotulo: "Tabela de valores" },
+    { id: "experiencia", href: "/admin/rematricula-2027/experiencia", rotulo: "Experiência Amadeus" },
   ] as const;
   return (
     <div className="mt-4 flex gap-1 border-b border-border/60">

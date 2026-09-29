@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { linkDaCarta } from "@/lib/rematricula-2027-link";
+import { guardarContato } from "@/lib/experiencia";
 import {
   SERIES,
   WEBHOOK_ENVIO,
@@ -128,6 +129,10 @@ export async function enviarCarta(entrada: {
       detalhe: [soFolder ? "só o folder" : dados?.tipo === "avista" ? "à vista" : null, r.detalhe].filter(Boolean).join(" · ") || null,
       enviado_por: user.email ?? null,
     });
+    // Família nova (sem aluno no Activesoft) que recebeu: entra na lista da Experiência para a escola não perder o contato.
+    if (entrada.alunoId === null && r.status === "enviado") {
+      await guardarContato({ telefone: d.telefone, responsavel: d.nome, crianca: nome || null, serie: serie ?? null, origem: "novato" });
+    }
   }
   return { ok: true, resultados };
 }

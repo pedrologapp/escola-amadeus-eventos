@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { Check, Copy, Eye, Loader2, Printer, Search, Send, UserPlus } from "lucide-react";
 import type { AlunoBusca, Leitura, Responsavel } from "@/lib/rematricula-2027-dados";
 import { enviarCarta, previaCarta, type Destino, type ResultadoEnvio } from "./actions";
+import { enviarExperiencia, type ResultadoExp } from "./experiencia/actions";
+import { EscolhaEncarte } from "./experiencia/painel";
 import {
   DEPOIS_DO_PRAZO,
   DESCONTO_IRMAO,
@@ -174,18 +176,23 @@ const SELO_ENVIO: Record<string, { texto: string; classe: string }> = {
  * "Só o folder" manda só a apresentação com o link (para quem vai receber os
  * valores por telefone). Com `soFolder` fixo, é o envio avulso, sem aluno.
  */
-function EnviarWhatsApp({ responsaveis, envios, enviar, rotuloCarta, soFolder: soFolderFixo }: {
+function EnviarWhatsApp({ responsaveis, envios, enviar, rotuloCarta, soFolder: soFolderFixo, experiencia }: {
   responsaveis: Responsavel[];
   envios: EnvioFeito[];
   enviar: (destinos: Destino[], soFolder: boolean) => Promise<{ ok: boolean; erro?: string; resultados: ResultadoEnvio[] }>;
   rotuloCarta?: string;
   soFolder?: boolean;
+  /** Oferece mandar junto o encarte da Experiência Amadeus (10/10); `marcado` = já vem ligado (novato). */
+  experiencia?: { crianca: string; serie: string | null; origem: "novato" | "simulador" | "avulso"; marcado: boolean };
 }) {
   const [marcados, setMarcados] = useState<Set<string>>(new Set());
   const [outro, setOutro] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [retorno, setRetorno] = useState<{ erro?: string; resultados: ResultadoEnvio[] } | null>(null);
   const [soFolderEscolhido, setSoFolder] = useState(false);
+  const [comExperiencia, setComExperiencia] = useState(!!experiencia?.marcado);
+  const [encarteExp, setEncarteExp] = useState("convite");
+  const [retornoExp, setRetornoExp] = useState<{ erro?: string; resultados: ResultadoExp[] } | null>(null);
   const soFolder = soFolderFixo || soFolderEscolhido;
   const jaRecebeu = new Set(envios.filter((e) => e.status === "enviado").map((e) => e.telefone));
 
@@ -198,11 +205,17 @@ function EnviarWhatsApp({ responsaveis, envios, enviar, rotuloCarta, soFolder: s
     const repetidos = destinos.filter((d) => jaRecebeu.has(d.telefone.replace(/\D/g, "")));
     const aviso = repetidos.length ? `\n\n${repetidos.length} desse(s) número(s) já recebeu mensagem antes.` : "";
     const oque = soFolder ? "só o folder digital (sem valores)" : `a apresentação e a ${rotuloCarta ?? "carta com os valores"}`;
-    if (!window.confirm(`Enviar ${oque} para ${destinos.length} número(s) pelo WhatsApp da escola?${aviso}`)) return;
+    const exp = experiencia && comExperiencia ? " + o encarte da Experiência Amadeus" : "";
+    if (!window.confirm(`Enviar ${oque}${exp} para ${destinos.length} número(s) pelo WhatsApp da escola?${aviso}`)) return;
     setEnviando(true);
     setRetorno(null);
+    setRetornoExp(null);
     try {
       setRetorno(await enviar(destinos, soFolder));
+      // O encarte da Experiência sai logo depois, para os mesmos números, e todos entram na lista da Experiência.
+      if (experiencia && comExperiencia) {
+        setRetornoExp(await enviarExperiencia({ destinos, crianca: experiencia.crianca, serie: experiencia.serie, escolha: encarteExp, origem: experiencia.origem }));
+      }
     } catch (e) {
       setRetorno({ erro: (e as Error).message, resultados: [] });
     } finally {
@@ -260,6 +273,21 @@ function EnviarWhatsApp({ responsaveis, envios, enviar, rotuloCarta, soFolder: s
         </ul>
       )}
 
+      {experiencia && (
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/60 p-3">
+          <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-amadeus-blue">
+            <input type="checkbox" className="size-4 accent-[#083078]" checked={comExperiencia} onChange={(e) => setComExperiencia(e.target.checked)} />
+            Enviar também o encarte da Experiência Amadeus (sáb 10/10, 14h)
+          </label>
+          {comExperiencia && (
+            <div className="mt-3">
+              <EscolhaEncarte valor={encarteExp} mudar={setEncarteExp} />
+              <p className="mt-2 text-xs text-muted-foreground">Os números entram na lista da Experiência e recebem o lembrete na sexta (09/10) às 9h.</p>
+            </div>
+          )}
+        </div>
+      )}
+
       <label className="mt-4 block max-w-xs text-sm font-semibold">
         {responsaveis.length ? "Outro número" : "Número (DDD + celular)"}
         <input value={outro} onChange={(e) => setOutro(e.target.value)} inputMode="tel" placeholder="84 99999-9999" className="mt-1 w-full rounded-xl border border-border px-3 py-2 font-normal outline-none focus:border-amadeus-blue" />
@@ -283,6 +311,18 @@ function EnviarWhatsApp({ responsaveis, envios, enviar, rotuloCarta, soFolder: s
           {r.detalhe && r.status === "erro" && <span className="ml-2 text-xs text-muted-foreground">{r.detalhe}</span>}
         </p>
       ))}
+      {retornoExp && (
+        <div className="mt-3 border-t border-border/60 pt-2">
+          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Experiência Amadeus</p>
+          {retornoExp.erro && <p className="mt-1 text-sm text-red-700">{retornoExp.erro}</p>}
+          {retornoExp.resultados.map((r) => (
+            <p key={r.telefone} className="mt-1 text-sm">
+              {telLegivel(r.telefone)}{" "}
+              <span className={`rounded-md px-1.5 py-0.5 text-xs font-bold ${SELO_ENVIO[r.status].classe}`}>{SELO_ENVIO[r.status].texto}</span>
+            </p>
+          ))}
+        </div>
+      )}
 
       {envios.length > 0 && (
         <div className="mt-5 border-t border-border/60 pt-3">
@@ -322,6 +362,7 @@ function FolderAvulso() {
         enviar={(destinos) =>
           enviarCarta({ alunoId: null, nome: nome.trim(), serie: "", desconto: 0, irmao: false, modo: "com", somenteFolder: true, destinos })
         }
+        experiencia={{ crianca: nome.trim(), serie: null, origem: "avulso", marcado: false }}
       />
     </div>
   );
@@ -733,6 +774,7 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                   envios={novato ? [] : envios}
                   rotuloCarta={tipo === "avista" ? "carta do pagamento à vista" : "carta com os valores"}
                   enviar={(destinos, soFolder) => enviarCarta({ ...dadosCarta!, somenteFolder: soFolder, destinos })}
+                  experiencia={{ crianca: nome, serie: serie || null, origem: novato ? "novato" : "simulador", marcado: novato }}
                 />
               </>
             ) : (
