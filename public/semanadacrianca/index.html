@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Semana da Criança · Infantil</title>
+<meta name="description" content="Programação da Semana da Criança da Educação Infantil, de 07 a 15 de outubro.">
+<meta property="og:title" content="Semana da Criança · Educação Infantil">
+<meta property="og:description" content="07 a 15 de outubro: vire as páginas e veja a programação de cada dia.">
+<meta property="og:image" content="https://www.escolaamadeus.com/semanadacrianca/banner.jpg">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="675"><meta property="og:url" content="https://www.escolaamadeus.com/semanadacrianca"><meta name="theme-color" content="#FAF7F0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
+<script src="/semanadacrianca/ilustra.js"></script>
+<style>
+  /* Feito primeiro para o celular: o livro ocupa a tela toda e vira uma página por vez. */
+  :root { --papel: #FFFDF7; --tinta: #3A4459; --mar: #083078; --gap: 12px; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { font-family: Nunito, system-ui, sans-serif; color: var(--tinta); background: #EFE8D8; overflow: hidden; -webkit-tap-highlight-color: transparent; overscroll-behavior: none; }
+  svg { display: block; width: 100%; height: 100%; }
+  .caveat { font-family: Caveat, cursive; }
+
+  .palco { height: 100svh; display: flex; flex-direction: column; align-items: center; padding: max(var(--gap), env(safe-area-inset-top)) var(--gap) 0; }
+  .livro { position: relative; flex: 1; width: 100%; max-width: 460px; max-height: 860px; perspective: 1800px; }
+  /* bloco de páginas embaixo (dá a espessura do livro) */
+  .livro::before { content: ''; position: absolute; inset: 5px -4px -6px 3px; border-radius: 6px 22px 22px 6px; background: repeating-linear-gradient(0deg, #E6DCC4 0 2px, #F3ECDB 2px 4px); box-shadow: 0 18px 36px rgba(60,40,10,.18); }
+  .folha { position: absolute; inset: 0; transform-origin: left center; transform-style: preserve-3d; transition: transform .95s cubic-bezier(.45,.05,.2,1), opacity .3s .65s; }
+  .folha.virada { transform: rotateY(-178deg); opacity: 0; }
+  .folha.volta { transition: transform .95s cubic-bezier(.45,.05,.2,1), opacity .05s; }
+  .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 6px 22px 22px 6px; background: var(--papel); overflow: hidden; }
+  .face.verso { transform: rotateY(180deg); border-radius: 22px 6px 6px 22px; background: #F6F0E2 repeating-linear-gradient(0deg, transparent 0 31px, rgba(29,79,160,.07) 31px 32px); }
+  /* dobra perto da lombada + linhas de caderno bem clarinhas */
+  .face::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(120,90,40,.16), transparent 22px); }
+  .face .sombra { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: linear-gradient(90deg, transparent 20%, rgba(0,0,0,.2)); transition: opacity .45s; }
+  .folha.virando .sombra { opacity: 1; }
+  .miolo { position: absolute; inset: 0; padding: 20px 20px 22px 26px; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; }
+  .miolo::-webkit-scrollbar { display: none; }
+  .num { position: absolute; bottom: 8px; right: 16px; font: 700 20px Caveat, cursive; color: #BBA67A; }
+
+  /* capa */
+  .capa .miolo { align-items: center; text-align: center; justify-content: safe center; }
+  .capa .band { position: absolute; left: 0; right: 0; top: 0; height: 52px; }
+  .capa .logo { height: 52px; margin-top: 30px; }
+  .capa .selo { margin-top: 8px; font-weight: 900; font-size: 12px; letter-spacing: .18em; color: var(--mar); opacity: .75; }
+  .capa h1 { margin-top: 2px; font: 700 50px/.9 Caveat, cursive; color: var(--mar); }
+  .capa h1 .grande { display: block; font-size: 84px; line-height: .85; }
+  .capa h1 .grande span { display: inline-block; animation: pula 2.6s ease-in-out infinite; }
+  @keyframes pula { 50% { transform: translateY(-5px) rotate(-3deg); } }
+  .capa .desenho { width: 100%; max-width: 360px; margin: 6px auto 0; aspect-ratio: 360/230; }
+  .capa .datas { margin-top: 6px; display: inline-block; padding: 4px 16px 6px; border-radius: 10px; background: #FFE08A; font: 700 28px Caveat, cursive; color: var(--mar); transform: rotate(-2deg); box-shadow: 0 3px 0 rgba(0,0,0,.08); }
+  .capa .intro { margin-top: 12px; font-size: 15.5px; line-height: 1.45; max-width: 330px; }
+  .virar { margin-top: 14px; font: 700 24px Caveat, cursive; color: #E0524C; animation: cutuca 1.5s ease-in-out infinite; }
+  @keyframes cutuca { 50% { transform: translateX(8px); } }
+
+  /* agenda (página 1) */
+  .agenda-p .miolo { justify-content: safe center; }
+  .agenda-p h2 { font: 700 42px/.95 Caveat, cursive; color: var(--mar); }
+  .agenda-p .sub { margin-top: 6px; font-size: 15px; }
+  .agenda { list-style: none; margin-top: 16px; display: grid; gap: 10px; }
+  .agenda li { display: grid; grid-template-columns: 64px 1fr; gap: 12px; align-items: center; cursor: pointer; }
+  .agenda .mini { width: 64px; height: 58px; border-radius: 14px; background: color-mix(in srgb, var(--c) 10%, #fff); border: 2px dashed color-mix(in srgb, var(--c) 45%, #fff); padding: 3px; }
+  .agenda b { display: block; font: 700 22px/1 Caveat, cursive; color: var(--c); }
+  .agenda span { font-weight: 800; font-size: 15px; line-height: 1.15; color: var(--mar); }
+  .agenda-p .toque { margin-top: 14px; font-size: 13px; opacity: .7; }
+
+  /* página do dia */
+  .dia .miolo { justify-content: safe center; }
+  .dia .data { align-self: flex-start; font: 700 25px/1 Caveat, cursive; color: #fff; background: var(--c); padding: 5px 14px 7px; border-radius: 4px 14px 14px 4px; margin-left: -26px; padding-left: 26px; box-shadow: 0 3px 0 rgba(0,0,0,.1); }
+  .dia .desenho { width: 100%; max-width: 250px; aspect-ratio: 220/200; margin: 4px auto 0; flex: none; }
+  .dia h2 { font: 700 44px/.92 Caveat, cursive; color: var(--mar); }
+  .dia .sub { font: 700 24px/1 Caveat, cursive; color: var(--c); margin-top: 2px; }
+  .dia p { margin-top: 10px; font-size: 15.5px; line-height: 1.5; }
+  .dia p b { color: var(--mar); }
+  /* bilhetinho colado (o que levar) */
+  .bilhete { position: relative; margin: 14px 4px 0; padding: 12px 14px 12px; background: #FFF1A8; transform: rotate(-1.2deg); box-shadow: 0 6px 14px rgba(80,60,0,.12); font-size: 15px; line-height: 1.4; }
+  .bilhete::before { content: ''; position: absolute; left: 50%; top: -9px; width: 70px; height: 18px; margin-left: -35px; background: rgba(255,255,255,.65); transform: rotate(2deg); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  .bilhete strong { font: 700 23px/1 Caveat, cursive; color: #C2410C; display: block; margin-bottom: 2px; }
+  .bilhete b { color: var(--mar); }
+  .mais { margin-top: 16px; padding: 12px 14px; border-radius: 16px; border: 2px dashed #E86FA6; background: #FFF0F6; font-size: 15px; line-height: 1.45; }
+  .mais strong { display: block; font: 700 28px/1 Caveat, cursive; color: #D2477F; margin-bottom: 4px; }
+  .mais b { color: var(--mar); }
+  .mais .cofre { float: right; width: 84px; height: 76px; margin: -8px -4px 0 6px; }
+
+  /* fim */
+  .fim .miolo { align-items: center; justify-content: safe center; text-align: center; }
+  .fim .desenho { width: 88%; max-width: 300px; aspect-ratio: 220/140; }
+  .fim h2 { margin-top: 8px; font: 700 50px/.9 Caveat, cursive; color: var(--mar); }
+  .fim h2 span { color: #E86FA6; }
+  .fim p { margin-top: 12px; font-size: 15.5px; line-height: 1.5; max-width: 320px; }
+  .fim .logo { height: 50px; margin-top: 18px; }
+  .fim .voltar { margin-top: 14px; border: 0; cursor: pointer; font: 700 22px Caveat, cursive; padding: 6px 18px; border-radius: 99px; background: #EEF3FF; color: var(--mar); }
+
+  /* navegação: grande e no alcance do polegar */
+  .nav { flex: none; width: 100%; max-width: 460px; display: flex; align-items: center; justify-content: space-between; padding: 12px 4px max(12px, env(safe-area-inset-bottom)); }
+  .nav button { width: 56px; height: 56px; border-radius: 50%; border: 0; cursor: pointer; background: #fff; color: var(--mar); font-size: 28px; font-weight: 900; box-shadow: 0 6px 14px rgba(60,40,10,.16); transition: transform .15s, opacity .2s; }
+  .nav button:active { transform: scale(.9); }
+  .nav button:disabled { opacity: .3; }
+  .bolinhas { display: flex; gap: 7px; }
+  .bolinhas i { width: 9px; height: 9px; border-radius: 99px; background: rgba(8,48,120,.2); transition: all .3s; }
+  .bolinhas i.on { width: 24px; background: #E86FA6; }
+
+  /* telas baixinhas (celular pequeno) */
+  @media (max-height: 700px) {
+    .dia .desenho { max-width: 180px; } .dia h2 { font-size: 38px; } .dia p { font-size: 14.5px; }
+    .capa .desenho { max-width: 280px; } .capa h1 .grande { font-size: 70px; } .capa .intro { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { .folha { transition-duration: .01s !important; } .capa h1 .grande span, .virar { animation: none; } }
+</style>
+</head>
+<body>
+  <main class="palco">
+    <div class="livro" id="livro"></div>
+    <nav class="nav">
+      <button id="ant" aria-label="Página anterior">‹</button>
+      <div class="bolinhas" id="bol"></div>
+      <button id="prox" aria-label="Próxima página">›</button>
+    </nav>
+  </main>
+
+<script>
+  document.head.insertAdjacentHTML('beforeend', `<style>${ILU.css}</style>`);
+  const C = ILU.C;
+  const $ = id => document.getElementById(id);
+
+  const DIAS = [
+    { cor: C.rox, data: 'Quarta, 07/10', ilu: 'caixa', t: 'Brinquedo não estruturado', sub: 'imaginação solta!',
+      p: 'A caixa vira casinha, o pote vira tambor, o rolinho vira telefone… <b>Qualquer objeto pode virar uma grande brincadeira!</b>',
+      bilhete: ['Não esqueça!', 'Um objeto <b>identificado com o nome</b>: caixa de papelão, potes, rolinhos, tampinhas, tecidos, colher de pau, tubos…'] },
+    { cor: C.ver, data: 'Quinta, 08/10', ilu: 'cinema', t: 'Cineminha na escola', sub: 'luzes, câmera… ação!',
+      p: 'Uma sessão especial de cinema, com direito a escurinho e muita emoção.',
+      bilhete: ['Não esqueça!', 'A <b>pipoquinha</b>! 🍿'] },
+    { cor: C.ros, data: 'Sexta, 09/10', ilu: 'fantasia', t: 'Baile à fantasia', sub: 'hoje eu sou quem eu quiser!',
+      p: 'Hora de escolher a fantasia, soltar a imaginação e virar o personagem preferido.',
+      bilhete: ['Venha…', '<b>fantasiado</b>, do jeitinho que escolher!'],
+      mais: 'Dia do <b>Projeto de Educação Financeira</b>: cada criança, com a família, abre o <b>cofrinho</b> e compra o seu sonho de curto prazo.<br>📸 Gravem esse momento e <b>marquem a escola no Instagram</b>!' },
+    { cor: C.verde, data: 'Quarta, 14/10', ilu: 'presente', t: 'Culminância da Educação Financeira', sub: 'o sonho realizado!',
+      p: 'Chegou o grande dia de compartilhar as conquistas com os colegas.',
+      bilhete: ['Não esqueça!', 'O <b>brinquedo escolhido</b> com o cofrinho, para mostrar e contar como foi.'] },
+    { cor: C.lar, data: 'Quinta, 15/10', ilu: 'parque', t: 'Passeio ao Viva Park', sub: 'partiu parque!',
+      p: 'Para as crianças que aderiram ao ingresso, chegou o dia de aproveitar esse passeio superespecial!' },
+  ];
+
+  const cores = [C.ver, C.lar, C.ama, C.verde, C.azul, C.rox, C.ros];
+  const paginas = [];
+  paginas.push(`<div class="face capa"><div class="band">${ILU.bandeirinhas(460, 52, 10)}</div><div class="sombra"></div><div class="miolo">
+      <img class="logo" src="/semanadacrianca/logo-amadeus.png" alt="Escola Amadeus">
+      <div class="selo">EDUCAÇÃO INFANTIL</div>
+      <h1>Semana da<span class="grande">${[...'Criança'].map((l, i) => `<span style="color:${cores[i]};animation-delay:${i * .12}s">${l}</span>`).join('')}</span></h1>
+      <div class="desenho">${ILU.capa()}</div>
+      <div class="datas">07 a 15 de outubro</div>
+      <p class="intro">Mamãe e papai, preparem a criançada! Uma programação cheia de brincadeiras, descobertas e muita diversão.</p>
+      <div class="virar">vire a página →</div></div></div>`);
+  paginas.push(`<div class="face agenda-p"><div class="sombra"></div><div class="miolo">
+      <h2>Anote na agenda da família</h2>
+      <p class="sub">Uma surpresa diferente a cada dia:</p>
+      <ul class="agenda">${DIAS.map((d, i) => `<li data-ir="${i + 2}" style="--c:${d.cor}"><div class="mini">${ILU[d.ilu]()}</div><div><b>${d.data}</b><span>${d.t}</span></div></li>`).join('')}</ul>
+      <p class="toque">Toque num dia para ir direto a ele.</p>
+      <div class="num">1</div></div></div>`);
+  DIAS.forEach((d, i) => paginas.push(`<div class="face dia" style="--c:${d.cor}"><div class="sombra"></div><div class="miolo">
+      <div class="data">${d.data}</div>
+      <div class="desenho">${ILU[d.ilu]()}</div>
+      <h2>${d.t}</h2><div class="sub">${d.sub}</div>
+      <p>${d.p}</p>
+      ${d.bilhete ? `<div class="bilhete"><strong>${d.bilhete[0]}</strong>${d.bilhete[1]}</div>` : ''}
+      ${d.mais ? `<div class="mais"><div class="cofre">${ILU.cofrinho()}</div><strong>E tem mais!</strong>${d.mais}</div>` : ''}
+      <div class="num">${i + 2}</div></div></div>`));
+  paginas.push(`<div class="face fim"><div class="sombra"></div><div class="miolo">
+      <div class="desenho">${ILU.arco()}</div>
+      <h2>Que venha a nossa <span>Semana da Criança!</span></h2>
+      <p>Uma semana recheada de brincadeiras, fantasia, cinema, descobertas e muitos momentos para guardar no coração. 💛</p>
+      <img class="logo" src="/semanadacrianca/logo-amadeus.png" alt="Escola Amadeus">
+      <button class="voltar" id="volta">↺ ler de novo</button></div></div>`);
+
+  const livro = $('livro');
+  livro.innerHTML = paginas.map(p => `<div class="folha">${p}<div class="face verso"></div></div>`).join('');
+  const els = [...livro.querySelectorAll('.folha')];
+  const N = els.length;
+  $('bol').innerHTML = els.map(() => '<i></i>').join('');
+  let atual = 0;
+
+  // os desenhos da página que aparece se desenham de novo
+  function desenhar(i) {
+    els[i].querySelectorAll('svg.giz').forEach(s => { s.classList.remove('anima'); void s.getBoundingClientRect(); s.classList.add('anima'); });
+  }
+  function pintar() {
+    els.forEach((el, i) => { el.classList.toggle('virada', i < atual); el.style.zIndex = i < atual ? i + 1 : N - i + 10; });
+    [...$('bol').children].forEach((b, i) => b.classList.toggle('on', i === atual));
+    $('ant').disabled = atual === 0; $('prox').disabled = atual === N - 1;
+  }
+  let ocupado = false;
+  function ir(novo) {
+    novo = Math.max(0, Math.min(N - 1, novo));
+    if (novo === atual || ocupado) return;
+    ocupado = true;
+    const indo = novo > atual;
+    const el = els[indo ? atual : novo];
+    el.style.zIndex = 100;
+    el.classList.add('virando'); el.classList.toggle('volta', !indo);
+    atual = novo;
+    desenhar(atual);
+    requestAnimationFrame(() => {
+      els.forEach((e, i) => { if (e !== el) { e.classList.toggle('virada', i < atual); e.style.zIndex = i < atual ? i + 1 : N - i + 10; } });
+      el.classList.toggle('virada', indo);
+      [...$('bol').children].forEach((b, i) => b.classList.toggle('on', i === atual));
+      $('ant').disabled = atual === 0; $('prox').disabled = atual === N - 1;
+    });
+    setTimeout(() => { el.classList.remove('virando', 'volta'); pintar(); ocupado = false; }, 980);
+  }
+  $('prox').onclick = () => ir(atual + 1);
+  $('ant').onclick = () => ir(atual - 1);
+  $('volta').onclick = e => { e.stopPropagation(); ir(0); };
+  livro.querySelectorAll('[data-ir]').forEach(li => li.onclick = e => { e.stopPropagation(); ir(+li.dataset.ir); });
+  addEventListener('keydown', e => { if (['ArrowRight', 'PageDown', ' '].includes(e.key)) ir(atual + 1); if (['ArrowLeft', 'PageUp'].includes(e.key)) ir(atual - 1); });
+  // arrastar o dedo para o lado vira a página; tocar na borda direita/esquerda também
+  let x0 = null, y0 = 0;
+  livro.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  livro.addEventListener('touchend', e => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.2) ir(atual + (dx < 0 ? 1 : -1));
+  });
+  livro.addEventListener('click', e => {
+    if (e.target.closest('button,[data-ir]')) return;
+    const r = livro.getBoundingClientRect(), x = e.clientX - r.left;
+    if (x > r.width * .75) ir(atual + 1); else if (x < r.width * .18) ir(atual - 1);
+  });
+  // ?p=N abre direto numa página (usado nas imagens de conferência)
+  const qp = +new URLSearchParams(location.search).get('p');
+  if (qp) atual = Math.min(N - 1, qp);
+  pintar(); desenhar(atual);
+</script>
+</body>
+</html>

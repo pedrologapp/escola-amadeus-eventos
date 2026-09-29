@@ -13,6 +13,10 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "4mb",
     },
   },
+  // Páginas estáticas em public/ com endereço curto (sem o /index.html).
+  async rewrites() {
+    return [{ source: "/semanadacrianca", destination: "/semanadacrianca/index.html" }];
+  },
   images: {
     remotePatterns: [
       {
