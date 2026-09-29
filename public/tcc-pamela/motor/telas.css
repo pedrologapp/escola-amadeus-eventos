@@ -1,0 +1,67 @@
+/* Peças de tela usadas pelas duas versões (capa, chips, citações, quadros…). */
+  /* capa */
+  .capa .pad { justify-content: center; }
+  .capa .tit { max-width: 58cqw; font: 650 3.5cqw/1.1 var(--serif); letter-spacing: -.02em; }
+  .capa .sub { margin-top: 1.4cqw; font: 700 3.4cqw/1 var(--mao); color: var(--lar-1); }
+  .capa .quem { margin-top: 3.2cqw; font: 650 2.1cqw/1.2 var(--serif); }
+  .capa .banca { margin-top: 1.4cqw; display: grid; gap: .4cqw; font: 400 1.4cqw/1.4 var(--sans); color: var(--creme-2); }
+  .capa .rodape { position: absolute; left: 6.5cqw; bottom: 4.5cqw; right: 6.5cqw; display: flex; justify-content: space-between; gap: 3cqw; }
+  .capa .rodape span:last-child { white-space: nowrap; }
+  .cena { position: absolute; right: 5.5cqw; top: 14cqw; width: 27cqw; height: 27cqw; }
+  .cena .anel { position: absolute; inset: 0; }
+  .cena .anel circle { stroke: rgba(233, 113, 50, .55); stroke-width: .35; fill: none; }
+  .cena .orb { fill: none; stroke: rgba(59, 180, 234, .35); stroke-width: .25; stroke-dasharray: .6 2; transform-origin: 50px 50px; animation: gira 70s linear infinite; }
+  @keyframes gira { to { transform: rotate(360deg); } }
+  .cena .i1 { position: absolute; left: 32%; top: 30%; width: 36%; height: 36%; }
+  .cena .i2 { position: absolute; left: 4%; top: 6%; width: 20%; height: 20%; }
+  .cena .i3 { position: absolute; right: 2%; top: 12%; width: 18%; height: 18%; }
+  .cena .i4 { position: absolute; left: 8%; bottom: 8%; width: 18%; height: 18%; }
+  .cena .i5 { position: absolute; right: 8%; bottom: 4%; width: 19%; height: 19%; }
+  .flutua { animation: flut 6s ease-in-out infinite alternate; }
+  @keyframes flut { to { transform: translateY(-1.2cqw); } }
+
+  /* chips de palavras */
+  .chips { display: flex; flex-wrap: wrap; gap: 1cqw; }
+  .chip { display: inline-flex; align-items: center; gap: .8cqw; padding: .9cqw 1.5cqw; border-radius: 99cqw; background: rgba(18, 52, 90, .9); border: 1px solid rgba(255, 255, 255, .08);
+    font: 600 1.55cqw/1 var(--sans); color: var(--creme); }
+  .chip svg { width: 2.2cqw; height: 2cqw; }
+  .chip.lar { background: rgba(233, 113, 50, .18); border-color: rgba(233, 113, 50, .6); }
+  .chips.grandes .chip { font: 650 2.2cqw/1 var(--serif); padding: 1.2cqw 2.2cqw; }
+
+  /* bloco de citação de autor */
+  .autor { border-left: .3cqw solid var(--lar); padding: .2cqw 0 .2cqw 1.4cqw; }
+  .autor p { font: 400 1.55cqw/1.45 var(--sans); color: var(--creme-2); }
+  .autor .cita { display: block; margin-bottom: .5cqw; }
+
+  .duas { display: grid; grid-template-columns: 1fr 1fr; gap: 3cqw; }
+  .col-ico { display: grid; grid-template-columns: 6cqw 1fr; gap: 1.6cqw; align-items: start; }
+  .col-ico > svg { width: 6cqw; height: 5.5cqw; }
+
+  /* pergunta de pesquisa */
+  .pergunta .h-m { max-width: 76cqw; font-size: 2.7cqw; }
+  .aspas { font: 700 12cqw/0 var(--serif); color: var(--lar); opacity: .35; height: 4cqw; }
+
+  /* objetivos */
+  .obj-geral { background: linear-gradient(120deg, rgba(233, 113, 50, .22), rgba(18, 52, 90, .6)); border: 1px solid rgba(233, 113, 50, .5); border-radius: 1.4cqw; padding: 1.6cqw 2cqw;
+    font: 500 1.7cqw/1.45 var(--sans); color: var(--creme); }
+
+  /* cadeia de setas (interdependência) */
+  .cadeia { display: flex; align-items: center; gap: 1cqw; }
+  .cadeia .elo { flex: 1; padding: 1.2cqw 1.4cqw; border-radius: 1.2cqw; background: rgba(18, 52, 90, .9); border: 1px solid rgba(255, 255, 255, .08); font: 500 1.45cqw/1.35 var(--sans); color: var(--creme); text-align: center; }
+  .cadeia .elo.fim { border-color: rgba(233, 113, 50, .7); background: rgba(233, 113, 50, .16); }
+  .cadeia svg { width: 3cqw; height: 2.6cqw; flex: none; }
+
+  /* troca de frases no mesmo lugar */
+  .swap { display: grid; }
+  .swap > * { grid-area: 1 / 1; }
+  .riscada { position: relative; }
+  .riscada::after { content: ''; position: absolute; left: -1%; right: -1%; top: 52%; height: .3cqw; background: var(--lar); transform: scaleX(0); transform-origin: left; transition: transform .9s var(--ease); }
+  .s[data-at="1"] .riscada::after, .s[data-at="2"] .riscada::after { transform: scaleX(1); }
+
+  /* referências */
+  .refs { columns: 2; column-gap: 3cqw; font: 400 1.12cqw/1.45 var(--sans); color: var(--creme-2); }
+  .refs p { break-inside: avoid; margin-bottom: .8cqw; padding-left: 1.6cqw; text-indent: -1.6cqw; }
+  .refs b { color: var(--creme); font-weight: 650; }
+
+  /* obrigada */
+  .fim .h-xl { font-size: 7cqw; }

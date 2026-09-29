@@ -1,0 +1,156 @@
+/* Motor das apresentações (16:9, para compartilhar a tela no Meet/Zoom).
+   Mesma ideia da skill apresentacao-imersiva: cada .s é uma tela, cada .r
+   aparece no passo data-step, textos com data-split sobem palavra por palavra
+   e traços .draw se desenham. Tudo medido em cqw (1cqw = 1% da largura do palco). */
+
+@font-face { font-family: Fraunces; src: url(fonts/fraunces.woff2) format('woff2'); font-weight: 100 900; font-display: block; }
+@font-face { font-family: Fraunces; src: url(fonts/fraunces-italic.woff2) format('woff2'); font-weight: 100 900; font-style: italic; font-display: block; }
+@font-face { font-family: Caveat; src: url(fonts/caveat.woff2) format('woff2'); font-weight: 400 700; font-display: block; }
+
+:root {
+  --bg: #081A30;          /* fundo (azul-marinho mais fundo) */
+  --marinho: #0E2841;     /* azul-marinho do documento */
+  --painel: #12345A;      /* cartões */
+  --lar: #E97132;         /* laranja do documento: destaque */
+  --lar-1: #F4A06A;       /* laranja claro */
+  --ciano: #3BB4EA;       /* azul claro de apoio (derivado do #0F9ED5, mais claro p/ contraste) */
+  --verde: #6CC24A;
+  --creme: #F7F3EC;
+  --creme-2: rgba(247, 243, 236, .78);
+  --creme-3: rgba(247, 243, 236, .45);
+  --serif: Fraunces, Georgia, serif;
+  --sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mao: Caveat, cursive;
+  --ease: cubic-bezier(.2, .8, .2, 1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-snap-type: y mandatory; overflow-y: scroll; scrollbar-width: none; }
+html::-webkit-scrollbar { display: none; }
+body { background: var(--bg); color: var(--creme); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+body.idle { cursor: none; }
+
+/* fundo vivo: manchas de luz que andam devagar + grão */
+#bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+#bg i { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .5; }
+#bg .b1 { width: 70vmax; height: 70vmax; left: -22vmax; top: -30vmax; background: #123A66; animation: drift1 26s ease-in-out infinite alternate; }
+#bg .b2 { width: 55vmax; height: 55vmax; right: -20vmax; bottom: -25vmax; background: #0B2A4E; animation: drift2 32s ease-in-out infinite alternate; }
+#bg .b3 { width: 34vmax; height: 34vmax; left: 48%; top: 50%; background: rgba(233, 113, 50, .16); animation: drift1 40s ease-in-out infinite alternate-reverse; }
+@keyframes drift1 { to { transform: translate(8vmax, 6vmax) scale(1.08); } }
+@keyframes drift2 { to { transform: translate(-7vmax, -5vmax) scale(1.1); } }
+#bg canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* telas */
+.s { position: relative; z-index: 1; height: 100vh; height: 100svh; scroll-snap-align: start; scroll-snap-stop: always;
+  display: flex; align-items: center; justify-content: center; }
+.stage { position: relative; width: min(100vw, 100svh * 16 / 9); aspect-ratio: 16 / 9; container-type: inline-size; overflow: hidden; }
+.pad { position: absolute; inset: 5.5cqw 6.5cqw; display: flex; flex-direction: column; }
+
+/* rótulo do topo com fio laranja que se desenha */
+.kicker { display: flex; align-items: center; gap: 1.2cqw; font: 700 1.25cqw/1 var(--sans); letter-spacing: .2em; text-transform: uppercase; color: var(--lar-1); }
+.kicker::before { content: ''; width: 4cqw; height: .22cqw; background: var(--lar); border-radius: 1cqw; transform: scaleX(0); transform-origin: left; transition: transform 1s var(--ease); }
+.kicker.in::before { transform: scaleX(1); }
+.kicker .n { color: var(--creme-3); }
+
+/* tipos de texto */
+.h-xl { font: 700 5.6cqw/1.02 var(--serif); letter-spacing: -.03em; }
+.h-l  { font: 650 3.9cqw/1.08 var(--serif); letter-spacing: -.025em; }
+.h-m  { font: 500 2.7cqw/1.18 var(--serif); letter-spacing: -.015em; }
+.body { font: 400 1.75cqw/1.45 var(--sans); color: var(--creme-2); }
+.body-s { font: 400 1.5cqw/1.45 var(--sans); color: var(--creme-2); }
+.small { font: 700 1.15cqw/1.3 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--creme-3); }
+.mao { font: 700 2.6cqw/1.1 var(--mao); color: var(--lar-1); }
+em.lar, .lar { color: var(--lar); font-style: italic; }
+.ciano { color: var(--ciano); }
+b, strong { color: var(--creme); font-weight: 650; }
+.cita { font: 600 1.25cqw/1 var(--sans); color: var(--ciano); letter-spacing: .02em; white-space: nowrap; }
+.mt1 { margin-top: 1.2cqw; } .mt2 { margin-top: 2.4cqw; } .mt3 { margin-top: 3.6cqw; } .mta { margin-top: auto; }
+
+/* passos */
+.r { transition: opacity .8s var(--ease) var(--d, 0s), transform .9s var(--ease) var(--d, 0s), filter .8s var(--ease) var(--d, 0s); }
+.r.fade { opacity: 0; transform: translateY(1.6cqw); filter: blur(8px); }
+.r.fade.in { opacity: 1; transform: none; filter: none; }
+.r.pop { opacity: 0; transform: scale(.85); }
+.r.pop.in { opacity: 1; transform: none; }
+.r.dim.in.apaga { opacity: .35; }
+.w { display: inline-block; overflow: hidden; vertical-align: top; padding: 0 .07em .14em 0; margin: 0 -.07em -.14em 0; }
+.w > span { display: inline-block; transform: translateY(115%) rotate(3deg); opacity: 0;
+  transition: transform .9s var(--ease), opacity .6s ease; transition-delay: calc(var(--d, 0s) + var(--i) * 55ms); }
+.r.in .w > span { transform: none; opacity: 1; }
+
+/* traço que se desenha */
+.draw { fill: none; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1.6s var(--ease) var(--d, 0s); }
+.r.in .draw { stroke-dashoffset: 0; }
+svg.ic { width: 100%; height: 100%; overflow: visible; stroke: var(--lar); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+svg.ic .c2 { stroke: var(--ciano); }
+svg.ic .c3 { stroke: var(--creme-2); }
+
+/* grades e cartões */
+.grid { display: grid; gap: 1.6cqw; }
+.g2 { grid-template-columns: 1fr 1fr; } .g3 { grid-template-columns: repeat(3, 1fr); } .g4 { grid-template-columns: repeat(4, 1fr); } .g5 { grid-template-columns: repeat(5, 1fr); } .g6 { grid-template-columns: repeat(3, 1fr); }
+.card { position: relative; background: linear-gradient(160deg, rgba(18, 52, 90, .92), rgba(14, 40, 65, .92)); border: 1px solid rgba(255, 255, 255, .07);
+  border-radius: 1.4cqw; padding: 1.8cqw 1.9cqw; box-shadow: 0 1.4cqw 3cqw rgba(0, 0, 0, .28); }
+.card .ico { width: 4.4cqw; height: 4cqw; margin-bottom: 1cqw; }
+.card h3 { font: 650 1.9cqw/1.15 var(--serif); color: var(--creme); }
+.card p { margin-top: .7cqw; font: 400 1.42cqw/1.42 var(--sans); color: var(--creme-2); }
+.card .tag { display: inline-block; margin-top: 1cqw; font: 700 1cqw/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--lar-1); }
+.card.lar { border-color: rgba(233, 113, 50, .55); background: linear-gradient(160deg, rgba(233, 113, 50, .2), rgba(14, 40, 65, .92)); }
+.num { font: 700 3.2cqw/1 var(--serif); color: var(--lar); }
+
+/* lista com marcador */
+.lista { list-style: none; display: grid; gap: 1.1cqw; }
+.lista li { display: block; position: relative; padding-left: 3.2cqw; font: 400 1.7cqw/1.4 var(--sans); color: var(--creme-2); }
+.lista li::before { content: ''; position: absolute; left: .7cqw; top: .65cqw; width: 1cqw; height: 1cqw; border-radius: 50%; border: .25cqw solid var(--lar); }
+.lista.num-l { counter-reset: n; }
+.lista.num-l li::before { counter-increment: n; content: counter(n); left: 0; top: .1cqw; width: 2.2cqw; height: 2.2cqw; border: none; background: var(--lar); color: #fff;
+  display: grid; place-items: center; font: 700 1.2cqw/1 var(--sans); }
+
+/* frase de impacto centralizada */
+.centro { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 10cqw; }
+.halo { position: absolute; width: 60cqw; height: 60cqw; border-radius: 50%; background: radial-gradient(circle, rgba(233, 113, 50, .16), transparent 60%); pointer-events: none; }
+.uline { display: block; height: .3cqw; width: 12cqw; margin: 2.2cqw auto 0; background: var(--lar); border-radius: 1cqw; transform: scaleX(0); transition: transform 1.2s var(--ease) var(--d, .6s); }
+.uline.in { transform: scaleX(1); }
+
+/* linha do tempo horizontal */
+.tl { position: relative; display: grid; gap: 1.5cqw; padding-top: 3.2cqw; }
+.tl::before { content: ''; position: absolute; left: 0; right: 0; top: 1cqw; height: .2cqw; background: rgba(255, 255, 255, .15); }
+.tl .linha { position: absolute; left: 0; top: 1cqw; height: .2cqw; width: 100%; background: var(--lar); transform: scaleX(0); transform-origin: left; transition: transform 2.2s var(--ease) var(--d, 0s); }
+.tl .linha.in { transform: scaleX(1); }
+.tl .mk { position: relative; }
+.tl .mk::before { content: ''; position: absolute; top: -2.9cqw; left: 0; width: 1.6cqw; height: 1.6cqw; border-radius: 50%; background: var(--bg); border: .3cqw solid var(--lar); }
+.tl .ano { font: 700 2.4cqw/1 var(--serif); color: var(--lar); }
+.tl .mk h4 { margin-top: .6cqw; font: 650 1.55cqw/1.2 var(--sans); color: var(--creme); }
+.tl .mk p { margin-top: .4cqw; font: 400 1.35cqw/1.4 var(--sans); color: var(--creme-2); }
+
+/* quadro (tabela) que monta linha por linha */
+.quadro { display: grid; gap: .5cqw; }
+.quadro .lh, .quadro .ln { display: grid; gap: 1.2cqw; padding: .9cqw 1.4cqw; border-radius: .9cqw; align-items: center; }
+.quadro .lh { font: 700 1.05cqw/1.2 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--lar-1); }
+.quadro .ln { background: rgba(18, 52, 90, .8); border: 1px solid rgba(255, 255, 255, .06); font: 400 1.38cqw/1.35 var(--sans); color: var(--creme-2); }
+.quadro .ln b { font: 650 1.45cqw/1.25 var(--sans); color: var(--creme); display: flex; align-items: center; gap: .9cqw; }
+.quadro .ln b svg { width: 2.6cqw; height: 2.4cqw; flex: none; }
+.quadro .fonte { margin-top: .6cqw; font: 400 1.05cqw/1 var(--sans); color: var(--creme-3); }
+
+/* duas colunas contrastadas */
+.versus { display: grid; grid-template-columns: 1fr auto 1fr; gap: 2cqw; align-items: stretch; }
+.versus .vs { align-self: center; font: italic 700 2.4cqw/1 var(--serif); color: var(--lar); }
+
+/* seta que se desenha entre duas coisas */
+.seta { width: 5cqw; height: 2.4cqw; }
+
+/* selo da citação no canto */
+.fonte-canto { position: absolute; right: 6.5cqw; bottom: 3.2cqw; font: 400 1.05cqw/1 var(--sans); color: var(--creme-3); }
+
+/* barra de progresso e dica */
+#prog { position: fixed; left: 0; bottom: 0; height: 3px; background: var(--lar); z-index: 20; width: 0; transition: width .6s var(--ease); }
+#hint { position: fixed; right: 16px; bottom: 12px; z-index: 20; font: 600 12px/1 var(--sans); color: var(--creme-3); letter-spacing: .08em; transition: opacity .6s; }
+body.idle #hint, body.limpo #hint, body.limpo #prog { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* bolinhas de marcação: uma por tela, a atual em laranja (clique leva à tela) */
+#dots { position: fixed; right: 14px; top: 50%; transform: translateY(-50%); z-index: 20; display: flex; flex-direction: column; gap: 7px; transition: opacity .6s; }
+#dots button { width: 7px; height: 7px; padding: 0; border: 0; border-radius: 50%; background: rgba(247, 243, 236, .28); cursor: pointer; transition: background .4s, transform .4s; }
+#dots button:hover { background: rgba(247, 243, 236, .6); }
+#dots button.on { background: var(--lar); transform: scale(1.6); }
+body.limpo #dots { opacity: 0; }
