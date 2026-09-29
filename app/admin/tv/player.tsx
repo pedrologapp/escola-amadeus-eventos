@@ -308,7 +308,8 @@ const CLASSE: Record<string, string> = {
   fim: "cena-fim",
 };
 
-export function PlayerTv({ roteiro, previa, congelada = null }: { roteiro: RoteiroTv; previa: boolean; congelada?: { cena: number; t: number } | null }) {
+/** embutida: dentro de uma caixa numa página (o portal); clicar abre em tela cheia. */
+export function PlayerTv({ roteiro, previa, congelada = null, embutida = false }: { roteiro: RoteiroTv; previa: boolean; congelada?: { cena: number; t: number } | null; embutida?: boolean }) {
   const router = useRouter();
   const cenas = roteiro.cenas;
   // congelada (?cena=3&t=5): para na cena 3 no segundo 5, para conferir
@@ -318,15 +319,20 @@ export function PlayerTv({ roteiro, previa, congelada = null }: { roteiro: Rotei
   const [escala, setEscala] = useState(0);
   const [cheia, setCheia] = useState(false);
   const inicio = useRef(0);
+  const raiz = useRef<HTMLDivElement>(null);
   const barra = useRef<HTMLDivElement>(null);
   const total = useMemo(() => cenas.reduce((s, c) => s + c.segundos, 0), [cenas]);
   const antes = useMemo(() => cenas.slice(0, atual).reduce((s, c) => s + c.segundos, 0), [cenas, atual]);
 
+  // o palco de 1920x1080 encolhe para caber na tela (ou na caixa, quando embutida)
   useLayoutEffect(() => {
-    const ajusta = () => setEscala(Math.min(window.innerWidth / 1920, window.innerHeight / 1080));
+    const el = raiz.current;
+    if (!el) return;
+    const ajusta = () => setEscala(Math.min(el.clientWidth / 1920, el.clientHeight / 1080));
     ajusta();
-    window.addEventListener("resize", ajusta);
-    return () => window.removeEventListener("resize", ajusta);
+    const ro = new ResizeObserver(ajusta);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
 
   useEffect(() => {
@@ -373,10 +379,12 @@ export function PlayerTv({ roteiro, previa, congelada = null }: { roteiro: Rotei
 
   return (
     <div
-      className={`tv-tela ${cheia ? "cheia" : ""} ${previa ? "previa" : ""}`}
+      ref={raiz}
+      className={`tv-tela ${cheia ? "cheia" : ""} ${previa ? "previa" : ""} ${embutida ? "embutida" : ""}`}
       onClick={() => {
         if (previa) return;
-        document.documentElement.requestFullscreen?.().then(() => setCheia(true)).catch(() => null);
+        const alvo = embutida ? raiz.current : document.documentElement;
+        alvo?.requestFullscreen?.().then(() => setCheia(!embutida)).catch(() => null);
       }}
     >
       {escala > 0 && (

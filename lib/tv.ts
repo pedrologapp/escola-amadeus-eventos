@@ -42,7 +42,7 @@ export const BLOCOS: Record<string, { nome: string; origem: string; equipe?: Tip
 };
 
 /** Prazo da matrícula antecipada (o mesmo do folder: 30 de outubro). */
-const PRAZO_PROMO = "2026-10-30";
+export const PRAZO_PROMO = "2026-10-30";
 
 export interface ItemTv {
   id: string;
@@ -84,11 +84,11 @@ export interface RoteiroTv {
 
 export const hojeLocal = () => new Date().toLocaleDateString("en-CA", { timeZone: FUSO });
 
-function valeHoje(i: ItemTv, hoje: string) {
+export function valeHoje(i: ItemTv, hoje: string) {
   return i.ativo && (!i.inicio || i.inicio <= hoje) && (!i.fim || i.fim >= hoje);
 }
 
-function somaDias(iso: string, n: number) {
+export function somaDias(iso: string, n: number) {
   const d = new Date(`${iso}T12:00:00Z`);
   d.setUTCDate(d.getUTCDate() + n);
   return d.toISOString().slice(0, 10);
@@ -172,6 +172,19 @@ export function roteiroDoDia(): Promise<RoteiroTv> {
 
 export const ETIQUETA_TV = "tv";
 
+/** Segunda a sexta da semana de hoje (no fim de semana, a semana que vem). */
+export function diasDaSemana(hoje: string) {
+  const semana = new Date(`${hoje}T12:00:00Z`).getUTCDay();
+  const segunda = somaDias(hoje, semana === 0 ? 1 : semana === 6 ? 2 : 1 - semana);
+  return [0, 1, 2, 3, 4].map((n) => somaDias(segunda, n));
+}
+
+/** A TV do site público: a mesma do dia, sem nome de aluno (tira os aniversariantes). */
+export async function roteiroPublico(): Promise<RoteiroTv> {
+  const r = await roteiroDoDia();
+  return { ...r, cenas: r.cenas.filter((c) => c.id !== "aniversariantes") };
+}
+
 /** Monta as cenas do dia. */
 async function montarRoteiro(hoje: string): Promise<RoteiroTv> {
   const { itens, blocos } = await lerItensEBlocos();
@@ -188,10 +201,7 @@ async function montarRoteiro(hoje: string): Promise<RoteiroTv> {
   const comemoracao = itens.find((i) => i.tipo === "comemoracao" && i.ativo && i.data?.slice(5) === mmdd) ?? null;
   const gira = (lista: ItemTv[]) => (lista.length ? lista[diaDoAno(hoje) % lista.length] : null);
 
-  // agenda: segunda a sexta desta semana
-  const semana = new Date(`${hoje}T12:00:00Z`).getUTCDay();
-  const segunda = somaDias(hoje, semana === 0 ? 1 : semana === 6 ? 2 : 1 - semana);
-  const diasSemana = [0, 1, 2, 3, 4].map((n) => somaDias(segunda, n));
+  const diasSemana = diasDaSemana(hoje);
   const agenda = itens.filter((i) => i.tipo === "agenda" && i.ativo && i.data && diasSemana.includes(i.data));
 
   const cenas: Cena[] = [];

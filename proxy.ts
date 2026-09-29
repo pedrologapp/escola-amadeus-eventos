@@ -32,6 +32,14 @@ export async function proxy(request: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
+  // Domínio principal (escolaamadeus.com / www) → Portal da Família na raiz.
+  // O resto dos caminhos (eventos, folder…) funciona igual em qualquer domínio.
+  if ((host === "escolaamadeus.com" || host === "www.escolaamadeus.com") && pathname === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/familia";
+    return NextResponse.rewrite(url);
+  }
+
   // Em produção, /admin/* só via subdomínio
   if (!isAdminSubdomain && isAdminPath && !isDev) {
     return new NextResponse("Página não encontrada", { status: 404 });

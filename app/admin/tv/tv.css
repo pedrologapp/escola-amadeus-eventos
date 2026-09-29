@@ -274,3 +274,12 @@
 
 /* prévia dentro do admin: sem cursor escondido */
 .tv-tela.previa { position: absolute; }
+
+/* dentro do portal: ocupa a caixa (16:9) em vez da tela toda */
+.tv-tela.embutida { position: absolute; inset: 0; cursor: pointer; border-radius: inherit; }
+.tv-tela.embutida:fullscreen { cursor: none; }
+
+/* fontes da marca para o portal da família (que também usa este arquivo) */
+.f-ralton { font-family: Ralton, sans-serif; }
+.f-scrib { font-family: Scrib, sans-serif; }
+.f-caveat { font-family: Caveat, cursive; }
