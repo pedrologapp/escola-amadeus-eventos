@@ -63,29 +63,6 @@
   .agenda b { display: block; font: 700 20px/1 Caveat, cursive; color: var(--c); }
   .agenda span { font-weight: 800; font-size: 14px; line-height: 1.15; color: var(--mar); }
   .agenda-p .toque { margin-top: 14px; font-size: 13px; opacity: .7; }
-  /* agenda em formato de calendário (seg a sex, as duas semanas) */
-  .mes { margin-top: 10px; font: 700 26px/1 Caveat, cursive; color: #E86FA6; }
-  .cal-grade { margin-top: 6px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
-  .cal-sem { text-align: center; font: 900 10.5px/1 Nunito, sans-serif; letter-spacing: .1em; color: var(--mar); opacity: .55; padding-bottom: 2px; }
-  .cal-dia { min-height: 98px; border-radius: 12px; padding: 4px 2px 6px; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer;
-    background: color-mix(in srgb, var(--c) 10%, #fff); border: 2px dashed color-mix(in srgb, var(--c) 45%, #fff); }
-  .cal-dia .n { font: 700 24px/1 Caveat, cursive; color: var(--c); }
-  .cal-dia .ic { width: 42px; height: 36px; margin: 1px 0 2px; }
-  .cal-dia .tt { font-weight: 800; font-size: 10.5px; line-height: 1.1; color: var(--mar); }
-  .cal-dia.vazio { cursor: default; background: transparent; border: 2px solid #EFE6D2; }
-  .cal-dia.vazio .n { color: #C9B78F; }
-  .cal-dia.vazio .tt { font-weight: 600; color: #B9A880; }
-  .cal-dia.folga { background: #F2F2F2; border-color: #DADADA; }
-  .item-check-cal { margin-top: 10px; display: grid; grid-template-columns: 44px 1fr; gap: 10px; align-items: center; padding: 7px 9px; border-radius: 14px; background: #FFF1A8; cursor: pointer; }
-  .item-check-cal .mini { width: 44px; height: 40px; border-radius: 12px; display: grid; place-items: center; font: 900 24px/1 Nunito, sans-serif; color: #E86FA6; background: #fff; }
-  .item-check-cal b { display: block; font: 700 20px/1 Caveat, cursive; color: #E86FA6; }
-  .item-check-cal span { font-weight: 800; font-size: 13.5px; color: var(--mar); }
-  /* dia com 2 páginas (07/10): lista de exemplos, figurino e o mimo */
-  .lista { list-style: none; margin-top: 6px; display: grid; gap: 5px; }
-  .lista li { display: grid; grid-template-columns: 26px 1fr; gap: 6px; font-size: 14.5px; line-height: 1.35; }
-  .magia { margin-top: 12px; font: 700 23px/1.1 Caveat, cursive; color: var(--c); text-align: center; }
-  .dia h3 { margin-top: 12px; font: 700 30px/1 Caveat, cursive; color: var(--mar); }
-  .assina { margin: 14px 0 22px; font: 700 21px/1.15 Caveat, cursive; color: var(--mar); text-align: right; }
 
   /* página do dia */
   .dia .miolo { justify-content: safe center; }
@@ -178,41 +155,26 @@
 
   // Programação revisada pela coordenação do Infantil (29/09): entraram 06/10, 12/10 e 16/10; mudaram 09/10 e 15/10.
   const DIAS = [
-    { cor: C.azul, data: 'Terça, 06/10', ilu: 'cofrinho', curto: 'Cofrinho', t: 'Culminância do Projeto Educação Financeira',
+    { cor: C.azul, data: 'Terça, 06/10', ilu: 'cofrinho', t: 'Culminância do Projeto Educação Financeira',
       p: 'Com a família, a criança abre o <b>cofrinho</b> e compra o seu sonho! 📸 Gravem esse momento e <b>marquem a escola no Instagram</b>!' },
-    // 07/10: texto da coordenação (02/10), em duas páginas: o brinquedo / figurino + picolé.
-    { cor: C.rox, data: 'Quarta, 07/10', ilu: 'caixa', curto: 'Brinquedo', menor: true, t: 'Brinquedo não estruturado', sub: 'o que é?',
-      p: 'Vocês <b>NÃO precisam construir, confeccionar ou comprar</b> nenhum brinquedo pronto! A ideia é justamente o oposto: permitir que a criança use a própria imaginação para transformar <b>objetos simples do dia a dia</b> em grandes invenções.',
-      bilhete: ['O que mandar na mochila', `<ul class="lista">
-          <li><span>🥘</span><span>Duas <b>tampas de panela</b> (para virar pratos de uma banda);</span></li>
-          <li><span>🥁</span><span>Uma <b>lata limpa com uma colher de pau</b> (que vira um tambor ou pandeiro);</span></li>
-          <li><span>📦</span><span><b>Caixas de papelão</b>, <b>potes plásticos</b> ou <b>rolos de papel</b>;</span></li>
-          <li><span>🥄</span><span><b>Colheres de silicone</b> ou <b>bacias</b>.</span></li></ul>`],
-      fecho: 'Para o adulto é apenas um utensílio, mas para a criança vira música, nave espacial, castelo e pura magia! ✨',
-      continua: `<h2>Infância Raiz!</h2><div class="sub">👗 estilo e figurino</div>
-        <p>Queremos que nossos pequenos venham <b>muito confortáveis</b> e com aquele visual gostoso de <b>criança de antigamente</b>:</p>
-        <ul class="lista" style="margin-top:8px">
-          <li><span>👧</span><span><b>Meninas:</b> vestidinhos alegres, penteados com maria-chiquinha, laços e roupas bem à vontade.</span></li>
-          <li><span>👦</span><span><b>Meninos:</b> roupinhas divertidas, podendo usar suspensório, bermudinha ou chapelinho.</span></li></ul>
-        <p>O importante é vir pronto para se divertir e <b>brincar sem medo de sujar!</b></p>
-        <div class="mais"><strong>🍦 Mimo especial!</strong>Para deixar o dia ainda mais refrescante e divertido, a escola oferecerá <b>picolé</b> para as crianças.
-          <p style="margin-top:8px;font-size:14.5px">⚠️ <b>Aviso importante:</b> caso o seu filho(a) não possa consumir por conta de alguma restrição alimentar, intolerância ou opção da família, por favor, <b>nos avise com antecedência</b>.</p></div>
-        <div class="assina">Com carinho,<br>A Direção / Equipe Pedagógica</div>` },
-    { cor: C.ver, data: 'Quinta, 08/10', ilu: 'cinema', curto: 'Cinema', t: 'Cineminha na escola', sub: 'luzes, câmera… ação!',
+    { cor: C.rox, data: 'Quarta, 07/10', ilu: 'caixa', t: 'Brinquedo não estruturado', sub: 'imaginação solta!',
+      p: 'A caixa vira casinha, o pote vira tambor, o rolinho vira telefone… <b>Qualquer objeto pode virar uma grande brincadeira!</b>',
+      bilhete: ['Não esqueça!', 'Um objeto <b>identificado com o nome</b>: caixa de papelão, potes, rolinhos, tampinhas, tecidos, colher de pau, tubos…'] },
+    { cor: C.ver, data: 'Quinta, 08/10', ilu: 'cinema', t: 'Cineminha na escola', sub: 'luzes, câmera… ação!',
       p: 'Uma sessão especial de cinema, com direito a escurinho e muita emoção.',
       bilhete: ['Não esqueça!', 'A <b>pipoquinha</b>! 🍿'] },
-    { cor: C.ros, data: 'Sexta, 09/10', ilu: 'fantasia', curto: 'Baile à fantasia', t: 'Baile à fantasia', sub: 'hoje eu sou quem eu quiser!',
+    { cor: C.ros, data: 'Sexta, 09/10', ilu: 'fantasia', t: 'Baile à fantasia', sub: 'hoje eu sou quem eu quiser!',
       p: 'Neste dia, as crianças poderão vir <b>fantasiadas</b> para participar desse momento especial. E os pais que desejarem também poderão vir buscar seus filhos fantasiados. Fiquem à vontade para entrar na brincadeira e juntos fazer aquele registro.',
       bilhete: ['Especial!', 'Participação do <b>Bilíngue</b> com a <b>Teacher Thalita</b>. 🎉'] },
-    { cor: C.cel, data: 'Segunda, 12/10', ilu: 'casa', curto: 'Feriado', folga: true, t: 'Feriado',
+    { cor: C.cel, data: 'Segunda, 12/10', ilu: 'casa', t: 'Feriado',
       bilhete: ['Atenção!', 'Não haverá aula.'] },
-    { cor: C.verde, data: 'Quarta, 14/10', ilu: 'presente', curto: 'Sonho realizado', t: 'Culminância da Educação Financeira', sub: 'o sonho realizado!',
+    { cor: C.verde, data: 'Quarta, 14/10', ilu: 'presente', t: 'Culminância da Educação Financeira', sub: 'o sonho realizado!',
       p: 'Chegou o grande dia de compartilhar as conquistas com os colegas.',
       bilhete: ['Não esqueça!', 'O <b>brinquedo escolhido</b> com o cofrinho, para mostrar e contar como foi.'] },
-    { cor: C.lar, data: 'Quinta, 15/10', ilu: 'parque', curto: 'Viva Park', t: 'Passeio ao Viva Park', sub: 'partiu parque!',
+    { cor: C.lar, data: 'Quinta, 15/10', ilu: 'parque', t: 'Passeio ao Viva Park', sub: 'partiu parque!',
       p: 'Para as crianças que aderiram ao ingresso, chegou o dia de aproveitar esse passeio superespecial!',
       bilhete: ['Atenção!', '⏰ <b>Das 13h às 17h.</b> Neste dia não haverá aula.'] },
-    { cor: C.mar, data: 'Sexta, 16/10', ilu: 'professor', curto: 'Sem aula', folga: true, t: 'Não haverá aula',
+    { cor: C.mar, data: 'Sexta, 16/10', ilu: 'professor', t: 'Não haverá aula',
       p: 'Este dia será destinado à compensação do feriado do <b>Dia do Professor</b> (15/10).' },
   ];
 
@@ -226,47 +188,24 @@
       <div class="datas">06 a 15 de outubro</div>
       <p class="intro">Mamãe e papai, preparem a criançada! Uma programação cheia de brincadeiras, descobertas e muita diversão.</p>
       <div class="virar">vire a página →</div></div></div>`);
-  // Páginas de cada dia (um dia pode ter 2 páginas: "continua"). paginaDe[i] = página onde começa o dia i.
-  const paginaDe = [];
-  let pg = 2;
-  DIAS.forEach(d => { paginaDe.push(pg); pg += d.continua ? 2 : 1; });
-  const PAG_CHECK = pg;
-  // Agenda em formato de calendário: seg a sex das duas semanas (05 e 13/10 são dias normais de aula).
-  const diaNum = d => d.data.slice(-5, -3);
-  const SEMANAS = [['05', '06', '07', '08', '09'], ['12', '13', '14', '15', '16']];
-  const celula = n => {
-    const i = DIAS.findIndex(d => diaNum(d) === n);
-    if (i < 0) return `<div class="cal-dia vazio"><div class="n">${n}</div><div class="tt">aula normal</div></div>`;
-    const d = DIAS[i];
-    return `<div class="cal-dia${d.folga ? ' folga' : ''}" data-ir="${paginaDe[i]}" style="--c:${d.cor}"><div class="n">${n}</div><div class="ic">${ILU[d.ilu]()}</div><div class="tt">${d.curto}</div></div>`;
-  };
   paginas.push(`<div class="face agenda-p"><div class="sombra"></div><div class="miolo">
       <h2>Anote na agenda da família</h2>
-      <div class="mes">outubro</div>
-      <div class="cal-grade">${['SEG', 'TER', 'QUA', 'QUI', 'SEX'].map(s => `<div class="cal-sem">${s}</div>`).join('')}${SEMANAS.flat().map(celula).join('')}</div>
-      <div class="item-check-cal" data-ir="${PAG_CHECK}"><div class="mini">✓</div><div><b>Checklist da família</b><span>O que levar em cada dia</span></div></div>
-      <p class="toque">Toque num dia para ver os detalhes.</p>
+      <p class="sub">A programação, dia a dia:</p>
+      <ul class="agenda">${DIAS.map((d, i) => `<li data-ir="${i + 2}" style="--c:${d.cor}"><div class="mini">${ILU[d.ilu]()}</div><div><b>${d.data}</b><span>${d.t}</span></div></li>`).join('')}
+        <li data-ir="${DIAS.length + 2}" class="item-check" style="--c:${C.ros}"><div class="mini mini-check">✓</div><div><b>Checklist da família</b><span>O que levar em cada dia</span></div></li></ul>
+      <p class="toque">Toque num item para ir direto a ele.</p>
       <div class="num">1</div></div></div>`);
-  DIAS.forEach((d, i) => {
-    paginas.push(`<div class="face dia" style="--c:${d.cor}"><div class="sombra"></div><div class="miolo">
+  DIAS.forEach((d, i) => paginas.push(`<div class="face dia" style="--c:${d.cor}"><div class="sombra"></div><div class="miolo">
       <div class="data">${d.data}</div>
-      <div class="desenho"${d.menor ? ' style="max-width:150px"' : ""}>${ILU[d.ilu]()}</div>
+      <div class="desenho">${ILU[d.ilu]()}</div>
       <h2>${d.t}</h2>${d.sub ? `<div class="sub">${d.sub}</div>` : ""}
       ${d.p ? `<p>${d.p}</p>` : ""}
       ${d.bilhete ? `<div class="bilhete"><strong>${d.bilhete[0]}</strong>${d.bilhete[1]}</div>` : ''}
-      ${d.fecho ? `<div class="magia">${d.fecho}</div>` : ''}
       ${d.mais ? `<div class="mais"><div class="cofre">${ILU.cofrinho()}</div><strong>E tem mais!</strong>${d.mais}</div>` : ''}
-      ${d.continua ? `<div class="virar" style="align-self:flex-end;font-size:21px">continua →</div>` : ''}
-      <div class="num">${paginaDe[i]}</div></div></div>`);
-    if (d.continua) paginas.push(`<div class="face dia" style="--c:${d.cor}"><div class="sombra"></div><div class="miolo">
-      <div class="data">${d.data}</div>
-      ${d.continua}
-      <div class="num">${paginaDe[i] + 1}</div></div></div>`);
-  });
+      <div class="num">${i + 2}</div></div></div>`));
   // Penúltima página: checklist do que levar (só os dias em que a criança leva ou veste algo).
   const CHECK = [
-    { id: 'objeto', cor: C.rox, data: 'Quarta, 07/10', txt: '<strong>Objetos do dia a dia</strong> na mochila (tampas de panela, lata e colher de pau, caixas, potes…)' },
-    { id: 'figurino', cor: C.rox, data: 'Quarta, 07/10', txt: 'Figurino <strong>Infância Raiz</strong> 👗 e, se tiver restrição, <strong>avisar sobre o picolé</strong> 🍦' },
+    { id: 'objeto', cor: C.rox, data: 'Quarta, 07/10', txt: 'Um <strong>objeto identificado com o nome</strong> (caixa, potes, rolinhos, tampinhas…)' },
     { id: 'pipoca', cor: C.ver, data: 'Quinta, 08/10', txt: 'A <strong>pipoquinha</strong> do cineminha 🍿' },
     { id: 'fantasia', cor: C.ros, data: 'Sexta, 09/10', txt: 'Vir <strong>fantasiado</strong> para o baile 🎭' },
     { id: 'brinquedo', cor: C.verde, data: 'Quarta, 14/10', txt: 'O <strong>brinquedo escolhido</strong> para mostrar aos colegas 🎁' },
@@ -278,7 +217,7 @@
       <p class="sub">Toque para marcar o que já está separado:</p>
       <ul class="checklist">${CHECK.map(c => `<li><button type="button" class="check" data-check="${c.id}" style="--c:${c.cor}"><div class="caixa">${certinho}</div><div><b>${c.data}</b><span>${c.txt}</span></div></button></li>`).join('')}</ul>
       <div class="sem-aula"><strong>Não haverá aula</strong>Seg 12/10 (feriado) · Qui 15/10 (dia do passeio) · Sex 16/10 (compensação do Dia do Professor)</div>
-      <div class="num">${PAG_CHECK}</div></div></div>`);
+      <div class="num">${DIAS.length + 2}</div></div></div>`);
   paginas.push(`<div class="face fim"><div class="sombra"></div><div class="miolo">
       <div class="desenho">${ILU.arco()}</div>
       <h2>Que venha a nossa <span>Semana da Criança!</span></h2>
