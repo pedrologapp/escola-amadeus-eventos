@@ -29,7 +29,7 @@ export const textoConvite = (crianca?: string | null) => {
 
 Vocês estão convidados para a *Experiência Amadeus*: no *sábado, 10 de outubro, às 14h*, venham viver um dia dentro da nossa escola junto com ${p || "seu filho ou sua filha"} e sentir na prática um pouco do que vai viver aqui. É *gratuito*.
 
-Para confirmar a presença, é só responder esta mensagem. Vai ser uma alegria receber vocês!
+Para confirmar a presença, responda *EU VOU* nesta mensagem. Vai ser uma alegria receber vocês!
 
 📍 Av. Benedito Santana, 09 · Amarante, São Gonçalo do Amarante
 ${MAPA}`;
@@ -151,4 +151,28 @@ export async function registrarEncaminhado(telefone: string, nome: string | null
   await guardarContato({ telefone: tel, responsavel: nome, origem: "whatsapp" });
   if (!atual?.convite_em) await admin.from("experiencia_contatos").update({ convite_em: em }).eq("telefone", tel);
   await admin.from("experiencia_envios").insert({ telefone: tel, tipo: "convite", encarte: "encaminhado", status: "enviado", detalhe: "saiu pelo celular da escola (visto pelo monitor)", enviado_por: "WhatsApp da escola" });
+}
+
+/**
+ * Resposta do pai confirmando presença ("EU VOU", "vou sim", "confirmado", "estaremos lá"...).
+ * Só vale até o dia do evento. Mensagem longa só conta se citar a Experiência, para não confundir
+ * "eu vou pagar amanhã" com confirmação; quem já está na lista pode confirmar com frase curta.
+ */
+const CONFIRMA = /\b(eu vou|vou sim|vou ir|nos vamos|a gente vai|vamos sim|vamos ir|vamos la|confirmad[oa]s?|confirmo|confirmando|estarei|estaremos|presenca confirmada|pode contar|com certeza vamos)\b/;
+export function eConfirmacaoDaExperiencia(m: { fromMe: boolean; body: string; ts: number }, naLista: boolean) {
+  if (m.fromMe || m.ts * 1000 > Date.parse("2026-10-10T20:00:00Z")) return false;
+  const t = normal(m.body).replace(/[^a-z0-9 ]+/g, " ").replace(/ +/g, " ").trim();
+  if (!t || !CONFIRMA.test(t)) return false;
+  if (t.includes("experiencia")) return true;
+  return naLista ? t.length <= 60 : t.length <= 40;
+}
+export async function registrarPresenca(telefone: string, nome: string | null, texto: string, em: string) {
+  const tel = limparTelefone(telefone);
+  if (tel.length < 10) return;
+  await guardarContato({ telefone: tel, responsavel: nome, origem: "whatsapp" });
+  await createAdminClient().from("experiencia_contatos").update({ vai_em: em, vai_texto: texto.trim().slice(0, 140), lembrar: true }).eq("telefone", tel).is("vai_em", null);
+}
+export async function estaNaLista(telefone: string) {
+  const { data } = await createAdminClient().from("experiencia_contatos").select("telefone").eq("telefone", limparTelefone(telefone)).maybeSingle();
+  return !!data;
 }

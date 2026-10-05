@@ -4,7 +4,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { avisarDirecao, LINK_PAINEL, quandoLegivel, telLegivel } from "@/lib/whatsapp-grupo";
 import { carregarContatos, chaveTelefone } from "@/lib/whatsapp-contatos";
-import { eConviteDaExperiencia, registrarEncaminhado } from "@/lib/experiencia";
+import { eConfirmacaoDaExperiencia, eConviteDaExperiencia, estaNaLista, registrarEncaminhado, registrarPresenca } from "@/lib/experiencia";
 
 /**
  * Monitoramento do WhatsApp da escola — SÓ LEITURA. Nada aqui envia ou
@@ -176,6 +176,9 @@ export async function processarLote(msgs: MensagemVista[]): Promise<{ novas: num
       }
       continue;
     }
+
+    // "EU VOU" para a Experiência Amadeus: marca a presença na lista (não responde nada).
+    if (eConfirmacaoDaExperiencia(m, await estaNaLista(telefone).catch(() => false))) await registrarPresenca(telefone, m.nome ?? atual?.contato ?? null, m.body, em).catch(() => {});
 
     // Ainda sem resposta da escola desde a última mensagem do contato.
     const ainda = atual && atual.status === "aguardando" && !atual.ultima_da_escola;

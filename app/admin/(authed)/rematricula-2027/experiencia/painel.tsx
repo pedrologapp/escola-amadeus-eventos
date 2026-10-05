@@ -23,6 +23,8 @@ export interface ContatoExp {
   lembrete_confirmado: boolean;
   convite_em: string | null;
   lembrete_em: string | null;
+  vai_em?: string | null;
+  vai_texto?: string | null;
   criado_em: string;
   ultimo?: string | null;
 }
@@ -134,7 +136,7 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
   };
 
   const baixarPlanilha = () => {
-    const linhas = [["Responsável", "Criança", "Série", "Telefone", "Origem", "Encarte", "Lembrete"], ...contatos.map((c) => [c.responsavel ?? "", c.crianca ?? "", c.serie ?? "", tel(c.telefone), ORIGEM[c.origem] ?? c.origem, dia(c.convite_em) ?? "", dia(c.lembrete_em) ?? ""])];
+    const linhas = [["Responsável", "Criança", "Série", "Telefone", "Origem", "Vai?", "Encarte", "Lembrete"], ...contatos.map((c) => [c.responsavel ?? "", c.crianca ?? "", c.serie ?? "", tel(c.telefone), ORIGEM[c.origem] ?? c.origem, c.vai_em ? "EU VOU " + (dia(c.vai_em) ?? "") : "", dia(c.convite_em) ?? "", dia(c.lembrete_em) ?? ""])];
     const csv = "﻿" + linhas.map((l) => l.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";")).join("\n");
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
@@ -170,7 +172,7 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
         {/* Lista de contatos */}
         <section className="rounded-2xl border border-border/60 bg-white p-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="flex items-center gap-2 text-sm font-bold text-amadeus-blue"><Users className="size-4" /> Contatos da Experiência · {contatos.length}</p>
+            <p className="flex items-center gap-2 text-sm font-bold text-amadeus-blue"><Users className="size-4" /> Contatos da Experiência · {contatos.length}{contatos.some((c) => c.vai_em) ? <span className="ml-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-xs font-bold text-emerald-700">{contatos.filter((c) => c.vai_em).length} disseram EU VOU</span> : null}</p>
             <div className="flex flex-wrap gap-2">
               {selecionados.length > 0 && (
                 <button type="button" disabled={ocupado} onClick={enviarSelecionados} className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-bold text-white disabled:opacity-40">
@@ -196,6 +198,7 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
                     </th>
                     <th className="py-2 pr-3">Família</th>
                     <th className="py-2 pr-3">Telefone</th>
+                    <th className="py-2 pr-3">Vai?</th>
                     <th className="py-2 pr-3">Encarte</th>
                     <th className="py-2 pr-3">Lembrete</th>
                     <th className="py-2 pr-3">Lembrar?</th>
@@ -213,6 +216,7 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
                         <p className="text-xs text-muted-foreground">{c.responsavel ?? "responsável não informado"} · {ORIGEM[c.origem] ?? c.origem}</p>
                       </td>
                       <td className="py-2.5 pr-3 tabular-nums">{tel(c.telefone)}</td>
+                      <td className="py-2.5 pr-3">{c.vai_em ? <span title={c.vai_texto ?? ""} className="rounded-md bg-emerald-50 px-1.5 py-0.5 text-xs font-bold text-emerald-700">✓ EU VOU · {dia(c.vai_em)}</span> : <span className="text-xs text-muted-foreground">—</span>}</td>
                       <td className="py-2.5 pr-3">
                         {c.convite_em ? <span className={`rounded-md px-1.5 py-0.5 text-xs font-bold ${SELO.enviado}`}>{dia(c.convite_em)}</span>
                           : c.ultimo ? <span className={`rounded-md px-1.5 py-0.5 text-xs font-bold ${SELO[c.ultimo]}`}>{TXT[c.ultimo]}</span>
