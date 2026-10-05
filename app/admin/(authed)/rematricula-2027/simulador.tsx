@@ -191,7 +191,7 @@ function EnviarWhatsApp({ responsaveis, envios, enviar, rotuloCarta, soFolder: s
   const [retorno, setRetorno] = useState<{ erro?: string; resultados: ResultadoEnvio[] } | null>(null);
   const [soFolderEscolhido, setSoFolder] = useState(false);
   const [comExperiencia, setComExperiencia] = useState(!!experiencia?.marcado);
-  const [encarteExp, setEncarteExp] = useState("convite");
+  const [encarteExp, setEncarteExp] = useState("video");
   const [retornoExp, setRetornoExp] = useState<{ erro?: string; resultados: ResultadoExp[] } | null>(null);
   const soFolder = soFolderFixo || soFolderEscolhido;
   const jaRecebeu = new Set(envios.filter((e) => e.status === "enviado").map((e) => e.telefone));

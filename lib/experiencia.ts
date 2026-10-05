@@ -5,17 +5,19 @@ import { WEBHOOK_ENVIO } from "@/lib/rematricula-2027";
 /**
  * Experiência Amadeus (sáb 10/10/2026, 14h). Envio do encarte pelo WhatsApp da escola usando o
  * MESMO fluxo do n8n da carta da rematrícula (webhook rematricula-carta): "capa" vai como imagem
- * com o "texto" na legenda; se "imagem" vier preenchida, sai uma segunda imagem.
+ * com o "texto" na legenda; se "imagem" vier preenchida, sai uma segunda imagem. Se "video" vier
+ * preenchido, sai o vídeo (com o "texto" na legenda) no lugar da imagem (05/10: o vídeo do convite é o padrão).
  * Todo número que recebe entra em experiencia_contatos (lembrete da véspera + não perder o contato).
  */
 
 export const DIA_LEMBRETE = "2026-10-09"; // sexta, véspera: o cron só manda neste dia
 export const ENCARTES = {
+  video: { rotulo: "Vídeo do convite", arquivo: "/materiais/experiencia-video.mp4" },
   convite: { rotulo: "Convite “Mãe, pai”", arquivo: "/materiais/experiencia-convite.png" },
   original: { rotulo: "Encarte original", arquivo: "/materiais/experiencia-original.png" },
 } as const;
-export type EscolhaEncarte = "convite" | "original" | "os_dois";
-export const escolhaValida = (v: unknown): EscolhaEncarte => (v === "original" || v === "os_dois" ? v : "convite");
+export type EscolhaEncarte = "video" | "convite" | "original" | "os_dois";
+export const escolhaValida = (v: unknown): EscolhaEncarte => (v === "convite" || v === "original" || v === "os_dois" ? v : "video");
 
 const MAPA = "https://www.google.com/maps/search/?api=1&query=Centro+Educacional+Amadeus+Av.+Benedito+Santana+09+S%C3%A3o+Gon%C3%A7alo+do+Amarante";
 const origemDoSite = () => process.env.NEXT_PUBLIC_SITE_URL ?? "https://eventos.escolaamadeus.com";
@@ -25,7 +27,7 @@ export const textoConvite = (crianca?: string | null) => {
   const p = primeiro(crianca);
   return `Olá, família${p ? ` de *${p}*` : ""}! 💛 Aqui é o Centro Educacional Amadeus.
 
-Vocês estão convidados para a *Experiência Amadeus*: no *sábado, 10 de outubro, às 14h*, venham viver um dia dentro da nossa escola junto com ${p || "seu filho ou sua filha"} e sentir na prática um pouco do que vai viver aqui.
+Vocês estão convidados para a *Experiência Amadeus*: no *sábado, 10 de outubro, às 14h*, venham viver um dia dentro da nossa escola junto com ${p || "seu filho ou sua filha"} e sentir na prática um pouco do que vai viver aqui. É *gratuito*.
 
 Para confirmar a presença, é só responder esta mensagem. Vai ser uma alegria receber vocês!
 
@@ -51,18 +53,18 @@ export interface Contato {
   responsavel?: string | null;
   crianca?: string | null;
   serie?: string | null;
-  origem?: "novato" | "simulador" | "avulso" | "manual";
+  origem?: "novato" | "simulador" | "avulso" | "manual" | "whatsapp";
 }
 
 /** Uma mensagem (1 ou 2 imagens) para um número, pelo fluxo do n8n. */
-async function mandar(telefone: string, capa: string, texto: string, imagem = ""): Promise<{ status: StatusEnvio; detalhe?: string }> {
+async function mandar(telefone: string, capa: string, texto: string, imagem = "", video = ""): Promise<{ status: StatusEnvio; detalhe?: string }> {
   const chave = process.env.WEBHOOK_CONFIRM_SECRET;
   if (!chave) return { status: "erro", detalhe: "WEBHOOK_CONFIRM_SECRET não configurada" };
   try {
     const resp = await fetch(WEBHOOK_ENVIO, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-amadeus-chave": chave },
-      body: JSON.stringify({ telefone, capa, texto, imagem, legenda: "" }),
+      body: JSON.stringify({ telefone, capa, texto, imagem, legenda: "", video }),
       signal: AbortSignal.timeout(60_000),
     });
     const j = (await resp.json().catch(() => ({}))) as { status?: StatusEnvio; detalhe?: string };
@@ -98,7 +100,8 @@ export async function enviarEncarte(c: Contato, escolha: EscolhaEncarte, enviado
   const o = origemDoSite();
   const capa = o + (escolha === "original" ? ENCARTES.original.arquivo : ENCARTES.convite.arquivo);
   const segunda = escolha === "os_dois" ? o + ENCARTES.original.arquivo : "";
-  const r = await mandar(telefone, capa, textoConvite(c.crianca), segunda);
+  const video = escolha === "video" ? o + ENCARTES.video.arquivo : "";
+  const r = await mandar(telefone, capa, textoConvite(c.crianca), segunda, video);
   const admin = createAdminClient();
   await admin.from("experiencia_envios").insert({ telefone, tipo: "convite", encarte: escolha, status: r.status, detalhe: r.detalhe ?? null, enviado_por: enviadoPor });
   if (r.status === "enviado") await admin.from("experiencia_contatos").update({ convite_em: new Date().toISOString() }).eq("telefone", telefone);
@@ -127,3 +130,25 @@ export async function pendentesDoLembrete() {
 
 /** Pausa entre envios em lote, para o WhatsApp da escola não ser marcado como spam. */
 export const pausa = () => new Promise((r) => setTimeout(r, 6000 + Math.random() * 6000));
+
+/**
+ * O convite também sai pelo celular da escola (a equipe encaminha o vídeo sem passar pelo sistema).
+ * O monitor do WhatsApp (só leitura) vê a última mensagem de cada conversa: quando é a escola
+ * mandando o convite (texto com "Experiência Amadeus", ou um vídeo até o dia do evento), o número
+ * entra na lista da Experiência com origem "whatsapp". Não envia nada.
+ */
+const normal = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+export function eConviteDaExperiencia(m: { fromMe: boolean; body: string; mimetype: string | null; ts: number }) {
+  if (!m.fromMe) return false;
+  if (normal(m.body).includes("experiencia amadeus")) return true;
+  return (m.mimetype ?? "").startsWith("video") && m.ts * 1000 < Date.parse("2026-10-11T03:00:00Z");
+}
+export async function registrarEncaminhado(telefone: string, nome: string | null, em: string) {
+  const tel = limparTelefone(telefone);
+  if (tel.length < 10) return;
+  const admin = createAdminClient();
+  const { data: atual } = await admin.from("experiencia_contatos").select("telefone, convite_em").eq("telefone", tel).maybeSingle();
+  await guardarContato({ telefone: tel, responsavel: nome, origem: "whatsapp" });
+  if (!atual?.convite_em) await admin.from("experiencia_contatos").update({ convite_em: em }).eq("telefone", tel);
+  await admin.from("experiencia_envios").insert({ telefone: tel, tipo: "convite", encarte: "encaminhado", status: "enviado", detalhe: "saiu pelo celular da escola (visto pelo monitor)", enviado_por: "WhatsApp da escola" });
+}

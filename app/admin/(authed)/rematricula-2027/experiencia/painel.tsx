@@ -30,14 +30,15 @@ export interface Candidato { telefone: string; responsavel: string | null; crian
 
 const tel = (t: string) => (t.length === 11 ? `(${t.slice(0, 2)}) ${t.slice(2, 7)}-${t.slice(7)}` : t.length === 10 ? `(${t.slice(0, 2)}) ${t.slice(2, 6)}-${t.slice(6)}` : t);
 const dia = (d: string | null) => (d ? new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", timeZone: "America/Fortaleza" }) : null);
-const ORIGEM: Record<string, string> = { novato: "novato", simulador: "rematrícula", avulso: "avulso", manual: "manual" };
+const ORIGEM: Record<string, string> = { novato: "novato", simulador: "rematrícula", avulso: "avulso", manual: "manual", whatsapp: "encaminhado no WhatsApp" };
 const SELO: Record<string, string> = { enviado: "bg-emerald-50 text-emerald-700", sem_whatsapp: "bg-amber-100 text-amber-800", erro: "bg-red-50 text-red-700" };
 const TXT: Record<string, string> = { enviado: "Enviado", sem_whatsapp: "Sem WhatsApp", erro: "Erro" };
 const campo = "mt-1 w-full rounded-xl border border-border bg-white px-3 py-2 font-normal outline-none focus:border-amadeus-blue";
 
-/** Qual encarte vai: o convite "Mãe, pai", o original ou os dois (um depois do outro). */
+/** Qual encarte vai: o vídeo do convite (padrão desde 05/10), o convite "Mãe, pai", o original ou os dois. */
 export function EscolhaEncarte({ valor, mudar }: { valor: string; mudar: (v: string) => void }) {
   const opcoes = [
+    { v: "video", t: "Vídeo do convite", img: "/materiais/experiencia-video.jpg" },
     { v: "convite", t: "Convite “Mãe, pai”", img: "/materiais/experiencia-convite.png" },
     { v: "original", t: "Encarte original", img: "/materiais/experiencia-original.png" },
     { v: "os_dois", t: "Os dois", img: null },
@@ -85,7 +86,7 @@ function Resultados({ r }: { r: { erro?: string; resultados: ResultadoExp[] } | 
 }
 
 export function PainelExperiencia({ contatos, candidatos, automatico }: { contatos: ContatoExp[]; candidatos: Candidato[]; automatico: boolean }) {
-  const [escolha, setEscolha] = useState("convite");
+  const [escolha, setEscolha] = useState("video");
   const [marcados, setMarcados] = useState<Set<string>>(new Set());
   const [novo, setNovo] = useState({ responsavel: "", crianca: "", serie: "", telefone: "" });
   const [retorno, setRetorno] = useState<{ erro?: string; resultados: ResultadoExp[] } | null>(null);
@@ -98,7 +99,7 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
   const aConfirmar = contatos.filter((c) => !c.lembrete_em && c.lembrar !== c.lembrete_confirmado);
   const vaoReceber = contatos.filter((c) => c.lembrar && !c.lembrete_em);
   const selecionados = contatos.filter((c) => marcados.has(c.telefone));
-  const nomeEncarte = escolha === "os_dois" ? "os dois encartes" : escolha === "original" ? "o encarte original" : "o convite “Mãe, pai”";
+  const nomeEncarte = escolha === "video" ? "o vídeo do convite" : escolha === "os_dois" ? "os dois encartes" : escolha === "original" ? "o encarte original" : "o convite “Mãe, pai”";
 
   const enviarSelecionados = () => {
     const ja = selecionados.filter((c) => c.convite_em).length;

@@ -4,6 +4,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { avisarDirecao, LINK_PAINEL, quandoLegivel, telLegivel } from "@/lib/whatsapp-grupo";
 import { carregarContatos, chaveTelefone } from "@/lib/whatsapp-contatos";
+import { eConviteDaExperiencia, registrarEncaminhado } from "@/lib/experiencia";
 
 /**
  * Monitoramento do WhatsApp da escola — SÓ LEITURA. Nada aqui envia ou
@@ -157,6 +158,8 @@ export async function processarLote(msgs: MensagemVista[]): Promise<{ novas: num
       // A escola respondeu. Se a conversa estava na lista, CONTINUA nela (só sai quando alguém
       // marca "Resolvido" — direção, 28/09/2026), agora marcada como respondida.
       await db.from("whatsapp_eventos").upsert({ msg_id: m.id, chat_id: m.chatId, da_escola: true, em });
+      // Convite da Experiência Amadeus encaminhado pelo celular da escola: o número entra na lista.
+      if (eConviteDaExperiencia(m)) await registrarEncaminhado(telefone, m.nome ?? atual?.contato ?? null, em).catch(() => {});
       const avisada = atual?.alertado_em && !atual?.respondido_em && !atual?.ultima_da_escola;
       // Resposta que saiu do celular (comercial/secretaria) para quem estava esperando: sinaliza
       // no painel como "respondida" com a hora; continua na lista até alguém concluir.

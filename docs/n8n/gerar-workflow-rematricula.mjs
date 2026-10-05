@@ -8,6 +8,8 @@
 //      folder na legenda (imagem própria em vez da prévia do link, que ficava feia);
 //   2) a imagem da carta com os valores (/api/rematricula/carta, link assinado);
 // e responde { status: enviado | sem_whatsapp | erro } para o site registrar.
+// Se o corpo trouxer "video" (Experiência Amadeus, 05/10), manda o vídeo com o "texto" na legenda
+// no lugar da apresentação, e para por aí.
 //
 // A chave do cabeçalho x-amadeus-chave é a WEBHOOK_CONFIRM_SECRET do site;
 // o JSON sai com ela dentro, por isso vai para fora do repositório (argv[2]
@@ -106,6 +108,25 @@ const nodes = [
     file: `={\n  "mimetype": "image/png",\n  "filename": "valores-2027.png",\n  "url": "{{ ${corpo("imagem")} }}"\n}`,
     caption: `={{ ${corpo("legenda")} || '' }}`,
   }, { credentials: CRED.waha, onError: "continueRegularOutput" }),
+  node("É vídeo?", "n8n-nodes-base.if", 2.2, [1240, -160], {
+    conditions: {
+      options: { caseSensitive: true, leftValue: "", typeValidation: "loose", version: 2 },
+      conditions: [{ id: "video", leftValue: `={{ ${corpo("video")} || '' }}`, rightValue: "", operator: { type: "string", operation: "notEmpty", singleValue: true } }],
+      combinator: "and",
+    },
+    options: {},
+  }),
+  node("Enviar Vídeo", "@devlikeapro/n8n-nodes-waha.WAHA", 202502, [1460, -260], {
+    resource: "Chatting", operation: "Send Video", session: "=amadeus", chatId: "={{ $json.chatId }}",
+    file: `={
+  "mimetype": "video/mp4",
+  "filename": "experiencia-amadeus.mp4",
+  "url": "{{ ${corpo("video")} }}"
+}`,
+    caption: `={{ ${corpo("texto")} }}`,
+  }, { credentials: CRED.waha, onError: "continueRegularOutput" }),
+  responder("Resultado Vídeo", [1680, -260], 200,
+    "={{ (() => { const e = $json.error; return { ok: !e, status: e ? 'erro' : 'enviado', detalhe: e ? JSON.stringify(e).slice(0, 300) : '' }; })() }}"),
   responder("Resultado", [2120, 80], 200,
     "={{ (() => { const a = $('Enviar Apresentação').first().json; const c = $json; const erro = a.error || c.error; return { ok: !erro, status: erro ? 'erro' : 'enviado', detalhe: erro ? JSON.stringify(erro).slice(0, 300) : '' }; })() }}"),
 ];
@@ -117,7 +138,8 @@ const ligacoes = [
   liga("Formatar Telefone", "Check Sem 9"), liga("Check Sem 9", "Existe sem 9?"),
   liga("Existe sem 9?", "Usar sem 9", 0), liga("Existe sem 9?", "Check Com 9", 1),
   liga("Check Com 9", "Existe com 9?"), liga("Existe com 9?", "Usar com 9", 0), liga("Existe com 9?", "Sem WhatsApp", 1),
-  liga("Usar sem 9", "Enviar Apresentação"), liga("Usar com 9", "Enviar Apresentação"),
+  liga("Usar sem 9", "É vídeo?"), liga("Usar com 9", "É vídeo?"),
+  liga("É vídeo?", "Enviar Vídeo", 0), liga("É vídeo?", "Enviar Apresentação", 1), liga("Enviar Vídeo", "Resultado Vídeo"),
   liga("Enviar Apresentação", "Tem carta?"), liga("Tem carta?", "Esperar 4s", 0), liga("Tem carta?", "Resultado", 1), liga("Esperar 4s", "Enviar Carta"), liga("Enviar Carta", "Resultado"),
 ];
 const connections = {};
