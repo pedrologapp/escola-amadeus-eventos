@@ -19,7 +19,8 @@ export const ENCARTES = {
 export type EscolhaEncarte = "video" | "convite" | "original" | "os_dois";
 export const escolhaValida = (v: unknown): EscolhaEncarte => (v === "convite" || v === "original" || v === "os_dois" ? v : "video");
 
-const MAPA = "https://www.google.com/maps/search/?api=1&query=Centro+Educacional+Amadeus+Av.+Benedito+Santana+09+S%C3%A3o+Gon%C3%A7alo+do+Amarante";
+// Link curto e legível (app/comochegar abre o Google Maps): os pais não clicam em link que não sabem para onde vai.
+const COMO_CHEGAR = "🗺️ *Como chegar* (abre o mapa): https://www.escolaamadeus.com/comochegar";
 const origemDoSite = () => process.env.NEXT_PUBLIC_SITE_URL ?? "https://eventos.escolaamadeus.com";
 const primeiro = (nome?: string | null) => (nome ?? "").trim().split(/\s+/)[0] ?? "";
 
@@ -34,8 +35,8 @@ Vocês estão convidados para a *Experiência Amadeus*: no *sábado, 10 de outub
 
 Para confirmar a presença, responda *EU VOU* nesta mensagem. Vai ser uma alegria receber vocês!
 
-📍 Av. Benedito Santana, 09 · Amarante, São Gonçalo do Amarante
-${MAPA}`;
+📍 *Onde:* Av. Benedito Santana, 09 · Amarante, São Gonçalo do Amarante
+${COMO_CHEGAR}`;
 };
 
 export const textoLembrete = (crianca?: string | null) => {
@@ -44,8 +45,8 @@ export const textoLembrete = (crianca?: string | null) => {
 
 Estamos preparando tudo com muito carinho para receber vocês${p ? ` e ${p}` : ""}. Até amanhã! 💛
 
-📍 Av. Benedito Santana, 09 · Amarante
-${MAPA}`;
+📍 *Onde:* Av. Benedito Santana, 09 · Amarante
+${COMO_CHEGAR}`;
 };
 
 export const limparTelefone = (t: string) => t.replace(/\D/g, "").replace(/^55(?=\d{10,11}$)/, "");
