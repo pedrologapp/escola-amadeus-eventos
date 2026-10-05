@@ -14,7 +14,7 @@ import { AbasRematricula } from "./abas";
 /**
  * Simulador da rematrícula 2027 (só a direção usa). Escolhe o aluno, o
  * sistema lê o boleto de 2026 no Activesoft, separa o livro e mostra quanto
- * fica 2027 fechando até 30/10 e depois. Daí sai o texto do WhatsApp e a
+ * fica 2027 fechando até 28/10 e depois. Daí sai o texto do WhatsApp e a
  * carta impressa para a família. Nada é gravado.
  */
 export const metadata = { title: "Rematrícula 2027 · Admin Amadeus" };

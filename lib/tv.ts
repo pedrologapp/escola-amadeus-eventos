@@ -41,8 +41,8 @@ export const BLOCOS: Record<string, { nome: string; origem: string; equipe?: Tip
   fim: { nome: "Encerramento", origem: "Logo dos 30 anos" },
 };
 
-/** Prazo da matrícula antecipada (o mesmo do folder: 30 de outubro). */
-export const PRAZO_PROMO = "2026-10-30";
+/** Prazo da matrícula antecipada (o mesmo do folder: 28 de outubro). */
+export const PRAZO_PROMO = "2026-10-28";
 
 export interface ItemTv {
   id: string;

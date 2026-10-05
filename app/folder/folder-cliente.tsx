@@ -1348,7 +1348,7 @@ function SecaoValores({
                 O material Geekie One é comprado à parte, uma vez no ano.
               </span>
               {/* Quando existe tabela promocional, ela vem primeiro: é o valor
-                  de quem matricula até 30/10, e é o que a escola quer vender. */}
+                  de quem matricula até 28/10, e é o que a escola quer vender. */}
               <div className="mt-4 flex flex-col gap-5">
                 {valores.material.map((linha) => {
                   const destaque = linha.promo ?? linha;

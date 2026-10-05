@@ -1,7 +1,7 @@
 /**
  * Regras da rematrícula 2027 (valores combinados com a direção em 27/09/2026).
  *
- * Mensalidade cheia de 2027 (+ R$ 50 fechando até 30/10, + R$ 60 depois):
+ * Mensalidade cheia de 2027 (+ R$ 50 fechando até 28/10, + R$ 60 depois):
  * - mesmo segmento: a mensalidade de hoje sem o livro + reajuste; o desconto
  *   é só o que o Isaac tira no pagamento além da Fidelidade (ex.: 150);
  * - troca de segmento (Grupo V → 1º, 5º → 6º): o teto do segmento novo +
@@ -13,7 +13,7 @@
  * Regras fechadas com a direção em 27/09/2026 (casos Arthur Mafra e Pedro
  * Gregório).
  *
- * Livro 2027: fechando até 30/10 fica no preço de 2026; depois, preço de 2027
+ * Livro 2027: fechando até 28/10 fica no preço de 2026; depois, preço de 2027
  * (sobe ~12% ao ano). Novato usa a tabela cheia do flyer.
  *
  * Fidelidade (= pontualidade): R$ 20 até o dia 05; do dia 06 ao 10, R$ 10.
@@ -25,8 +25,8 @@
 
 export type Segmento = "maternal" | "grupo" | "ef1" | "ef2";
 
-export const PRAZO_PROMOCAO = "30 de outubro";
-export const PRAZO_PROMOCAO_CURTO = "30/10";
+export const PRAZO_PROMOCAO = "28 de outubro";
+export const PRAZO_PROMOCAO_CURTO = "28/10";
 export const DEPOIS_DO_PRAZO = "31 de outubro";
 export const REAJUSTE = { promo: 50, depois: 60 };
 export const FIDELIDADE = 20;
@@ -107,7 +107,7 @@ export function proximaSerie(serie: NomeSerie): NomeSerie | null {
 }
 
 /**
- * Uma condição de fechamento (até 30/10 ou depois). A carta mostra nesta
+ * Uma condição de fechamento (até 28/10 ou depois). A carta mostra nesta
  * ordem: mensalidade cheia, os descontos, e a mensalidade real pagando até
  * o dia 05. Todos os descontos (Fidelidade, o da família, irmão) só valem
  * pagando até o dia 05; do dia 06 ao 10 é a cheia − 10; depois, a cheia.
@@ -142,7 +142,7 @@ export const planoActivesoft = (c: { cheia: number }) => c.cheia - DESCONTO_PLAN
 
 /**
  * Veterano e novato partem do mesmo teto: o da tabela de 2026 do segmento
- * de 2027 (Grupo V → 1º ano parte de 490; 5º → 6º de 510) + 50 até 30/10 ou
+ * de 2027 (Grupo V → 1º ano parte de 490; 5º → 6º de 510) + 50 até 28/10 ou
  * + 60 depois. É igual à tabela do novato do flyer (570/580, 540/550, 560/570).
  * O desconto da família (novato: 0) entra só pagando até o dia 05. O desconto
  * especial (extra) é o que a direção decide dar na conversa com a família; segue

@@ -365,7 +365,7 @@ export const MANIFESTO: { src: string; capa: string; duracao: string } | null = 
 };
 
 /** Prazo da matrícula antecipada, que também dá desconto no material. */
-export const PRAZO_ANTECIPADA = "30 de outubro";
+export const PRAZO_ANTECIPADA = "28 de outubro";
 
 /**
  * A Mensalidade Fidelidade não é uma tabela à parte: é um desconto fixo de
@@ -390,11 +390,11 @@ export interface Economia {
 export interface Valores {
   /** Mensalidade 2027, sem nenhuma condição. */
   cheia: Condicao;
-  /** Matriculando ou renovando até 30/10/2026. */
+  /** Matriculando ou renovando até 28/10/2026. */
   antecipada: Condicao;
   /** Antecipada mais o desconto da fidelidade. É o melhor cenário possível. */
   melhor: Condicao;
-  /** O que ele economiza matriculando até 30/10. */
+  /** O que ele economiza matriculando até 28/10. */
   economia: Economia;
   /** O material é comprado à parte. Nunca apresentar como incluso. */
   material: {
@@ -403,7 +403,7 @@ export interface Valores {
     parcela: string;
     aVista: string;
     total: string;
-    /** Tabela promocional de quem matricula até 30/10. */
+    /** Tabela promocional de quem matricula até 28/10. */
     promo?: { parcela: string; aVista: string; total: string };
   }[];
 }

@@ -205,11 +205,11 @@ export default async function ValoresPage({ searchParams }: { searchParams: Prom
             <b>valor de 2027</b>.
           </li>
           <li>
-            Ex.: Fund. 1, rematrícula feita em 2026: até 30/10 o livro é <b>{reais(PRECO_LIVRO[2026].ef1)}</b> (valor de 2025); depois,{" "}
+            Ex.: Fund. 1, rematrícula feita em 2026: até 28/10 o livro é <b>{reais(PRECO_LIVRO[2026].ef1)}</b> (valor de 2025); depois,{" "}
             <b>{reais(PRECO_LIVRO[2027].ef1)}</b> (valor de 2027).
           </li>
           <li>O livro sobe cerca de 12% por ano. À vista, 10% de desconto sobre as 12 parcelas.</li>
-          <li>A mensalidade de tabela subiu R$ 40 em 2025 e em 2026. Em 2027, o veterano tem + R$ 50 até 30/10 e + R$ 60 depois.</li>
+          <li>A mensalidade de tabela subiu R$ 40 em 2025 e em 2026. Em 2027, o veterano tem + R$ 50 até 28/10 e + R$ 60 depois.</li>
         </ul>
       </div>
 

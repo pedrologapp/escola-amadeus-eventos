@@ -49,14 +49,14 @@ export interface AnoLetivo {
 export const ANOS_LETIVOS: AnoLetivo[] = [
   {
     ano: 2027,
-    prazo: "30/10/2026",
-    prazoIso: "2026-10-30",
+    prazo: "28/10/2026",
+    prazoIso: "2026-10-28",
     mensalidade: { maternal: 580, grupo: 580, ef1: 550, ef2: 570 },
     mensalidadeNoPrazo: { maternal: 570, grupo: 570, ef1: 540, ef2: 560 },
     livroNaMensalidade: true,
     fonte: "Flyer das matrículas 2027 e regras da direção (27/09/2026)",
     observacoes: [
-      "Novato: a tabela acima (teto + R$ 50 até 30/10, ou + R$ 60 depois).",
+      "Novato: a tabela acima (teto + R$ 50 até 28/10, ou + R$ 60 depois).",
       "Veterano no mesmo segmento: a mensalidade de hoje (sem livro) + R$ 50/60; depois, a Fidelidade e o desconto que o Isaac dá no pagamento.",
       "Troca de segmento (Grupo V → 1º ano: 490; 5º → 6º: 510): o teto do segmento novo + R$ 50/60, menos o desconto que a família tem no Isaac. Boleto abaixo do teto não é desconto.",
       "Todos os descontos valem só pagando até o dia 05: Fidelidade − R$ 20, o da família e irmão − R$ 20 (cada irmão). Do dia 06 ao 10: cheia − R$ 10. Depois do dia 10: cheia.",

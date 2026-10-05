@@ -617,7 +617,7 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                 {serie && (
                   <div className="rounded-xl bg-amber-50 p-3 text-xs text-amber-900">
                     <p className="font-bold">Informação sobre a mensalidade</p>
-                    <p className="mt-1">{origemDaCheia(serieAtual, serie as NomeSerie, REAJUSTE.promo, Number.isFinite(baseNum) ? baseNum : null)} Depois de 30/10: + {reais(REAJUSTE.depois)}.</p>
+                    <p className="mt-1">{origemDaCheia(serieAtual, serie as NomeSerie, REAJUSTE.promo, Number.isFinite(baseNum) ? baseNum : null)} Depois de 28/10: + {reais(REAJUSTE.depois)}.</p>
                   </div>
                 )}
                 {/* O desconto que a família tem hoje e mantém em 2027 */}
