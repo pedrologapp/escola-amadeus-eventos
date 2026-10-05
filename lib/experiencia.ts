@@ -23,9 +23,12 @@ const MAPA = "https://www.google.com/maps/search/?api=1&query=Centro+Educacional
 const origemDoSite = () => process.env.NEXT_PUBLIC_SITE_URL ?? "https://eventos.escolaamadeus.com";
 const primeiro = (nome?: string | null) => (nome ?? "").trim().split(/\s+/)[0] ?? "";
 
-export const textoConvite = (crianca?: string | null) => {
+// Primeira linha quando vai o vídeo (aparece junto da miniatura): convida a dar o play com o filho (Pedro, 05/10).
+const chamadaVideo = (p: string) => (p ? `▶️ Assista junto com *${p}*: vai adorar o final 😊` : "▶️ Assista com seu filho(a): ele(a) vai adorar o final 😊");
+
+export const textoConvite = (crianca?: string | null, video = false) => {
   const p = primeiro(crianca);
-  return `Olá, família${p ? ` de *${p}*` : ""}! 💛 Aqui é o Centro Educacional Amadeus.
+  return `${video ? chamadaVideo(p) + "\n\n" : ""}Olá, família${p ? ` de *${p}*` : ""}! 💛 Aqui é o Centro Educacional Amadeus.
 
 Vocês estão convidados para a *Experiência Amadeus*: no *sábado, 10 de outubro, às 14h*, venham viver um dia dentro da nossa escola junto com ${p || "seu filho ou sua filha"} e sentir na prática um pouco do que vai viver aqui. É *gratuito*.
 
@@ -101,7 +104,7 @@ export async function enviarEncarte(c: Contato, escolha: EscolhaEncarte, enviado
   const capa = o + (escolha === "original" ? ENCARTES.original.arquivo : ENCARTES.convite.arquivo);
   const segunda = escolha === "os_dois" ? o + ENCARTES.original.arquivo : "";
   const video = escolha === "video" ? o + ENCARTES.video.arquivo : "";
-  const r = await mandar(telefone, capa, textoConvite(c.crianca), segunda, video);
+  const r = await mandar(telefone, capa, textoConvite(c.crianca, !!video), segunda, video);
   const admin = createAdminClient();
   await admin.from("experiencia_envios").insert({ telefone, tipo: "convite", encarte: escolha, status: r.status, detalhe: r.detalhe ?? null, enviado_por: enviadoPor });
   if (r.status === "enviado") await admin.from("experiencia_contatos").update({ convite_em: new Date().toISOString() }).eq("telefone", telefone);
