@@ -37,9 +37,9 @@ export function Inscricao() {
     return (
       <div className="mt-8 rounded-3xl bg-white p-6 text-center shadow-sm">
         <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-emerald-50"><Check className="size-7 text-emerald-600" /></div>
-        <p className="mt-4 text-xl font-extrabold text-[#1B3B7C]">Inscrição feita, {pronto}!</p>
+        <p className="mt-4 text-xl font-extrabold text-[#1B3B7C]">Obrigado, {pronto}! Inscrição feita 💛</p>
         <p className="mt-2 text-sm leading-relaxed text-[#5A6478]">
-          Esperamos vocês no <b className="text-[#1B3B7C]">sábado, 10 de outubro, às 14h</b>. Vai ser uma alegria receber sua família!
+          Esperamos vocês no <b className="text-[#1B3B7C]">sábado, 10 de outubro, às 14h</b>. Vai ser uma alegria receber sua família!<br /><br />Em instantes chega no seu WhatsApp a confirmação, com o nosso folder para você conhecer a escola por dentro.
         </p>
         <a href={AGENDA} target="_blank" className="mt-5 inline-flex items-center gap-2 rounded-2xl border-2 border-[#1B3B7C] px-4 py-2.5 text-sm font-bold text-[#1B3B7C]">
           <CalendarPlus className="size-4" /> Salvar na agenda

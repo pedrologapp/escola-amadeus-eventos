@@ -1,7 +1,8 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { limparTelefone } from "@/lib/experiencia";
+import { after } from "next/server";
+import { enviarConfirmacaoSite, limparTelefone } from "@/lib/experiencia";
 import { SERIES_2027 } from "./series";
 
 /**
@@ -24,5 +25,7 @@ export async function inscrever(e: { nome: string; whatsapp: string; serie: stri
     ? await db.from("experiencia_contatos").update({ responsavel: nome, serie: `${serie} (2027)`, vai_em: agora, vai_texto: "inscrição pelo site", atualizado_em: agora }).eq("telefone", telefone)
     : await db.from("experiencia_contatos").insert({ telefone, responsavel: nome, serie: `${serie} (2027)`, origem: "site", lembrar: true, vai_em: agora, vai_texto: "inscrição pelo site" });
   if (error) return { ok: false as const, erro: "Não consegui salvar agora. Tente de novo em instantes." };
+  // A confirmação no WhatsApp sai depois da resposta, para a página não ficar esperando o envio.
+  after(() => enviarConfirmacaoSite(telefone, nome).then(() => undefined, () => undefined));
   return { ok: true as const, nome: nome.split(" ")[0] };
 }

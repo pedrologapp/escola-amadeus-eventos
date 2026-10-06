@@ -112,6 +112,38 @@ export async function enviarEncarte(c: Contato, escolha: EscolhaEncarte, enviado
   return { telefone, ...r };
 }
 
+/** Texto da confirmação para quem se inscreve pela página /experiencia (06/10/2026). */
+export const textoConfirmacaoSite = (nome?: string | null) => {
+  const p = primeiro(nome);
+  return `Olá${p ? `, ${p}` : ""}! 💛 Aqui é o Centro Educacional Amadeus.
+
+Sua inscrição na *Experiência Amadeus* está confirmada! 🎉
+📅 *Sábado, 10 de outubro, às 14h*
+👨‍👩‍👧 Venha com seu filho ou sua filha. É gratuito.
+
+Enquanto o sábado não chega, conheça a escola por dentro no nosso folder digital:
+👉 https://eventos.escolaamadeus.com/conheca
+
+📍 *Onde:* Av. Benedito Santana, 09 · Amarante, São Gonçalo do Amarante
+${COMO_CHEGAR}
+
+Qualquer dúvida, é só responder esta mensagem. Até sábado!`;
+};
+
+/**
+ * Confirmação automática de quem se inscreveu pelo site: o convite como imagem, com o texto
+ * (e o link do folder) na legenda. Manda uma vez só por número.
+ */
+export async function enviarConfirmacaoSite(telefone: string, nome: string | null) {
+  const admin = createAdminClient();
+  const { data: ja } = await admin.from("experiencia_envios").select("id").eq("telefone", telefone).eq("tipo", "confirmacao").eq("status", "enviado").limit(1);
+  if (ja?.length) return { telefone, status: "enviado" as StatusEnvio, detalhe: "já tinha recebido" };
+  const r = await mandar(telefone, origemDoSite() + ENCARTES.convite.arquivo, textoConfirmacaoSite(nome));
+  await admin.from("experiencia_envios").insert({ telefone, tipo: "confirmacao", encarte: "convite", status: r.status, detalhe: r.detalhe ?? null, enviado_por: "site" });
+  if (r.status === "enviado") await admin.from("experiencia_contatos").update({ convite_em: new Date().toISOString() }).eq("telefone", telefone);
+  return { telefone, ...r };
+}
+
 /** Lembrete da véspera para um contato (com o convite de novo como imagem). */
 export async function enviarLembrete(telefone: string, crianca: string | null, enviadoPor: string | null) {
   const r = await mandar(telefone, origemDoSite() + ENCARTES.convite.arquivo, textoLembrete(crianca));
