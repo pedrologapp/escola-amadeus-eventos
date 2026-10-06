@@ -47,13 +47,14 @@ export default function DiaDoProfessorPage() {
           </p>
           <p className="mt-[30px]">
             Estamos organizando um <b className="text-amadeus-blue">bate e volta ao West Aquapark</b>, perto de Martins/RN.
-            A saída é de madrugada e a volta, depois de aproveitarmos o dia no parque.
+            A saída é às <b className="text-amadeus-blue">3h da manhã</b> e a volta, depois de aproveitarmos o dia no parque.
           </p>
           <div className="mt-[30px] grid gap-0">
             <p><b className="text-amadeus-blue">Passeio:</b> R$ 250 (ônibus + entrada no parque)</p>
             <p><b className="text-amadeus-blue">A escola paga:</b> R$ 150 de cada colaborador</p>
             <p><b className="text-amadeus-blue">Você paga:</b> R$ 100, em até 2x de R$ 50</p>
             <p><b className="text-amadeus-blue">Acompanhantes:</b> R$ 250 por pessoa, em até 3x</p>
+            <p><b className="text-amadeus-blue">Alimentação:</b> por conta de cada um</p>
           </div>
           <p className={`${letra.className} mt-[30px] text-[26px] leading-[30px] text-[#C25F00]`}>
             A data com mais votos da equipe será a do passeio. Responda até sexta, às 7h da manhã.
