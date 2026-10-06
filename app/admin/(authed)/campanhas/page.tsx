@@ -3,6 +3,7 @@ import {
   ClipboardList,
   GraduationCap,
   Heart,
+  Waves,
 } from "lucide-react";
 import { ModuloCard, type Modulo } from "@/components/admin/modulo-card";
 
@@ -18,6 +19,13 @@ export const metadata = { title: "Campanhas · Admin Amadeus" };
 
 // A Rematrícula 2027 tem aba própria no menu (/admin/rematricula-2027).
 const EM_ANDAMENTO: Modulo[] = [
+  {
+    href: "/admin/dia-do-professor",
+    icone: Waves,
+    titulo: "Dia dos Professores",
+    descricao: "Bate e volta ao West Aquapark: quem vai, votação das datas (16 × 29/10) e acompanhantes.",
+    selo: "Em andamento",
+  },
   {
     href: "/admin/fotos-infancia",
     icone: Baby,
