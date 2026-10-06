@@ -32,7 +32,7 @@ export interface Candidato { telefone: string; responsavel: string | null; crian
 
 const tel = (t: string) => (t.length === 11 ? `(${t.slice(0, 2)}) ${t.slice(2, 7)}-${t.slice(7)}` : t.length === 10 ? `(${t.slice(0, 2)}) ${t.slice(2, 6)}-${t.slice(6)}` : t);
 const dia = (d: string | null) => (d ? new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", timeZone: "America/Fortaleza" }) : null);
-const ORIGEM: Record<string, string> = { novato: "novato", simulador: "rematrícula", avulso: "avulso", manual: "manual", whatsapp: "encaminhado no WhatsApp" };
+const ORIGEM: Record<string, string> = { novato: "novato", simulador: "rematrícula", avulso: "avulso", manual: "manual", whatsapp: "encaminhado no WhatsApp", site: "inscrição pelo site" };
 const SELO: Record<string, string> = { enviado: "bg-emerald-50 text-emerald-700", sem_whatsapp: "bg-amber-100 text-amber-800", erro: "bg-red-50 text-red-700" };
 const TXT: Record<string, string> = { enviado: "Enviado", sem_whatsapp: "Sem WhatsApp", erro: "Erro" };
 const campo = "mt-1 w-full rounded-xl border border-border bg-white px-3 py-2 font-normal outline-none focus:border-amadeus-blue";
