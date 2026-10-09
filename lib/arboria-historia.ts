@@ -80,6 +80,9 @@ export interface UniversoInfo {
   titulo: string;           // como a viagem se chama
   bolsa: string;            // como a bolsa se chama
   abertura: string;         // fala na escola, antes de sair
+  base: string | null;      // arte da base (public/arboria/artes/<base>.webp); Casas: desenhada em código
+  baseNome: string;
+  baseFala: string;
   chegada: string;          // fala de volta à escola
   mundos: Mundo[];
 }
@@ -92,8 +95,10 @@ export const UNIVERSOS: Record<Universo, UniversoInfo> = {
   infantil: {
     titulo: "A viagem da Nave Vagalume",
     bolsa: "bolsinha mágica",
-    abertura: "Oi! Eu sou {nome}! Essa é a minha escola. Hoje eu vou subir na Nave Vagalume e visitar oito planetinhas! Minha bolsinha tá vazia… vamos?",
-    chegada: "Voltei pra minha escola! Olha a minha bolsinha: tá cheinha de coisas que eu encontrei!",
+    abertura: "Oi! Eu sou {nome}! Essa é a minha escola. Pega a mochila… bora voar?",
+    base: "nave-vagalume", baseNome: "Nave Vagalume",
+    baseFala: "Essa é a Nave Vagalume! Ela vai me levar pra visitar oito planetinhas. Segura firme!",
+    chegada: "Voltei pra minha escola! Ufa… olha o tamanho que ficou a minha mochila!",
     mundos: [
       { chave: "ling", lugar: "Planeta-Concha", fundo: "inf-linguistico", cor: COR.ling, item: "🫧", itemNome: "uma bolha-palavra",
         fala: "Aqui as palavras viram bolhas! O Lulu perdeu o chapéu e eu ajudei ele a contar como era.",
@@ -124,8 +129,10 @@ export const UNIVERSOS: Record<Universo, UniversoInfo> = {
   herois: {
     titulo: "A Academia de Super-heróis",
     bolsa: "cinto de herói",
-    abertura: "Eu sou {nome}, herói da Academia! A Pressa, aquela nuvem travessa, tá fazendo todo mundo agir sem pensar na Vila Faísca. Meu cinto tá vazio… hora da missão!",
-    chegada: "Missão cumprida! Voltei pra minha escola com o cinto cheio. E aprendi o golpe mais forte de todos: a Pausa.",
+    abertura: "Eu sou {nome}! Hoje não é um dia comum: eu vou pra Academia de Super-heróis!",
+    base: "central", baseNome: "Central da Academia",
+    baseFala: "Essa é a Central! A Pressa tá fazendo todo mundo agir sem pensar na Vila Faísca. Hora da missão!",
+    chegada: "Missão cumprida! Aprendi o golpe mais forte de todos: a Pausa. Só não sei como essa mochila ficou desse tamanho…",
     mundos: [
       { chave: "ling", lugar: "Torre do Eco", fundo: "her-torre-do-eco", cor: COR.ling, item: "📣", itemNome: "o megafone do eco",
         fala: "Na Torre do Eco, as palavras viram objetos! Eu criei a frase que fez a cidade parar de jogar lixo no rio.",
@@ -156,8 +163,10 @@ export const UNIVERSOS: Record<Universo, UniversoInfo> = {
   talentos: {
     titulo: "A Agência Bússola",
     bolsa: "mochila de agente",
-    abertura: "Agente {nome}, se apresentando. O mundo de Orbe tem oito regiões com problemas que nenhum adulto apressado resolveu. Mochila vazia, passaporte em branco. Missão aceita.",
-    chegada: "De volta à base: a minha escola. Mochila cheia e oito carimbos no passaporte. Missão boa é a que a gente pensa antes de agir.",
+    abertura: "Agente {nome}, se apresentando. Primeiro dia de missão. Destino: o mundo de Orbe.",
+    base: "agencia-bussola", baseNome: "Agência Bússola",
+    baseFala: "Aqui chegam os envelopes das missões. Oito regiões com problemas que nenhum adulto apressado resolveu. Missão aceita.",
+    chegada: "De volta à minha escola. Oito carimbos no passaporte… e uma mochila que agora tem vida própria.",
     mundos: [
       { chave: "ling", lugar: "Arquipélago de Tinta", fundo: "tal-arquipelago-de-tinta", cor: COR.ling, item: "🖋️", itemNome: "a pena das Lontras-Escribas",
         fala: "Missão: uma carta de 30 palavras para reabrir o porto. Pensei em cada palavra. O porto abriu.",
@@ -188,8 +197,10 @@ export const UNIVERSOS: Record<Universo, UniversoInfo> = {
   casas: {
     titulo: "As 8 Casas",
     bolsa: "Jornada",
-    abertura: "Eu sou {nome}. No Fundamental 2, a escola tem oito Casas, oito torres. Neste ano eu vou entrar em cada uma. Minha Jornada começa em branco.",
-    chegada: "Voltei. Mesma escola, outra pessoa. A minha Jornada está cheia: é o mapa de quem eu sou e de quem eu quero ser.",
+    abertura: "Eu sou {nome}. No Fundamental 2, a escola tem oito Casas. Neste ano eu vou entrar em cada uma.",
+    base: null, baseNome: "Pátio das Casas",
+    baseFala: "Esse é o pátio das Casas: oito torres, oito jeitos de pensar. Começa aqui a minha Jornada.",
+    chegada: "Voltei. Mesma escola, outra pessoa. E essa mochila… acho que cabe um ano inteiro aqui dentro.",
     mundos: [
       { chave: "ling", lugar: "Torre da Linguística", fundo: "", cor: COR.ling, item: "📝", itemNome: "um texto meu",
         fala: "Aprendi a desmontar um texto bom, peça por peça. Depois escrevi o meu.",

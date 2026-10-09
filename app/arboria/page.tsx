@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { Fredoka } from "next/font/google";
+import { Caveat, Fredoka } from "next/font/google";
 import { SERIES } from "@/lib/arboria-historia";
 import { AppArboria } from "./app";
 import type { CriancaHistoria } from "./actions";
 
 const fredoka = Fredoka({ subsets: ["latin"], weight: ["400", "500", "600", "700"] });
+const caveat = Caveat({ subsets: ["latin"], weight: ["600", "700"], variable: "--font-caderno" }); // letra de caderno das falas
 
 export const metadata: Metadata = {
   title: "Arboria · a jornada do seu filho",
@@ -31,5 +32,5 @@ export default async function ArboriaPage({ searchParams }: { searchParams: Prom
         respostas: [], boneco_url: null,
       }
     : null;
-  return <div className={fredoka.className}><AppArboria demo={demo} /></div>;
+  return <div className={`${fredoka.className} ${caveat.variable}`}><AppArboria demo={demo} /></div>;
 }
