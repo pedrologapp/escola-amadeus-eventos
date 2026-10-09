@@ -11,6 +11,28 @@ export const metadata = { title: "Experiência Amadeus · Admin Amadeus" };
 export const dynamic = "force-dynamic";
 export const maxDuration = 300; // envio em lote tem pausa entre um número e outro
 
+// O WhatsApp entrega o mesmo celular com e sem o 9 (8487905400 e 84987905400): mostra uma linha só, a com o 9,
+// completando o que faltar (nome, criança, respostas) com a outra.
+const semNome = (n: string | null | undefined) => !n || /escola|amadeus/i.test(n);
+function juntarRepetidos(lista: ContatoExp[]): ContatoExp[] {
+  const porTel = new Map(lista.map((c) => [c.telefone, c]));
+  const fica: ContatoExp[] = [];
+  for (const c of lista) {
+    if (c.telefone.length === 10 && porTel.has(c.telefone.slice(0, 2) + "9" + c.telefone.slice(2))) continue;
+    const g = c.telefone.length === 11 ? porTel.get(c.telefone.slice(0, 2) + c.telefone.slice(3)) : undefined;
+    if (!g) { fica.push(c); continue; }
+    const j: ContatoExp = { ...c };
+    for (const k of ["crianca", "serie", "convite_em", "lembrete_em", "vai_em", "vai_texto", "pessoas", "nao_vai_em", "resposta_texto", "pedido_confirmacao_em"] as const)
+      if (j[k] == null && g[k] != null) (j as unknown as Record<string, unknown>)[k] = g[k];
+    if (semNome(j.responsavel) && !semNome(g.responsavel)) j.responsavel = g.responsavel;
+    j.lembrar = c.lembrar || g.lembrar;
+    j.conferir = c.conferir || g.conferir;
+    if (g.criado_em < j.criado_em) j.criado_em = g.criado_em;
+    fica.push(j);
+  }
+  return fica;
+}
+
 export default async function ExperienciaPage() {
   const admin = createAdminClient();
   const [contatos, config, envios, novatos] = await Promise.all([
@@ -20,8 +42,8 @@ export default async function ExperienciaPage() {
     admin.from("rematricula_envios").select("aluno_nome, serie_2027, responsavel, telefone, created_at").is("aluno_id", null).eq("status", "enviado").order("created_at", { ascending: false }),
   ]);
 
-  const lista = (contatos.data ?? []) as ContatoExp[];
-  const naLista = new Set(lista.map((c) => c.telefone));
+  const lista = juntarRepetidos((contatos.data ?? []) as ContatoExp[]);
+  const naLista = new Set((contatos.data ?? []).map((c) => c.telefone as string));
   // Último erro por número (para mostrar "sem WhatsApp"/"erro" quando o encarte não chegou).
   const ultimoConvite = new Map<string, string>();
   for (const e of envios.data ?? []) if (e.tipo === "convite" && !ultimoConvite.has(e.telefone)) ultimoConvite.set(e.telefone, e.status);
