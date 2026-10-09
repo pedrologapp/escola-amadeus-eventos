@@ -1,0 +1,87 @@
+  /* ===================== Experiência Amadeus 2027 · TV 16:9 (medidas em cqh) ===================== */
+  .stage { padding: 9cqh 11cqh; }
+  .kicker { top: 7cqh; left: 11cqh; }
+  .wide { max-width: 150cqh; }
+
+  /* fotos da escola de antigamente: entram uma por clique, como polaroids */
+  .antigo { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4cqh; margin-top: 6cqh; }
+  .pol { background: var(--creme); padding: 1.4cqh 1.4cqh 0; border-radius: .6cqh; box-shadow: 0 2cqh 4cqh rgba(0, 0, 0, .45);
+    opacity: 0; transform: translateY(5cqh) rotate(var(--rot, -3deg)) scale(.92); transition: opacity .8s ease var(--d, 0s), transform 1.1s var(--ease) var(--d, 0s); }
+  .pol.in { opacity: 1; transform: rotate(var(--rot, -3deg)); }
+  .pol img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: #fff; }
+  .pol p { font: 700 2.9cqh/1.15 var(--sans); color: #1A2238; text-align: center; padding: 1.6cqh .4cqh 2cqh; }
+
+  /* números grandes que contam */
+  .nums { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 6cqh; margin-top: 7cqh; }
+  .num b { display: block; font: 700 17cqh/1 var(--serif); color: var(--ouro); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+  .num p { margin-top: 2cqh; font: 400 3.8cqh/1.3 var(--sans); color: var(--creme-2); }
+  .num { opacity: 0; transform: translateY(3cqh); transition: opacity .9s ease var(--d, 0s), transform 1.1s var(--ease) var(--d, 0s); }
+  .num.in { opacity: 1; transform: none; }
+  .fonte { position: absolute; left: 11cqh; bottom: 5cqh; font: 600 1.8cqh var(--sans); color: var(--creme-3); letter-spacing: .04em; }
+
+  /* palavras que acendem (habilidades) */
+  .pilulas { display: flex; flex-wrap: wrap; gap: 3cqh; margin-top: 7cqh; }
+  .pilula { font: 600 5.6cqh/1 var(--serif); padding: 2.6cqh 4.4cqh; border-radius: 10cqh; border: .35cqh solid rgba(255, 176, 0, .5); color: var(--creme);
+    opacity: 0; transform: scale(.85); transition: opacity .7s ease, transform .9s var(--ease), background .8s ease, color .8s ease; }
+  .pilula.in { opacity: 1; transform: none; background: rgba(255, 176, 0, .12); }
+  .pilula.in em { color: var(--ouro); }
+
+  /* três colunas (pilares) */
+  .tres { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5cqh; margin-top: 6cqh; }
+  .col { border-top: .45cqh solid var(--ouro); padding-top: 3cqh; opacity: 0; transform: translateY(4cqh);
+    transition: opacity .9s ease var(--d, 0s), transform 1.1s var(--ease) var(--d, 0s); }
+  .col.in { opacity: 1; transform: none; }
+  .col .n { font: 800 2.6cqh var(--sans); letter-spacing: .3em; color: var(--ouro); }
+  .col h3 { margin-top: 1.6cqh; font: 600 5.4cqh/1.05 var(--serif); letter-spacing: -.02em; color: var(--creme); }
+  .col p { margin-top: 2cqh; font: 400 3.4cqh/1.35 var(--sans); color: var(--creme-2); }
+
+  /* materiais: cartões claros com a foto do produto */
+  .mats { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 3cqh; margin-top: 5cqh; }
+  .mat { background: var(--creme); border-radius: 2cqh; padding: 2.4cqh 2.4cqh 2.6cqh; display: flex; flex-direction: column; align-items: center; text-align: center;
+    box-shadow: 0 2cqh 5cqh rgba(0, 0, 0, .4); opacity: 0; transform: translateY(4cqh) scale(.96);
+    transition: opacity .8s ease var(--d, 0s), transform 1s var(--ease) var(--d, 0s); }
+  .mat.in { opacity: 1; transform: none; }
+  .mat img { width: 100%; height: var(--h, 20cqh); object-fit: contain; }
+  .mat b { margin-top: 1.8cqh; font: 800 3.1cqh/1.15 var(--sans); color: #0A2F7A; }
+  .mat small { margin-top: .8cqh; font: 600 2.5cqh/1.25 var(--sans); color: #4A5878; }
+  .mat .tag { margin-top: 1.2cqh; font: 800 2cqh var(--sans); letter-spacing: .14em; text-transform: uppercase; color: #fff; background: #0058B0; padding: .7cqh 1.6cqh; border-radius: 4cqh; }
+
+  /* tela da plataforma ao lado do texto */
+  .lado { display: grid; grid-template-columns: 1fr 1.25fr; gap: 7cqh; align-items: center; height: 100%; }
+  .print { margin: 0; border-radius: 1.6cqh; overflow: hidden; box-shadow: 0 3cqh 7cqh rgba(0, 0, 0, .55); border: .3cqh solid rgba(250, 247, 240, .2);
+    opacity: 0; transform: translateX(6cqh) rotate(1.5deg); transition: opacity 1s ease var(--d, 0s), transform 1.3s var(--ease) var(--d, 0s); background: #fff; }
+  .print.in { opacity: 1; transform: rotate(1deg); }
+  .print img { display: block; width: 100%; max-height: 74cqh; object-fit: contain; }
+
+  /* para as famílias: quatro telas pequenas que acendem uma por clique */
+  .quatro { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3cqh; margin-top: 5cqh; }
+  .rec { opacity: 0; transform: translateY(4cqh); transition: opacity .8s ease var(--d, 0s), transform 1s var(--ease) var(--d, 0s); }
+  .rec.in { opacity: 1; transform: none; }
+  .rec img { display: block; width: 100%; height: 26cqh; object-fit: cover; object-position: top left; border-radius: 1.4cqh; border: .3cqh solid rgba(255, 176, 0, .5); background: #fff; }
+  .rec h3 { margin-top: 2cqh; font: 600 4cqh/1.08 var(--serif); color: var(--creme); }
+  .rec p { margin-top: 1.2cqh; font: 400 2.9cqh/1.3 var(--sans); color: var(--creme-2); }
+  .rec .seg { display: inline-block; margin-top: 1.4cqh; font: 800 2cqh var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--ouro); }
+
+  /* avaliações por série */
+  .aval { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3.4cqh; margin-top: 6cqh; }
+  .av { border: .3cqh solid rgba(250, 247, 240, .2); border-radius: 2cqh; padding: 3cqh 3cqh 3.2cqh; background: rgba(8, 48, 120, .35);
+    opacity: 0; transform: translateY(4cqh); transition: opacity .8s ease var(--d, 0s), transform 1s var(--ease) var(--d, 0s); }
+  .av.in { opacity: 1; transform: none; }
+  .av .serie { font: 800 2.4cqh var(--sans); letter-spacing: .18em; text-transform: uppercase; color: var(--ouro); }
+  .av h3 { margin-top: 1.4cqh; font: 600 4.4cqh/1.08 var(--serif); color: var(--creme); }
+  .av p { margin-top: 1.2cqh; font: 400 2.9cqh/1.3 var(--sans); color: var(--creme-2); }
+  .av.novo { border-color: var(--ouro); }
+  .av.novo .selo { display: inline-block; margin-left: 1cqh; padding: .4cqh 1.2cqh; border-radius: 3cqh; background: var(--ouro); color: #1A1300; font-size: 1.9cqh; vertical-align: middle; }
+
+  /* capa de segmento */
+  .seg-capa { justify-content: center; }
+  .seg-capa .h-xl { font-size: 13cqh; }
+  .seg-capa .serie { margin-top: 2.6cqh; font: 700 4cqh var(--sans); letter-spacing: .2em; text-transform: uppercase; color: var(--creme-2); }
+  .seg-capa .linha { width: 26cqh; height: .5cqh; background: var(--ouro); border-radius: 1cqh; margin-top: 5cqh; transform: scaleX(0); transform-origin: left; transition: transform 1.4s var(--ease) .9s; }
+  .seg-capa .linha.in { transform: none; }
+  .seg-capa .orb { top: 50%; right: 14cqh; width: 52cqh; height: 52cqh; margin-top: -26cqh; }
+
+  .lista-g { margin-top: 5cqh; display: flex; flex-direction: column; gap: 2.4cqh; }
+  .lista-g p { font: 400 4cqh/1.3 var(--sans); color: var(--creme-2); padding-left: 4.4cqh; position: relative; }
+  .lista-g p::before { content: ''; position: absolute; left: 0; top: 1.6cqh; width: 1.8cqh; height: 1.8cqh; border-radius: 50%; background: var(--ouro); }
+  .lista-g p b { color: var(--creme); font-weight: 700; }

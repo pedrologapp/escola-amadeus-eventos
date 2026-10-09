@@ -1,0 +1,1197 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Experiência Amadeus · Educação Infantil</title>
+<!--
+  MODELO da skill apresentacao-imersiva. Copie a pasta modelo/ inteira para o
+  projeto e troque as telas de demonstração pelo conteúdo real.
+  Tema (cores e fontes): variáveis em :root, logo em assets/.
+  Controles: → avança · ← volta · F tela cheia · T teste do telão · H esconde a interface
+  Conferir em imagem: index.html?shot=N&at=K (tela N, passo K).
+-->
+<style>
+  @font-face { font-family: Fraunces; src: url(fonts/fraunces.woff2) format('woff2'); font-weight: 100 900; font-style: normal; font-display: block; }
+  @font-face { font-family: Fraunces; src: url(fonts/fraunces-italic.woff2) format('woff2'); font-weight: 100 900; font-style: italic; font-display: block; }
+
+  :root {
+    --bg: #08080C;
+    --azul: #083078;
+    --azul-a: #0058B0;
+    --ouro: #FFB000;
+    --ouro-1: #FFD860;
+    --creme: #FAF7F0;
+    --creme-2: rgba(250, 247, 240, .72);
+    --creme-3: rgba(250, 247, 240, .38);
+    --serif: Fraunces, Georgia, serif;
+    --sans: "SF Pro Display", "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+    --ease: cubic-bezier(.16, .84, .24, 1);
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html { scroll-snap-type: y mandatory; scrollbar-width: none; background: var(--bg); }
+  html::-webkit-scrollbar { display: none; }
+  body { background: var(--bg); color: var(--creme); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+  body.idle { cursor: none; }
+
+  /* ---------- fundo vivo ---------- */
+  #bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  #bg .blob { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .55; transition: background 2.4s ease; }
+  #bg .b1 { width: 70vmax; height: 70vmax; left: -20vmax; top: -25vmax; background: var(--azul); animation: drift1 26s ease-in-out infinite alternate; }
+  #bg .b2 { width: 55vmax; height: 55vmax; right: -18vmax; bottom: -22vmax; background: #0B1F55; animation: drift2 32s ease-in-out infinite alternate; }
+  #bg .b3 { width: 30vmax; height: 30vmax; left: 45%; top: 55%; background: rgba(255, 176, 0, .10); animation: drift1 40s ease-in-out infinite alternate-reverse; }
+  body[data-who="adriana"] #bg .b2 { background: #06306A; }
+  body[data-who="adriana"] #bg .b3 { background: rgba(0, 88, 176, .22); }
+  @keyframes drift1 { to { transform: translate(12vmax, 8vmax) scale(1.15); } }
+  @keyframes drift2 { to { transform: translate(-10vmax, -6vmax) scale(.9); } }
+  #dust { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #bg .grain { position: absolute; inset: -50%; opacity: .07; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    animation: grain 1.2s steps(6) infinite; }
+  @keyframes grain { 0% { transform: translate(0, 0); } 33% { transform: translate(-4%, 3%); } 66% { transform: translate(3%, -5%); } 100% { transform: translate(-2%, 2%); } }
+
+  /* ---------- telas ---------- */
+  .s { position: relative; z-index: 1; height: 100vh; height: 100svh; scroll-snap-align: start; scroll-snap-stop: always;
+    display: grid; place-items: center; overflow: hidden; }
+  .stage { position: relative; width: min(100vw, calc(100svh * 16 / 9)); height: min(100svh, calc(100vw * 9 / 16)); container-type: size;
+    translate: var(--ox, 0px) var(--oy, 0px); scale: var(--sx, 1) 1;
+    padding: 10.4cqh; display: flex; flex-direction: column; justify-content: center; }
+  .kicker { position: absolute; top: 10.4cqh; left: 10.4cqh; display: flex; align-items: center; gap: 2.6cqh;
+    font: 800 3.64cqh var(--sans); letter-spacing: .26em; text-transform: uppercase; color: var(--ouro); }
+  .kicker::before { content: ''; width: 9.1cqh; height: .45.5cqh; background: var(--ouro); border-radius: 1.3cqh;
+    transform: scaleX(0); transform-origin: left; transition: transform 1s var(--ease) .1s; }
+  .kicker.in::before { transform: scaleX(1); }
+
+  .h-xl { font: 700 14.3cqh/0.98 var(--serif); letter-spacing: -.035em; font-variation-settings: "opsz" 144; }
+  .h-l  { font: 600 9.62cqh/1.04 var(--serif); letter-spacing: -.03em; font-variation-settings: "opsz" 144; }
+  .h-m  { font: 400 7.02cqh/1.1 var(--serif); letter-spacing: -.02em; font-variation-settings: "opsz" 96; }
+  .body { font: 400 4.94cqh/1.38 var(--sans); color: var(--creme-2); }
+  .small { font: 700 3.38cqh/1.3 var(--sans); letter-spacing: .18em; text-transform: uppercase; color: var(--creme-3); }
+  .ouro { color: var(--ouro); }
+  em { font-style: italic; }
+  .mt1 { margin-top: 2.6cqh; } .mt2 { margin-top: 5.2cqh; } .mt3 { margin-top: 7.8cqh; }
+
+  /* ---------- sistema de revelação ----------
+     Todo .r ganha .in quando a tela está ativa e o passo dele chegou
+     (data-step, padrão 0). Tudo que se move escuta esse .in. */
+  .r.fade { opacity: 0; transform: translateY(3.9cqh); filter: blur(10px);
+    transition: opacity 1s var(--ease) var(--d, 0s), transform 1.2s var(--ease) var(--d, 0s), filter 1s var(--ease) var(--d, 0s); }
+  .r.fade.in { opacity: 1; transform: none; filter: none; }
+
+  .w { display: inline-block; overflow: hidden; vertical-align: top; padding: 0 .07em .12em 0; margin: 0 -.07em -.12em 0; }
+  .w > span { display: inline-block; transform: translateY(115%) rotate(4deg); opacity: 0;
+    transition: transform 1.1s var(--ease) calc(var(--d, 0s) + var(--i) * 70ms), opacity .8s ease calc(var(--d, 0s) + var(--i) * 70ms); }
+  .r.in .w > span { transform: none; opacity: 1; }
+
+  .draw { fill: none; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1.6s var(--ease) var(--d, 0s); }
+  .r.in .draw { stroke-dashoffset: 0; }
+
+  /* ---------- capa ---------- */
+  .cover { align-items: flex-start; justify-content: flex-end; }
+  .orb { position: absolute; top: 15.6cqh; right: 10.4cqh; width: 46.8cqh; height: 46.8cqh; }
+  .orb img { position: absolute; inset: 11%; width: 78%; height: 78%; object-fit: contain; border-radius: 50%;
+    opacity: 0; transform: scale(.85); transition: opacity 1.4s var(--ease) .5s, transform 1.8s var(--ease) .5s; }
+  .orb.in img { opacity: 1; transform: none; animation: float 7s ease-in-out 2.3s infinite alternate; }
+  .orb svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .orb .ring { stroke: var(--ouro); stroke-width: .5; }
+  .orb .orbit { fill: none; stroke: rgba(255, 176, 0, .35); stroke-width: .25; stroke-dasharray: .6 2.2; transform-origin: 50px 50px; animation: spin 60s linear infinite; }
+  .orb .sat { fill: var(--ouro-1); transform-origin: 50px 50px; animation: spin 18s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes float { to { transform: translateY(-1.56cqh); } }
+  .cover .name { margin-top: 2.6cqh; }
+  .cover .role { margin-top: 3.12cqh; max-width: 80.6cqh; }
+  .cover .event { position: absolute; left: 10.4cqh; bottom: 10.4cqh; }
+  .cover .stack { margin-bottom: 15.6cqh; }
+
+  /* ---------- G1 · "Nada." ---------- */
+  .nada { position: relative; margin-top: 6.5cqh; height: 28.6cqh; }
+  .nada .dots { position: absolute; left: 0; top: 7.8cqh; display: flex; gap: 2.08cqh; opacity: 0; }
+  .nada .dots i { width: 3.38cqh; height: 3.38cqh; border-radius: 50%; background: var(--creme-3); animation: blink 1s ease-in-out infinite; }
+  .nada .dots i:nth-child(2) { animation-delay: .15s; } .nada .dots i:nth-child(3) { animation-delay: .3s; }
+  @keyframes blink { 50% { opacity: .25; transform: translateY(-.7.8cqh); } }
+  .nada .word { position: absolute; left: 0; top: 0; font: 800 28.6cqh/1 var(--serif); letter-spacing: -.05em; color: var(--ouro);
+    font-variation-settings: "opsz" 144; opacity: 0; transform: scale(1.35); filter: blur(14px); transform-origin: left center;
+    transition: opacity .6s ease, transform .9s var(--ease), filter .6s ease; }
+  .nada.in .dots { animation: dots 1.5s ease forwards; }
+  .nada.in .word { opacity: 1; transform: none; filter: none; transition-delay: 1.45s; }
+  @keyframes dots { 0% { opacity: 0; } 12%, 80% { opacity: 1; } 100% { opacity: 0; } }
+
+  /* ---------- G2 · tarefa riscada, a pergunta ---------- */
+  .strike { position: relative; display: inline-block; transition: color .8s ease 2s; }
+  .strike::after { content: ''; position: absolute; left: -3%; right: -3%; top: 56%; height: .07em; border-radius: .05em; background: var(--ouro);
+    transform: scaleX(0); transform-origin: left; transition: transform .8s var(--ease) 1.7s; }
+  .r.in .strike { color: var(--creme-3); }
+  .r.in .strike::after { transform: scaleX(1); }
+  .bigq { position: absolute; right: -7.8cqh; bottom: -23.4cqh; font: italic 300 123.5cqh/1 var(--serif); color: transparent;
+    -webkit-text-stroke: .32.5cqh rgba(255, 176, 0, .16); pointer-events: none; opacity: 0; transform: rotate(-8deg) scale(.9);
+    transition: opacity 2s ease, transform 3s var(--ease); }
+  .bigq.in { opacity: 1; transform: rotate(4deg) scale(1); animation: sway 9s ease-in-out 3s infinite alternate; }
+  @keyframes sway { to { transform: rotate(-2deg) scale(1.03); } }
+
+  /* ---------- G3 · as três perguntas ---------- */
+  .qs { display: flex; flex-direction: column; gap: 5.72cqh; margin-top: 5.2cqh; position: relative; padding-left: 7.8cqh; }
+  .qs::before { content: ''; position: absolute; left: .10.4cqh; top: 1.3cqh; bottom: 1.3cqh; width: .32.5cqh; background: rgba(250, 247, 240, .14); }
+  .q .qi { transition: opacity .9s ease, transform .9s var(--ease); }
+  .q .n { display: block; font: 800 3.38cqh var(--sans); letter-spacing: .3em; color: var(--ouro); margin-bottom: 1.3cqh; }
+  .q .h-m { font-style: italic; }
+  .q::before { content: ''; position: absolute; left: -8.19cqh; top: -.45.5cqh; width: 2.86cqh; height: 2.86cqh; border-radius: 50%;
+    background: var(--ouro); box-shadow: 0 0 3.9cqh rgba(255, 176, 0, .7); transform: scale(0); transition: transform .8s var(--ease) .2s; }
+  .q { position: relative; }
+  .q.in::before { transform: scale(1); }
+  .s[data-at="1"] .q[data-step="0"] .qi, .s[data-at="2"] .q[data-step="0"] .qi, .s[data-at="2"] .q[data-step="1"] .qi { opacity: .28; transform: translateX(-1.3cqh); }
+  .s[data-at="1"] .q[data-step="0"]::before, .s[data-at="2"] .q[data-step="0"]::before, .s[data-at="2"] .q[data-step="1"]::before { transform: scale(.45); box-shadow: none; }
+  .qs-apoio { margin-top: 6.5cqh; padding-left: 7.8cqh; }
+
+  /* ---------- G4 · diário e portfólio ---------- */
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 6.5cqh; margin-top: 5.2cqh; }
+  .pair svg { width: 100%; height: 22.1cqh; overflow: visible; }
+  .pair .t { font: 600 5.72cqh/1.05 var(--serif); letter-spacing: -.02em; margin-top: 3.9cqh; }
+  .pair .body { margin-top: 2.08cqh; font-size: 4.42cqh; }
+  .nb-page { stroke: var(--creme); stroke-width: .8; }
+  .nb-line { stroke: rgba(250, 247, 240, .25); stroke-width: .5; }
+  .nb-ink { stroke: var(--ouro); stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+  .nb-ring { stroke: var(--creme-2); stroke-width: .7; }
+  .frame { transform-box: fill-box; transform-origin: 50% 100%; opacity: 0; transform: translateY(14px) rotate(0);
+    transition: opacity .8s ease var(--d), transform 1.4s var(--ease) var(--d); }
+  .r.in .frame { opacity: 1; transform: translate(var(--x), 0) rotate(var(--rot)); }
+  .frame rect.p { fill: #11131C; stroke: var(--creme); stroke-width: .8; }
+  .frame .img { fill: none; stroke: var(--ouro); stroke-width: .9; stroke-linecap: round; stroke-linejoin: round; }
+  .echo { margin-top: 7.8cqh; display: flex; align-items: baseline; gap: 3.9cqh; flex-wrap: wrap; }
+  .echo .was { font: 800 7.02cqh var(--serif); color: var(--creme-3); position: relative; }
+  .echo .was::after { content: ''; position: absolute; left: -4%; right: -4%; top: 55%; height: .08em; background: var(--ouro);
+    transform: scaleX(0); transform-origin: left; transition: transform .7s var(--ease) .5s; }
+  .echo.in .was::after { transform: scaleX(1); }
+  .echo .now { font: italic 400 5.46cqh/1.15 var(--serif); flex: 1 1 65cqh; }
+
+  /* ---------- G5 · a caixa que se abre ---------- */
+  .boxwrap { position: relative; height: 52cqh; perspective: 143cqh; display: grid; place-items: center; margin-bottom: 5.2cqh; }
+  .cube { position: relative; width: 28.6cqh; height: 28.6cqh; transform-style: preserve-3d; transform: rotateX(-26deg) rotateY(-38deg);
+    animation: turn 16s ease-in-out infinite alternate; }
+  @keyframes turn { to { transform: rotateX(-22deg) rotateY(-18deg); } }
+  .face { position: absolute; inset: 0; border: .45.5cqh solid var(--ouro); background: rgba(8, 48, 120, .55); backface-visibility: visible; }
+  .f-front { transform: translateZ(14.3cqh); } .f-back { transform: rotateY(180deg) translateZ(14.3cqh); }
+  .f-right { transform: rotateY(90deg) translateZ(14.3cqh); } .f-left { transform: rotateY(-90deg) translateZ(14.3cqh); }
+  .f-bottom { transform: rotateX(-90deg) translateZ(14.3cqh); background: rgba(255, 176, 0, .35); }
+  .lid { transform-origin: 50% 0; transform: translateZ(-14.3cqh) rotateX(90deg); background: rgba(8, 48, 120, .85);
+    transition: transform 2.2s cubic-bezier(.5, -0.2, .2, 1.2) 1.9s; }
+  .r.in .lid { transform: translateZ(-14.3cqh) rotateX(215deg); }
+  .light { position: absolute; left: 50%; top: 50%; width: 78cqh; height: 78cqh; margin: -49.4cqh 0 0 -39cqh; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 216, 96, .55), rgba(255, 176, 0, .12) 40%, transparent 68%);
+    opacity: 0; transform: scale(.4); transition: opacity 2s ease 2.6s, transform 2.6s var(--ease) 2.6s; }
+  .r.in .light { opacity: 1; transform: none; }
+  .spark { position: absolute; left: 50%; top: 42%; width: .11.7cqh; height: .11.7cqh; border-radius: 50%; background: var(--ouro-1);
+    box-shadow: 0 0 1.82cqh var(--ouro); opacity: 0; }
+  .r.in .spark { animation: rise var(--t) ease-out calc(3s + var(--dl)) infinite; }
+  @keyframes rise { 0% { opacity: 0; transform: translate(0, 0) scale(.6); } 15% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--dx), -44.2cqh) scale(1.2); } }
+  .final { text-align: center; }
+
+  /* ---------- A1/A2 · a linha do bimestre ---------- */
+  .tl { position: relative; height: 20.8cqh; margin: 9.1cqh 0 6.5cqh; }
+  .tl-track { position: absolute; left: 0; right: 0; top: 9.1cqh; height: .3.9cqh; background: rgba(250, 247, 240, .2); transform-origin: left; }
+  .tl-track.r { transform: scaleX(0); transition: transform 1.4s var(--ease) .3s; }
+  .tl-track.r.in { transform: none; }
+  .tl-ticks { position: absolute; left: 0; right: 0; top: 8.06cqh; display: flex; justify-content: space-between; }
+  .tl-ticks i { width: .3.9cqh; height: 2.47cqh; background: rgba(250, 247, 240, .28); }
+  .tl-fill { position: absolute; left: 18%; right: 0; top: 8.97cqh; height: .6.5cqh; transform-origin: left; transform: scaleX(0);
+    background: repeating-linear-gradient(90deg, rgba(250, 247, 240, .55) 0 1.56cqh, transparent 1.56cqh 2.6cqh);
+    transition: transform 2.4s cubic-bezier(.45, 0, .2, 1) .2s; }
+  .tl-fill.in { transform: none; }
+  .mark { position: absolute; top: 9.29cqh; left: var(--x); }
+  .mark .dot { position: absolute; width: 3.9cqh; height: 3.9cqh; margin: -1.95cqh 0 0 -1.95cqh; border-radius: 50%; }
+  .mark .lab { position: absolute; white-space: nowrap; transform: translateX(-50%); font: 800 3.38cqh var(--sans); letter-spacing: .2em; text-transform: uppercase; }
+  .mark .lab.up { bottom: 3.9cqh; } .mark .lab.down { top: 3.9cqh; }
+  .mark.err .dot { background: var(--creme); box-shadow: 0 0 0 .11.7cqh rgba(250, 247, 240, .15); }
+  .mark.err .lab { color: var(--creme-2); }
+  .mark.late .dot { background: var(--creme-3); }
+  .mark.late .lab { color: var(--creme-2); transform: translateX(-80%); }
+  .mark.r { opacity: 0; transition: opacity .8s ease var(--d, 0s); }
+  .mark.r.in { opacity: 1; }
+  .gap { position: absolute; left: 18%; right: 0; top: 14.3cqh; height: 2.6cqh; border: .32.5cqh solid rgba(255, 176, 0, .6); border-top: 0;
+    border-radius: 0 0 1.3cqh 1.3cqh; opacity: 0; transition: opacity .8s ease 2.4s; }
+  .gap span { position: absolute; left: 50%; top: 3.64cqh; transform: translateX(-50%); font: 800 3.38cqh var(--sans); letter-spacing: .2em; text-transform: uppercase; color: var(--ouro); }
+  .gap.in { opacity: 1; }
+  .mark.see { left: 100%; transition: left 2s var(--ease) .9s, opacity .6s ease .3s; }
+  .mark.see.in { left: 18%; }
+  .mark.see .dot { background: var(--ouro); box-shadow: 0 0 3.9cqh rgba(255, 176, 0, .8); }
+  .mark.see .lab { color: var(--ouro); }
+  .mark.see.in .dot::after { content: ''; position: absolute; inset: -1.3cqh; border-radius: 50%; border: .3.9cqh solid var(--ouro); opacity: 0; animation: pulse 2s ease-out 3s infinite; }
+  @keyframes pulse { 0% { opacity: .9; transform: scale(.6); } 100% { opacity: 0; transform: scale(2.6); } }
+
+  /* ---------- A3 · duas colunas ---------- */
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 7.8cqh; margin-top: 6.5cqh; position: relative; }
+  .cols::before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: .32.5cqh; background: rgba(250, 247, 240, .16); }
+  .cols .yr { font: 800 3.64cqh var(--sans); letter-spacing: .26em; text-transform: uppercase; color: var(--ouro); }
+  .cols .t { font: 600 6.24cqh/1.05 var(--serif); letter-spacing: -.02em; margin-top: 2.6cqh; }
+  .cols .body { margin-top: 2.6cqh; font-size: 4.42cqh; }
+  .cols svg { width: 100%; height: 16.9cqh; margin-top: 3.9cqh; overflow: visible; }
+  .book { stroke: var(--creme); stroke-width: .8; stroke-linejoin: round; }
+  .bookl { stroke: rgba(250, 247, 240, .35); stroke-width: .6; }
+  .lists { display: grid; grid-template-columns: 1fr 1fr; gap: 3.12cqh; margin-top: 3.9cqh; }
+  .list .who { font: 800 2.99cqh var(--sans); letter-spacing: .2em; text-transform: uppercase; color: var(--creme-3); margin-bottom: 1.3cqh; }
+  .list b { display: block; height: 2.21cqh; border-radius: .6.5cqh; margin-top: .11.7cqh; transform: scaleX(0); transform-origin: left;
+    transition: transform .9s var(--ease) calc(.3s + var(--k) * 160ms); }
+  .list b.o { background: var(--ouro); } .list b.a { background: var(--azul-a); } .list b.c { background: rgba(250, 247, 240, .5); }
+  .lists.in b { transform: scaleX(var(--w)); }
+
+  /* ---------- A4 · toda sexta-feira ---------- */
+  .week { display: flex; gap: 2.34cqh; margin-top: 10.4cqh; }
+  .day { flex: 1; height: 14.3cqh; border-radius: 1.82cqh; border: .32.5cqh solid rgba(250, 247, 240, .2); display: grid; place-items: center;
+    font: 800 3.64cqh var(--sans); letter-spacing: .14em; color: var(--creme-3); transition: all .5s ease calc(var(--k) * 260ms); }
+  .week.in .day { border-color: rgba(250, 247, 240, .45); color: var(--creme-2); }
+  .week.in .day.fri { flex: 1.8; background: var(--ouro); border-color: var(--ouro); color: var(--bg); transform: translateY(-1.3cqh);
+    box-shadow: 0 2.6cqh 7.8cqh rgba(255, 176, 0, .35); transition-delay: 1.3s; }
+  .mail { margin-top: 6.5cqh; display: grid; grid-template-columns: 16.9cqh 1fr; gap: 5.2cqh; align-items: start; }
+  .mail svg { width: 16.9cqh; height: 13cqh; overflow: visible; }
+  .env { stroke: var(--ouro); stroke-width: 1.4; stroke-linejoin: round; }
+  .checks { list-style: none; padding: 0; margin-top: 3.38cqh; display: grid; gap: 1.82cqh; }
+  .checks li { display: flex; align-items: center; gap: 2.34cqh; font: 400 4.94cqh var(--sans); color: var(--creme);
+    opacity: 0; transform: translateX(-2.6cqh); transition: opacity .7s ease calc(1s + var(--k) * 350ms), transform .9s var(--ease) calc(1s + var(--k) * 350ms); }
+  .checks li svg { width: 4.94cqh; height: 4.94cqh; flex: none; }
+  .checks li .ck { stroke: var(--ouro); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+  .mail.in .checks li { opacity: 1; transform: none; }
+
+  /* ---------- A5 · o ano inteiro ---------- */
+  .year { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2.86cqh; margin: 3.9cqh 0 10.4cqh; }
+  .year i { aspect-ratio: 1; border-radius: 50%; background: rgba(250, 247, 240, .1); transition: background .5s ease, box-shadow .5s ease, transform .5s var(--ease); transition-delay: calc(.6s + var(--k) * 55ms); }
+  .year i:last-child { background: var(--creme-3); }
+  .year.in i { background: var(--ouro); box-shadow: 0 0 2.08cqh rgba(255, 176, 0, .45); }
+  .year.in i:last-child { transform: scale(1.35); background: var(--creme); box-shadow: 0 0 0 .10.4cqh rgba(250, 247, 240, .18); }
+
+  /* ---------- interface ---------- */
+  .ui { position: fixed; z-index: 5; transition: opacity .6s ease; }
+  body.clean .ui { opacity: 0; }
+  #dots { right: 1.6vmin; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 1vmin; }
+  #dots button { width: .9vmin; height: .9vmin; min-width: 6px; min-height: 6px; border-radius: 50%; border: 0; padding: 0; cursor: pointer;
+    background: rgba(250, 247, 240, .22); transition: transform .3s, background .3s; }
+  #dots button.on { background: var(--ouro); transform: scale(1.6); }
+  #dots button.sep { margin-top: 1.6vmin; }
+  #who { left: 2vmin; bottom: 2vmin; font: 700 max(10px, 1.1vmin) var(--sans); letter-spacing: .24em; text-transform: uppercase; color: var(--creme-3); }
+  #hint { left: 50%; bottom: 3vmin; transform: translateX(-50%); font: 600 max(11px, 1.3vmin) var(--sans); letter-spacing: .12em;
+    color: var(--creme-2); background: rgba(250, 247, 240, .08); padding: 1vmin 2vmin; border-radius: 99px; animation: hint 6s ease forwards; }
+  @keyframes hint { 0%, 70% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
+
+
+  body[data-who="graca"] #bg .b3 { background: rgba(255, 176, 0, .16); }
+  body[data-who="abertura"] #bg .b1 { background: #0A2A6A; }
+  .r.op { opacity: 0; transition: opacity .9s ease var(--d, 0s); }
+  .r.op.in { opacity: 1; }
+  .swap { display: grid; }
+  .swap > * { grid-area: 1 / 1; }
+
+  /* ---------- abertura · o símbolo girando ---------- */
+  .opening { align-items: center; text-align: center; }
+  .spin { position: relative; width: 72.8cqh; height: 72.8cqh; perspective: 208cqh; }
+  .spin .glow { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, rgba(255, 176, 0, .28), rgba(8, 48, 120, .25) 45%, transparent 68%);
+    animation: breathe 4.5s ease-in-out infinite alternate; }
+  @keyframes breathe { from { opacity: .55; transform: scale(.92); } to { opacity: 1; transform: scale(1.08); } }
+  .spin svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .spin .o1 { fill: none; stroke: rgba(255, 176, 0, .55); stroke-width: .35; stroke-dasharray: .5 1.9; transform-origin: 50px 50px; animation: spin 40s linear infinite; }
+  .spin .o2 { fill: none; stroke: rgba(250, 247, 240, .16); stroke-width: .2; transform-origin: 50px 50px; animation: spin 80s linear infinite reverse; }
+  .coin { position: absolute; inset: 15%; transform-style: preserve-3d; animation: coin 9s cubic-bezier(.45, .05, .55, .95) infinite; }
+  .coin img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+  .coin img.back { transform: rotateY(180deg); }
+  @keyframes coin { to { transform: rotateY(360deg); } }
+  .opening .cap { margin-top: 9.1cqh; }
+
+  /* ---------- vídeo em tela cheia ---------- */
+  .s.video { background: #000; cursor: pointer; }
+  .vstage { padding: 0; display: block; }
+  .s.video video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; }
+  .vplay { position: absolute; left: 50%; top: 50%; width: 20.8cqh; height: 20.8cqh; margin: -10.4cqh 0 0 -10.4cqh; border-radius: 50%;
+    border: .6.5cqh solid var(--ouro); display: grid; place-items: center; opacity: 0; transition: opacity .4s; pointer-events: none; background: rgba(0, 0, 0, .35); }
+  .vplay::after { content: ''; margin-left: 1.82cqh; border-left: 6.24cqh solid var(--ouro); border-top: 3.9cqh solid transparent; border-bottom: 3.9cqh solid transparent; }
+  .s.video.paused .vplay { opacity: .9; }
+  .vmiss { display: none; position: absolute; left: 13cqh; right: 13cqh; top: 62%; text-align: center;
+    font: 500 3.9cqh/1.5 var(--sans); color: var(--creme-2); }
+  .s.video.missing .vmiss { display: block; }
+  .s.video.missing .vplay { display: none; }
+
+  /* ---------- "Isso é o que somos!" ---------- */
+  .somos { align-items: center; text-align: center; }
+  .somos .h-xl { font-size: 16.25cqh; }
+  .somos .halo { position: absolute; left: 50%; top: 50%; width: 117cqh; height: 117cqh; margin: -58.5cqh 0 0 -58.5cqh; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 176, 0, .20), rgba(8, 48, 120, .22) 40%, transparent 66%); opacity: 0; transform: scale(.5);
+    transition: opacity 2.4s ease, transform 3s var(--ease); pointer-events: none; }
+  .somos .halo.in { opacity: 1; transform: none; animation: breathe 6s ease-in-out 3s infinite alternate; }
+  .uline { width: 39cqh; height: .6.5cqh; margin: 6.5cqh auto 5.2cqh; background: var(--ouro); border-radius: 1.3cqh; transform: scaleX(0); transition: transform 1.4s var(--ease) 1.2s; }
+  .uline.in { transform: none; }
+
+  /* ---------- G1 · fomos, somos, seremos ---------- */
+  .fss { display: flex; flex-direction: column; gap: 3.25cqh; }
+  .fss p { transition: opacity 1.2s ease, color 1.2s ease, transform 1.2s var(--ease); transform-origin: left center; }
+  .s[data-at="1"] .fss .l1, .s[data-at="1"] .fss .l3 { opacity: .16; }
+  .s[data-at="1"] .fss .l2 { color: var(--ouro); transform: scale(1.06); }
+
+  /* ---------- G2 · ficha e computador ---------- */
+  .illus { width: 100%; height: 49.4cqh; margin: 7.8cqh 0 6.5cqh; overflow: visible; }
+  .illus .fr { stroke: var(--creme); stroke-width: 1; stroke-linejoin: round; }
+  .illus .ln { stroke: rgba(250, 247, 240, .35); stroke-width: .8; }
+  .illus .ink { stroke: var(--ouro); stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+  .illus .ar2 { stroke: var(--ouro); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+  .illus .code { stroke: var(--ouro); stroke-width: 2.4; stroke-linecap: round; }
+  .illus .ft { font: 800 3.6px var(--sans); letter-spacing: .08em; fill: var(--creme-3); }
+  .illus .cursor { fill: var(--ouro); opacity: 0; }
+  .r.in .cursor { animation: blinkc 1s steps(2) 2.8s infinite; }
+  @keyframes blinkc { 0% { opacity: 1; } 100% { opacity: 0; } }
+
+  /* ---------- G3 · a impressora ---------- */
+  .printer { width: 100%; height: 44.2cqh; margin-top: 6.5cqh; overflow: visible; }
+  .printer .pb { stroke: var(--creme); stroke-width: 1.1; fill: #11131C; }
+  .printer .pb.draw { fill: #11131C; }
+  .printer .pl { stroke: rgba(250, 247, 240, .4); stroke-width: 1; }
+  .printer .paper { animation: feed 6s linear infinite; animation-play-state: paused; }
+  .r.in .paper { animation-play-state: running; }
+  @keyframes feed { to { transform: translateY(-48px); } }
+  .printer .headp { fill: var(--ouro); opacity: 0; transition: opacity .6s ease 1.2s; }
+  .r.in .headp { opacity: 1; animation: head .9s ease-in-out 1.2s infinite alternate; }
+  @keyframes head { to { transform: translateX(62px); } }
+  .printer .led { fill: var(--ouro); opacity: 0; }
+  .r.in .led { animation: blinkc .8s steps(2) 1s infinite; }
+  .carnes { display: flex; justify-content: center; gap: 1.56cqh; height: 15.6cqh; margin: 5.2cqh 0 2.6cqh; }
+  .carnes i { width: 10.92cqh; height: 14.95cqh; border: .3.9cqh solid var(--ouro); border-radius: .10.4cqh; background: rgba(255, 176, 0, .10); position: relative;
+    opacity: 0; transform: translateY(-9.1cqh) rotate(0); transition: opacity .5s ease calc(.2s + var(--k) * 220ms), transform .9s cubic-bezier(.3, 1.4, .5, 1) calc(.2s + var(--k) * 220ms); }
+  .carnes i::before { content: ''; position: absolute; left: 12%; right: 12%; top: 26%; border-top: .3.9cqh dashed rgba(255, 176, 0, .7); }
+  .carnes i::after { content: ''; position: absolute; left: 12%; width: 55%; bottom: 20%; height: .11.7cqh; border-radius: .3.9cqh; background: rgba(255, 176, 0, .55);
+    box-shadow: 0 -2.86cqh 0 rgba(250, 247, 240, .35); }
+  .carnes.in i { opacity: 1; transform: rotate(var(--rot)); }
+
+  /* ---------- ícones em traço (gerados pelo script) ---------- */
+  svg[data-icon] { fill: none; stroke: var(--creme); stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
+
+  /* ---------- G4 · seis computadores ---------- */
+  .mons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3.9cqh 6.5cqh; width: 93.6cqh; margin: 9.1cqh auto 5.2cqh; }
+  .mons svg { width: 100%; height: auto; aspect-ratio: 40 / 36; }
+  .mons .scr { transition: fill .7s ease calc(var(--d) + .8s), filter .7s ease calc(var(--d) + .8s); }
+  .mons.in .scr { fill: rgba(255, 176, 0, .38); }
+  .six { display: flex; align-items: center; gap: 5.2cqh; }
+  .count { position: relative; width: 22.1cqh; height: 31.2cqh; flex: none; }
+  .count span { position: absolute; inset: 0; font: 800 33.8cqh/0.9 var(--serif); color: var(--ouro); letter-spacing: -.04em; opacity: 0; text-align: center; }
+  .six.in .count span { animation: tick .45s linear calc(.3s + var(--k) * .45s) forwards; }
+  .six.in .count span.last { animation: stay .45s var(--ease) calc(.3s + var(--k) * .45s) forwards; }
+  @keyframes tick { 0%, 99% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes stay { from { opacity: 0; transform: scale(1.3); } to { opacity: 1; transform: none; } }
+  .six .h-l { opacity: 0; transform: translateX(-2.6cqh); transition: opacity .9s ease 3s, transform 1s var(--ease) 3s; }
+  .six.in .h-l { opacity: 1; transform: none; }
+
+  /* ---------- G5 · a escola, sala por sala ---------- */
+  .plan { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3.12cqh; row-gap: 7.8cqh; margin-top: 10.4cqh; position: relative; }
+  .plan::before { content: ''; position: absolute; left: -2.6cqh; right: -2.6cqh; top: calc(50% - 1.56cqh); height: 3.12cqh;
+    border-top: .2.6cqh dashed rgba(250, 247, 240, .18); border-bottom: .2.6cqh dashed rgba(250, 247, 240, .18); }
+  .room { aspect-ratio: 1.25 / 1; border: .32.5cqh solid rgba(250, 247, 240, .22); border-radius: .10.4cqh; display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: .7.8cqh;
+    padding: .10.4cqh; transition: background .7s ease calc(var(--k) * 140ms), border-color .7s ease calc(var(--k) * 140ms), box-shadow .7s ease calc(var(--k) * 140ms); }
+  .room svg { width: 40%; height: auto; aspect-ratio: 40 / 36; stroke: var(--ouro); stroke-width: 2; opacity: 0; transform: scale(.5);
+    transition: opacity .5s ease calc(.2s + var(--k) * 140ms), transform .7s cubic-bezier(.3, 1.5, .5, 1) calc(.2s + var(--k) * 140ms); }
+  .room svg.lb { width: 62%; }
+  .plan.in .room:first-child { border-color: var(--ouro); background: rgba(255, 176, 0, .14); }
+  .plan.in .room:first-child .lb { opacity: 1; transform: none; }
+  .s[data-at="1"] .room .pj, .s[data-at="2"] .room .pj, .s[data-at="3"] .room .pj { opacity: 1; transform: none; }
+  .s[data-at="1"] .room, .s[data-at="2"] .room { border-color: rgba(255, 176, 0, .55); }
+  .s[data-at="2"] .room .ar, .s[data-at="3"] .room .ar { opacity: 1; transform: none; }
+  .s[data-at="3"] .room { border-color: var(--ouro); background: rgba(255, 176, 0, .20); box-shadow: 0 0 3.12cqh rgba(255, 176, 0, .3); }
+  .s[data-at="1"] .room .lb, .s[data-at="2"] .room .lb, .s[data-at="3"] .room .lb { width: 40%; }
+
+  /* ---------- G6 · sempre houve uma criança ---------- */
+  .row5 { display: flex; justify-content: space-between; margin: 10.4cqh 0 3.9cqh; transition: opacity 1.4s ease; }
+  .row5 svg { width: 18.2cqh; height: auto; aspect-ratio: 40 / 36; }
+  .s[data-at="1"] .row5 { opacity: .22; }
+  .s[data-at="2"] .row5 { opacity: .1; }
+
+  /* ---------- G7 · o anúncio ---------- */
+  .anuncio { align-items: center; text-align: center; }
+  .burst { position: absolute; left: 50%; top: 47%; width: 169cqh; height: 169cqh; margin: -84.5cqh 0 0 -84.5cqh; pointer-events: none; opacity: 0; transform: scale(.2);
+    transition: opacity 1.2s ease, transform 2s var(--ease); }
+  .burst.in { opacity: 1; transform: none; }
+  .burst .rays { position: absolute; inset: 0; border-radius: 50%;
+    background: repeating-conic-gradient(from 0deg, rgba(255, 176, 0, .16) 0 4deg, transparent 4deg 16deg);
+    -webkit-mask: radial-gradient(circle, #000 8%, transparent 62%); mask: radial-gradient(circle, #000 8%, transparent 62%); animation: spin 50s linear infinite; }
+  .burst .core { position: absolute; inset: 28%; border-radius: 50%; background: radial-gradient(circle, rgba(255, 216, 96, .45), rgba(255, 176, 0, .12) 45%, transparent 70%); }
+  .anuncio .novo { opacity: 0; transition: opacity 1s ease .9s; margin-bottom: 2.6cqh; }
+  .r.in .novo { opacity: 1; }
+  .geekie { font: 800 29.9cqh/1 var(--serif); letter-spacing: -.045em; color: var(--ouro); font-variation-settings: "opsz" 144;
+    text-shadow: 0 0 10.4cqh rgba(255, 176, 0, .45); opacity: 0; transform: scale(.6); filter: blur(20px);
+    transition: opacity 1s ease .25s, transform 1.6s cubic-bezier(.2, 1.4, .3, 1) .25s, filter 1s ease .25s; }
+  .r.in .geekie { opacity: 1; transform: none; filter: none; }
+  .bemvindo { margin-top: 5.2cqh; }
+
+
+
+  body[data-who="sonia"] #bg .b3 { background: rgba(0, 88, 176, .22); }
+
+  /* ---------- "Isso é o que nós somos!": o "nós" abre espaço e entra ---------- */
+  .somos .frase { line-height: 1.04; }
+  .nos { display: inline-block; max-width: 0; overflow: hidden; vertical-align: bottom; white-space: nowrap; transition: max-width 1.3s var(--ease) .1s; }
+  .nos em { display: inline-block; padding-right: .24em; transform: translateY(100%); opacity: 0; transition: transform 1s var(--ease) .55s, opacity .6s ease .55s; }
+  .s[data-at="1"] .nos { max-width: 3em; }
+  .s[data-at="1"] .nos em { transform: none; opacity: 1; }
+  .somos .sozinha { max-width: 109.2cqh; margin: 0 auto; font-size: 8.58cqh; }
+
+  /* ---------- tela da apresentação do Geekie ---------- */
+  .hold { align-items: center; text-align: center; }
+  .hold-marca { position: relative; width: 57.2cqh; height: 57.2cqh; }
+  .hold-marca .glow { position: absolute; inset: -18%; border-radius: 50%; background: radial-gradient(circle, rgba(255, 176, 0, .26), rgba(8, 48, 120, .2) 45%, transparent 68%);
+    animation: breathe 5s ease-in-out infinite alternate; }
+  .hold-marca img { position: relative; width: 100%; height: 100%; object-fit: contain; animation: float 7s ease-in-out infinite alternate; }
+  .hold .hold-nome { margin-top: 6.5cqh; font-size: 22.1cqh; }
+  .geekie.r.in { opacity: 1; transform: none; filter: none; }
+
+  /* ---------- Sônia: fotos ---------- */
+  .foto-q { width: 67.6cqh; aspect-ratio: 432 / 381; margin-top: 9.1cqh; border-radius: 2.6cqh; overflow: hidden;
+    border: .3.9cqh solid rgba(255, 176, 0, .55); box-shadow: 0 3.9cqh 10.4cqh rgba(0, 0, 0, .55); }
+  .foto-q img, .foto-retrato img { width: 100%; height: 100%; object-fit: cover; display: block; transform: scale(1.12); transition: transform 10s ease-out .2s; }
+  .s.on .foto-q img, .s.on .foto-retrato img { transform: none; }
+  .duo { flex-direction: row; align-items: center; gap: 7.8cqh; }
+  .foto-retrato { flex: 0 0 49.4cqh; aspect-ratio: 639 / 719; border-radius: 2.6cqh; overflow: hidden;
+    border: .3.9cqh solid rgba(255, 176, 0, .55); box-shadow: 0 3.9cqh 10.4cqh rgba(0, 0, 0, .55); }
+  .duo-texto { flex: 1; }
+  .duo .h-l { font-size: 8.06cqh; }
+
+  /* ---------- Sônia: mensalidades ---------- */
+  .precos { margin-top: 6.5cqh; }
+  .pl { display: grid; grid-template-columns: 1.4fr 1fr 1.2fr; align-items: baseline; padding: 2.86cqh 0; border-bottom: .2.6cqh solid rgba(250, 247, 240, .14);
+    font: 600 6.5cqh var(--serif); letter-spacing: -.01em; }
+  .pl span:first-child { font: 700 4.55cqh var(--sans); color: var(--creme); letter-spacing: 0; }
+  .pl span:not(:first-child) { text-align: right; }
+  .pl .dest { color: var(--ouro); }
+  .pl.cab { font: 800 2.99cqh var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--creme-3); padding-bottom: 1.82cqh; }
+  .pl.cab .dest { color: var(--ouro); }
+  .precos.depois { margin-top: 7.8cqh; }
+  .depois .pl { font-size: 4.68cqh; padding: 1.56cqh 0; color: var(--creme-2); }
+  .depois .pl span:first-child { font-size: 3.77cqh; color: var(--creme-2); }
+
+
+  /* ---------- Sônia: letras maiores em todas as telas dela ---------- */
+  section[data-who="sonia"] .small { font-size: 4.03cqh; }
+  section[data-who="sonia"] .body { font-size: 5.46cqh; }
+
+  /* ---------- valores, um segmento por clique ---------- */
+  .vcards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3.9cqh; margin-top: 9.1cqh; perspective: 182cqh; }
+  .vcard { border: .3.9cqh solid rgba(255, 176, 0, .5); border-radius: 3.12cqh; padding: 5.72cqh 2.08cqh 4.68cqh; text-align: center;
+    background: linear-gradient(165deg, rgba(8, 48, 120, .6), rgba(8, 8, 12, .55)); box-shadow: 0 3.9cqh 10.4cqh rgba(0, 0, 0, .45);
+    opacity: 0; transform: rotateY(-75deg) translateY(5.2cqh); transform-origin: left center;
+    transition: opacity .7s ease var(--d, 0s), transform 1.3s var(--ease) var(--d, 0s); }
+  .vcard.in { opacity: 1; transform: none; }
+  .vcard .seg { font: 800 3.25cqh/1.2 var(--sans); letter-spacing: .03em; text-transform: uppercase; color: var(--creme); min-height: 9.1cqh; }
+  .vcard .de { margin-top: 2.6cqh; font: 600 5.72cqh var(--serif); color: var(--creme-3); text-decoration: line-through; text-decoration-color: var(--ouro);
+    text-decoration-thickness: .3.9cqh; opacity: 0; transform: translateY(1.3cqh); transition: opacity .5s ease .3s, transform .6s var(--ease) .3s; }
+  .vcard .de.in { opacity: 1; transform: none; }
+  .vcard .val { margin-top: 1.56cqh; font: 700 8.84cqh/1 var(--serif); color: var(--ouro); letter-spacing: -.02em; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .vcard .mes { margin-top: 2.08cqh; font: 600 3.9cqh var(--sans); color: var(--creme-2); }
+
+  /* ---------- Sônia: fotos maiores ---------- */
+  .foto-q.banner { width: 100%; aspect-ratio: auto; height: 59.8cqh; margin-top: 7.8cqh; position: relative; }
+  .foto-q.banner img { filter: brightness(.72) saturate(.9); }
+  .escolinha { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .escolinha .eq { fill: none; stroke: #FFD860; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 1.2px rgba(0,0,0,.9)); }
+  .escolinha .sol { stroke: #FFB000; }
+  .escolinha .bandeira { fill: rgba(255, 176, 0, .5); }
+  .escolinha .eq-txt { font: 800 4px var(--sans); letter-spacing: .6px; fill: #FFD860; opacity: 0; transition: opacity .8s ease 3.4s; }
+  .escolinha g.in .eq-txt { opacity: 1; }
+  .stage.duo .foto-retrato { flex: 0 0 62.4cqh; width: 62.4cqh; }
+  .stage.duo { gap: 6.5cqh; }
+  .stage.duo .h-l { font-size: 8.32cqh; }
+  .precos .pl { font-size: 7.8cqh; padding: 2.34cqh 0; }
+  .precos .pl span:first-child { font-size: 5.46cqh; }
+  .precos .pl.cab { font-size: 3.64cqh; }
+  .precos.depois .pl { font-size: 5.72cqh; padding: 1.43cqh 0; }
+  .precos.depois .pl span:first-child { font-size: 4.55cqh; }
+
+
+
+  /* ---------- Pedro: os programas, e o Arboria tomando a tela ---------- */
+  .progs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3.12cqh; margin-top: 7.8cqh; transition: opacity .8s ease; }
+  .prog { position: relative; height: 31.85cqh; border-radius: 2.6cqh; overflow: hidden; background: #0B1733;
+    opacity: 0; transform: translateY(3.9cqh) scale(.96); transition: opacity .8s ease var(--d, 0s), transform 1.1s var(--ease) var(--d, 0s); }
+  .prog.in { opacity: 1; transform: none; }
+  .prog img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .prog img.fundo { filter: blur(2.6cqh) brightness(.75); transform: scale(1.2); }
+  .prog img.inteira { position: absolute; inset: 0; object-fit: contain; object-position: 96% 50%; }
+  .prog .veu { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(7, 11, 24, .05) 0%, rgba(7, 11, 24, .45) 45%, rgba(7, 11, 24, .92) 100%); }
+  .prog .veu.lado { background: linear-gradient(90deg, rgba(7, 11, 24, .92) 0%, rgba(7, 11, 24, .7) 40%, rgba(7, 11, 24, 0) 62%); }
+  .prog .tx { position: absolute; left: 3.38cqh; right: 3.38cqh; bottom: 2.86cqh; }
+  .prog .tx.estreito { right: 46%; }
+  .prog .tx b { display: block; font: 700 4.81cqh/1.1 var(--sans); color: var(--creme); }
+  .prog .tx i { display: block; margin-top: .7.8cqh; font: 500 3.38cqh/1.3 var(--sans); font-style: normal; color: var(--creme-2); }
+  .s[data-at="1"] .progs { opacity: .15; }
+
+  .expand { position: absolute; z-index: 3; overflow: hidden; opacity: 0; pointer-events: none; top: 0; left: 0; width: 100%; height: 100%;
+    transition: top 1.2s var(--ease), left 1.2s var(--ease), width 1.2s var(--ease), height 1.2s var(--ease), border-radius 1.2s var(--ease), opacity .3s ease .9s; }
+  .expand.in { opacity: 1; transition: top 1.2s var(--ease), left 1.2s var(--ease), width 1.2s var(--ease), height 1.2s var(--ease), border-radius 1.2s var(--ease), opacity .15s ease; }
+  .expand > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; transform: scale(1.08); transition: transform 9s ease-out; }
+  .expand.in > img { transform: none; }
+  .expand .veu2 { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8, 8, 12, .05) 30%, rgba(8, 8, 12, .6) 62%, rgba(8, 8, 12, .95) 100%); }
+  .ex-stage { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); justify-content: flex-end; }
+  .ex-tx { opacity: 0; transform: translateY(5.2cqh); transition: opacity .8s ease, transform 1s var(--ease); }
+  .expand.in .ex-tx { opacity: 1; transform: none; transition-delay: 1s; }
+  .ex-tx .small { color: var(--ouro); }
+  .ex-tx .h-m { color: var(--creme); }
+  .ex-tx .h-m.ouro { color: var(--ouro); }
+
+
+  /* ---------- telão: modo esticado (a processadora espreme o 16:9 no quadrado) ---------- */
+  html.esticado .expand > img { left: 50%; width: 100vh; margin-left: -50vh; transform: none; scale: var(--sx, 1) 1; }
+
+  /* ---------- teste do telão (tecla T) ---------- */
+  #cal { position: fixed; inset: 0; z-index: 40; display: none; place-items: center; overflow: hidden;
+    background: repeating-linear-gradient(45deg, #6A1015 0 3vmin, #2A0608 3vmin 6vmin); }
+  body.calib #cal { display: grid; }
+  body.calib .ui { opacity: 0; }
+  .cal-stage { background: #000; padding: 0; display: block; }
+  .cal-stage::after { content: ''; position: absolute; inset: 0; border: .10.4cqh solid var(--ouro); pointer-events: none; }
+  .cal-grid { position: absolute; inset: 0; background-size: 13cqh 13cqh;
+    background-image: linear-gradient(rgba(250, 247, 240, .13) .19.5cqh, transparent .19.5cqh), linear-gradient(90deg, rgba(250, 247, 240, .13) .19.5cqh, transparent .19.5cqh); }
+  .cal-circ { position: absolute; left: 15.6cqh; top: 15.6cqh; width: 98.8cqh; height: 98.8cqh; border-radius: 50%; border: .6.5cqh solid #4FC3F7; }
+  .cc { position: absolute; width: 14.3cqh; height: 14.3cqh; border: 2.08cqh solid #fff; }
+  .cc.tl { left: 0; top: 0; border-right: 0; border-bottom: 0; } .cc.tr { right: 0; top: 0; border-left: 0; border-bottom: 0; }
+  .cc.bl { left: 0; bottom: 0; border-right: 0; border-top: 0; } .cc.br { right: 0; bottom: 0; border-left: 0; border-top: 0; }
+  .cal-lado { position: absolute; font: 800 3.9cqh var(--sans); letter-spacing: .2em; text-transform: uppercase; color: var(--ouro); }
+  .cal-lado.t { top: 3.9cqh; left: 0; right: 0; text-align: center; } .cal-lado.b { bottom: 3.9cqh; left: 0; right: 0; text-align: center; }
+  .cal-lado.l { left: 3.9cqh; top: 62.4cqh; } .cal-lado.r { right: 3.9cqh; top: 62.4cqh; }
+  .cal-box { position: absolute; left: 26cqh; right: 26cqh; top: 31.2cqh; padding: 4.42cqh; border-radius: 2.6cqh; background: rgba(0, 0, 0, .8);
+    text-align: center; font: 500 3.51cqh/1.4 var(--sans); color: var(--creme); }
+  .cal-box h2 { font: 700 6.5cqh var(--serif); color: var(--ouro); margin-bottom: 2.08cqh; }
+  .cal-box p { margin-top: 1.82cqh; }
+  .cal-box b { color: var(--ouro); }
+  .cal-box .modo { margin-top: 3.12cqh; font: 800 2.99cqh var(--sans); letter-spacing: .1em; text-transform: uppercase; color: #4FC3F7; }
+  .cal-box .teclas { margin-top: 1.56cqh; font-size: 2.99cqh; color: var(--creme-2); }
+
+
+  /* ---------- Arboria ---------- */
+  .pergunta { align-items: center; text-align: center; }
+  .aspas { position: absolute; left: 0; right: 0; top: 2.6cqh; text-align: center; font: italic 700 80.6cqh/1 var(--serif); color: var(--ouro);
+    opacity: 0; transform: translateY(-7.8cqh); transition: opacity 1.8s ease, transform 2.2s var(--ease); pointer-events: none; }
+  .aspas.in { opacity: .14; transform: none; }
+
+  .oito { width: 100%; height: auto; margin-top: 3.9cqh; overflow: visible; }
+  .oito .anel { fill: none; stroke: rgba(250, 247, 240, .12); stroke-width: .4; }
+  .oito .lig { stroke: rgba(255, 176, 0, .4); stroke-width: .45; }
+  .oito .pt { fill: #1A2238; stroke: var(--ouro); stroke-width: .8; transition: fill .5s ease var(--d); }
+  .oito.in .pt { fill: var(--ouro); }
+  .oito .nm { font: 600 6.6px var(--sans); fill: var(--creme-3); transition: fill .5s ease var(--d); }
+  .oito.in .nm { fill: var(--creme); }
+
+  .olhar .l1 { transition: opacity 1.2s ease; }
+  .s[data-at="1"] .olhar .l1 { opacity: .28; }
+
+  .epp .e1, .epp .e2, .epp .e3 { color: var(--creme-3); transition: color .8s ease .6s; }
+  .s[data-at] .epp .e1, .s[data-at="1"] .epp .e2, .s[data-at="2"] .epp .e2, .s[data-at="2"] .epp .e3 { color: var(--ouro); }
+  .arvore { width: 100%; height: auto; margin-top: 2.6cqh; overflow: visible; }
+  .arvore .chao { stroke: rgba(250, 247, 240, .25); stroke-width: .6; fill: none; }
+  .arvore .tr { stroke: var(--creme); stroke-width: 1.6; stroke-linecap: round; }
+  .arvore .copa { stroke: var(--ouro); stroke-width: 1.3; stroke-linejoin: round; }
+  .arvore text { opacity: 0; transition: opacity .8s ease 1s; }
+  .arvore g.in text { opacity: 1; }
+  .arvore .lb1 { font: 800 5.8px var(--sans); letter-spacing: .12em; fill: var(--creme-2); }
+  .arvore .lb2 { font: 600 12px var(--serif); fill: var(--ouro); }
+
+  .parque { width: 100%; height: auto; margin-top: 5.2cqh; overflow: visible; }
+  .parque .pq-borda { stroke: rgba(250, 247, 240, .5); stroke-width: 1; }
+  .parque .pq-cam { stroke: var(--ouro); stroke-width: 1.4; stroke-linecap: round; }
+  .parque .pq-obj { stroke: var(--creme); stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+
+  .casas { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 2.08cqh; margin: 10.4cqh 0 3.9cqh; }
+  .casas svg { width: 100%; height: auto; overflow: visible; }
+  .casas path { fill: none; stroke: var(--azul-a); stroke-width: 2.2; stroke-linejoin: round; transition: fill .5s ease var(--d), stroke .5s ease var(--d); }
+  .casas.in svg.lit path { fill: rgba(255, 176, 0, .22); stroke: var(--ouro); }
+  .pct { font: 800 23.4cqh/1 var(--serif); color: var(--ouro); letter-spacing: -.03em; text-align: center; font-variant-numeric: tabular-nums; }
+
+  .linha-anos { position: relative; height: 44.2cqh; margin-top: 13cqh; }
+  .la-trilho, .la-fill { position: absolute; left: 0; right: 0; top: 14.3cqh; height: .45.5cqh; background: rgba(250, 247, 240, .2); }
+  .la-fill { background: var(--ouro); transform: scaleX(0); transform-origin: left; transition: transform 4.6s linear .8s; }
+  .linha-anos.in .la-fill { transform: none; }
+  .la-m { position: absolute; top: 14.53cqh; left: var(--x); }
+  .la-m i { position: absolute; width: 3.38cqh; height: 3.38cqh; margin: -1.69cqh 0 0 -1.69cqh; border-radius: 50%; background: #1A2238;
+    border: .3.9cqh solid rgba(250, 247, 240, .35); transition: background .4s ease var(--d), border-color .4s ease var(--d), box-shadow .4s ease var(--d); }
+  .linha-anos.in .la-m i { background: var(--ouro); border-color: var(--ouro); box-shadow: 0 0 2.6cqh rgba(255, 176, 0, .6); }
+  .la-m span { position: absolute; transform: translateX(-50%); white-space: nowrap; font: 700 3.38cqh var(--sans); color: var(--creme-3); transition: color .4s ease var(--d); }
+  .la-m.up span { bottom: 3.12cqh; } .la-m.dn span { top: 3.12cqh; }
+  .linha-anos.in .la-m span { color: var(--creme); }
+  .la-g { position: absolute; top: 26cqh; height: 2.6cqh; border: .32.5cqh solid rgba(255, 176, 0, .55); border-top: 0; border-radius: 0 0 1.3cqh 1.3cqh;
+    opacity: 0; transition: opacity .8s ease 5.4s; }
+  .linha-anos.in .la-g { opacity: 1; }
+  .la-g b { position: absolute; left: 50%; top: 3.9cqh; transform: translateX(-50%); white-space: nowrap; font: 800 3.25cqh var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--ouro); }
+
+  .seta { width: 100%; height: auto; overflow: visible; margin-bottom: 6.5cqh; }
+  .seta .st { stroke: var(--ouro); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .seta .ponta { transition: stroke-dashoffset 1.6s var(--ease) var(--d, 0s), opacity .6s ease; }
+  .s[data-at="1"] .seta .ponta { opacity: 0; }
+
+  /* ---------- Sônia: material didático, quatro cartões em 2x2 ---------- */
+  .vcards.q2 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3.38cqh 5.2cqh; margin-top: 5.2cqh; }
+  .vcards.q2 .vcard { padding: 4.42cqh 2.6cqh 3.9cqh; }
+  .vcards.q2 .seg { min-height: 0; font-size: 3.64cqh; }
+  .vcards.q2 .de { margin-top: 1.82cqh; font-size: 4.94cqh; }
+  .vcards.q2 .val { font-size: 7.8cqh; }
+  .vcards.q2 .vista { margin-top: 1.82cqh; font: 600 3.64cqh var(--sans); color: var(--creme-2); opacity: 0; transition: opacity .6s ease 1.6s; }
+  .vcards.q2 .vista.in { opacity: 1; }
+
+  /* ---------- G5b · os programas: perdem a cor nos tempos difíceis, voltam brilhando ---------- */
+  .pgs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3.12cqh; margin-top: 10.4cqh; }
+  .pg { margin: 0; opacity: 0; transform: translateY(5.2cqh); transition: opacity .8s ease, transform 1.1s var(--ease); }
+  .pgs.in .pg { opacity: 1; transform: none; }
+  .pgs.in .pg:nth-child(2) { transition-delay: .2s; } .pgs.in .pg:nth-child(3) { transition-delay: .4s; } .pgs.in .pg:nth-child(4) { transition-delay: .6s; }
+  .pg img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 2.08cqh; border: .3.9cqh solid rgba(250, 247, 240, .25);
+    transition: filter 1.2s ease, border-color 1.2s ease, box-shadow 1.2s ease; }
+  .pg figcaption { margin-top: 2.08cqh; text-align: center; font: 700 3.12cqh/1.2 var(--sans); color: var(--creme); transition: color 1.2s ease; }
+  .s[data-at="1"] .pg img { filter: grayscale(1) brightness(.55); }
+  .s[data-at="1"] .pg figcaption { color: var(--creme-3); }
+  .s[data-at="2"] .pg img { border-color: var(--ouro); box-shadow: 0 0 5.2cqh rgba(255, 176, 0, .35); }
+  .s[data-at="2"] .pg figcaption { color: var(--ouro); }
+
+  /* ---------- Valores ---------- */
+  .riscado { position: relative; display: inline-block; transition: color .8s ease; }
+  .riscado::after { content: ''; position: absolute; left: -2%; right: -2%; top: 55%; height: .07em; background: var(--ouro); transform: scaleX(0); transform-origin: left; transition: transform .8s var(--ease); }
+  .s[data-at="1"] .riscado { color: var(--creme-3); }
+  .s[data-at="1"] .riscado::after { transform: scaleX(1); }
+  .coracao-grande { display: block; width: 20.8cqh; height: auto; margin-top: 5.2cqh; overflow: visible; }
+  .coracao-grande path, .maos .cor path { fill: rgba(224, 82, 76, .18); stroke: #E0524C; stroke-width: 1.6; stroke-linejoin: round; }
+  .grat { display: flex; flex-direction: column; gap: 4.68cqh; margin-top: 6.5cqh; }
+  .grat p { transition: opacity 1s ease; }
+  .s[data-at="1"] .grat p:nth-child(1), .s[data-at="2"] .grat p:nth-child(-n+2), .s[data-at="3"] .grat p:nth-child(-n+3), .s[data-at="4"] .grat p:nth-child(-n+4) { opacity: .4; }
+  .maos { display: flex; align-items: center; gap: 7.8cqh; margin-top: 10.4cqh; }
+  .maos svg { width: 31.2cqh; height: auto; overflow: visible; }
+  .maos svg[data-icon] { stroke: var(--ouro); stroke-width: 1.4; }
+  .fss3 { display: flex; flex-direction: column; gap: 6.5cqh; margin-top: 7.8cqh; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+  /* ===================== Experiência Amadeus 2027 · TV 16:9 (medidas em cqh) ===================== */
+  .stage { padding: 11.7cqh 14.3cqh; }
+  .kicker { top: 9.1cqh; left: 14.3cqh; }
+  .wide { max-width: 195cqh; }
+
+  /* fotos da escola de antigamente: entram uma por clique, como polaroids */
+  .antigo { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5.2cqh; margin-top: 7.8cqh; }
+  .pol { background: var(--creme); padding: 1.82cqh 1.82cqh 0; border-radius: .7.8cqh; box-shadow: 0 2.6cqh 5.2cqh rgba(0, 0, 0, .45);
+    opacity: 0; transform: translateY(6.5cqh) rotate(var(--rot, -3deg)) scale(.92); transition: opacity .8s ease var(--d, 0s), transform 1.1s var(--ease) var(--d, 0s); }
+  .pol.in { opacity: 1; transform: rotate(var(--rot, -3deg)); }
+  .pol img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: #fff; }
+  .pol p { font: 700 3.77cqh/1.15 var(--sans); color: #1A2238; text-align: center; padding: 2.08cqh .5.2cqh 2.6cqh; }
+
+  /* números grandes que contam */
+  .nums { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 7.8cqh; margin-top: 9.1cqh; }
+  .num b { display: block; font: 700 22.1cqh/1 var(--serif); color: var(--ouro); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+  .num p { margin-top: 2.6cqh; font: 400 4.94cqh/1.3 var(--sans); color: var(--creme-2); }
+  .num { opacity: 0; transform: translateY(3.9cqh); transition: opacity .9s ease var(--d, 0s), transform 1.1s var(--ease) var(--d, 0s); }
+  .num.in { opacity: 1; transform: none; }
+  .fonte { position: absolute; left: 14.3cqh; bottom: 6.5cqh; font: 600 2.34cqh var(--sans); color: var(--creme-3); letter-spacing: .04em; }
+
+  /* palavras que acendem (habilidades) */
+  .pilulas { display: flex; flex-wrap: wrap; gap: 3.9cqh; margin-top: 9.1cqh; }
+  .pilula { font: 600 7.28cqh/1 var(--serif); padding: 3.38cqh 5.72cqh; border-radius: 13cqh; border: .45.5cqh solid rgba(255, 176, 0, .5); color: var(--creme);
+    opacity: 0; transform: scale(.85); transition: opacity .7s ease, transform .9s var(--ease), background .8s ease, color .8s ease; }
+  .pilula.in { opacity: 1; transform: none; background: rgba(255, 176, 0, .12); }
+  .pilula.in em { color: var(--ouro); }
+
+  /* três colunas (pilares) */
+  .tres { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6.5cqh; margin-top: 7.8cqh; }
+  .col { border-top: .58.5cqh solid var(--ouro); padding-top: 3.9cqh; opacity: 0; transform: translateY(5.2cqh);
+    transition: opacity .9s ease var(--d, 0s), transform 1.1s var(--ease) var(--d, 0s); }
+  .col.in { opacity: 1; transform: none; }
+  .col .n { font: 800 3.38cqh var(--sans); letter-spacing: .3em; color: var(--ouro); }
+  .col h3 { margin-top: 2.08cqh; font: 600 7.02cqh/1.05 var(--serif); letter-spacing: -.02em; color: var(--creme); }
+  .col p { margin-top: 2.6cqh; font: 400 4.42cqh/1.35 var(--sans); color: var(--creme-2); }
+
+  /* materiais: cartões claros com a foto do produto */
+  .mats { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 3.9cqh; margin-top: 6.5cqh; }
+  .mat { background: var(--creme); border-radius: 2.6cqh; padding: 3.12cqh 3.12cqh 3.38cqh; display: flex; flex-direction: column; align-items: center; text-align: center;
+    box-shadow: 0 2.6cqh 6.5cqh rgba(0, 0, 0, .4); opacity: 0; transform: translateY(5.2cqh) scale(.96);
+    transition: opacity .8s ease var(--d, 0s), transform 1s var(--ease) var(--d, 0s); }
+  .mat.in { opacity: 1; transform: none; }
+  .mat img { width: 100%; height: var(--h, 26cqh); object-fit: contain; }
+  .mat b { margin-top: 2.34cqh; font: 800 4.03cqh/1.15 var(--sans); color: #0A2F7A; }
+  .mat small { margin-top: .10.4cqh; font: 600 3.25cqh/1.25 var(--sans); color: #4A5878; }
+  .mat .tag { margin-top: 1.56cqh; font: 800 2.6cqh var(--sans); letter-spacing: .14em; text-transform: uppercase; color: #fff; background: #0058B0; padding: .9.1cqh 2.08cqh; border-radius: 5.2cqh; }
+
+  /* tela da plataforma ao lado do texto */
+  .lado { display: grid; grid-template-columns: 1fr 1.25fr; gap: 9.1cqh; align-items: center; height: 100%; }
+  .print { margin: 0; border-radius: 2.08cqh; overflow: hidden; box-shadow: 0 3.9cqh 9.1cqh rgba(0, 0, 0, .55); border: .3.9cqh solid rgba(250, 247, 240, .2);
+    opacity: 0; transform: translateX(7.8cqh) rotate(1.5deg); transition: opacity 1s ease var(--d, 0s), transform 1.3s var(--ease) var(--d, 0s); background: #fff; }
+  .print.in { opacity: 1; transform: rotate(1deg); }
+  .print img { display: block; width: 100%; max-height: 96.2cqh; object-fit: contain; }
+
+  /* para as famílias: quatro telas pequenas que acendem uma por clique */
+  .quatro { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3.9cqh; margin-top: 6.5cqh; }
+  .rec { opacity: 0; transform: translateY(5.2cqh); transition: opacity .8s ease var(--d, 0s), transform 1s var(--ease) var(--d, 0s); }
+  .rec.in { opacity: 1; transform: none; }
+  .rec img { display: block; width: 100%; height: 33.8cqh; object-fit: cover; object-position: top left; border-radius: 1.82cqh; border: .3.9cqh solid rgba(255, 176, 0, .5); background: #fff; }
+  .rec h3 { margin-top: 2.6cqh; font: 600 5.2cqh/1.08 var(--serif); color: var(--creme); }
+  .rec p { margin-top: 1.56cqh; font: 400 3.77cqh/1.3 var(--sans); color: var(--creme-2); }
+  .rec .seg { display: inline-block; margin-top: 1.82cqh; font: 800 2.6cqh var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--ouro); }
+
+  /* avaliações por série */
+  .aval { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4.42cqh; margin-top: 7.8cqh; }
+  .av { border: .3.9cqh solid rgba(250, 247, 240, .2); border-radius: 2.6cqh; padding: 3.9cqh 3.9cqh 4.16cqh; background: rgba(8, 48, 120, .35);
+    opacity: 0; transform: translateY(5.2cqh); transition: opacity .8s ease var(--d, 0s), transform 1s var(--ease) var(--d, 0s); }
+  .av.in { opacity: 1; transform: none; }
+  .av .serie { font: 800 3.12cqh var(--sans); letter-spacing: .18em; text-transform: uppercase; color: var(--ouro); }
+  .av h3 { margin-top: 1.82cqh; font: 600 5.72cqh/1.08 var(--serif); color: var(--creme); }
+  .av p { margin-top: 1.56cqh; font: 400 3.77cqh/1.3 var(--sans); color: var(--creme-2); }
+  .av.novo { border-color: var(--ouro); }
+  .av.novo .selo { display: inline-block; margin-left: 1.3cqh; padding: .5.2cqh 1.56cqh; border-radius: 3.9cqh; background: var(--ouro); color: #1A1300; font-size: 2.47cqh; vertical-align: middle; }
+
+  /* capa de segmento */
+  .seg-capa { justify-content: center; }
+  .seg-capa .h-xl { font-size: 16.9cqh; }
+  .seg-capa .serie { margin-top: 3.38cqh; font: 700 5.2cqh var(--sans); letter-spacing: .2em; text-transform: uppercase; color: var(--creme-2); }
+  .seg-capa .linha { width: 33.8cqh; height: .6.5cqh; background: var(--ouro); border-radius: 1.3cqh; margin-top: 6.5cqh; transform: scaleX(0); transform-origin: left; transition: transform 1.4s var(--ease) .9s; }
+  .seg-capa .linha.in { transform: none; }
+  .seg-capa .orb { top: 50%; right: 18.2cqh; width: 67.6cqh; height: 67.6cqh; margin-top: -33.8cqh; }
+
+  .lista-g { margin-top: 6.5cqh; display: flex; flex-direction: column; gap: 3.12cqh; }
+  .lista-g p { font: 400 5.2cqh/1.3 var(--sans); color: var(--creme-2); padding-left: 5.72cqh; position: relative; }
+  .lista-g p::before { content: ''; position: absolute; left: 0; top: 2.08cqh; width: 2.34cqh; height: 2.34cqh; border-radius: 50%; background: var(--ouro); }
+  .lista-g p b { color: var(--creme); font-weight: 700; }
+
+</style>
+</head>
+<body data-who="abertura">
+
+<div id="bg" aria-hidden="true">
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+  <canvas id="dust"></canvas>
+  <div class="grain"></div>
+</div>
+
+<main>
+<!-- ============================================================
+     EXPERIÊNCIA AMADEUS · EDUCAÇÃO INFANTIL (sáb 10/10/2026)
+     Resumo do material da Geekie "Lançamento de Famílias" (51 telas) para as famílias do Infantil.
+     Todo texto vem do material da Geekie; nada inventado.
+     ============================================================ -->
+
+<!-- 0 · espera: o símbolo girando -->
+<section class="s" data-who="abertura" data-block="abertura" data-label="">
+  <div class="stage opening">
+    <div class="spin r fade" style="--d:.2s">
+      <div class="glow"></div>
+      <svg viewBox="0 0 100 100" aria-hidden="true"><circle class="o2" cx="50" cy="50" r="49" /><circle class="o1" cx="50" cy="50" r="45" /></svg>
+      <div class="coin"><img src="assets/marca-globo.png" alt="Centro Educacional Amadeus"><img class="back" src="assets/marca-globo.png" alt=""></div>
+    </div>
+    <p class="small cap r fade" style="--d:1.2s">Experiência Amadeus · Educação Infantil 2027</p>
+  </div>
+</section>
+
+<!-- 1 · como você aprendeu? -->
+<section class="s" data-who="abertura" data-block="checkin" data-label="Check-in · tempo de escola">
+  <div class="stage">
+    <div class="kicker r">Check-in</div>
+    <p class="h-l r" data-split style="--d:.2s">Como <em class="ouro">você</em> aprendeu no seu tempo de escola?</p>
+    <div class="antigo">
+      <div class="pol r" data-step="1" style="--rot:-3deg"><img src="img/mimeo.png" alt=""><p>Atividade mimeografada</p></div>
+      <div class="pol r" data-step="1" style="--rot:2deg;--d:.25s"><img src="img/barsa.png" alt=""><p>Pesquisa na Barsa</p></div>
+      <div class="pol r" data-step="1" style="--rot:-2deg;--d:.5s"><img src="img/retro.png" alt=""><p>TV e retroprojetor</p></div>
+      <div class="pol r" data-step="1" style="--rot:3deg;--d:.75s"><img src="img/estojo.png" alt=""><p>Estojo de madeira</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 · e o seu filho? -->
+<section class="s" data-who="abertura" data-block="checkin" data-label="Check-in · hoje">
+  <div class="stage somos">
+    <div class="halo r"></div>
+    <p class="h-xl r" data-split style="--d:.3s">E como o seu filho <em class="ouro">aprende hoje?</em></p>
+    <div class="uline r"></div>
+    <p class="h-m sozinha r" data-split data-step="1" style="--d:.2s">O mundo sempre mudou, <em class="ouro">mas nunca tão rapidamente.</em></p>
+  </div>
+</section>
+
+<!-- 3 · números do mundo que muda -->
+<section class="s" data-who="abertura" data-block="mundo" data-label="Um mundo que muda">
+  <div class="stage">
+    <div class="kicker r">Até 2030</div>
+    <p class="h-l r" data-split style="--d:.2s">O mundo do trabalho <em class="ouro">vai mudar.</em></p>
+    <div class="nums" style="--n:2">
+      <div class="num r" style="--d:.8s"><b><span class="r" data-count-from="0" data-count-to="85" data-count-delay="900">0</span>%</b><p>dos empregos que vão existir em 2030 ainda não existem</p></div>
+      <div class="num r" data-step="1"><b><span class="r" data-step="1" data-count-from="0" data-count-to="65" data-count-delay="300">0</span>%</b><p>das habilidades exigidas no trabalho vão mudar até 2030</p></div>
+    </div>
+    <p class="fonte r fade" style="--d:1.4s">Fontes citadas pela Geekie: Siminova (2025) · Você RH</p>
+  </div>
+</section>
+
+<!-- 4 · o que a IA não substitui -->
+<section class="s" data-who="abertura" data-block="mundo" data-label="O que a IA não substitui">
+  <div class="stage">
+    <div class="kicker r">O que a IA não substitui</div>
+    <p class="h-m wide r" data-split style="--d:.2s">A IA processa informações em escala. Ela não ajuda uma criança a <em class="ouro">entender como pensa.</em></p>
+    <div class="pilulas">
+      <span class="pilula r" data-step="1"><em>Colaboração</em></span>
+      <span class="pilula r" data-step="2"><em>Curiosidade</em></span>
+      <span class="pilula r" data-step="3"><em>Criatividade</em></span>
+      <span class="pilula r" data-step="4"><em>Pensamento crítico</em></span>
+    </div>
+    <p class="fonte r fade" style="--d:1.4s">Fonte citada pela Geekie: Nord Anglia, "Teaching the skills AI can't replace" (2026)</p>
+  </div>
+</section>
+
+<!-- 5 · Geekie -->
+<section class="s" data-who="abertura" data-block="geekie" data-label="Quem é a Geekie">
+  <div class="stage">
+    <div class="kicker r">Nosso parceiro em 2027</div>
+    <p class="h-xl r" data-split style="--d:.2s">Quem é a <em class="ouro">Geekie?</em></p>
+    <div class="nums" style="--n:2">
+      <div class="num r" data-step="1"><b>+<span class="r" data-step="1" data-count-from="0" data-count-to="500" data-count-delay="300">0</span></b><p>escolas</p></div>
+      <div class="num r" data-step="1" style="--d:.3s"><b>+<span class="r" data-step="1" data-count-from="0" data-count-to="110" data-count-delay="600">0</span> mil</b><p>estudantes</p></div>
+    </div>
+    <p class="body mt2 r fade" data-step="2">Única plataforma de aprendizagem adaptativa <b style="color:var(--creme)">credenciada pelo MEC.</b></p>
+  </div>
+</section>
+
+<!-- 6 · capa do Infantil -->
+<section class="s" data-who="infantil" data-block="infantil" data-label="Educação Infantil">
+  <div class="stage seg-capa">
+    <div class="orb r">
+      <svg viewBox="0 0 100 100"><circle class="orbit" cx="50" cy="50" r="49" /><circle class="ring draw" cx="50" cy="50" r="44" pathLength="1" style="--d:.2s" transform="rotate(-90 50 50)" /><circle class="sat" cx="50" cy="1" r="1.2" /></svg>
+      <img src="assets/marca-globo.png" alt="">
+    </div>
+    <div class="small r fade" style="--d:.3s">Coleção Rios · Geekie</div>
+    <h1 class="h-xl r" data-split style="--d:.5s">Educação <em class="ouro">Infantil</em></h1>
+    <p class="serie r fade" style="--d:1.2s">Do Maternal II ao Grupo V</p>
+    <div class="linha r"></div>
+  </div>
+</section>
+
+<!-- 7 · a criança no centro -->
+<section class="s" data-who="infantil" data-block="infantil" data-label="Educação Infantil · proposta">
+  <div class="stage">
+    <div class="kicker r">Coleção Rios</div>
+    <p class="h-l wide r" data-split style="--d:.2s">A criança no <em class="ouro">centro</em> da aprendizagem.</p>
+    <div class="lista-g">
+      <p class="r fade" data-step="1">Inspirada na abordagem <b>Reggio Emilia</b>: liga as descobertas de cada criança às da turma.</p>
+      <p class="r fade" data-step="2">Rotinas de pensamento do <b>Project Zero (Harvard)</b>, que instigam a curiosidade natural da criança.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 8 · três pilares -->
+<section class="s" data-who="infantil" data-block="infantil" data-label="Educação Infantil · pilares">
+  <div class="stage">
+    <div class="kicker r">Educação Infantil</div>
+    <p class="h-l r" data-split style="--d:.2s">Vivências que viram <em class="ouro">aprendizado.</em></p>
+    <div class="tres">
+      <div class="col r" style="--d:.8s"><span class="n">01</span><h3>Desenvolvimento integral</h3><p>Vivências lúdicas conectadas à BNCC.</p></div>
+      <div class="col r" data-step="1"><span class="n">02</span><h3>Parceria família e escola</h3><p>Conquistas acompanhadas em tempo real.</p></div>
+      <div class="col r" data-step="2"><span class="n">03</span><h3>Apoio pedagógico</h3><p>Documentação e formação para as professoras.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 9 · o que a criança recebe -->
+<section class="s" data-who="infantil" data-block="infantil" data-label="Educação Infantil · materiais">
+  <div class="stage">
+    <div class="kicker r">Para cada criança, por ano</div>
+    <p class="h-m r" data-split style="--d:.2s">O que chega na <em class="ouro">mochila.</em></p>
+    <div class="mats" style="--n:3;--h:23cqh">
+      <div class="mat r" style="--d:.6s"><img src="img/maleta.png" alt=""><b>1 maleta anual</b><small>embalagem especial</small></div>
+      <div class="mat r" style="--d:.8s"><img src="img/blocos.png" alt=""><b>2 blocos Minhas Investigações</b></div>
+      <div class="mat r" style="--d:1s"><img src="img/diario.png" alt=""><b>1 diário de bordo anual</b></div>
+      <div class="mat r" data-step="1"><img src="img/literatura.png" alt=""><b>2 livros de literatura</b></div>
+      <div class="mat r" data-step="1" style="--d:.2s"><img src="img/contar.png" alt=""><b>2 livros Contar e Recontar</b><small>Grupo IV e Grupo V</small></div>
+      <div class="mat r" data-step="1" style="--d:.4s"><img src="img/portfolio-note.png" alt=""><b>Portfólio digital</b><small>Geekie One</small></div>
+    </div>
+  </div>
+</section>
+
+<!-- 10 · portfólio digital -->
+<section class="s" data-who="infantil" data-block="infantil" data-label="Educação Infantil · portfólio digital">
+  <div class="stage">
+    <div class="lado">
+      <div>
+        <div class="small r fade" style="--d:.2s;color:var(--ouro)">Para as famílias</div>
+        <p class="h-l mt1 r" data-split style="--d:.3s">Portfólio <em class="ouro">digital</em></p>
+        <p class="body mt2 r fade" style="--d:1s">A família acompanha o seu filho <b style="color:var(--creme)">de perto</b> e percebe a profundidade do que ele está aprendendo.</p>
+      </div>
+      <figure class="print r" style="--d:.6s"><img src="img/tela44.png" alt="Portfólio digital da Geekie One"></figure>
+    </div>
+  </div>
+</section>
+
+<!-- 11 · fecho -->
+<section class="s" data-who="abertura" data-block="fecho" data-label="Fecho">
+  <div class="stage somos">
+    <div class="halo r"></div>
+    <p class="h-m r" data-split style="--d:.2s;color:var(--creme-2)">Acreditamos em uma formação que prepare para o <em class="ouro">desconhecido do mundo.</em></p>
+    <p class="h-xl ouro mt3 r" data-split data-step="1">Muito obrigado!</p>
+  </div>
+</section>
+
+<!-- 12 · espera final -->
+<section class="s" data-who="abertura" data-block="fecho" data-label="">
+  <div class="stage opening">
+    <div class="spin r fade" style="--d:.2s">
+      <div class="glow"></div>
+      <svg viewBox="0 0 100 100" aria-hidden="true"><circle class="o2" cx="50" cy="50" r="49" /><circle class="o1" cx="50" cy="50" r="45" /></svg>
+      <div class="coin"><img src="assets/marca-globo.png" alt="Centro Educacional Amadeus"><img class="back" src="assets/marca-globo.png" alt=""></div>
+    </div>
+    <p class="small cap r fade" style="--d:1.2s">Centro Educacional Amadeus · 30 anos</p>
+  </div>
+</section>
+
+</main>
+
+<div id="cal" aria-hidden="true">
+  <div class="stage cal-stage">
+    <div class="cal-grid"></div>
+    <div class="cal-circ"></div>
+    <i class="cc tl"></i><i class="cc tr"></i><i class="cc bl"></i><i class="cc br"></i>
+    <span class="cal-lado t">Alto</span><span class="cal-lado b">Baixo</span><span class="cal-lado l">Esq.</span><span class="cal-lado r">Dir.</span>
+    <div class="cal-box">
+      <h2>Teste do telão</h2>
+      <p>No telão tem que aparecer <b>o quadro dourado inteiro</b>, com os 4 cantos brancos, e <b>o círculo azul redondo</b>. Nenhuma listra vermelha.</p>
+      <p><b>Listra vermelha ou canto cortado:</b> as setas movem o quadro, + e − mudam o tamanho.</p>
+      <p><b>Círculo achatado, virando oval:</b> tecla 2.</p>
+      <p class="modo" id="cal-modo"></p>
+      <p class="teclas">1 centro · 2 esticado · setas e + − ajuste fino · 0 volta ao padrão · T sai do teste</p>
+    </div>
+  </div>
+</div>
+<nav id="dots" class="ui" aria-label="Telas"></nav>
+<div id="who" class="ui"></div>
+<div id="hint" class="ui">→ avança · ← volta · F tela cheia · H esconde isto</div>
+
+<script>
+(() => {
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // ?shot=N mostra só a tela N com todos os passos (para conferir em imagem)
+  const shot = new URLSearchParams(location.search).get('shot');
+  const atParam = new URLSearchParams(location.search).get('at');
+
+  // ---------- desenhos gerados ----------
+  // Os desenhos feitos por código de cada apresentação entram aqui, sempre
+  // protegidos com "if (el)", para a tela poder ser apagada sem quebrar nada.
+  // Exemplos completos (círculo com 8 pontos ligados, casinhas que acendem,
+  // linha do tempo, planta de salas, papel saindo da impressora) estão em
+  // exemplos/reuniao-2027/index.html, nesta mesma seção.
+
+  // ícones em traço, todos no mesmo quadro 40x36
+  const ICONS = {
+    crt: '<rect x="3" y="2" width="34" height="24" rx="3"/><rect class="scr" x="7" y="6" width="26" height="16" rx="1.5"/><path d="M16 26l-2 5h12l-2-5M10 33h20"/>',
+    printer: '<path d="M11 13V3h18v10"/><rect x="4" y="13" width="32" height="14" rx="2.5"/><path d="M11 21h18v12H11z"/><circle cx="31" cy="17.5" r="1"/>',
+    lousa: '<rect x="4" y="3" width="32" height="20" rx="1.5"/><path d="M12 23l-4 11M28 23l4 11M9 17l6-6 4 4 7-7"/>',
+    proj: '<rect x="4" y="12" width="24" height="13" rx="3"/><circle cx="20" cy="18.5" r="3.6"/><path d="M28 15l9-5M28 22l9 5"/>',
+    ar: '<rect x="3" y="6" width="34" height="11" rx="2.5"/><path d="M7 13.5h26M11 22q2.5 3 0 6M20 22q2.5 3 0 6M29 22q2.5 3 0 6"/>'
+  };
+  document.querySelectorAll('svg[data-icon]').forEach(sv => {
+    sv.setAttribute('viewBox', '0 0 40 36'); sv.setAttribute('aria-hidden', 'true');
+    sv.innerHTML = ICONS[sv.dataset.icon];
+    sv.querySelectorAll('rect, path, circle').forEach(el => { el.setAttribute('pathLength', '1'); el.classList.add('draw'); });
+  });
+
+  // Quebra o texto em palavras, cada uma sobe por trás de uma máscara
+  document.querySelectorAll('[data-split]').forEach(root => {
+    let n = 0;
+    const walk = node => {
+      [...node.childNodes].forEach(ch => {
+        if (ch.nodeType === 3) {
+          const frag = document.createDocumentFragment();
+          ch.textContent.split(/(\s+)/).forEach(part => {
+            if (!part) return;
+            if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(' ')); return; }
+            const w = document.createElement('span'); w.className = 'w';
+            const inner = document.createElement('span'); inner.textContent = part; inner.style.setProperty('--i', n++);
+            w.appendChild(inner); frag.appendChild(w);
+          });
+          ch.replaceWith(frag);
+        } else if (ch.nodeType === 1) walk(ch);
+      });
+    };
+    walk(root);
+  });
+
+  // ---------- navegação ----------
+  const secs = [...document.querySelectorAll('.s')];
+  if (shot !== null) { secs.forEach((s, j) => { if (j !== +shot) s.remove(); }); secs.splice(0, secs.length, secs[+shot]); document.getElementById('hint').remove();
+    if (!location.search.includes('live')) { const st = document.createElement('style'); st.textContent = '*,*::before,*::after{transition:none!important;animation-delay:0s!important;animation-duration:.01s!important;animation-iteration-count:1!important}'; document.head.appendChild(st); } }
+  const steps = s => [...s.querySelectorAll('.r')];
+  secs.forEach(s => { s.max = Math.max(0, ...steps(s).map(r => +r.dataset.step || 0)); s.at = 0; });
+
+  let cur = -1, mode = 'scroll', timers = [], busy = false, driving = 0;
+  const clear = () => { timers.forEach(clearTimeout); timers = []; };
+
+  // data-step: passo em que aparece; data-until: último passo em que fica
+  function apply(s, k) {
+    s.at = k; s.dataset.at = k;
+    steps(s).forEach(r => {
+      const a = +r.dataset.step || 0, u = r.dataset.until;
+      const was = r.classList.contains('in'), now = a <= k && (u === undefined || k <= +u);
+      r.classList.toggle('in', now);
+      // só os contadores deste passo: um contador dentro de outro .r responde ao passo dele
+      const alvos = [...r.querySelectorAll('[data-count-from]')].filter(el => el.closest('.r') === r); if (r.matches('[data-count-from]')) alvos.push(r);
+      if (now && !was) alvos.forEach(count);
+      if (!now && was) alvos.forEach(el => { el.dataset.run = ''; el.textContent = el.dataset.countFrom; });
+      if (r.dataset.expandFrom && now !== was) expand(r, now);
+    });
+  }
+
+  // um quadro cresce do lugar dele até tomar a tela inteira (e volta, ao retroceder)
+  function expand(r, on) {
+    const sec = r.closest('.s'), card = sec.querySelector(r.dataset.expandFrom);
+    const sr = sec.getBoundingClientRect(), cr = card.getBoundingClientRect();
+    const raio = getComputedStyle(card).borderRadius;
+    const set = (t, l, w, h, rad) => Object.assign(r.style, { top: t, left: l, width: w, height: h, borderRadius: rad });
+    const noCard = () => set((cr.top - sr.top) + 'px', (cr.left - sr.left) + 'px', cr.width + 'px', cr.height + 'px', raio);
+    if (!on) { noCard(); return; }
+    if (shot !== null || reduced) { set('0px', '0px', '100%', '100%', '0px'); return; }
+    r.style.transition = 'none'; noCard(); r.getBoundingClientRect(); r.style.transition = '';
+    requestAnimationFrame(() => set('0px', '0px', '100%', '100%', '0px'));
+  }
+
+  // o valor cheio desce até o valor com as condições, depois que o cartão vira
+  function count(el) {
+    const a = +el.dataset.countFrom, b = +el.dataset.countTo;
+    if (shot !== null || reduced) { el.textContent = b; return; }
+    el.textContent = a;
+    const run = el.dataset.run = String(Math.random());
+    const t0 = performance.now() + (+el.dataset.countDelay || 1700), dur = +el.dataset.countDur || 1500;
+    const f = t => {
+      if (el.dataset.run !== run) return;
+      const p = Math.min(1, Math.max(0, (t - t0) / dur));
+      el.textContent = Math.round(a + (b - a) * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) requestAnimationFrame(f);
+    };
+    requestAnimationFrame(f);
+  }
+
+  // ---------- vídeo ----------
+  // cada tela com data-video tem o seu vídeo; toca ao chegar, para ao sair
+  const vidDe = sec => sec && sec.hasAttribute('data-video') ? sec.querySelector('video') : null;
+  secs.filter(x => x.hasAttribute('data-video')).forEach(vsec => {
+    const vid = vsec.querySelector('video');
+    vid.addEventListener('play', () => vsec.classList.remove('paused'));
+    vid.addEventListener('pause', () => vsec.classList.add('paused'));
+    vid.addEventListener('error', () => vsec.classList.add('missing'));
+    // terminou o vídeo: segue sozinho para a tela seguinte
+    vid.addEventListener('ended', () => { if (secs[cur] === vsec) { mode = 'key'; go(cur + 1); } });
+    vsec.addEventListener('click', () => { vid.paused ? vid.play().catch(() => {}) : vid.pause(); });
+  });
+
+  function activate(i) {
+    if (i === cur) return;
+    const back = i < cur;
+    clear();
+    const prev = secs[cur];
+    if (prev) {
+      prev.classList.remove('on');
+      if (vidDe(prev)) vidDe(prev).pause();
+      setTimeout(() => { if (secs[cur] !== prev) steps(prev).forEach(r => r.classList.remove('in')); }, 700);
+    }
+    cur = i;
+    const s = secs[i];
+    s.classList.add('on');
+    document.body.dataset.who = s.dataset.who;
+    document.getElementById('who').textContent = s.dataset.label || '';
+    [...dots.children].forEach((d, j) => d.classList.toggle('on', j === i));
+    // chegando no vídeo para frente, ele toca do começo; voltando, fica parado
+    if (vidDe(s) && !back && shot === null) { vidDe(s).currentTime = 0; vidDe(s).play().catch(() => {}); }
+    const start = shot !== null ? (atParam !== null ? +atParam : s.max) : reduced ? s.max : (mode === 'key' && back ? s.max : 0);
+    s.at = start;
+    if (shot !== null) apply(s, start); else timers.push(setTimeout(() => apply(s, start), 40));
+    // rolando com o mouse, os passos tocam sozinhos
+    if (mode === 'scroll' && shot === null && start < s.max) {
+      let t = 0;
+      for (let k = start + 1; k <= s.max; k++) { t += 2600; timers.push(setTimeout(() => { if (secs[cur] === s) apply(s, k); }, t)); }
+    }
+  }
+
+  // Pelo teclado/passador a tela ativa no clique, sem esperar a rolagem;
+  // o observador só manda quando quem rola é o mouse ou o dedo.
+  const go = i => {
+    if (i < 0 || i >= secs.length || busy) return;
+    driving = Date.now(); activate(i);
+    secs[i].scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
+  };
+  function next() { if (busy) return; mode = 'key'; const s = secs[cur]; if (s && s.at < s.max) { clear(); apply(s, s.at + 1); } else go(cur + 1); }
+  function prev() { if (busy) return; mode = 'key'; const s = secs[cur]; if (s && s.at > 0) { clear(); apply(s, s.at - 1); } else go(cur - 1); }
+
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting && !busy && Date.now() - driving > 1200) activate(secs.indexOf(e.target));
+  }), { threshold: .6 });
+  secs.forEach(s => io.observe(s));
+
+  // ---------- ajuste ao telão ----------
+  // centro: o quadro no meio da tela (a processadora recorta o quadrado central)
+  // esticado: o conteúdo vai largo para a processadora espremer de volta ao quadrado
+  // manual: o quadro no lugar e no tamanho que o teste mostrar
+  const TELA = 'amadeus-telao';
+  const tela = { modo: 'centro', side: 0, ox: 0, oy: 0 };
+  try { Object.assign(tela, JSON.parse(localStorage.getItem(TELA) || '{}')); } catch (e) {}
+  const q = new URLSearchParams(location.search);
+  if (q.get('modo')) tela.modo = q.get('modo');
+  function aplicaTela() {
+    const st = document.documentElement.style;
+    document.documentElement.classList.toggle('esticado', tela.modo === 'esticado');
+    ['--side', '--sx', '--ox', '--oy'].forEach(p => st.removeProperty(p));
+    if (tela.modo === 'esticado') { st.setProperty('--side', '100vh'); st.setProperty('--sx', String(innerWidth / innerHeight)); }
+    if (tela.modo === 'manual') { st.setProperty('--side', tela.side + 'px'); st.setProperty('--ox', tela.ox + 'px'); st.setProperty('--oy', tela.oy + 'px'); }
+    document.getElementById('cal-modo').textContent = 'Modo: ' + (tela.modo === 'manual'
+      ? 'ajuste manual (' + tela.side + ' px, ' + tela.ox + ' / ' + tela.oy + ')' : tela.modo) + ' · tela ' + innerWidth + ' × ' + innerHeight;
+    if (shot === null && !q.get('modo')) try { localStorage.setItem(TELA, JSON.stringify(tela)); } catch (e) {}
+  }
+  aplicaTela(); addEventListener('resize', aplicaTela);
+  if (q.has('cal')) document.body.classList.add('calib');
+  function teclaTeste(e) {
+    const k = e.key, passo = e.shiftKey ? 1 : 10;
+    const manual = () => { if (tela.modo !== 'manual') { tela.side = Math.min(innerWidth, innerHeight); tela.ox = 0; tela.oy = 0; tela.modo = 'manual'; } };
+    if (k === 't' || k === 'T' || k === 'Escape') document.body.classList.remove('calib');
+    else if (k === '1') tela.modo = 'centro';
+    else if (k === '2') tela.modo = 'esticado';
+    else if (k === '0') Object.assign(tela, { modo: 'centro', side: 0, ox: 0, oy: 0 });
+    else if (k === 'ArrowLeft') { manual(); tela.ox -= passo; }
+    else if (k === 'ArrowRight') { manual(); tela.ox += passo; }
+    else if (k === 'ArrowUp') { manual(); tela.oy -= passo; }
+    else if (k === 'ArrowDown') { manual(); tela.oy += passo; }
+    else if (k === '+' || k === '=') { manual(); tela.side += passo; }
+    else if (k === '-') { manual(); tela.side = Math.max(100, tela.side - passo); }
+    else return;
+    e.preventDefault(); aplicaTela();
+  }
+
+  addEventListener('keydown', e => {
+    if (document.body.classList.contains('calib')) return teclaTeste(e);
+    if (e.key === 't' || e.key === 'T') { document.body.classList.add('calib'); aplicaTela(); return; }
+    if (['ArrowDown', 'ArrowRight', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); next(); }
+    else if (['ArrowUp', 'ArrowLeft', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); prev(); }
+    else if (e.key === 'Home') { e.preventDefault(); mode = 'key'; go(0); }
+    else if (e.key === 'End') { e.preventDefault(); mode = 'key'; go(secs.length - 1); }
+    else if (e.key === 'f' || e.key === 'F') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
+    else if (e.key === 'h' || e.key === 'H') document.body.classList.toggle('clean');
+    else if ('pPkK'.includes(e.key) && vidDe(secs[cur])) { const v = vidDe(secs[cur]); v.paused ? v.play().catch(() => {}) : v.pause(); }
+  });
+  addEventListener('wheel', () => { mode = 'scroll'; }, { passive: true });
+  addEventListener('touchstart', () => { mode = 'scroll'; }, { passive: true });
+
+  const dots = document.getElementById('dots');
+  secs.forEach((s, i) => {
+    const b = document.createElement('button');
+    b.title = s.dataset.label || s.dataset.tn || '';
+    if (i > 0 && s.dataset.block !== secs[i - 1].dataset.block) b.className = 'sep';
+    b.onclick = () => { mode = 'key'; go(i); };
+    dots.appendChild(b);
+  });
+  if (shot !== null) activate(0);
+
+  let idle; addEventListener('mousemove', () => { document.body.classList.remove('idle'); clearTimeout(idle); idle = setTimeout(() => document.body.classList.add('idle'), 2500); });
+
+  // ---------- poeira dourada ----------
+  const cv = document.getElementById('dust'), cx = cv.getContext('2d');
+  let W, H, P = [];
+  const size = () => {
+    const r = devicePixelRatio || 1; W = innerWidth; H = innerHeight; cv.width = W * r; cv.height = H * r; cx.setTransform(r, 0, 0, r, 0, 0);
+    P = Array.from({ length: Math.round(W * H / 16000) }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.6 + .3,
+      vx: (Math.random() - .5) * .12, vy: -Math.random() * .22 - .04, a: Math.random() * .5 + .1, p: Math.random() * 6.28 }));
+  };
+  size(); addEventListener('resize', size);
+  const tick = t => {
+    cx.clearRect(0, 0, W, H);
+    for (const d of P) {
+      d.x += d.vx; d.y += d.vy; if (d.y < -5) { d.y = H + 5; d.x = Math.random() * W; }
+      cx.globalAlpha = d.a * (.6 + .4 * Math.sin(t / 900 + d.p));
+      cx.fillStyle = '#FFC040'; cx.beginPath(); cx.arc(d.x, d.y, d.r, 0, 6.283); cx.fill();
+    }
+    if (!reduced) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
