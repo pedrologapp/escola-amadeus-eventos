@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { BadgeCheck, BellRing, Download, Loader2, Send, Trash2, UserPlus, Users } from "lucide-react";
 import {
   confirmarLembrete,
@@ -28,6 +29,7 @@ export interface ContatoExp {
   pessoas?: number | null;
   nao_vai_em?: string | null;
   resposta_texto?: string | null;
+  resposta_em?: string | null;
   conferir?: boolean;
   pedido_confirmacao_em?: string | null;
   criado_em: string;
@@ -92,6 +94,61 @@ function Resultados({ r }: { r: { erro?: string; resultados: ResultadoExp[] } | 
   );
 }
 
+// Quem respondeu ao pedido de confirmação da véspera (09/10): quem vai e com quantas pessoas, quem não vai e o que conferir.
+// A tela se atualiza sozinha a cada minuto (o monitor do WhatsApp lê as respostas a cada 5 minutos).
+function PainelConfirmacoes({ contatos }: { contatos: ContatoExp[] }) {
+  const router = useRouter();
+  useEffect(() => {
+    const t = setInterval(() => router.refresh(), 60000);
+    return () => clearInterval(t);
+  }, [router]);
+  const quem = (c: ContatoExp) => (c.responsavel && !/escola|amadeus/i.test(c.responsavel) ? c.responsavel : c.crianca ? `Família de ${c.crianca}` : tel(c.telefone));
+  const recente = (a: ContatoExp, b: ContatoExp) => (b.resposta_em ?? b.vai_em ?? "").localeCompare(a.resposta_em ?? a.vai_em ?? "");
+  const vao = contatos.filter((c) => c.vai_em && !c.nao_vai_em).sort(recente);
+  const naoVao = contatos.filter((c) => c.nao_vai_em).sort(recente);
+  const conferir = contatos.filter((c) => c.conferir && !c.vai_em && !c.nao_vai_em).sort(recente);
+  const aguardando = contatos.filter((c) => c.pedido_confirmacao_em && !c.resposta_em).length;
+  const pessoas = vao.reduce((s, c) => s + (c.pessoas ?? 0), 0);
+  const semQuantos = vao.filter((c) => !c.pessoas).length;
+  const numero = (valor: number, rotulo: string, cor: string) => (
+    <div className={`rounded-xl px-3 py-3 text-center ${cor}`}><p className="text-3xl font-extrabold leading-none">{valor}</p><p className="mt-1 text-xs font-semibold">{rotulo}</p></div>
+  );
+  return (
+    <section className="rounded-2xl border-2 border-emerald-200 bg-white p-5">
+      <p className="flex items-center gap-2 text-sm font-bold text-amadeus-blue"><BadgeCheck className="size-4 text-emerald-600" /> Confirmações · sábado, 10/10, 14h</p>
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {numero(pessoas, semQuantos ? `pessoas (+${semQuantos} sem dizer quantos)` : "pessoas confirmadas", "bg-emerald-50 text-emerald-800")}
+        {numero(vao.length, vao.length === 1 ? "família vai" : "famílias vão", "bg-emerald-50 text-emerald-800")}
+        {numero(naoVao.length, "não vão", "bg-red-50 text-red-700")}
+        {numero(aguardando, "ainda não responderam", "bg-slate-50 text-slate-600")}
+      </div>
+      {vao.length > 0 && (
+        <ul className="mt-4 divide-y divide-border/60">
+          {vao.map((c) => (
+            <li key={c.telefone} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+              <span className="min-w-0">
+                <b className="text-amadeus-blue">{quem(c)}</b>
+                {c.crianca && c.responsavel && !/escola|amadeus/i.test(c.responsavel) ? <span className="text-muted-foreground"> · {c.crianca}{c.serie ? ` (${c.serie})` : ""}</span> : null}
+                {c.resposta_texto ? <span className="block truncate text-xs italic text-muted-foreground">“{c.resposta_texto}”</span> : null}
+              </span>
+              <span className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-bold ${c.pessoas ? "bg-emerald-50 text-emerald-700" : "bg-amber-100 text-amber-800"}`}>
+                {c.pessoas ? `${c.pessoas} ${c.pessoas === 1 ? "pessoa" : "pessoas"}` : "quantos?"}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {(naoVao.length > 0 || conferir.length > 0) && (
+        <div className="mt-3 space-y-1 text-xs">
+          {naoVao.map((c) => <p key={c.telefone}><span className="font-bold text-red-700">✗ {quem(c)}</span>{c.resposta_texto ? <span className="italic text-muted-foreground"> · “{c.resposta_texto}”</span> : null}</p>)}
+          {conferir.map((c) => <p key={c.telefone}><span className="font-bold text-amber-800">? {quem(c)}</span><span className="italic text-muted-foreground"> · “{c.resposta_texto}” (ler e conferir)</span></p>)}
+        </div>
+      )}
+      {vao.length === 0 && naoVao.length === 0 && conferir.length === 0 && <p className="mt-3 text-sm text-muted-foreground">Ninguém respondeu ainda. As respostas aparecem aqui sozinhas.</p>}
+    </section>
+  );
+}
+
 export function PainelExperiencia({ contatos, candidatos, automatico }: { contatos: ContatoExp[]; candidatos: Candidato[]; automatico: boolean }) {
   const [escolha, setEscolha] = useState("video");
   const [marcados, setMarcados] = useState<Set<string>>(new Set());
@@ -152,6 +209,8 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
   return (
     <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
       <div className="space-y-6">
+        <PainelConfirmacoes contatos={contatos} />
+
         {/* Novo número */}
         <section className="rounded-2xl border border-border/60 bg-white p-5">
           <p className="flex items-center gap-2 text-sm font-bold text-amadeus-blue"><Send className="size-4" /> Enviar o encarte da Experiência</p>
