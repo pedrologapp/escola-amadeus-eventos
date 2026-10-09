@@ -208,6 +208,49 @@ export async function registrarPresenca(telefone: string, nome: string | null, t
   await guardarContato({ telefone: tel, responsavel: nome, origem: "whatsapp" });
   await createAdminClient().from("experiencia_contatos").update({ vai_em: em, vai_texto: texto.trim().slice(0, 140), lembrar: true }).eq("telefone", tel).is("vai_em", null);
 }
+/**
+ * Resposta ao pedido de confirmação da véspera (09/10/2026: "você poderia nos contar se vem e quantas pessoas?").
+ * Lê se a família vem e quantas pessoas. O que não der para entender fica com conferir = true no admin.
+ */
+const NUMEROS: Record<string, number> = { um: 1, uma: 1, dois: 2, duas: 2, tres: 3, quatro: 4, cinco: 5, seis: 6, sete: 7, oito: 8, nove: 9, dez: 10 };
+const NAO_VAI = /\b(nao (vou|vamos|poderei|poderemos|vai dar|da|consigo|conseguirei|conseguiremos|irei|iremos)|infelizmente|nao estarei|nao estaremos|fica pra proxima|fica para proxima)\b/;
+const VEM = /\b(vou|vamos|irei|iremos|estarei|estaremos|confirm\w*|sim|somos|seremos|com certeza|presenca|eu e)\b/;
+export function lerResposta(texto: string): { vai: boolean | null; pessoas: number | null } {
+  const t = normal(texto).replace(/[^a-z0-9 ,]+/g, " ").replace(/ +/g, " ").trim();
+  if (!t) return { vai: null, pessoas: null };
+  if (NAO_VAI.test(t)) return { vai: false, pessoas: null };
+  let pessoas: number | null = null;
+  // "somos 3", "vamos em 4", "3 pessoas", "eu e meus 2 filhos" (= 1 + 2)
+  const digitos = [...t.matchAll(/\b(\d{1,2})\b/g)].map((m) => Number(m[1])).filter((n) => n >= 1 && n <= 15);
+  const palavras = t.split(" ").map((p) => NUMEROS[p]).filter((n): n is number => !!n);
+  const filhos = t.match(/\beu e (meus|minhas|os|as)? ?(\d{1,2}|dois|duas|tres|quatro|cinco)\b/);
+  if (filhos) pessoas = 1 + (Number(filhos[2]) || NUMEROS[filhos[2]] || 0);
+  else if (digitos.length) pessoas = digitos[0];
+  else if (/\bsomos|seremos|vamos em|vamos ser\b/.test(t) && palavras.length) pessoas = palavras[0];
+  else if (/\b(so eu|apenas eu|somente eu|eu sozinh)/.test(t)) pessoas = 1;
+  else if (/\beu e\b/.test(t)) pessoas = 1 + t.split(/\beu e\b/)[1].split(/,| e /).filter((p) => p.trim()).length; // "eu e meu filho" = 2
+  else if (/\beu ?,/.test(t)) pessoas = 1 + t.split(/\beu ?,/)[1].split(/,| e /).filter((p) => p.trim()).length; // "eu, meu marido e minha filha" = 3
+  else if (/\b(vou|irei|vamos|iremos) com\b/.test(t)) pessoas = 1 + t.split(/\b(?:vou|irei|vamos|iremos) com\b/)[1].split(/,| e /).filter((p) => p.trim()).length; // "vou com minha filha" = 2
+  else if (palavras.length && /pessoa|filh|crianc|adult/.test(t)) pessoas = palavras[0];
+  const vai = pessoas !== null || VEM.test(t) ? true : null;
+  return { vai, pessoas };
+}
+const PEDIDO_EM = Date.parse("2026-10-09T11:00:00Z"); // quando a escola mandou o pedido de confirmação
+export async function registrarResposta(telefone: string, nome: string | null, texto: string, em: string, ts: number) {
+  if (ts * 1000 < PEDIDO_EM || ts * 1000 > Date.parse("2026-10-10T20:00:00Z")) return;
+  const tel = limparTelefone(telefone);
+  const admin = createAdminClient();
+  const { data: c } = await admin.from("experiencia_contatos").select("telefone, pedido_confirmacao_em, vai_em").eq("telefone", tel).maybeSingle();
+  if (!c?.pedido_confirmacao_em) return; // só quem recebeu o pedido de confirmação
+  const r = lerResposta(texto);
+  const muda: Record<string, unknown> = { resposta_texto: texto.trim().slice(0, 200), resposta_em: em, atualizado_em: em };
+  if (r.vai === false) Object.assign(muda, { nao_vai_em: em, pessoas: null, conferir: false });
+  else if (r.vai) Object.assign(muda, { nao_vai_em: null, vai_em: c.vai_em ?? em, vai_texto: c.vai_em ? undefined : texto.trim().slice(0, 140), pessoas: r.pessoas, conferir: r.pessoas === null });
+  else muda.conferir = true;
+  if (muda.vai_texto === undefined) delete muda.vai_texto;
+  await admin.from("experiencia_contatos").update(muda).eq("telefone", tel);
+  if (nome) await guardarContato({ telefone: tel, responsavel: nome, origem: "whatsapp" });
+}
 export async function estaNaLista(telefone: string) {
   const { data } = await createAdminClient().from("experiencia_contatos").select("telefone").eq("telefone", limparTelefone(telefone)).maybeSingle();
   return !!data;

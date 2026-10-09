@@ -25,6 +25,11 @@ export interface ContatoExp {
   lembrete_em: string | null;
   vai_em?: string | null;
   vai_texto?: string | null;
+  pessoas?: number | null;
+  nao_vai_em?: string | null;
+  resposta_texto?: string | null;
+  conferir?: boolean;
+  pedido_confirmacao_em?: string | null;
   criado_em: string;
   ultimo?: string | null;
 }
@@ -136,7 +141,7 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
   };
 
   const baixarPlanilha = () => {
-    const linhas = [["Responsável", "Criança", "Série", "Telefone", "Origem", "Vai?", "Encarte", "Lembrete"], ...contatos.map((c) => [c.responsavel ?? "", c.crianca ?? "", c.serie ?? "", tel(c.telefone), ORIGEM[c.origem] ?? c.origem, c.vai_em ? "EU VOU " + (dia(c.vai_em) ?? "") : "", dia(c.convite_em) ?? "", dia(c.lembrete_em) ?? ""])];
+    const linhas = [["Responsável", "Criança", "Série", "Telefone", "Origem", "Vai?", "Pessoas", "Resposta", "Encarte", "Lembrete"], ...contatos.map((c) => [c.responsavel ?? "", c.crianca ?? "", c.serie ?? "", tel(c.telefone), ORIGEM[c.origem] ?? c.origem, c.nao_vai_em ? "NÃO VAI" : c.vai_em ? "VAI" : "", c.pessoas ? String(c.pessoas) : "", c.resposta_texto ?? "", dia(c.convite_em) ?? "", dia(c.lembrete_em) ?? ""])];
     const csv = "﻿" + linhas.map((l) => l.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";")).join("\n");
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
@@ -172,7 +177,7 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
         {/* Lista de contatos */}
         <section className="rounded-2xl border border-border/60 bg-white p-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="flex items-center gap-2 text-sm font-bold text-amadeus-blue"><Users className="size-4" /> Contatos da Experiência · {contatos.length}{contatos.some((c) => c.vai_em) ? <span className="ml-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-xs font-bold text-emerald-700">{contatos.filter((c) => c.vai_em).length} disseram EU VOU</span> : null}</p>
+            <p className="flex items-center gap-2 text-sm font-bold text-amadeus-blue"><Users className="size-4" /> Contatos da Experiência · {contatos.length}{contatos.some((c) => c.vai_em) ? <span className="ml-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-xs font-bold text-emerald-700">{contatos.filter((c) => c.vai_em && !c.nao_vai_em).length} vão · {contatos.reduce((s, c) => s + (c.vai_em && !c.nao_vai_em ? c.pessoas ?? 0 : 0), 0)} pessoas</span> : null}{contatos.some((c) => c.nao_vai_em) ? <span className="rounded-md bg-red-50 px-1.5 py-0.5 text-xs font-bold text-red-700">{contatos.filter((c) => c.nao_vai_em).length} não vão</span> : null}{contatos.some((c) => c.conferir) ? <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-xs font-bold text-amber-800">{contatos.filter((c) => c.conferir).length} para conferir</span> : null}{contatos.some((c) => c.vai_em && !c.nao_vai_em && !c.pessoas) ? <span className="text-xs font-normal text-muted-foreground">({contatos.filter((c) => c.vai_em && !c.nao_vai_em && !c.pessoas).length} vão sem dizer quantos)</span> : null}</p>
             <div className="flex flex-wrap gap-2">
               {selecionados.length > 0 && (
                 <button type="button" disabled={ocupado} onClick={enviarSelecionados} className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-bold text-white disabled:opacity-40">
@@ -216,7 +221,13 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
                         <p className="text-xs text-muted-foreground">{c.responsavel ?? "responsável não informado"} · {ORIGEM[c.origem] ?? c.origem}</p>
                       </td>
                       <td className="py-2.5 pr-3 tabular-nums">{tel(c.telefone)}</td>
-                      <td className="py-2.5 pr-3">{c.vai_em ? <span title={c.vai_texto ?? ""} className="rounded-md bg-emerald-50 px-1.5 py-0.5 text-xs font-bold text-emerald-700">✓ EU VOU · {dia(c.vai_em)}</span> : <span className="text-xs text-muted-foreground">—</span>}</td>
+                      <td className="py-2.5 pr-3">
+                        {c.nao_vai_em ? <span className="rounded-md bg-red-50 px-1.5 py-0.5 text-xs font-bold text-red-700">✗ Não vai</span>
+                          : c.vai_em ? <span title={c.vai_texto ?? ""} className="rounded-md bg-emerald-50 px-1.5 py-0.5 text-xs font-bold text-emerald-700">✓ Vai{c.pessoas ? ` · ${c.pessoas} ${c.pessoas === 1 ? "pessoa" : "pessoas"}` : " · quantos?"}</span>
+                          : <span className="text-xs text-muted-foreground">—</span>}
+                        {c.conferir && <span className="ml-1 rounded-md bg-amber-100 px-1.5 py-0.5 text-xs font-bold text-amber-800">conferir</span>}
+                        {c.resposta_texto && <p className="mt-1 max-w-[220px] text-xs italic text-muted-foreground">“{c.resposta_texto}”</p>}
+                      </td>
                       <td className="py-2.5 pr-3">
                         {c.convite_em ? <span className={`rounded-md px-1.5 py-0.5 text-xs font-bold ${SELO.enviado}`}>{dia(c.convite_em)}</span>
                           : c.ultimo ? <span className={`rounded-md px-1.5 py-0.5 text-xs font-bold ${SELO[c.ultimo]}`}>{TXT[c.ultimo]}</span>
