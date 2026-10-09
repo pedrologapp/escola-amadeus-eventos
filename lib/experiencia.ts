@@ -238,10 +238,14 @@ export function lerResposta(texto: string): { vai: boolean | null; pessoas: numb
 const PEDIDO_EM = Date.parse("2026-10-09T11:00:00Z"); // quando a escola mandou o pedido de confirmação
 export async function registrarResposta(telefone: string, nome: string | null, texto: string, em: string, ts: number) {
   if (ts * 1000 < PEDIDO_EM || ts * 1000 > Date.parse("2026-10-10T20:00:00Z")) return;
-  const tel = limparTelefone(telefone);
+  const limpo = limparTelefone(telefone);
+  // o WhatsApp às vezes entrega o número sem o 9 (8487905400) e o pedido foi marcado na versão com o 9 (84987905400), ou vice-versa
+  const formas = [limpo, limpo.length === 10 ? limpo.slice(0, 2) + "9" + limpo.slice(2) : limpo.length === 11 ? limpo.slice(0, 2) + limpo.slice(3) : limpo];
   const admin = createAdminClient();
-  const { data: c } = await admin.from("experiencia_contatos").select("telefone, pedido_confirmacao_em, vai_em").eq("telefone", tel).maybeSingle();
-  if (!c?.pedido_confirmacao_em) return; // só quem recebeu o pedido de confirmação
+  const { data: linhas } = await admin.from("experiencia_contatos").select("telefone, pedido_confirmacao_em, vai_em").in("telefone", formas);
+  const c = (linhas ?? []).find((l) => l.pedido_confirmacao_em);
+  if (!c) return; // só quem recebeu o pedido de confirmação
+  const tel = c.telefone as string;
   const r = lerResposta(texto);
   const muda: Record<string, unknown> = { resposta_texto: texto.trim().slice(0, 200), resposta_em: em, atualizado_em: em };
   if (r.vai === false) Object.assign(muda, { nao_vai_em: em, pessoas: null, conferir: false });
