@@ -57,14 +57,14 @@ export default function DiaDoProfessorPage() {
             <p><b className="text-amadeus-blue">Alimentação:</b> por conta de cada um</p>
           </div>
           <p className={`${letra.className} mt-[30px] text-[26px] leading-[30px] text-[#C25F00]`}>
-            A data com mais votos da equipe será a do passeio. Responda até sexta, às 7h da manhã.
+            A data com mais votos da equipe será a do passeio. Responda até sábado, 10/10, às 9h da manhã.
           </p>
         </section>
 
         {fechado ? (
           <div className="mt-8 rounded-3xl bg-white p-6 text-center shadow-sm">
             <p className="text-lg font-extrabold text-amadeus-blue">As respostas encerraram</p>
-            <p className="mt-2 text-sm text-[#5A6478]">O prazo terminou na sexta, às 7h. Fale com a coordenação se precisar.</p>
+            <p className="mt-2 text-sm text-[#5A6478]">O prazo terminou no sábado, às 9h. Fale com a coordenação se precisar.</p>
           </div>
         ) : (
           <Resposta />

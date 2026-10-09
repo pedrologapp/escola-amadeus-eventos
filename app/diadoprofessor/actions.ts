@@ -24,7 +24,7 @@ export async function buscarNome(termo: string): Promise<(Colaborador & { respon
 export async function responder(e: {
   id: number | null; nome: string; participa: boolean; data: string | null; acompanhantes: number; quem: string;
 }) {
-  if (encerrado()) return { ok: false as const, erro: "O prazo para responder terminou na sexta, às 7h." };
+  if (encerrado()) return { ok: false as const, erro: "O prazo para responder terminou no sábado, às 9h." };
   const limpo = nomeBonito(String(e.nome ?? "").replace(/\s+/g, " ").slice(0, 120));
   if (limpo.length < 5 || !limpo.includes(" ")) return { ok: false as const, erro: "Escolha seu nome na lista ou digite nome e sobrenome." };
   let p = { id: null as number | null, nome: limpo };
