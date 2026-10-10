@@ -4,7 +4,7 @@
 // tracoVivo(svg, dados, imagem, { dur, pular: [[x0,y0,x1,y1], …] })
 window.tracoVivo = function (svg, dados, imagem, op = {}) {
   const dur = op.dur || 5, ns = 'http://www.w3.org/2000/svg', id = 'tvm' + Math.random().toString(36).slice(2, 7);
-  svg.setAttribute('viewBox', `0 0 ${dados.w} ${dados.h}`);
+  svg.setAttribute('viewBox', `0 0 ${dados.w} ${dados.h}`); svg.setAttribute('preserveAspectRatio', op.ajuste || 'xMidYMid slice');
   svg.innerHTML = '';
   const area = (p) => (p.c[2] - p.c[0]) * (p.c[3] - p.c[1]);
   // ordem: primeiro as formas grandes (a estrutura), depois os detalhes de cima para baixo

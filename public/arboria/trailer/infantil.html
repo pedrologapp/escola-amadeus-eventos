@@ -79,7 +79,7 @@
   @keyframes aproxima { from { transform: scale(1); } to { transform: scale(1.1) translateY(2%); } }
 
   /* a cabine, com o quadrinho do nome */
-  #cabine { background: radial-gradient(circle at 50% 40%, #2a4497 0%, #101c52 55%, #060b2a 100%); }
+  #cabine { background: radial-gradient(circle at 50% 30%, #23408f 0%, #0d1849 55%, #050a24 100%); }
   #cabine.on .cam { animation: aproxima 6s ease-out both; }
   .quadro { position: absolute; left: 50%; top: 31%; width: 58%; aspect-ratio: 4/3; translate: -50% 0; rotate: -3deg; background: #FFFCF2; border: 8px solid #C98B3C; border-radius: 4px; box-shadow: 0 14px 30px rgba(0,0,0,.5); opacity: 0;
     background-image: repeating-linear-gradient(transparent 0 22px, #C9D8EF 22px 23px); display: grid; place-items: center; }
@@ -194,6 +194,16 @@
   @keyframes flash { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; } }
   #transforma .onomt { left: 6%; top: 9%; rotate: -8deg; }
   #transforma.on .onomt { animation: pop .5s cubic-bezier(.2,1.8,.4,1) 2.2s forwards; }
+  .tvsvg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .chamaNome { position: absolute; z-index: 26; font-family: Caveat, cursive; font-weight: 700; color: #FFE38A; text-shadow: 0 0 14px rgba(255,214,107,.95), 0 0 3px rgba(255,214,107,.9); opacity: 0; white-space: nowrap; }
+  #escola.chama .chamaNome { animation: chamaNome 1.7s ease-in-out var(--a) 2 both; }
+  @keyframes chamaNome { 0% { opacity: 0; transform: scale(.6); filter: blur(4px); } 35% { opacity: 1; transform: scale(1.06); filter: none; } 100% { opacity: 0; transform: scale(1.3); } }
+  #cabine .nomeassento { position: absolute; left: 37.5%; width: 25%; top: 73%; text-align: center; font: 700 clamp(22px, 7vw, 34px) Caveat, cursive; color: #FFC94A; text-shadow: 0 0 10px rgba(255,201,74,.85); opacity: 0; rotate: -4deg; clip-path: inset(0 100% 0 0); }
+  #cabine .nomeassento.on { animation: escreve 1.2s steps(10) forwards; }
+  @keyframes escreve { to { opacity: 1; clip-path: inset(0 0 0 0); } }
+  #cabine .botao { position: absolute; width: 1.6%; aspect-ratio: 1; border-radius: 50%; background: #FFC94A; box-shadow: 0 0 10px 3px rgba(255,201,74,.8); opacity: 0; }
+  #cabine .botao.on { animation: piscaBotao .8s ease-in-out infinite alternate; }
+  @keyframes piscaBotao { from { opacity: .1; } to { opacity: 1; } }
   #comecar { position: absolute; inset: 0; z-index: 60; display: grid; place-items: center; background: #000; text-align: center; padding: 0 12%; }
   #comecar p { font: 700 11px "Atkinson Hyperlegible"; letter-spacing: .4em; color: rgba(255,255,255,.6); }
   #comecar h1 { font-family: "Young Serif", serif; font-size: 40px; line-height: 1.05; margin: 14px 0 6px; font-weight: 400; }
@@ -208,6 +218,7 @@
 
   <section class="cena" id="mapa">
     <div class="estrelas"></div>
+    <svg class="tvsvg" id="tvMapa" style="opacity:.6"></svg>
     <p class="rotulo">LÁ NO ALTO, OITO PLANETINHAS…</p>
     <svg class="rota" viewBox="0 0 100 100" preserveAspectRatio="none"><path id="rota" d="" /></svg>
     <svg class="escolinha" viewBox="0 0 100 80" fill="none" stroke="#FFF6E0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 75 V40 H85 V75 M8 42 L50 15 L92 42 M42 75 V58 H58 V75" /><path d="M50 15 V3 l12 4 l-12 4" stroke="#FFC94A" /></svg>
@@ -217,17 +228,12 @@
 
   <section class="cena" id="escola">
     <div class="cam">
-      <svg class="traco desenhar" viewBox="0 0 360 640" preserveAspectRatio="xMidYMid slice">
-        <path class="d" pathLength="1" d="M-10 560 C80 548 220 568 370 552" />
-        <path class="d" pathLength="1" style="--a:.2s" d="M40 560 V420 H320 V560 M20 426 L180 340 L340 426" />
-        <path class="d" pathLength="1" style="--a:.6s" d="M155 560 V490 H205 V560 M70 450 h46 v36 h-46 z M244 450 h46 v36 h-46 z" />
-        <path class="d ouro" pathLength="1" style="--a:.9s" d="M180 340 V290 l40 12 l-40 14" />
-        <circle class="d ouro" pathLength="1" style="--a:1.1s" cx="180" cy="390" r="20" />
-      </svg>
+      <svg class="tvsvg" id="tvEscola"></svg>
+      <svg class="tvsvg" id="tvChamado"></svg>
       <img class="naveesc" src="../artes/nave-vagalume.webp" alt="">
-      <span class="chamado nome" style="--a:.2s;left:4%;top:7%;font-size:30px;rotate:-12deg"></span>
-      <span class="chamado nome" style="--a:.7s;right:4%;top:15%;font-size:36px;rotate:9deg"></span>
-      <span class="chamado nome" style="--a:1.2s;left:8%;top:23%;font-size:24px;rotate:6deg"></span>
+      <span class="chamaNome nome" style="--a:.2s;left:5%;top:6%;font-size:40px;rotate:-12deg"></span>
+      <span class="chamaNome nome" style="--a:.8s;right:5%;top:15%;font-size:48px;rotate:9deg"></span>
+      <span class="chamaNome nome" style="--a:1.4s;left:9%;top:24%;font-size:34px;rotate:5deg"></span>
       <img class="desenho" alt="">
       <div class="balao"></div>
     </div>
@@ -235,6 +241,7 @@
 
   <section class="cena" id="transforma">
     <div class="raios"></div>
+    <svg class="tvsvg" id="tvTransforma"></svg>
     <img class="antes" alt="">
     <img class="depois" alt="">
     <span class="peca" style="--a:.5s;left:10%;top:30%;--r:-10deg">CAPACETE!</span>
@@ -263,15 +270,8 @@
 
   <section class="cena" id="cabine">
     <div class="cam">
-      <svg class="traco desenhar" viewBox="0 0 360 640" preserveAspectRatio="xMidYMid slice">
-        <path class="d ouro" pathLength="1" style="--t:1.6s" d="M30 330 C30 140 330 140 330 330" />
-        <path class="d" pathLength="1" style="--a:.4s" d="M30 330 H330 M60 330 V560 M300 330 V560" />
-        <path class="d" pathLength="1" style="--a:.7s" d="M90 470 h180 M110 500 h30 M160 500 h40 M220 500 h30" />
-        <circle class="d ouro" pathLength="1" style="--a:1s;--t:.6s" cx="120" cy="530" r="6" /><circle class="d ouro" pathLength="1" style="--a:1.1s;--t:.6s" cx="180" cy="530" r="6" /><circle class="d ouro" pathLength="1" style="--a:1.2s;--t:.6s" cx="240" cy="530" r="6" />
-      </svg>
-      <div class="quadro"><span class="fita"></span><p class="escrito"><small class="dona"></small><span class="nome"></span> ★</p>
-        <svg viewBox="0 0 60 60" fill="none" stroke="#E0524C" stroke-width="3" stroke-linecap="round"><path d="M30 50 C10 36 8 20 20 16 C26 14 30 20 30 22 C30 20 34 14 40 16 C52 20 50 36 30 50 Z" /></svg>
-      </div>
+      <svg class="tvsvg" id="tvCabine"></svg>
+      <div class="nomeassento nome"></div>
     </div>
   </section>
 
@@ -284,7 +284,7 @@
   <section class="cena" id="mundo">
     <div class="cam">
       <video class="fundo" muted playsinline loop preload="auto"></video>
-      <svg class="traco" id="tracoMundo" viewBox="0 0 360 640" preserveAspectRatio="xMidYMid slice"></svg>
+      <svg class="tvsvg" id="tvMundo"></svg>
       <div class="crianca respira"><img alt=""></div>
     </div>
     <div class="cartao"><p class="p"></p><span class="m"></span><div class="linha"></div></div>
@@ -293,6 +293,7 @@
   </section>
 
   <section class="cena" id="final">
+    <svg class="tvsvg" id="tvFesta"></svg>
     <div class="anel"></div>
     <img class="centro flutua" src="../artes/nave-vagalume.webp" alt="">
     <p class="frase">A jornada <span class="de"></span> <em class="nome"></em><br>começa em 2027.</p>
@@ -314,6 +315,7 @@
 </div>
 <audio id="trilha" src="trilha.mp3" preload="auto"></audio>
 
+<script src="../tracos/traco-vivo.js"></script>
 <script>
 const q = new URLSearchParams(location.search);
 const nome = (q.get('nome') || 'Maria').replace(/[<>]/g, '').trim().split(/\s+/)[0];
@@ -322,7 +324,6 @@ const marcadas = new Set((q.get('k') || '').split(',').filter(Boolean));
 const A = menino ? 'o' : 'a', ELA = menino ? 'ele' : 'ela', DELA = menino ? 'dele' : 'dela', DE = menino ? 'do' : 'da';
 document.querySelectorAll('.nome').forEach((e) => e.textContent = nome);
 document.querySelectorAll('.de').forEach((e) => e.textContent = DE);
-document.querySelector('.dona').textContent = 'nave ' + DE;
 document.querySelector('.selo').textContent = `do jeitinho ${DELA} ★`;
 const POSE = menino ? ['crianca-menino.webp', 'crianca-menino-ceu.webp'] : ['crianca-menina.webp', 'crianca-menina-ceu.webp'];
 document.querySelector('#pouso img.pose-a').src = POSE[1];
@@ -394,10 +395,10 @@ function mundo(m, i) {
   const s = document.getElementById('mundo');
   const vid = s.querySelector('video'); vid.src = `../vivos/${m.fundo}.mp4`; vid.play().catch(() => {});
   s.querySelector('.cartao .p').textContent = m.planeta; s.querySelector('.cartao .m').textContent = m.mundo;
-  const tr = s.querySelector('#tracoMundo'); tr.classList.remove('desenhar'); tr.innerHTML = m.traco.join(''); tr.style.setProperty('--base', '2.2s');
+  tv('tvMundo', 'm-' + m.chave, 3.2);
   const cr = s.querySelector('.crianca'); cr.querySelector('img').src = POSE[i % 2]; cr.style.left = i % 2 ? '8%' : 'auto'; cr.style.right = i % 2 ? 'auto' : '8%';
   const b = marcadas.has(m.chave); s.classList.toggle('brilho', b);
-  s.classList.remove('on'); cena('mundo'); void s.offsetWidth; s.classList.add('on'); void tr.offsetWidth; tr.classList.add('desenhar');
+  s.classList.remove('on'); cena('mundo'); void s.offsetWidth; s.classList.add('on'); 
   plim(ac.currentTime + .3, 660 + i * 40, .12);
   const on = s.querySelector('.onom'); on.textContent = m.onom; on.style.left = m.ox; on.style.top = m.oy; on.classList.remove('pop'); setTimeout(() => { void on.offsetWidth; on.classList.add('pop'); tum(ac.currentTime, 160, .35); }, 2300);
   setTimeout(() => { if (s.classList.contains('on')) fala(b ? m.brilho : m.frase, i % 2 ? 'baixo' : ''); }, 3000);
@@ -423,6 +424,7 @@ const poeNave = (p, anima) => { naveMapa.style.transition = anima ? '' : 'none';
 const rotaAte = (k) => { const pts = [ESCOLA, ...POS.slice(0, k)]; document.getElementById('rota').setAttribute('d', pts.length > 1 ? 'M' + pts.map((p) => p.join(' ')).join(' L') : ''); };
 
 function abreMapa() {
+  tv('tvMapa', 'mapa', 3.5);
   cena('mapa'); naveMapa.style.opacity = 0; rotaAte(0); mapa.querySelector('.missao').textContent = '';
   PLS.forEach((p, k) => { p.className = 'pl nasce'; p.style.setProperty('--a', (0.4 + k * 0.32) + 's'); setTimeout(() => plim(ac.currentTime, 523 + k * 70, .08), 400 + k * 320); });
 }
@@ -434,6 +436,18 @@ function mapaMissao(i) {
   setTimeout(() => { poeNave(POS[i], true); vuuush(ac.currentTime, 1.5); }, 350);
 }
 
+// traço vivo: os desenhos em linha (public/arboria/tracos) se fazem na hora, por cima dos cenários
+const TR = {};
+const TRACOS = ['mapa', 'escola', 'chamado', 'transforma', 'cabine', 'festa', ...MUNDOS.map((m) => 'm-' + m.chave)];
+const carregaTracos = () => Promise.all(TRACOS.map((n) => fetch('../tracos/' + n + '.json').then((r) => r.json()).then((j) => { TR[n] = j; }).catch(() => {})));
+function tv(id, nome, dur, pular) { const el = document.getElementById(id); if (TR[nome]) tracoVivo(el, TR[nome], '../tracos/' + nome + '.webp', { dur, pular }); }
+function botoes() {
+  const cam = document.querySelector('#cabine .cam'); cam.querySelectorAll('.botao').forEach((b) => b.remove());
+  [[23, 55.5], [28, 55.5], [33, 59], [62, 58], [67, 58], [72, 61], [44, 52], [56, 52]].forEach(([x, y], k) => {
+    const b = document.createElement('i'); b.className = 'botao'; b.style.left = (50 + (x - 50) * 1.195) + '%'; b.style.top = y + '%'; b.style.animationDelay = (k * .15) + 's'; cam.appendChild(b);
+    setTimeout(() => b.classList.add('on'), 3300 + k * 120);
+  });
+}
 const ROT = [];
 let t = 0;
 ROT.push([t, () => { cena('titulo'); const a = ac.currentTime; tum(a + .2); tum(a + .6); }]); t += 4.2;
@@ -441,15 +455,15 @@ ROT.push([t, () => { cena('titulo'); const a = ac.currentTime; tum(a + .2); tum(
 ROT.push([t, () => { abreMapa(); document.getElementById('trilha').play().catch(() => {}); fala('Lá no alto, oito planetinhas brincavam em paz…', 'baixo'); }]); t += 3.8;
 ROT.push([t, () => { PLS.forEach((p) => { p.className = 'pl alvo'; }); tum(ac.currentTime, 70, .6); fala('…até que, um dia, todos começaram a piscar.', 'baixo'); }]); t += 3.2;
 // 2 · na Escola Amadeus, a nave chega chamando
-ROT.push([t, () => { const e = document.getElementById('escola'); e.className = 'cena'; cena('escola'); reinicia(e); zumbido(ac.currentTime, 6); fala(`Na Escola Amadeus, ${A} ${N} brincava…`, 'baixo'); }]); t += 3.2;
-ROT.push([t, () => { document.getElementById('escola').classList.add('chama'); fala(''); [0, .5, 1, 1.6, 2.1, 2.6].forEach((d, k) => plim(ac.currentTime + d, k % 2 ? 988 : 784, .09)); }]); t += 3.4;
+ROT.push([t, () => { const e = document.getElementById('escola'); e.className = 'cena'; cena('escola'); reinicia(e); tv('tvEscola', 'escola', 4); zumbido(ac.currentTime, 6); fala(`Na Escola Amadeus, ${A} ${N} brincava…`, 'baixo'); }]); t += 3.2;
+ROT.push([t, () => { document.getElementById('escola').classList.add('chama'); tv('tvChamado', 'chamado', 2.6); fala(''); [0, .5, 1, 1.6, 2.1, 2.6].forEach((d, k) => plim(ac.currentTime + d, k % 2 ? 988 : 784, .09)); }]); t += 3.4;
 // 3 · a nave fala
 ROT.push([t, () => { const e = document.getElementById('escola'); e.classList.remove('chama'); e.querySelector('.balao').innerHTML = `${N}! Os planetas estão em apuros!<br>Precisamos de você para salvá-los!`; e.classList.add('fala'); plim(ac.currentTime, 660); plim(ac.currentTime + .15, 880); }]); t += 4.6;
 // 4 · a transformação
-ROT.push([t, () => { cena('transforma'); reinicia(document.getElementById('transforma')); fala(''); vuuush(ac.currentTime, 1.9); [0.5, 0.9, 1.3].forEach((d) => tum(ac.currentTime + d, 180, .4)); setTimeout(() => { plim(ac.currentTime, 784); plim(ac.currentTime + .12, 1047); }, 2100); }]); t += 3.6;
+ROT.push([t, () => { cena('transforma'); reinicia(document.getElementById('transforma')); tv('tvTransforma', 'transforma', 2); fala(''); vuuush(ac.currentTime, 1.9); [0.5, 0.9, 1.3].forEach((d) => tum(ac.currentTime + d, 180, .4)); setTimeout(() => { plim(ac.currentTime, 784); plim(ac.currentTime + .12, 1047); }, 2100); }]); t += 3.6;
 ROT.push([t, () => fala(`${A === 'a' ? 'A' : 'O'} ${N} vestiu sua roupa de piloto…`, 'baixo')]); t += 2.4;
 // 5 · a cabine com o nome
-ROT.push([t, () => { cena('cabine'); reinicia(document.getElementById('cabine')); fala('…e embarcou na Nave Vagalume!'); plim(ac.currentTime + 1.3, 880); }]); t += 3.6;
+ROT.push([t, () => { cena('cabine'); reinicia(document.getElementById('cabine')); tv('tvCabine', 'cabine', 3.4, [[270, 745, 420, 865]]); botoes(); setTimeout(() => document.querySelector('#cabine .nomeassento').classList.add('on'), 3500); setTimeout(() => plim(ac.currentTime, 880), 3600); fala('…e embarcou na Nave Vagalume!'); }]); t += 5.6;
 // 6 · de planeta em planeta, sempre passando pelo mapa
 MUNDOS.forEach((m, i) => {
   ROT.push([t, () => { fala(''); mapaMissao(i); }]); t += 2.4;
@@ -462,11 +476,13 @@ ROT.push([t, () => {
   setTimeout(() => { poeNave(ESCOLA, true); vuuush(ac.currentTime, 1.5); }, 500);
   PLS.forEach((p, k) => setTimeout(() => plim(ac.currentTime, 523 + k * 60, .1), 200 + k * 160));
 }]); t += 3.6;
-ROT.push([t, () => { cena('final'); reinicia(document.getElementById('final'));
+ROT.push([t, () => { cena('final'); reinicia(document.getElementById('final')); tv('tvFesta', 'festa', 3);
   document.querySelectorAll('#final .anel img').forEach((img, k) => { img.classList.remove('aceso'); setTimeout(() => img.classList.add('aceso'), 200 + k * 200); }); }]); t += 6;
 ROT.push([t, () => { cena('creditos'); reinicia(document.getElementById('creditos')); }]);
 
-document.getElementById('play').onclick = () => {
+document.getElementById('play').onclick = async () => {
+  const bt = document.getElementById('play'); bt.textContent = 'carregando…'; bt.disabled = true;
+  await carregaTracos();
   ac = new (window.AudioContext || window.webkitAudioContext)(); mestre = ac.createGain(); mestre.gain.value = .9; mestre.connect(ac.destination);
   const tr = document.getElementById('trilha'); tr.volume = .5;
   document.getElementById('comecar').remove();
