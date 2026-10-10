@@ -34,3 +34,17 @@ export async function recolherHistorias() {
   await createAdminClient().from("arboria_exp_reuniao").update({ liberada_em: null, atualizado_em: new Date().toISOString() }).eq("id", 1);
   revalidatePath(CAMINHO);
 }
+
+/** Para o telão: em que pé está a reunião e quantas crianças já foram cadastradas depois do começo. */
+export async function situacaoTelao() {
+  await logado();
+  const db = createAdminClient();
+  const { data: r } = await db.from("arboria_exp_reuniao").select("iniciada_em, liberada_em").eq("id", 1).single();
+  let criancas = 0, familias = 0;
+  if (r?.iniciada_em) {
+    const { data: cs } = await db.from("arboria_exp_criancas").select("familia").gte("criado_em", r.iniciada_em);
+    criancas = cs?.length ?? 0;
+    familias = new Set((cs ?? []).map((c) => c.familia)).size;
+  }
+  return { iniciada: r?.iniciada_em ?? null, liberada: r?.liberada_em ?? null, criancas, familias };
+}

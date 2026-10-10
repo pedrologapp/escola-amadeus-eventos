@@ -27,6 +27,7 @@ export default async function ArboriaExperienciaPage() {
     <div className="container mx-auto px-4 py-6">
       <h1 className="text-2xl font-extrabold text-amadeus-blue">História do Arboria</h1>
       <p className="mt-1 text-sm text-muted-foreground">Experiência Amadeus · sábado, 10/10. Cada pai cadastra o filho pelo QR e, no fim, a história aparece no celular.</p>
+      <a href="/admin/arboria-experiencia/telao" target="_blank" className="mt-3 inline-block rounded-full bg-[#0b1112] px-4 py-2 text-sm font-bold text-[#2dd4bf]">Abrir o telão da sala ↗</a>
       <Painel iniciada={r?.iniciada_em ?? null} liberada={r?.liberada_em ?? null} criancas={criancas} />
     </div>
   );
