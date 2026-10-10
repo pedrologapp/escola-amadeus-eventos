@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Trailer · Nave Vagalume</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Bangers&family=Atkinson+Hyperlegible:wght@400;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<!--
+  Trailer da série do Arboria · Infantil (Experiência Amadeus, 10/10/2026). ~76 s, sem narração.
+  Modelo do protótipo 2: cenário que já existe + traço vivo em código + a criança de fantasia completa.
+  Parâmetros: ?nome=Maria&g=menina|menino&k=mus,cor  (k = respostas do pai; o mundo marcado ganha a frase "do jeitinho dela")
+-->
+<style>
+  :root { --ouro: #FFC94A; --traco: #FFF6E0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #000; overflow: hidden; }
+  body { font-family: "Atkinson Hyperlegible", system-ui, sans-serif; color: #fff; -webkit-font-smoothing: antialiased; }
+  #palco { position: fixed; inset: 0; margin: auto; width: min(100vw, calc(100svh * 9 / 16)); height: min(100svh, calc(100vw * 16 / 9)); overflow: hidden; background: #050a24; }
+  .cena { position: absolute; inset: 0; visibility: hidden; overflow: hidden; }
+  .cena.on { visibility: visible; }
+  .cam { position: absolute; inset: 0; transform-origin: 50% 55%; }
+  video.fundo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  svg.traco { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+  .d { fill: none; stroke: var(--traco); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; filter: drop-shadow(0 0 3px rgba(255,240,200,.6)) drop-shadow(0 1px 2px rgba(0,0,0,.45)); }
+  .d.ouro { stroke: var(--ouro); filter: drop-shadow(0 0 6px rgba(255,201,74,.85)) drop-shadow(0 1px 2px rgba(0,0,0,.4)); }
+  .desenhar .d { animation: desenha var(--t, 1.4s) cubic-bezier(.6,.1,.3,1) calc(var(--base, 0s) + var(--a, 0s)) forwards; }
+  @keyframes desenha { to { stroke-dashoffset: 0; } }
+  .flutua { animation: flutua 3s ease-in-out infinite alternate; }
+  @keyframes flutua { to { transform: translateY(-10px); } }
+
+  /* recordatório de gibi: a caixinha do narrador, dentro da cena */
+  #legenda { position: absolute; left: 6%; max-width: 74%; top: 56%; z-index: 40; padding: 9px 13px 10px; background: #FFF4D6; color: #1B2550; border: 2.5px solid #1B2550; border-radius: 3px;
+    box-shadow: 5px 5px 0 rgba(10,15,40,.55); font: 700 clamp(14px, 4.1vw, 18px)/1.32 "Atkinson Hyperlegible", sans-serif; rotate: -1.5deg;
+    opacity: 0; transform: scale(.85); transform-origin: 0 0; transition: opacity .25s ease, transform .35s cubic-bezier(.2,1.5,.4,1); }
+  #legenda.on { opacity: 1; transform: none; }
+  #legenda b { color: #C2410C; }
+  #legenda.baixo { top: auto; bottom: 7%; left: auto; right: 6%; rotate: 1.5deg; }
+  /* onomatopeia */
+  .onom { position: absolute; z-index: 32; font-family: Bangers, "Young Serif", sans-serif; font-size: clamp(40px, 13vw, 62px); letter-spacing: .04em; color: var(--ouro);
+    -webkit-text-stroke: 2.5px #1B2550; paint-order: stroke fill; text-shadow: 4px 4px 0 #1B2550; rotate: -10deg; opacity: 0; pointer-events: none; }
+  .onom.pop { animation: pop .5s cubic-bezier(.2,1.8,.4,1) forwards, some .6s ease 2.2s forwards; }
+  @keyframes pop { from { opacity: 0; transform: scale(.2); } to { opacity: 1; transform: scale(1); } }
+  @keyframes some { to { opacity: 0; transform: scale(1.1); } }
+  /* o chamado vindo da nave */
+  .chamado { position: absolute; z-index: 25; font-family: "Young Serif", serif; font-style: italic; color: #FFE38A; text-shadow: 0 0 12px rgba(255,214,107,.95), 0 0 2px #000; opacity: 0; white-space: nowrap; }
+  #pouso.on .chamado { animation: chama 1.6s ease-in-out var(--a) 2 both; }
+  @keyframes chama { 0% { opacity: 0; transform: scale(.7); } 35% { opacity: 1; transform: scale(1.05); } 100% { opacity: 0; transform: scale(1.35); } }
+  .onda { position: absolute; left: 50%; top: 17%; width: 40%; aspect-ratio: 1; translate: -50% -50%; border: 2px solid rgba(255,214,107,.8); border-radius: 50%; opacity: 0; }
+  #pouso.on .onda { animation: onda 1.6s ease-out var(--a) 3 both; }
+  @keyframes onda { from { opacity: .9; transform: scale(.5); } to { opacity: 0; transform: scale(2.2); } }
+  .grao { position: absolute; inset: -50%; z-index: 35; pointer-events: none; opacity: .07; mix-blend-mode: overlay; animation: grao 1s steps(5) infinite;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  @keyframes grao { 0% { transform: translate(0,0); } 50% { transform: translate(-3%,2%); } 100% { transform: translate(2%,-3%); } }
+  .vinheta { position: absolute; inset: 0; z-index: 34; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0,0,0,.55) 100%); }
+  .estrela { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: #fff; animation: pisca 2s ease-in-out infinite alternate; }
+  @keyframes pisca { to { opacity: .2; } }
+  @keyframes surge { to { opacity: 1; } }
+
+  /* título */
+  #titulo { background: #000; display: grid; place-items: center; text-align: center; }
+  #titulo .o { font: 700 11px "Atkinson Hyperlegible"; letter-spacing: .45em; color: rgba(255,255,255,.6); opacity: 0; }
+  #titulo .n { font-family: "Young Serif", serif; font-size: clamp(54px, 18vw, 86px); line-height: 1; margin-top: 18px; opacity: 0; }
+  #titulo .e { font-family: "Young Serif", serif; font-size: clamp(18px, 5.4vw, 24px); color: var(--ouro); margin-top: 10px; opacity: 0; }
+  #titulo.on .o { animation: surge .8s ease .2s forwards; }
+  #titulo.on .n { animation: nomeIn 1.4s cubic-bezier(.2,.8,.2,1) .9s forwards; }
+  #titulo.on .e { animation: surge 1s ease 1.9s forwards; }
+  @keyframes nomeIn { from { opacity: 0; transform: scale(1.12); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
+
+  /* a nave pousa */
+  #pouso { background: linear-gradient(#060b2a 0%, #0f1f5c 62%, #0d1a3a 100%); }
+  #pouso .nave { position: absolute; left: 50%; width: 66%; translate: -50% 0; top: -40%; filter: drop-shadow(0 0 40px rgba(255,214,120,.5)); }
+  #pouso.on .nave { animation: paira 3.6s ease-in-out forwards, pousa 3s cubic-bezier(.3,.6,.25,1) 3.6s forwards; }
+  @keyframes paira { 0% { top: -40%; } 30% { top: 4%; transform: rotate(-3deg); } 65% { top: 6%; transform: rotate(3deg); } 100% { top: 4%; transform: rotate(-2deg); } }
+  @keyframes pousa { 0% { top: 4%; transform: rotate(-2deg); } 70% { top: 30%; transform: rotate(3deg); } 100% { top: 27%; transform: rotate(0); } }
+  #pouso .crianca { left: 50%; translate: -50% 0; }
+  #pouso.on .cam { animation: aproxima 4.2s ease-out both; }
+  @keyframes aproxima { from { transform: scale(1); } to { transform: scale(1.1) translateY(2%); } }
+
+  /* a cabine, com o quadrinho do nome */
+  #cabine { background: radial-gradient(circle at 50% 40%, #2a4497 0%, #101c52 55%, #060b2a 100%); }
+  #cabine.on .cam { animation: aproxima 6s ease-out both; }
+  .quadro { position: absolute; left: 50%; top: 31%; width: 58%; aspect-ratio: 4/3; translate: -50% 0; rotate: -3deg; background: #FFFCF2; border: 8px solid #C98B3C; border-radius: 4px; box-shadow: 0 14px 30px rgba(0,0,0,.5); opacity: 0;
+    background-image: repeating-linear-gradient(transparent 0 22px, #C9D8EF 22px 23px); display: grid; place-items: center; }
+  #cabine.on .quadro { animation: quadroIn .9s cubic-bezier(.2,1.3,.4,1) 1.2s forwards; }
+  @keyframes quadroIn { from { opacity: 0; transform: scale(.6) rotate(8deg); } to { opacity: 1; transform: none; } }
+  .quadro .escrito { font-family: Caveat, cursive; font-weight: 700; font-size: clamp(34px, 11vw, 52px); color: #1F3A8A; line-height: 1; text-align: center; }
+  .quadro .escrito small { display: block; font-size: .5em; color: #3b4a6b; margin-bottom: 2px; }
+  .quadro .fita { position: absolute; top: -16px; left: 50%; width: 70px; height: 22px; translate: -50% 0; rotate: 4deg; background: rgba(255,214,107,.85); }
+  .quadro svg { position: absolute; right: 6%; bottom: 8%; width: 26%; }
+
+  /* viagem entre os mundos */
+  #viagem canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #viagem .planeta { position: absolute; left: 50%; top: 42%; width: 66%; translate: -50% -50%; scale: .12; opacity: 0; }
+  #viagem.indo .planeta { animation: cresce 1.5s cubic-bezier(.5,0,.6,1) forwards; }
+  @keyframes cresce { 0% { scale: .12; opacity: 0; } 25% { opacity: 1; } 100% { scale: 1.9; opacity: 1; } }
+  #viagem .navinha { position: absolute; left: 50%; top: 72%; width: 28%; translate: -50% 0; filter: drop-shadow(0 0 20px rgba(255,214,120,.6)); animation: balanca .5s ease-in-out infinite alternate; }
+  @keyframes balanca { from { transform: rotate(-3deg) translateY(0); } to { transform: rotate(3deg) translateY(-6px); } }
+
+  /* um mundo */
+  #mundo .cam { transform-origin: 50% 70%; }
+  #mundo.on .cam { animation: entra 7s ease-out both; }
+  @keyframes entra { from { transform: scale(1.25) translateY(-4%); } to { transform: scale(1.04); } }
+  .cartao { position: absolute; left: 0; right: 0; top: 11%; text-align: center; z-index: 30; opacity: 0; }
+  .cartao .p { font-family: "Young Serif", serif; font-size: clamp(28px, 9.5vw, 44px); line-height: 1.05; text-shadow: 0 3px 14px rgba(0,0,0,.85), 0 0 2px rgba(0,0,0,.8); }
+  .cartao .m { display: inline-block; margin-top: 8px; padding: 4px 12px; border-radius: 99px; background: rgba(5,10,36,.55); font: 700 12px "Atkinson Hyperlegible"; letter-spacing: .28em; text-transform: uppercase; color: var(--ouro); backdrop-filter: blur(2px); }
+  .cartao .linha { width: 0; height: 2px; margin: 10px auto 0; background: var(--ouro); box-shadow: 0 0 10px var(--ouro); }
+  #mundo.on .cartao { animation: cartao 5.6s ease .15s forwards; }
+  #mundo.on .cartao .linha { animation: linha 1.2s ease .6s forwards; }
+  @keyframes cartao { 0% { opacity: 0; transform: translateY(10px) scale(1.06); filter: blur(6px); } 12% { opacity: 1; transform: none; filter: none; } 80% { opacity: 1; } 100% { opacity: .0; transform: translateY(-14px); } }
+  @keyframes linha { to { width: 46%; } }
+  .crianca { position: absolute; bottom: 7%; height: 31%; z-index: 20; }
+  .crianca img { height: 100%; filter: drop-shadow(0 10px 12px rgba(0,0,0,.55)); }
+  #mundo .crianca { opacity: 0; }
+  #mundo.on .crianca { animation: pula 1s cubic-bezier(.2,1.4,.4,1) 1.1s forwards; }
+  @keyframes pula { 0% { opacity: 1; transform: translateY(-150%) scale(.8); } 70% { opacity: 1; transform: translateY(3%) scaleY(.92); } 100% { opacity: 1; transform: none; } }
+  .respira img { animation: respira 2.4s ease-in-out 2.2s infinite alternate; transform-origin: 50% 100%; }
+  @keyframes respira { to { transform: scaleY(1.02) translateY(-3px); } }
+  .selo { position: absolute; z-index: 31; left: 50%; top: 27%; translate: -50% 0; font-family: Caveat, cursive; font-size: 22px; font-weight: 700; color: #1F3A8A; background: var(--ouro); padding: 2px 12px; border-radius: 6px; rotate: -3deg; opacity: 0; box-shadow: 0 6px 14px rgba(0,0,0,.35); }
+  #mundo.on.brilho .selo { animation: surge .6s ease 2.6s forwards; }
+
+  /* final */
+  #final { background: radial-gradient(circle at 50% 42%, #1d2f7a 0%, #070e2e 70%); }
+  #final .anel { position: absolute; left: 50%; top: 40%; width: 92%; aspect-ratio: 1; translate: -50% -50%; }
+  #final .anel img { position: absolute; width: 21%; translate: -50% -50%; opacity: .25; filter: grayscale(.8); transition: opacity .5s ease, filter .5s ease; }
+  #final .anel img.aceso { opacity: 1; filter: drop-shadow(0 0 16px rgba(255,214,120,.7)); }
+  #final .centro { position: absolute; left: 50%; top: 40%; width: 34%; translate: -50% -50%; }
+  #final .frase { position: absolute; left: 6%; right: 6%; top: 74%; text-align: center; font-family: "Young Serif", serif; font-size: clamp(24px, 7.5vw, 34px); line-height: 1.15; opacity: 0; }
+  #final .frase em { color: var(--ouro); font-style: normal; }
+  #final.on .frase { animation: surge 1.2s ease 3.4s forwards; }
+
+  #creditos { background: #000; display: grid; place-items: center; text-align: center; padding: 0 12%; }
+  #creditos .l { font: 700 11px "Atkinson Hyperlegible"; letter-spacing: .4em; color: rgba(255,255,255,.55); margin-top: 22px; }
+  #creditos .l:first-child { margin-top: 0; }
+  #creditos .v { font-family: "Young Serif", serif; font-size: clamp(22px, 7vw, 30px); margin-top: 6px; }
+  #creditos .v.p { font-size: 18px; color: rgba(255,255,255,.85); }
+  #creditos > div > * { opacity: 0; }
+  #creditos.on > div > * { animation: surge 1s ease forwards; }
+  #creditos.on > div > *:nth-child(3), #creditos.on > div > *:nth-child(4) { animation-delay: 1s; }
+  #creditos.on > div > *:nth-child(5), #creditos.on > div > *:nth-child(6) { animation-delay: 2s; }
+  #creditos.on > div > *:nth-child(7) { animation-delay: 3.2s; }
+  #creditos button { margin-top: 30px; background: none; border: 1.5px solid rgba(255,255,255,.5); color: #fff; padding: 9px 20px; border-radius: 99px; font: 700 13px "Atkinson Hyperlegible"; }
+
+  #comecar { position: absolute; inset: 0; z-index: 60; display: grid; place-items: center; background: #000; text-align: center; padding: 0 12%; }
+  #comecar p { font: 700 11px "Atkinson Hyperlegible"; letter-spacing: .4em; color: rgba(255,255,255,.6); }
+  #comecar h1 { font-family: "Young Serif", serif; font-size: 40px; line-height: 1.05; margin: 14px 0 6px; font-weight: 400; }
+  #comecar h2 { font-family: "Young Serif", serif; font-weight: 400; color: var(--ouro); font-size: 18px; margin-bottom: 30px; }
+  #comecar button { background: var(--ouro); color: #1a1300; border: 0; border-radius: 99px; padding: 15px 28px; font: 700 16px "Atkinson Hyperlegible"; }
+  #comecar small { display: block; margin-top: 14px; color: rgba(255,255,255,.5); font-size: 12px; }
+</style>
+</head>
+<body>
+<div id="palco">
+  <section class="cena" id="titulo"><div><p class="o">UMA SÉRIE ORIGINAL ARBORIA</p><p class="n nome"></p><p class="e">e a Nave Vagalume</p></div></section>
+
+  <section class="cena" id="pouso">
+    <div class="cam">
+      <div class="estrelas"></div>
+      <svg class="traco desenhar" viewBox="0 0 360 640" preserveAspectRatio="xMidYMid slice">
+        <path class="d" pathLength="1" d="M-10 520 C80 505 200 530 370 512" />
+        <path class="d ouro" pathLength="1" style="--a:5.6s;--t:.9s" d="M150 380 L105 520 M180 385 L180 525 M210 380 L255 520" />
+      </svg>
+      <i class="onda" style="--a:.6s"></i>
+      <img class="nave" src="../artes/nave-vagalume.webp" alt="">
+      <span class="chamado nome" style="--a:.7s;left:6%;top:9%;font-size:26px;rotate:-12deg"></span>
+      <span class="chamado nome" style="--a:1.2s;right:5%;top:20%;font-size:32px;rotate:9deg"></span>
+      <span class="chamado nome" style="--a:1.7s;left:10%;top:27%;font-size:22px;rotate:6deg"></span>
+      <span class="chamado nome" style="--a:2.1s;right:10%;top:5%;font-size:20px;rotate:-6deg"></span>
+      <div class="crianca respira"><img class="pose-a" alt=""></div>
+    </div>
+  </section>
+
+  <section class="cena" id="cabine">
+    <div class="cam">
+      <svg class="traco desenhar" viewBox="0 0 360 640" preserveAspectRatio="xMidYMid slice">
+        <path class="d ouro" pathLength="1" style="--t:1.6s" d="M30 330 C30 140 330 140 330 330" />
+        <path class="d" pathLength="1" style="--a:.4s" d="M30 330 H330 M60 330 V560 M300 330 V560" />
+        <path class="d" pathLength="1" style="--a:.7s" d="M90 470 h180 M110 500 h30 M160 500 h40 M220 500 h30" />
+        <circle class="d ouro" pathLength="1" style="--a:1s;--t:.6s" cx="120" cy="530" r="6" /><circle class="d ouro" pathLength="1" style="--a:1.1s;--t:.6s" cx="180" cy="530" r="6" /><circle class="d ouro" pathLength="1" style="--a:1.2s;--t:.6s" cx="240" cy="530" r="6" />
+      </svg>
+      <div class="quadro"><span class="fita"></span><p class="escrito"><small class="dona"></small><span class="nome"></span> ★</p>
+        <svg viewBox="0 0 60 60" fill="none" stroke="#E0524C" stroke-width="3" stroke-linecap="round"><path d="M30 50 C10 36 8 20 20 16 C26 14 30 20 30 22 C30 20 34 14 40 16 C52 20 50 36 30 50 Z" /></svg>
+      </div>
+    </div>
+  </section>
+
+  <section class="cena" id="viagem">
+    <canvas></canvas>
+    <img class="planeta" alt="">
+    <img class="navinha" src="../artes/nave-vagalume.webp" alt="">
+  </section>
+
+  <section class="cena" id="mundo">
+    <div class="cam">
+      <video class="fundo" muted playsinline loop preload="auto"></video>
+      <svg class="traco" id="tracoMundo" viewBox="0 0 360 640" preserveAspectRatio="xMidYMid slice"></svg>
+      <div class="crianca respira"><img alt=""></div>
+    </div>
+    <div class="cartao"><p class="p"></p><span class="m"></span><div class="linha"></div></div>
+    <div class="selo">do jeitinho dela ★</div>
+    <div class="onom"></div>
+  </section>
+
+  <section class="cena" id="final">
+    <div class="anel"></div>
+    <img class="centro flutua" src="../artes/nave-vagalume.webp" alt="">
+    <p class="frase">A jornada <span class="de"></span> <em class="nome"></em><br>começa em 2027.</p>
+  </section>
+
+  <section class="cena" id="creditos">
+    <div>
+      <p class="l">ESTRELANDO</p><p class="v nome"></p>
+      <p class="l">HISTÓRIA ORIGINAL</p><p class="v p">a família <span class="de"></span> <span class="nome"></span></p>
+      <p class="l">UMA SÉRIE ORIGINAL</p><p class="v p">Arboria · Centro Educacional Amadeus</p>
+      <button onclick="location.reload()">assistir de novo</button>
+    </div>
+  </section>
+
+  <div class="vinheta"></div><div class="grao"></div>
+  <div id="legenda"></div>
+
+  <div id="comecar"><div><p>UMA SÉRIE ORIGINAL ARBORIA</p><h1 class="nome"></h1><h2>e a Nave Vagalume</h2><button id="play">▶ Assistir ao trailer</button><small>aumente o volume 🔊</small></div></div>
+</div>
+<audio id="trilha" src="trilha.mp3" preload="auto"></audio>
+
+<script>
+const q = new URLSearchParams(location.search);
+const nome = (q.get('nome') || 'Maria').replace(/[<>]/g, '').trim().split(/\s+/)[0];
+const menino = q.get('g') === 'menino';
+const marcadas = new Set((q.get('k') || '').split(',').filter(Boolean));
+const A = menino ? 'o' : 'a', ELA = menino ? 'ele' : 'ela', DELA = menino ? 'dele' : 'dela', DE = menino ? 'do' : 'da';
+document.querySelectorAll('.nome').forEach((e) => e.textContent = nome);
+document.querySelectorAll('.de').forEach((e) => e.textContent = DE);
+document.querySelector('.dona').textContent = 'nave ' + DE;
+document.querySelector('.selo').textContent = `do jeitinho ${DELA} ★`;
+const POSE = menino ? ['crianca-menino.webp', 'crianca-menino-ceu.webp'] : ['crianca-menina.webp', 'crianca-menina-ceu.webp'];
+document.querySelector('#pouso img.pose-a').src = POSE[1];
+
+// os 8 mundos do Infantil: planeta, nome do mundo, fundo animado, arte, traço próprio, frases
+const N = `<b>${nome}</b>`;
+const MUNDOS = [
+  { chave: 'ling', onom: 'PLOP!', ox: '24%', oy: '38%', planeta: 'Planeta-Concha', mundo: 'Mundo Linguístico', fundo: 'inf-linguistico', arte: 'mundo-linguistico',
+    frase: `Aqui, as palavras viram bolhas… e ${A} ${N} vai soltar as ${DELA}.`, brilho: `Dizem que ${A} ${N} adora inventar histórias. Aqui, elas viram passarinhos de papel.`,
+    traco: ['<circle class="d" pathLength="1" style="--a:0s" cx="80" cy="250" r="16"/>', '<circle class="d" pathLength="1" style="--a:.3s" cx="130" cy="200" r="10"/>', '<circle class="d" pathLength="1" style="--a:.6s" cx="260" cy="230" r="14"/>', '<path class="d ouro" pathLength="1" style="--a:.9s;--t:1.6s" d="M190 300 l22 -16 l-8 22 l26 -10 l-30 26 z"/>'] },
+  { chave: 'log', onom: 'CLIC!', ox: '58%', oy: '40%', planeta: 'Planeta dos Cubinhos', mundo: 'Mundo Lógico-Matemático', fundo: 'inf-logico', arte: 'mundo-logico',
+    frase: `Aqui, os tatuzinhos andam em fila… e só ${A} ${N} vai descobrir o que mudou.`, brilho: `${A === 'a' ? 'A' : 'O'} ${N} adora descobrir como tudo funciona. Aqui, cada coisa tem um porquê.`,
+    traco: ['<path class="d" pathLength="1" d="M70 300 h40 v40 h-40 z"/>', '<path class="d" pathLength="1" style="--a:.3s" d="M120 300 h40 v40 h-40 z"/>', '<path class="d ouro" pathLength="1" style="--a:.6s" d="M170 300 h40 v40 h-40 z"/>', '<path class="d" pathLength="1" style="--a:.9s" d="M230 320 h40 M250 300 v40"/>'] },
+  { chave: 'esp', onom: 'ZUUUM!', ox: '10%', oy: '40%', planeta: 'Planeta de Fita', mundo: 'Mundo Espacial', fundo: 'inf-espacial', arte: 'mundo-espacial',
+    frase: `Aqui, dá pra andar de ponta-cabeça. ${A === 'a' ? 'A' : 'O'} ${N} vai achar o caminho.`, brilho: `${A === 'a' ? 'A' : 'O'} ${N} adora montar e desenhar. Aqui, o planeta muda de forma com ${ELA}.`,
+    traco: ['<path class="d ouro" pathLength="1" style="--t:2s" d="M60 320 C100 220 160 380 200 280 S290 200 310 290"/>', '<path class="d" pathLength="1" style="--a:1s" d="M260 200 l10 22 l24 2 l-18 16 l6 24 l-22 -13 l-22 13 l6 -24 l-18 -16 l24 -2 z"/>'] },
+  { chave: 'mus', onom: 'TUM TUM!', ox: '12%', oy: '40%', planeta: 'Planeta-Tambor', mundo: 'Mundo Musical', fundo: 'inf-musical', arte: 'mundo-musical',
+    frase: 'Aqui, quando chove… a chuva toca música.', brilho: `Todo mundo sabe que ${A} ${N} adora cantar e batucar. Aqui, ${ELA} vai se sentir em casa.`,
+    traco: ['<path class="d ouro" pathLength="1" d="M70 300 C100 270 130 330 160 300 C190 270 220 330 250 300 C270 285 285 295 300 300"/>', '<path class="d" pathLength="1" style="--a:.5s" d="M100 240 v-34 l18 -6 v34 M100 240 a8 6 0 1 1 -1 0 M118 234 a8 6 0 1 1 -1 0"/>', '<path class="d" pathLength="1" style="--a:.8s" d="M240 230 v-30 l14 -4 v30 M240 230 a7 5 0 1 1 -1 0"/>'] },
+  { chave: 'cor', onom: 'BOING!', ox: '52%', oy: '38%', planeta: 'Planeta-Trampolim', mundo: 'Mundo Corporal', fundo: 'inf-corporal', arte: 'mundo-corporal',
+    frase: `Aqui, tudo pula! ${A === 'a' ? 'A' : 'O'} ${N} vai equilibrar a torre dos Pulantes.`, brilho: `${A === 'a' ? 'A' : 'O'} ${N} corre e escala tudo. Aqui, o chão é de trampolim!`,
+    traco: ['<path class="d" pathLength="1" d="M80 330 l12 -16 l12 16 l12 -16 l12 16 l12 -16 l12 16"/>', '<path class="d ouro" pathLength="1" style="--a:.5s" d="M220 340 v-80 M206 274 l14 -16 l14 16"/>', '<path class="d" pathLength="1" style="--a:.8s" d="M270 340 v-60 M258 292 l12 -14 l12 14"/>'] },
+  { chave: 'nat', onom: 'UAU!', ox: '14%', oy: '40%', planeta: 'Planeta das Gavetinhas', mundo: 'Mundo Naturalista', fundo: 'inf-naturalista', arte: 'mundo-naturalista',
+    frase: 'Aqui, cada gavetinha guarda um tesouro: pedrinhas, conchas, penas…', brilho: `${A === 'a' ? 'A' : 'O'} ${N} adora bichos e plantas. Aqui, ${ELA} vai cuidar das coleções.`,
+    traco: ['<circle class="d ouro" pathLength="1" cx="230" cy="260" r="34"/>', '<path class="d ouro" pathLength="1" style="--a:.5s" d="M254 284 l34 34"/>', '<path class="d" pathLength="1" style="--a:.8s" d="M80 300 C90 270 120 270 128 300 C120 320 90 320 80 300 Z M104 285 v30"/>'] },
+  { chave: 'inter', onom: 'OBA!', ox: '56%', oy: '38%', planeta: 'Planeta das Duas Luas', mundo: 'Mundo Interpessoal', fundo: 'inf-interpessoal', arte: 'mundo-interpessoal',
+    frase: `Aqui, ninguém brinca sozinho. ${A === 'a' ? 'A' : 'O'} ${N} vai ajudar dois amigos a combinar.`, brilho: `${A === 'a' ? 'A' : 'O'} ${N} adora chamar os amigos. Aqui, é o planeta das brincadeiras juntos.`,
+    traco: ['<circle class="d" pathLength="1" cx="140" cy="250" r="26"/>', '<circle class="d" pathLength="1" style="--a:.3s" cx="220" cy="250" r="26"/>', '<path class="d ouro" pathLength="1" style="--a:.8s" d="M180 300 C160 284 150 270 162 262 C170 258 178 264 180 268 C182 264 190 258 198 262 C210 270 200 284 180 300 Z"/>'] },
+  { chave: 'intra', onom: 'AHHH…', ox: '18%', oy: '40%', planeta: 'Planetinha do Pôr do Sol', mundo: 'Mundo Intrapessoal', fundo: 'inf-intrapessoal', arte: 'mundo-intrapessoal',
+    frase: 'Aqui, o sol nunca se põe… e o Calminho muda de cor com o que sente.', brilho: `${A === 'a' ? 'A' : 'O'} ${N} gosta do seu mundinho. Aqui, ${ELA} vai descobrir o que sente.`,
+    traco: ['<path class="d ouro" pathLength="1" d="M120 300 a60 60 0 0 1 120 0"/>', '<path class="d ouro" pathLength="1" style="--a:.4s" d="M180 228 v-18 M130 246 l-12 -12 M230 246 l12 -12 M104 290 h-16 M256 290 h16"/>', '<path class="d" pathLength="1" style="--a:.8s" d="M90 320 h180 M110 334 h140 M140 348 h80"/>'] },
+];
+
+// estrelas
+document.querySelectorAll('.estrelas').forEach((box) => { for (let i = 0; i < 70; i++) { const s = document.createElement('i'); s.className = 'estrela'; s.style.left = Math.random() * 100 + '%'; s.style.top = Math.random() * 62 + '%'; s.style.animationDelay = Math.random() * 2 + 's'; box.appendChild(s); } });
+const cv = document.querySelector('#viagem canvas'), cx = cv.getContext('2d');
+const pts = Array.from({ length: 200 }, () => ({ x: Math.random() * 2 - 1, y: Math.random() * 2 - 1, z: Math.random() }));
+(function voa() {
+  const w = cv.width = cv.clientWidth * devicePixelRatio, h = cv.height = cv.clientHeight * devicePixelRatio;
+  cx.fillStyle = '#050a24'; cx.fillRect(0, 0, w, h);
+  for (const p of pts) { p.z -= .02; if (p.z < .02) { p.z = 1; p.x = Math.random() * 2 - 1; p.y = Math.random() * 2 - 1; }
+    const sx = w / 2 + p.x / p.z * w * .5, sy = h * .42 + p.y / p.z * h * .5, ex = w / 2 + p.x / (p.z + .05) * w * .5, ey = h * .42 + p.y / (p.z + .05) * h * .5;
+    cx.strokeStyle = `rgba(255,240,210,${1 - p.z})`; cx.lineWidth = (1 - p.z) * 2.5 * devicePixelRatio; cx.beginPath(); cx.moveTo(sx, sy); cx.lineTo(ex, ey); cx.stroke(); }
+  requestAnimationFrame(voa);
+})();
+
+// anel de planetas do final
+const anel = document.querySelector('#final .anel');
+MUNDOS.forEach((m, i) => { const a = -Math.PI / 2 + i * Math.PI / 4; const img = document.createElement('img'); img.src = `../artes/${m.arte}.webp`; img.style.left = 50 + Math.cos(a) * 40 + '%'; img.style.top = 50 + Math.sin(a) * 40 + '%'; anel.appendChild(img); });
+
+// som
+let ac, mestre;
+const ruido = (dur) => { const b = ac.createBuffer(1, ac.sampleRate * dur, ac.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; const s = ac.createBufferSource(); s.buffer = b; return s; };
+function tum(t, f = 100, v = 1) { const o = ac.createOscillator(), g = ac.createGain(); o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * .35, t + .4); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.001, t + .55); o.connect(g).connect(mestre); o.start(t); o.stop(t + .6); }
+function vuuush(t, dur) { const n = ruido(dur), f = ac.createBiquadFilter(), g = ac.createGain(); f.type = 'bandpass'; f.frequency.setValueAtTime(250, t); f.frequency.exponentialRampToValueAtTime(2600, t + dur * .7); g.gain.setValueAtTime(.001, t); g.gain.exponentialRampToValueAtTime(.35, t + dur * .6); g.gain.exponentialRampToValueAtTime(.001, t + dur); n.connect(f).connect(g).connect(mestre); n.start(t); }
+function plim(t, f, v = .16) { const o = ac.createOscillator(), g = ac.createGain(); o.type = 'triangle'; o.frequency.value = f; g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.001, t + 1.2); o.connect(g).connect(mestre); o.start(t); o.stop(t + 1.3); }
+function zumbido(t, dur) { const o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = 110; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.1, t + 1); g.gain.linearRampToValueAtTime(0, t + dur); o.connect(g).connect(mestre); o.start(t); o.stop(t + dur); }
+
+const legenda = document.getElementById('legenda');
+const fala = (txt, pos = '') => { legenda.classList.remove('on'); if (txt) setTimeout(() => { legenda.innerHTML = txt; legenda.className = pos; void legenda.offsetWidth; legenda.classList.add('on'); }, 250); };
+const cena = (id) => { document.querySelectorAll('.cena').forEach((c) => c.classList.toggle('on', c.id === id)); };
+const reinicia = (el) => { el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); };
+
+function viagem(m) {
+  const v = document.getElementById('viagem'); v.querySelector('.planeta').src = `../artes/${m.arte}.webp`;
+  v.classList.remove('indo'); cena('viagem'); void v.offsetWidth; v.classList.add('indo'); vuuush(ac.currentTime, 1.5);
+}
+function mundo(m, i) {
+  const s = document.getElementById('mundo');
+  const vid = s.querySelector('video'); vid.src = `../vivos/${m.fundo}.mp4`; vid.play().catch(() => {});
+  s.querySelector('.cartao .p').textContent = m.planeta; s.querySelector('.cartao .m').textContent = m.mundo;
+  const tr = s.querySelector('#tracoMundo'); tr.classList.remove('desenhar'); tr.innerHTML = m.traco.join(''); tr.style.setProperty('--base', '2.2s');
+  const cr = s.querySelector('.crianca'); cr.querySelector('img').src = POSE[i % 2]; cr.style.left = i % 2 ? '8%' : 'auto'; cr.style.right = i % 2 ? 'auto' : '8%';
+  const b = marcadas.has(m.chave); s.classList.toggle('brilho', b);
+  s.classList.remove('on'); cena('mundo'); void s.offsetWidth; s.classList.add('on'); void tr.offsetWidth; tr.classList.add('desenhar');
+  plim(ac.currentTime + .3, 660 + i * 40, .12);
+  const on = s.querySelector('.onom'); on.textContent = m.onom; on.style.left = m.ox; on.style.top = m.oy; on.classList.remove('pop'); setTimeout(() => { void on.offsetWidth; on.classList.add('pop'); tum(ac.currentTime, 160, .35); }, 2300);
+  setTimeout(() => fala(b ? m.brilho : m.frase, i % 2 ? 'baixo' : ''), 3000);
+}
+
+const ROT = [];
+let t = 0;
+ROT.push([t, () => { cena('titulo'); const a = ac.currentTime; tum(a + .2); tum(a + .6); }]); t += 4.2;
+ROT.push([t, () => { cena('pouso'); reinicia(document.getElementById('pouso')); zumbido(ac.currentTime + 3.4, 3.4); document.getElementById('trilha').play().catch(() => {}); [0.8, 1.3, 1.8, 2.2, 2.4, 2.9].forEach((d, k) => plim(ac.currentTime + d, k % 2 ? 988 : 784, .08)); fala(`Toda noite, ${A} ${N} olhava pro céu…`, 'baixo'); setTimeout(() => fala(`…até que uma noite, o céu chamou o nome ${DELA}.`, 'baixo'), 3400); }]); t += 7.2;
+ROT.push([t, () => { cena('cabine'); reinicia(document.getElementById('cabine')); fala(`Esta é a nave ${DE} ${N}.`); plim(ac.currentTime + 1.3, 880); }]); t += 3.4;
+ROT.push([t, () => fala(`Oito planetinhas estão esperando por ${ELA}.`)]); t += 3.4;
+MUNDOS.forEach((m, i) => {
+  ROT.push([t, () => { fala(''); viagem(m); }]); t += 1.5;
+  ROT.push([t, () => mundo(m, i)]); t += 6.6;
+});
+ROT.push([t, () => {
+  fala(''); cena('final'); reinicia(document.getElementById('final'));
+  document.querySelectorAll('#final .anel img').forEach((img, k) => { img.classList.remove('aceso'); setTimeout(() => { img.classList.add('aceso'); plim(ac.currentTime, 523 + k * 60, .1); }, 300 + k * 330); });
+}]); t += 7.4;
+ROT.push([t, () => { cena('creditos'); reinicia(document.getElementById('creditos')); }]);
+
+document.getElementById('play').onclick = () => {
+  ac = new (window.AudioContext || window.webkitAudioContext)(); mestre = ac.createGain(); mestre.gain.value = .9; mestre.connect(ac.destination);
+  const tr = document.getElementById('trilha'); tr.volume = .5;
+  document.getElementById('comecar').remove();
+  ROT.forEach(([tt, f]) => setTimeout(f, tt * 1000));
+};
+</script>
+</body>
+</html>
