@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Camera, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
 import { ATIVIDADE, SERIES, primeiroNome, type Chave } from "@/lib/arboria-historia";
 import { cadastrar, estado, type CriancaHistoria, type FilhoEntrada } from "./actions";
-import { Historia } from "./historia";
+import { Trailer } from "./trailer";
 
 /**
  * O celular do pai na Experiência: cadastra o(s) filho(s), faz a atividade e espera.
@@ -38,7 +38,7 @@ export function AppArboria({ demo }: { demo?: CriancaHistoria | null }) {
     if (pronto) gravar({ familia, etapa, responsavel, filhos: filhos.map((f) => ({ ...f, foto: null })) });
   }, [pronto, familia, etapa, responsavel, filhos]);
 
-  if (demo) return <Historia crianca={demo} />;
+  if (demo) return <Trailer crianca={demo} />;
   if (!pronto) return null;
   if (etapa === "cadastro") return <Cadastro responsavel={responsavel} setResponsavel={setResponsavel} filhos={filhos} setFilhos={setFilhos} seguir={() => setEtapa("atividade")} />;
   if (etapa === "atividade") return <Atividade familia={familia} responsavel={responsavel} filhos={filhos} setFilhos={setFilhos} voltar={() => setEtapa("cadastro")} seguir={() => setEtapa("espera")} />;
@@ -235,7 +235,7 @@ function Espera({ familia, nomes }: { familia: string; nomes: string[] }) {
     return () => { vivo = false; clearInterval(t); };
   }, [familia]);
 
-  if (aberta) return <Historia crianca={aberta} fechar={() => setAberta(null)} />;
+  if (aberta) return <Trailer crianca={aberta} fechar={() => setAberta(null)} />;
 
   if (!criancas.length) {
     return (

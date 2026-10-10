@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
-<title>Trailer · Nave Vagalume</title>
+<title>Trailer · Arboria</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Bangers&family=Atkinson+Hyperlegible:wght@400;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
 <!--
@@ -214,6 +214,15 @@
   #cabine .botao { position: absolute; width: 1.6%; aspect-ratio: 1; border-radius: 50%; background: #FFC94A; box-shadow: 0 0 10px 3px rgba(255,201,74,.8); opacity: 0; }
   #cabine .botao.on { animation: piscaBotao .8s ease-in-out infinite alternate; }
   @keyframes piscaBotao { from { opacity: .1; } to { opacity: 1; } }
+  .cartaonome { position: absolute; left: 50%; top: 66%; translate: -50% 0; min-width: 52%; padding: 10px 18px 12px; text-align: center; background: #FFF4D6; border: 3px solid #1B2550; border-radius: 10px; box-shadow: 6px 6px 0 rgba(10,15,40,.5); rotate: -3deg; opacity: 0; transform: scale(.4); transition: opacity .3s ease, transform .5s cubic-bezier(.2,1.6,.4,1); }
+  .cartaonome.on { opacity: 1; transform: none; }
+  .cartaonome small { display: block; font: 700 11px "Atkinson Hyperlegible"; letter-spacing: .3em; color: #C2410C; }
+  .cartaonome b { display: block; font: 700 clamp(30px, 10vw, 44px)/1 Caveat, cursive; color: #1B2550; margin-top: 4px; }
+  #mapa .pl.redondo { border-radius: 50%; aspect-ratio: 1; object-fit: cover; border: 3px solid #FFF4D6; }
+  #mapa .pl.torre { border-radius: 50%; aspect-ratio: 1; object-fit: contain; padding: 4%; border: 3px solid #FFF4D6; }
+  #final .anel img.redondo, #final .anel img.torre { border-radius: 50%; aspect-ratio: 1; object-fit: cover; border: 3px solid #FFF4D6; }
+  #final .anel img.torre { object-fit: contain; padding: 3%; }
+  #mundo.semvideo video { display: none; }
   #comecar { position: absolute; inset: 0; z-index: 60; display: grid; place-items: center; background: #000; text-align: center; padding: 0 12%; }
   #comecar p { font: 700 11px "Atkinson Hyperlegible"; letter-spacing: .4em; color: rgba(255,255,255,.6); }
   #comecar h1 { font-family: "Young Serif", serif; font-size: 40px; line-height: 1.05; margin: 14px 0 6px; font-weight: 400; }
@@ -225,7 +234,7 @@
 <body>
 <div id="palco">
   <section class="cena" id="cartela"><div></div></section>
-  <section class="cena" id="titulo"><div><p class="o">UMA SÉRIE ORIGINAL ARBORIA</p><p class="n nome"></p><p class="e">e a Nave Vagalume</p></div></section>
+  <section class="cena" id="titulo"><div><p class="o">UMA SÉRIE ORIGINAL ARBORIA</p><p class="n nome"></p><p class="e sub"></p></div></section>
 
   <section class="cena" id="mapa">
     <div class="estrelas"></div>
@@ -283,6 +292,7 @@
     <div class="cam">
       <svg class="tvsvg" id="tvCabine"></svg>
       <div class="nomeassento nome"></div>
+      <div class="cartaonome"><small></small><b class="nome"></b></div>
     </div>
   </section>
 
@@ -296,6 +306,7 @@
     <div class="cam">
       <video class="fundo" muted playsinline loop preload="auto"></video>
       <svg class="tvsvg" id="tvMundo"></svg>
+      <svg class="tvsvg" id="tvBorda"></svg>
       <div class="crianca respira"><img alt=""></div>
     </div>
     <div class="cartao"><p class="p"></p><span class="m"></span><div class="linha"></div></div>
@@ -322,7 +333,7 @@
   <div class="vinheta"></div><div class="grao"></div>
   <div id="legenda"></div>
 
-  <div id="comecar"><div><p>UMA SÉRIE ORIGINAL ARBORIA</p><h1 class="nome"></h1><h2>e a Nave Vagalume</h2><button id="play">▶ Assistir ao trailer</button><small>aumente o volume 🔊</small></div></div>
+  <div id="comecar"><div><p>UMA SÉRIE ORIGINAL ARBORIA</p><h1 class="nome"></h1><h2 class="sub"></h2><button id="play">▶ Assistir ao trailer</button><small>aumente o volume 🔊</small></div></div>
 </div>
 <audio id="trilha" src="trilha.mp3" preload="auto"></audio>
 
@@ -336,37 +347,76 @@ const A = menino ? 'o' : 'a', ELA = menino ? 'ele' : 'ela', DELA = menino ? 'del
 document.querySelectorAll('.nome').forEach((e) => e.textContent = nome);
 document.querySelectorAll('.de').forEach((e) => e.textContent = DE);
 document.querySelector('.selo').textContent = `do jeitinho ${DELA} ★`;
-const POSE = menino ? ['crianca-menino.webp', 'crianca-menino-ceu.webp'] : ['crianca-menina.webp', 'crianca-menina-ceu.webp'];
-document.querySelector('#pouso img.pose-a').src = POSE[1];
-
-// os 8 mundos do Infantil: planeta, nome do mundo, fundo animado, arte, traço próprio, frases
+const U = ['herois', 'talentos', 'casas'].includes(q.get('u')) ? q.get('u') : 'herois';
+const G = menino ? 'menino' : 'menina';
+const A_ = A === 'a' ? 'A' : 'O';
 const N = `<b>${nome}</b>`;
-const MUNDOS = [
-  { chave: 'ling', onom: 'PLOP!', ox: '24%', oy: '38%', planeta: 'Planeta-Concha', mundo: 'Mundo Linguístico', fundo: 'inf-linguistico', arte: 'mundo-linguistico',
-    frase: `Aqui, as palavras viram bolhas… e ${A} ${N} vai soltar as ${DELA}.`, brilho: `Dizem que ${A} ${N} adora inventar histórias. Aqui, elas viram passarinhos de papel.`,
-    traco: ['<circle class="d" pathLength="1" style="--a:0s" cx="80" cy="250" r="16"/>', '<circle class="d" pathLength="1" style="--a:.3s" cx="130" cy="200" r="10"/>', '<circle class="d" pathLength="1" style="--a:.6s" cx="260" cy="230" r="14"/>', '<path class="d ouro" pathLength="1" style="--a:.9s;--t:1.6s" d="M190 300 l22 -16 l-8 22 l26 -10 l-30 26 z"/>'] },
-  { chave: 'log', onom: 'CLIC!', ox: '58%', oy: '40%', planeta: 'Planeta dos Cubinhos', mundo: 'Mundo Lógico-Matemático', fundo: 'inf-logico', arte: 'mundo-logico',
-    frase: `Aqui, os tatuzinhos andam em fila… e só ${A} ${N} vai descobrir o que mudou.`, brilho: `${A === 'a' ? 'A' : 'O'} ${N} adora descobrir como tudo funciona. Aqui, cada coisa tem um porquê.`,
-    traco: ['<path class="d" pathLength="1" d="M70 300 h40 v40 h-40 z"/>', '<path class="d" pathLength="1" style="--a:.3s" d="M120 300 h40 v40 h-40 z"/>', '<path class="d ouro" pathLength="1" style="--a:.6s" d="M170 300 h40 v40 h-40 z"/>', '<path class="d" pathLength="1" style="--a:.9s" d="M230 320 h40 M250 300 v40"/>'] },
-  { chave: 'esp', onom: 'ZUUUM!', ox: '10%', oy: '40%', planeta: 'Planeta de Fita', mundo: 'Mundo Espacial', fundo: 'inf-espacial', arte: 'mundo-espacial',
-    frase: `Aqui, dá pra andar de ponta-cabeça. ${A === 'a' ? 'A' : 'O'} ${N} vai achar o caminho.`, brilho: `${A === 'a' ? 'A' : 'O'} ${N} adora montar e desenhar. Aqui, o planeta muda de forma com ${ELA}.`,
-    traco: ['<path class="d ouro" pathLength="1" style="--t:2s" d="M60 320 C100 220 160 380 200 280 S290 200 310 290"/>', '<path class="d" pathLength="1" style="--a:1s" d="M260 200 l10 22 l24 2 l-18 16 l6 24 l-22 -13 l-22 13 l6 -24 l-18 -16 l24 -2 z"/>'] },
-  { chave: 'mus', onom: 'TUM TUM!', ox: '12%', oy: '40%', planeta: 'Planeta-Tambor', mundo: 'Mundo Musical', fundo: 'inf-musical', arte: 'mundo-musical',
-    frase: 'Aqui, quando chove… a chuva toca música.', brilho: `Todo mundo sabe que ${A} ${N} adora cantar e batucar. Aqui, ${ELA} vai se sentir em casa.`,
-    traco: ['<path class="d ouro" pathLength="1" d="M70 300 C100 270 130 330 160 300 C190 270 220 330 250 300 C270 285 285 295 300 300"/>', '<path class="d" pathLength="1" style="--a:.5s" d="M100 240 v-34 l18 -6 v34 M100 240 a8 6 0 1 1 -1 0 M118 234 a8 6 0 1 1 -1 0"/>', '<path class="d" pathLength="1" style="--a:.8s" d="M240 230 v-30 l14 -4 v30 M240 230 a7 5 0 1 1 -1 0"/>'] },
-  { chave: 'cor', onom: 'BOING!', ox: '52%', oy: '38%', planeta: 'Planeta-Trampolim', mundo: 'Mundo Corporal', fundo: 'inf-corporal', arte: 'mundo-corporal',
-    frase: `Aqui, tudo pula! ${A === 'a' ? 'A' : 'O'} ${N} vai equilibrar a torre dos Pulantes.`, brilho: `${A === 'a' ? 'A' : 'O'} ${N} corre e escala tudo. Aqui, o chão é de trampolim!`,
-    traco: ['<path class="d" pathLength="1" d="M80 330 l12 -16 l12 16 l12 -16 l12 16 l12 -16 l12 16"/>', '<path class="d ouro" pathLength="1" style="--a:.5s" d="M220 340 v-80 M206 274 l14 -16 l14 16"/>', '<path class="d" pathLength="1" style="--a:.8s" d="M270 340 v-60 M258 292 l12 -14 l12 14"/>'] },
-  { chave: 'nat', onom: 'UAU!', ox: '14%', oy: '40%', planeta: 'Planeta das Gavetinhas', mundo: 'Mundo Naturalista', fundo: 'inf-naturalista', arte: 'mundo-naturalista',
-    frase: 'Aqui, cada gavetinha guarda um tesouro: pedrinhas, conchas, penas…', brilho: `${A === 'a' ? 'A' : 'O'} ${N} adora bichos e plantas. Aqui, ${ELA} vai cuidar das coleções.`,
-    traco: ['<circle class="d ouro" pathLength="1" cx="230" cy="260" r="34"/>', '<path class="d ouro" pathLength="1" style="--a:.5s" d="M254 284 l34 34"/>', '<path class="d" pathLength="1" style="--a:.8s" d="M80 300 C90 270 120 270 128 300 C120 320 90 320 80 300 Z M104 285 v30"/>'] },
-  { chave: 'inter', onom: 'OBA!', ox: '56%', oy: '38%', planeta: 'Planeta das Duas Luas', mundo: 'Mundo Interpessoal', fundo: 'inf-interpessoal', arte: 'mundo-interpessoal',
-    frase: `Aqui, ninguém brinca sozinho. ${A === 'a' ? 'A' : 'O'} ${N} vai ajudar dois amigos a combinar.`, brilho: `${A === 'a' ? 'A' : 'O'} ${N} adora chamar os amigos. Aqui, é o planeta das brincadeiras juntos.`,
-    traco: ['<circle class="d" pathLength="1" cx="140" cy="250" r="26"/>', '<circle class="d" pathLength="1" style="--a:.3s" cx="220" cy="250" r="26"/>', '<path class="d ouro" pathLength="1" style="--a:.8s" d="M180 300 C160 284 150 270 162 262 C170 258 178 264 180 268 C182 264 190 258 198 262 C210 270 200 284 180 300 Z"/>'] },
-  { chave: 'intra', onom: 'AHHH…', ox: '18%', oy: '40%', planeta: 'Planetinha do Pôr do Sol', mundo: 'Mundo Intrapessoal', fundo: 'inf-intrapessoal', arte: 'mundo-intrapessoal',
-    frase: 'Aqui, o sol nunca se põe… e o Calminho muda de cor com o que sente.', brilho: `${A === 'a' ? 'A' : 'O'} ${N} gosta do seu mundinho. Aqui, ${ELA} vai descobrir o que sente.`,
-    traco: ['<path class="d ouro" pathLength="1" d="M120 300 a60 60 0 0 1 120 0"/>', '<path class="d ouro" pathLength="1" style="--a:.4s" d="M180 228 v-18 M130 246 l-12 -12 M230 246 l12 -12 M104 290 h-16 M256 290 h16"/>', '<path class="d" pathLength="1" style="--a:.8s" d="M90 320 h180 M110 334 h140 M140 348 h80"/>'] },
-];
+const CASA_COR = { ling: '#1E3A8A', log: '#047857', esp: '#7C3AED', mus: '#7F1D1D', cor: '#B8860B', nat: '#78350F', inter: '#0891B2', intra: '#EA580C' };
+const CFG = {
+  herois: {
+    sub: 'na Academia de Super-heróis', pose: 'heroi', pref: 'h-', mapa: 'mapa-herois', base: 'base-herois', chamado: 'chamado-herois', transforma: 'transforma-herois', festa: 'festa-herois', crianca: 'crianca-heroi-' + G,
+    rot1: 'VILA FAÍSCA', rot2: 'MAPA DA ACADEMIA', mais: 'MAIS 6 MISSÕES!', card: 'CRACHÁ DE HERÓI', pecas: ['CAPACETE!', 'CAPA!', 'CINTO!'], centro: '../artes/central.webp',
+    mapa1: 'Na Vila Faísca, oito lugares viviam em paz…', mapa2: '…até que a Pressa, uma nuvem travessa, chegou bagunçando tudo.',
+    escola: `Na Escola Amadeus, ${A} ${N} estava na aula…`, balao: `${N}! A Pressa está bagunçando a Vila Faísca!<br>A Academia precisa de você!`,
+    vestiu: `${A_} ${N} vestiu seu uniforme de herói…`, embarca: '…e correu para a Central da Academia!',
+  },
+  talentos: {
+    sub: 'na Agência Bússola', pose: 'agente', pref: 't-', mapa: 'mapa-talentos', base: 'base-talentos', chamado: 'chamado-talentos', transforma: 'transforma-talentos', festa: 'festa', crianca: 'crianca-agente-' + G,
+    rot1: 'O MUNDO DE ORBE', rot2: 'ATLAS DA AGÊNCIA', mais: 'MAIS 6 REGIÕES!', card: 'AGENTE', pecas: ['CAPACETE!', 'COLETE!', 'MOCHILA!'], centro: '../artes/agencia-bussola.webp', marcaRedonda: true,
+    mapa1: 'No mundo de Orbe, oito regiões guardam problemas que nenhum adulto apressado resolveu…', mapa2: '…e a Agência Bússola precisava de alguém especial.',
+    escola: `Na Escola Amadeus, ${A} ${N} recebeu um envelope misterioso…`, balao: `Agente ${N}: missão urgente em Orbe.<br>A Agência Bússola conta com você.`,
+    vestiu: `${A_} agente ${N} vestiu seu equipamento de missão…`, embarca: '…e se apresentou na Agência Bússola.',
+  },
+  casas: {
+    sub: 'e as Oito Casas', pose: 'casas', pref: '', mapa: 'base-casas', base: 'base-casas', chamado: 'chamado-casas', transforma: 'transforma-casas', festa: 'festa', crianca: 'crianca-casas-' + G,
+    rot1: 'O PÁTIO DAS CASAS', rot2: 'MAPA DAS CASAS', mais: 'MAIS 6 TORRES!', card: 'JORNADA', pecas: ['CAPACETE!', 'JAQUETA!', 'TÊNIS!'], torres: true,
+    mapa1: 'No Fundamental 2, oito torres se erguem no pátio…', mapa2: '…e cada uma guarda um jeito diferente de pensar.',
+    escola: `Na Escola Amadeus, ${A} ${N} olhou para cima…`, balao: `${N}, as oito Casas estão te chamando.<br>A sua Jornada começa agora.`,
+    vestiu: `${A_} ${N} se preparou…`, embarca: '…e atravessou o portão do pátio das Casas.',
+  },
+}[U];
+document.querySelectorAll('.sub').forEach((e) => e.textContent = CFG.sub);
+const POSE = [`${CFG.pose}-${G}.webp`, `${CFG.pose}-${G}-ceu.webp`];
+const LUGARES = {
+  herois: [
+    ['ling', 'Torre do Eco', 'her-torre-do-eco', 'torre-do-eco', 'BLÁ BLÁ!', `Na Torre do Eco, as palavras viram objetos de verdade. ${A_} ${N} vai escolher as certas.`, `Dizem que ${A} ${N} adora inventar histórias. Aqui, cada palavra ${DELA} vira coisa de verdade!`],
+    ['log', 'Usina do Porquê', 'her-usina-do-porque', 'usina-do-porque', 'CLANC!', `A máquina dava 2, 4, 6… e de repente 9! Só ${A} ${N} vai descobrir o porquê.`, `${A_} ${N} adora entender como tudo funciona. Aqui, os robôs precisam ${DELA}.`],
+    ['esp', 'Cidade Dobrável', 'her-cidade-dobravel', 'cidade-dobravel', 'FLIP!', `Na Cidade Dobrável, as casas viram de ponta-cabeça. ${A_} ${N} vai achar o caminho.`, `${A_} ${N} adora montar e desenhar. Aqui, a cidade se dobra com ${ELA}.`],
+    ['mus', 'Estação do Compasso', 'her-estacao-do-compasso', 'estacao-do-compasso', 'PIUÍ!', 'Na Estação do Compasso, os trens andam no ritmo… até a Pressa chegar.', `Todo mundo sabe que ${A} ${N} adora música. Aqui, é ${ELA} quem dita o ritmo!`],
+    ['cor', 'Canteiro Dourado', 'her-canteiro-dourado', 'canteiro-dourado', 'VRUM!', 'No Canteiro Dourado, o guindaste só obedece aos movimentos do corpo.', `${A_} ${N} corre e escala tudo. Aqui, ${ELA} vai comandar o guindaste!`],
+    ['nat', 'Museu das Mil Gavetas', 'her-museu-das-mil-gavetas', 'museu-mil-gavetas', 'UAU!', 'No Museu das Mil Gavetas, dez pedrinhas parecem iguais… mas não são.', `${A_} ${N} adora bichos e plantas. Aqui, ${ELA} vai cuidar das gavetas do museu!`],
+    ['inter', 'Porto dos Recados', 'her-porto-dos-recados', 'porto-dos-recados', 'OBA!', 'No Porto dos Recados, um bilhete caiu no mar… e dois amigos brigaram.', `${A_} ${N} adora juntar os amigos. Aqui, ${ELA} vai fazer as pazes acontecerem.`],
+    ['intra', 'Farol de Dentro', 'her-farol-de-dentro', 'farol-de-dentro', 'HMMM…', 'No Farol de Dentro, a luz muda de cor com o que a gente sente.', `${A_} ${N} gosta do seu mundinho. Aqui, ${ELA} vai descobrir a cor do que sente.`],
+  ],
+  talentos: [
+    ['ling', 'Arquipélago de Tinta', 'tal-arquipelago-de-tinta', null, 'RISC!', 'Missão: uma carta de 30 palavras para reabrir o porto. Cada palavra conta.', `Dizem que ${A} ${N} escreve como ninguém. Aqui, as palavras ${DELA} abrem portos.`],
+    ['log', 'Planalto das Engrenagens', 'tal-planalto-das-engrenagens', null, 'TIC-TAC!', `Duas vilas que nunca recebem água juntas? ${A_} agente ${N} vai provar que sim.`, `${A_} ${N} adora um desafio de lógica. Aqui, cada número guarda um segredo.`],
+    ['esp', 'Cordilheira Invertida', 'tal-cordilheira-invertida', null, 'ZUUUM!', 'Montanhas de ponta-cabeça e cachoeiras que caem para cima. Só com o mapa certo.', `${A_} ${N} tem olho para formas e mapas. Aqui, ${ELA} vai traçar a rota.`],
+    ['mus', 'Desfiladeiro dos Ecos', 'tal-desfiladeiro-dos-ecos', null, 'TUM TUM!', 'A represa só abre com o ritmo certo… e uma batida está fora do lugar.', `Todo mundo sabe que ${A} ${N} sente a música. Aqui, é o ouvido ${DELA} que abre a represa.`],
+    ['cor', 'Dunas Douradas de Kalu', 'tal-dunas-douradas-de-kalu', null, 'VUUUSH!', 'O mastro do navio de areia cai toda vez que o vento vira.', `${A_} ${N} adora construir com as mãos. Aqui, ${ELA} vai erguer o mastro.`],
+    ['nat', 'Cavernas do Inventário', 'tal-cavernas-do-inventario', null, 'UAU!', 'Um objeto misterioso não cabe em nenhuma prateleira das cavernas.', `${A_} ${N} adora bichos, pedras e plantas. Aqui, ${ELA} vai criar uma prateleira nova.`],
+    ['inter', 'Costa das Mil Bandeiras', 'tal-costa-das-mil-bandeiras', null, 'OBA!', 'Gaivotas e caranguejos querem o mesmo cais, o dia inteiro.', `${A_} ${N} sabe ouvir todo mundo. Aqui, ${ELA} vai reunir o Conselho das Marés.`],
+    ['intra', 'Mirante do Entardecer', 'tal-mirante-do-entardecer', null, 'HMMM…', 'Uma missão deu errado… e a Guardiã Raposa só responde com perguntas.', `${A_} ${N} gosta de pensar antes de agir. Aqui, ${ELA} vai entender o que sente.`],
+  ],
+  casas: [
+    ['ling', 'Torre Linguística', null, null, '', 'Aqui, um texto bom é desmontado peça por peça… para construir o seu.', `Dizem que ${A} ${N} escreve muito bem. Aqui, a voz ${DELA} vai ganhar força.`],
+    ['log', 'Torre Lógico-Matemática', null, null, '', 'Aqui, a gente aprende que provar é mais forte do que achar.', `${A_} ${N} curte um bom desafio. Aqui, os problemas difíceis viram jogo.`],
+    ['esp', 'Torre Espacial', null, null, '', 'Aqui, o mesmo problema muda de tamanho quando se olha de outro ângulo.', `${A_} ${N} pensa em formas e espaços. Aqui, ${ELA} vai projetar soluções.`],
+    ['mus', 'Torre Musical', null, null, '', 'Aqui, a pergunta é: por que uma música mexe tanto com a gente?', `Todo mundo sabe que ${A} ${N} vive de fone no ouvido. Aqui, ${ELA} vai criar a própria faixa.`],
+    ['cor', 'Torre Corporal-Cinestésica', null, null, '', 'Aqui, o corpo também pensa.', `${A_} ${N} é de movimento. Aqui, ${ELA} vai treinar até o gesto virar seu.`],
+    ['nat', 'Torre Naturalista', null, null, '', 'Aqui, observar de perto revela padrões que ninguém vê.', `${A_} ${N} adora a natureza. Aqui, ${ELA} vai investigar o mundo real.`],
+    ['inter', 'Torre Interpessoal', null, null, '', 'Aqui, liderar não é mandar: é juntar pessoas diferentes.', `${A_} ${N} vive ${menino ? 'rodeado' : 'rodeada'} de amigos. Aqui, ${ELA} vai aprender a liderar.`],
+    ['intra', 'Torre Intrapessoal', null, null, '', 'Aqui, a Jornada é escrita por quem vive: quem eu sou? quem eu quero ser?', `${A_} ${N} pensa fundo sobre a vida. Aqui, ${ELA} vai escrever a própria Jornada.`],
+  ],
+}[U];
+const NOME_MUNDO = { ling: 'Linguístico', log: 'Lógico-Matemático', esp: 'Espacial', mus: 'Musical', cor: 'Corporal', nat: 'Naturalista', inter: 'Interpessoal', intra: 'Intrapessoal' };
+const POS_ONOM = [['22%', '38%'], ['56%', '40%'], ['10%', '40%'], ['12%', '40%'], ['50%', '38%'], ['14%', '40%'], ['56%', '38%'], ['18%', '40%']];
+const MUNDOS = LUGARES.map(([chave, planeta, fundo, arte, onom, frase, brilho], k) => ({
+  chave, planeta, fundo, arte, onom, frase, brilho, ox: POS_ONOM[k][0], oy: POS_ONOM[k][1],
+  mundo: CFG.torres ? 'Casa ' + { ling: 'Linguística', log: 'Lógico-Matemática', esp: 'Espacial', mus: 'Musical', cor: 'Corporal-Cinestésica', nat: 'Naturalista', inter: 'Interpessoal', intra: 'Intrapessoal' }[chave] : 'Mundo ' + NOME_MUNDO[chave],
+  marca: arte ? `../artes/${arte}.webp` : fundo ? `../fundos/${fundo}.webp` : '../tracos/torre.webp',
+  tracoNome: CFG.torres ? 'torre' : CFG.pref + chave,
+}));
 
 // estrelas
 document.querySelectorAll('.estrelas').forEach((box) => { for (let i = 0; i < 70; i++) { const s = document.createElement('i'); s.className = 'estrela'; s.style.left = Math.random() * 100 + '%'; s.style.top = Math.random() * 62 + '%'; s.style.animationDelay = Math.random() * 2 + 's'; box.appendChild(s); } });
@@ -383,7 +433,7 @@ const pts = Array.from({ length: 200 }, () => ({ x: Math.random() * 2 - 1, y: Ma
 
 // anel de planetas do final
 const anel = document.querySelector('#final .anel');
-MUNDOS.forEach((m, i) => { const a = -Math.PI / 2 + i * Math.PI / 4; const img = document.createElement('img'); img.src = `../artes/${m.arte}.webp`; img.style.left = 50 + Math.cos(a) * 40 + '%'; img.style.top = 50 + Math.sin(a) * 40 + '%'; anel.appendChild(img); });
+MUNDOS.forEach((m, i) => { const a = -Math.PI / 2 + i * Math.PI / 4; const img = document.createElement('img'); img.src = m.marca; if (CFG.torres || CFG.marcaRedonda) img.className = CFG.torres ? 'torre' : 'redondo'; if (CFG.torres) img.style.background = CASA_COR[m.chave]; img.style.left = 50 + Math.cos(a) * 40 + '%'; img.style.top = 50 + Math.sin(a) * 40 + '%'; anel.appendChild(img); });
 
 // som
 let ac, mestre;
@@ -404,14 +454,16 @@ function viagem(m) {
 }
 function mundo(m, i) {
   const s = document.getElementById('mundo');
-  const vid = s.querySelector('video'); vid.src = `../vivos/${m.fundo}.mp4`; vid.play().catch(() => {});
+  const vid = s.querySelector('video');
+  if (m.fundo) { s.classList.remove('semvideo'); s.style.background = ''; vid.src = `../vivos/${m.fundo}.mp4`; vid.play().catch(() => {}); }
+  else { s.classList.add('semvideo'); s.style.background = `linear-gradient(#0d1530 0%, ${CASA_COR[m.chave]} 70%, #f4e9d8 100%)`; }
   s.querySelector('.cartao .p').textContent = m.planeta; s.querySelector('.cartao .m').textContent = m.mundo;
-  tv('tvMundo', 'm-' + m.chave, 3.2);
+  tv('tvMundo', m.tracoNome, 3.2, null, null, m); borda(2.6);
   const cr = s.querySelector('.crianca'); cr.querySelector('img').src = POSE[i % 2]; cr.style.left = i % 2 ? '8%' : 'auto'; cr.style.right = i % 2 ? 'auto' : '8%';
   s.querySelector('.crianca').style.visibility = ''; s.classList.remove('rapido'); const b = marcadas.has(m.chave); s.classList.toggle('brilho', b);
   s.classList.remove('on'); cena('mundo'); void s.offsetWidth; s.classList.add('on'); 
   plim(ac.currentTime + .3, 660 + i * 40, .12);
-  const on = s.querySelector('.onom'); on.textContent = m.onom; on.style.left = m.ox; on.style.top = m.oy; on.classList.remove('pop'); setTimeout(() => { void on.offsetWidth; on.classList.add('pop'); tum(ac.currentTime, 160, .35); }, 2300);
+  const on = s.querySelector('.onom'); on.style.display = m.onom ? '' : 'none'; on.textContent = m.onom; on.style.left = m.ox; on.style.top = m.oy; on.classList.remove('pop'); setTimeout(() => { void on.offsetWidth; on.classList.add('pop'); tum(ac.currentTime, 160, .35); }, 2300);
   setTimeout(() => { if (s.classList.contains('on')) fala(b ? m.brilho : m.frase, i % 2 ? 'baixo' : ''); }, 3000);
 }
 
@@ -422,31 +474,37 @@ const ESCOLA = [50, 88];
 const POS = [[22, 68], [76, 70], [84, 47], [55, 52], [17, 44], [26, 20], [72, 23], [49, 33]];
 const mapa = document.getElementById('mapa');
 const ESC = mapa.querySelector('.escolinha'); ESC.style.left = ESCOLA[0] + '%'; ESC.style.top = ESCOLA[1] + '%';
-const PLS = MUNDOS.map((m, i) => { const img = document.createElement('img'); img.className = 'pl'; img.src = `../artes/${m.arte}.webp`; img.style.left = POS[i][0] + '%'; img.style.top = POS[i][1] + '%'; mapa.insertBefore(img, mapa.querySelector('.navemapa')); return img; });
-const naveMapa = mapa.querySelector('.navemapa');
+const classeMarca = CFG.torres ? ' torre' : CFG.marcaRedonda ? ' redondo' : '';
+const PLS = MUNDOS.map((m, i) => { const img = document.createElement('img'); img.className = 'pl' + classeMarca; img.src = m.marca; if (CFG.torres) img.style.background = CASA_COR[m.chave]; img.style.left = POS[i][0] + '%'; img.style.top = POS[i][1] + '%'; mapa.insertBefore(img, mapa.querySelector('.navemapa')); return img; });
+const naveMapa = mapa.querySelector('.navemapa'); naveMapa.src = POSE[1];
+document.querySelector('#escola .naveesc').style.display = 'none';
+document.querySelector('#final .centro').src = CFG.centro || POSE[0];
+document.querySelectorAll('#transforma .peca').forEach((p, k) => p.textContent = CFG.pecas[k]);
 const poeNave = (p, anima) => { naveMapa.style.transition = anima ? '' : 'none'; naveMapa.style.left = p[0] + '%'; naveMapa.style.top = p[1] + '%'; void naveMapa.offsetWidth; naveMapa.style.transition = ''; };
 const rotaAte = (vis) => { const pts = [ESCOLA, ...vis.map((k) => POS[k])]; document.getElementById('rota').setAttribute('d', pts.length > 1 ? 'M' + pts.map((p) => p.join(' ')).join(' L') : ''); };
 
 function abreMapa() {
-  tv('tvMapa', 'mapa', 3.5);
+  tv('tvMapa', CFG.mapa, 3.5); mapa.querySelector('.rotulo').textContent = CFG.rot1;
   cena('mapa'); naveMapa.style.opacity = 0; rotaAte([]); mapa.querySelector('.missao').textContent = '';
-  PLS.forEach((p, k) => { p.className = 'pl nasce'; p.style.setProperty('--a', (0.4 + k * 0.32) + 's'); setTimeout(() => plim(ac.currentTime, 523 + k * 70, .08), 400 + k * 320); });
+  PLS.forEach((p, k) => { p.className = 'pl nasce' + classeMarca; p.style.setProperty('--a', (0.4 + k * 0.32) + 's'); setTimeout(() => plim(ac.currentTime, 523 + k * 70, .08), 400 + k * 320); });
 }
 function mapaMissao(i, vis, passo) {
   cena('mapa'); naveMapa.style.opacity = 1;
-  PLS.forEach((p, k) => { p.className = 'pl' + (vis.includes(k) ? ' aceso' : k === i ? ' alvo' : ''); });
+  PLS.forEach((p, k) => { p.className = 'pl' + classeMarca + (vis.includes(k) ? ' aceso' : k === i ? ' alvo' : ''); });
   rotaAte(vis); poeNave(vis.length ? POS[vis[vis.length - 1]] : ESCOLA, false);
-  mapa.querySelector('.missao').textContent = `MISSÃO ${passo}: ${MUNDOS[i].planeta.toUpperCase()}`; mapa.querySelector('.rotulo').textContent = 'MAPA DA NAVE VAGALUME';
+  mapa.querySelector('.missao').textContent = `MISSÃO ${passo}: ${MUNDOS[i].planeta.toUpperCase()}`; mapa.querySelector('.rotulo').textContent = CFG.rot2;
   setTimeout(() => { poeNave(POS[i], true); vuuush(ac.currentTime, 1.5); }, 350);
 }
 // um relance de um planeta (a sequência rápida dos outros mundos)
 function relance(m) {
   const s = document.getElementById('mundo');
-  const vid = s.querySelector('video'); vid.src = `../vivos/${m.fundo}.mp4`; vid.play().catch(() => {});
+  const vid = s.querySelector('video');
+  if (m.fundo) { s.classList.remove('semvideo'); s.style.background = ''; vid.src = `../vivos/${m.fundo}.mp4`; vid.play().catch(() => {}); }
+  else { s.classList.add('semvideo'); s.style.background = `linear-gradient(#0d1530 0%, ${CASA_COR[m.chave]} 70%, #f4e9d8 100%)`; }
   s.querySelector('.cartao .p').textContent = m.planeta; s.querySelector('.cartao .m').textContent = m.mundo;
   s.querySelector('.crianca').style.visibility = 'hidden'; s.classList.remove('brilho'); s.classList.add('rapido');
   s.classList.remove('on'); cena('mundo'); void s.offsetWidth; s.classList.add('on');
-  tv('tvMundo', 'm-' + m.chave, 1.1); plim(ac.currentTime, 700 + Math.random() * 300, .1);
+  tv('tvMundo', m.tracoNome, 1.1, null, null, m); borda(1); plim(ac.currentTime, 700 + Math.random() * 300, .1);
 }
 
 // traço vivo: os desenhos em linha (public/arboria/tracos) se fazem na hora, por cima dos cenários
@@ -464,9 +522,23 @@ const CORES = {
   'm-cor': [[0, '#FFE38A'], [.5, '#FFC27A'], [1, '#FFF3B0']], 'm-nat': [[0, '#C9F2A7'], [.5, '#F2D6A8'], [1, '#A7E3B8']],
   'm-inter': [[0, '#A7F0FF'], [.5, '#FFFFFF'], [1, '#9AD9FF']], 'm-intra': [[0, '#FFC59A'], [.5, '#FFE3A0'], [1, '#FFB38A']],
 };
-const TRACOS = ['mapa', 'escola', 'chamado', 'transforma', 'cabine', 'festa', 'crianca-' + (menino ? 'menino' : 'menina'), ...MUNDOS.map((m) => 'm-' + m.chave)];
+const borda = (d) => { const el = document.getElementById('tvBorda'); if (CFG.torres) tv('tvBorda', 'c-borda', d); else el.innerHTML = ''; };
+const TRACOS = [...(CFG.torres ? ['c-borda'] : []), CFG.mapa, 'escola', CFG.chamado, CFG.transforma, CFG.base, CFG.festa, CFG.crianca, ...new Set(MUNDOS.map((m) => m.tracoNome))];
+Object.assign(CORES, {
+  'mapa-herois': [[0, '#FFD54F'], [.5, '#FF8A65'], [1, '#7FD0FF']], 'mapa-talentos': [[0, '#FFD54F'], [.5, '#F2D6A8'], [1, '#7FD0FF']],
+  'base-herois': [[0, '#7FD0FF'], [.4, '#FFD54F'], [.7, '#FF8A65'], [1, '#C9A7FF']], 'base-talentos': [[0, '#F2D6A8'], [.4, '#FFD54F'], [.7, '#7FD0FF'], [1, '#C9F2A7']],
+  'base-casas': [[0, '#FFD54F'], [.35, '#FF9EC4'], [.6, '#7FD0FF'], [1, '#C9F2A7']],
+  'chamado-herois': [[0, '#FFD54F'], [.5, '#FF8A65'], [1, '#FFFFFF']], 'chamado-talentos': [[0, '#F2D6A8'], [.5, '#FFD54F'], [1, '#FFFFFF']], 'chamado-casas': [[0, '#C9A7FF'], [.5, '#7FD0FF'], [1, '#FFFFFF']],
+  'transforma-herois': [[0, '#FFFFFF'], [.5, '#FFD54F'], [1, '#FF8A65']], 'transforma-talentos': [[0, '#FFFFFF'], [.5, '#FFD54F'], [1, '#C9F2A7']], 'transforma-casas': [[0, '#FFFFFF'], [.5, '#7FD0FF'], [1, '#C9A7FF']],
+  'festa-herois': [[0, '#FF9AA2'], [.3, '#FFD54F'], [.6, '#7FD0FF'], [1, '#C9A7FF']],
+});
 const carregaTracos = () => Promise.all(TRACOS.map((n) => fetch('../tracos/' + n + '.json').then((r) => r.json()).then((j) => { TR[n] = j; }).catch(() => {})));
-function tv(id, nome, dur, pular, ajuste) { const el = document.getElementById(id); const chave = nome.startsWith('crianca') ? 'crianca' : nome; if (TR[nome]) tracoVivo(el, TR[nome], '../tracos/' + nome + '.webp', { dur, pular, ajuste, cores: CORES[chave] }); }
+function tv(id, nome, dur, pular, ajuste, m) {
+  const el = document.getElementById(id); const chave = nome.startsWith('crianca') ? 'crianca' : nome;
+  let cores = CORES[chave] || CORES[nome.replace(/^[ht]-/, 'm-')];
+  if (nome === 'torre' && m) cores = [[0, '#FFFFFF'], [.5, '#FFE9A8'], [1, '#FFFFFF']];
+  if (TR[nome]) tracoVivo(el, TR[nome], '../tracos/' + nome + '.webp', { dur, pular, ajuste, cores });
+}
 function botoes() {
   const cam = document.querySelector('#cabine .cam'); cam.querySelectorAll('.botao').forEach((b) => b.remove());
   [[23, 55.5], [28, 55.5], [33, 59], [62, 58], [67, 58], [72, 61], [44, 52], [56, 52]].forEach(([x, y], k) => {
@@ -475,12 +547,26 @@ function botoes() {
   });
 }
 const CART = {
-  c1: ['Mas a ajuda viria de onde ninguém esperava…'],
-  c2: [`Começava ali a maior aventura ${DE} ${N}.`],
-  c3: [`E assim, ${A} ${N} foi de planeta em planeta…`, 'explorando e resolvendo cada desafio.'],
-  c4: ['Até que o último planetinha voltou a brilhar.'],
-  c5: ['Uma nova missão a cada 15 dias.', 'Só no Arboria.'],
-};
+  herois: {
+    c1: ['Mas a Vila Faísca guardava um segredo…', 'uma Academia de heróis esperando alguém especial.'],
+    c2: [menino ? `Naquele dia, nascia um novo herói.` : `Naquele dia, nascia uma nova heroína.`],
+    c3: [`E assim, ${A} ${N} foi de missão em missão…`, 'enfrentando a Pressa e salvando cada canto da Vila.'],
+    c4: ['Até que a Vila Faísca voltou a brilhar.'],
+  },
+  talentos: {
+    c1: ['A Agência Bússola procurava alguém especial…', 'e ninguém imaginava quem seria.'],
+    c2: [`A primeira missão ${DE} agente ${N} estava prestes a começar.`],
+    c3: [`E assim, ${A} agente ${N} cruzou Orbe de região em região…`, 'decifrando cada enigma pelo caminho.'],
+    c4: ['Até que Orbe inteiro voltou a respirar.'],
+  },
+  casas: {
+    c1: ['Todo ano, alguém atravessa aquele portão…', 'e nunca mais volta igual.'],
+    c2: ['Algumas jornadas mudam quem a gente é.'],
+    c3: [`E assim, ${A} ${N} foi de torre em torre…`, `descobrindo do que ${ELA} é capaz.`],
+    c4: ['Até que as oito torres se acenderam.'],
+  },
+}[U];
+CART.c5 = U === 'casas' ? ['Um novo capítulo a cada 15 dias.', 'Só no Arboria.'] : ['Uma nova missão a cada 15 dias.', 'Só no Arboria.'];
 // cartela de trailer: tela preta com a frase que costura a história
 function cartela(linhas) {
   const c = document.getElementById('cartela'); fala('');
@@ -492,19 +578,19 @@ const ROT = [];
 let t = 0;
 ROT.push([t, () => { cena('titulo'); const a = ac.currentTime; tum(a + .2); tum(a + .6); }]); t += 4.2;
 // 1 · o mapa com os 8 planetinhas
-ROT.push([t, () => { abreMapa(); document.getElementById('trilha').play().catch(() => {}); fala('Lá no alto, oito planetinhas brincavam em paz…', 'baixo'); }]); t += 3.8;
-ROT.push([t, () => { PLS.forEach((p) => { p.className = 'pl alvo'; }); tum(ac.currentTime, 70, .6); fala('…até que, um dia, todos começaram a piscar.', 'baixo'); }]); t += 3.2;
+ROT.push([t, () => { abreMapa(); document.getElementById('trilha').play().catch(() => {}); fala(CFG.mapa1, 'baixo'); }]); t += 3.8;
+ROT.push([t, () => { PLS.forEach((p) => { p.className = 'pl alvo' + classeMarca; }); tum(ac.currentTime, 70, .6); fala(CFG.mapa2, 'baixo'); }]); t += 3.2;
 ROT.push([t, () => cartela(CART.c1)]); t += durCart(CART.c1);
 // 2 · na Escola Amadeus, a nave chega chamando
-ROT.push([t, () => { const e = document.getElementById('escola'); e.className = 'cena'; cena('escola'); reinicia(e); tv('tvEscola', 'escola', 4); tv('tvCrianca', 'crianca-' + (menino ? 'menino' : 'menina'), 3, null, 'xMidYMax meet'); zumbido(ac.currentTime, 6); fala(`Na Escola Amadeus, ${A} ${N} brincava…`, 'baixo'); }]); t += 3.2;
-ROT.push([t, () => { document.getElementById('escola').classList.add('chama'); tv('tvChamado', 'chamado', 2.6); fala(''); [0, .5, 1, 1.6, 2.1, 2.6].forEach((d, k) => plim(ac.currentTime + d, k % 2 ? 988 : 784, .09)); }]); t += 3.4;
+ROT.push([t, () => { const e = document.getElementById('escola'); e.className = 'cena'; cena('escola'); reinicia(e); tv('tvEscola', 'escola', 4); tv('tvCrianca', CFG.crianca, 3, null, 'xMidYMax meet'); zumbido(ac.currentTime, 6); fala(CFG.escola, 'baixo'); }]); t += 3.2;
+ROT.push([t, () => { document.getElementById('escola').classList.add('chama'); tv('tvChamado', CFG.chamado, 2.6); fala(''); [0, .5, 1, 1.6, 2.1, 2.6].forEach((d, k) => plim(ac.currentTime + d, k % 2 ? 988 : 784, .09)); }]); t += 3.4;
 // 3 · a nave fala
-ROT.push([t, () => { const e = document.getElementById('escola'); e.classList.remove('chama'); e.querySelector('.balao').innerHTML = `${N}! Os planetas estão em apuros!<br>Precisamos de você para salvá-los!`; e.classList.add('fala'); plim(ac.currentTime, 660); plim(ac.currentTime + .15, 880); }]); t += 4.6;
+ROT.push([t, () => { const e = document.getElementById('escola'); e.classList.remove('chama'); e.querySelector('.balao').innerHTML = CFG.balao; e.classList.add('fala'); plim(ac.currentTime, 660); plim(ac.currentTime + .15, 880); }]); t += 4.6;
 // 4 · a transformação
-ROT.push([t, () => { cena('transforma'); reinicia(document.getElementById('transforma')); tv('tvTransforma', 'transforma', 2); tv('tvCriancaT', 'crianca-' + (menino ? 'menino' : 'menina'), .1, null, 'xMidYMax meet'); fala(''); vuuush(ac.currentTime, 1.9); [0.5, 0.9, 1.3].forEach((d) => tum(ac.currentTime + d, 180, .4)); setTimeout(() => { plim(ac.currentTime, 784); plim(ac.currentTime + .12, 1047); }, 2100); }]); t += 3.6;
-ROT.push([t, () => fala(`${A === 'a' ? 'A' : 'O'} ${N} vestiu sua roupa de piloto…`, 'baixo')]); t += 2.4;
+ROT.push([t, () => { cena('transforma'); reinicia(document.getElementById('transforma')); tv('tvTransforma', CFG.transforma, 2); tv('tvCriancaT', CFG.crianca, .1, null, 'xMidYMax meet'); fala(''); vuuush(ac.currentTime, 1.9); [0.5, 0.9, 1.3].forEach((d) => tum(ac.currentTime + d, 180, .4)); setTimeout(() => { plim(ac.currentTime, 784); plim(ac.currentTime + .12, 1047); }, 2100); }]); t += 3.6;
+ROT.push([t, () => fala(CFG.vestiu, 'baixo')]); t += 2.4;
 // 5 · a cabine com o nome
-ROT.push([t, () => { cena('cabine'); reinicia(document.getElementById('cabine')); tv('tvCabine', 'cabine', 3.4, [[270, 745, 420, 865]]); botoes(); setTimeout(() => document.querySelector('#cabine .nomeassento').classList.add('on'), 3500); setTimeout(() => plim(ac.currentTime, 880), 3600); fala('…e embarcou na Nave Vagalume!'); }]); t += 5.6;
+ROT.push([t, () => { cena('cabine'); reinicia(document.getElementById('cabine')); tv('tvCabine', CFG.base, 3.4); const cn = document.querySelector('#cabine .cartaonome'); cn.querySelector('small').textContent = CFG.card; cn.classList.remove('on'); setTimeout(() => cn.classList.add('on'), 3400); setTimeout(() => plim(ac.currentTime, 880), 3500); fala(CFG.embarca); }]); t += 5.6;
 ROT.push([t, () => cartela(CART.c2)]); t += durCart(CART.c2);
 // 6 · de planeta em planeta, sempre passando pelo mapa
 const KS = [...marcadas], rank = (k) => { const r = KS.indexOf(MUNDOS[k].chave); return r < 0 ? 99 : r; };
@@ -518,20 +604,20 @@ ROT.push([t, () => cartela(CART.c3)]); t += durCart(CART.c3);
 // a sequência rápida: o mapa mostra a nave saltando pelos outros planetas, e cada um aparece de relance
 ROT.push([t, () => {
   fala(''); cena('mapa'); naveMapa.style.opacity = 1;
-  mapa.querySelector('.missao').textContent = 'MAIS 6 PLANETINHAS!';
-  PLS.forEach((p, k) => { p.className = 'pl' + (COMPLETOS.includes(k) ? ' aceso' : ''); }); rotaAte(COMPLETOS); poeNave(POS[COMPLETOS[1]], false);
-  RELANCES.forEach((k, j) => setTimeout(() => { poeNave(POS[k], true); PLS[k].className = 'pl aceso'; rotaAte([...COMPLETOS, ...RELANCES.slice(0, j + 1)]); plim(ac.currentTime, 600 + j * 60, .08); }, 200 + j * 420));
+  mapa.querySelector('.missao').textContent = CFG.mais;
+  PLS.forEach((p, k) => { p.className = 'pl' + classeMarca + (COMPLETOS.includes(k) ? ' aceso' : ''); }); rotaAte(COMPLETOS); poeNave(POS[COMPLETOS[1]], false);
+  RELANCES.forEach((k, j) => setTimeout(() => { poeNave(POS[k], true); PLS[k].className = 'pl aceso' + classeMarca; rotaAte([...COMPLETOS, ...RELANCES.slice(0, j + 1)]); plim(ac.currentTime, 600 + j * 60, .08); }, 200 + j * 420));
 }]); t += 3.2;
 RELANCES.forEach((k) => { ROT.push([t, () => { fala(''); relance(MUNDOS[k]); }]); t += 1.7; });
 ROT.push([t, () => cartela(CART.c4)]); t += durCart(CART.c4);
 // 7 · todos os planetas salvos, a volta para a escola
 ROT.push([t, () => {
-  fala(''); cena('mapa'); rotaAte(ORDEM); PLS.forEach((p) => { p.className = 'pl aceso'; }); poeNave(POS[ORDEM[7]], false);
+  fala(''); cena('mapa'); rotaAte(ORDEM); PLS.forEach((p) => { p.className = 'pl aceso' + classeMarca; }); poeNave(POS[ORDEM[7]], false);
   mapa.querySelector('.missao').textContent = 'MISSÃO CUMPRIDA!';
   setTimeout(() => { poeNave(ESCOLA, true); vuuush(ac.currentTime, 1.5); }, 500);
   PLS.forEach((p, k) => setTimeout(() => plim(ac.currentTime, 523 + k * 60, .1), 200 + k * 160));
 }]); t += 3.6;
-ROT.push([t, () => { cena('final'); reinicia(document.getElementById('final')); tv('tvFesta', 'festa', 3);
+ROT.push([t, () => { cena('final'); reinicia(document.getElementById('final')); tv('tvFesta', CFG.festa, 3);
   document.querySelectorAll('#final .anel img').forEach((img, k) => { img.classList.remove('aceso'); setTimeout(() => img.classList.add('aceso'), 200 + k * 200); }); }]); t += 6;
 ROT.push([t, () => cartela(CART.c5)]); t += durCart(CART.c5);
 ROT.push([t, () => { cena('creditos'); reinicia(document.getElementById('creditos')); }]);
