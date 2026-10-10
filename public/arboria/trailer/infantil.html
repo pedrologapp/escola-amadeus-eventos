@@ -394,7 +394,8 @@ function plim(t, f, v = .16) { const o = ac.createOscillator(), g = ac.createGai
 function zumbido(t, dur) { const o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = 110; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.1, t + 1); g.gain.linearRampToValueAtTime(0, t + dur); o.connect(g).connect(mestre); o.start(t); o.stop(t + dur); }
 
 const legenda = document.getElementById('legenda');
-const fala = (txt, pos = '') => { legenda.classList.remove('on'); if (txt) setTimeout(() => { legenda.innerHTML = txt; legenda.className = pos; void legenda.offsetWidth; legenda.classList.add('on'); }, 250); };
+let falaVez = 0;
+const fala = (txt, pos = '') => { const vez = ++falaVez; legenda.classList.remove('on'); if (txt) setTimeout(() => { if (vez !== falaVez) return; legenda.innerHTML = txt; legenda.className = pos; void legenda.offsetWidth; legenda.classList.add('on'); }, 260); };
 const cena = (id) => { document.querySelectorAll('.cena').forEach((c) => c.classList.toggle('on', c.id === id)); };
 const reinicia = (el) => { el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); };
 
@@ -520,9 +521,8 @@ ROT.push([t, () => {
   fala(''); cena('mapa'); naveMapa.style.opacity = 1;
   mapa.querySelector('.missao').textContent = 'MAIS 6 PLANETINHAS!';
   PLS.forEach((p, k) => { p.className = 'pl' + (COMPLETOS.includes(k) ? ' aceso' : ''); }); rotaAte(COMPLETOS); poeNave(POS[COMPLETOS[1]], false);
-  RELANCES.forEach((k, j) => setTimeout(() => { poeNave(POS[k], true); PLS[k].className = 'pl aceso'; rotaAte([...COMPLETOS, ...RELANCES.slice(0, j + 1)]); plim(ac.currentTime, 600 + j * 60, .08); }, 200 + j * 420));
-}]); t += 3.2;
-RELANCES.forEach((k) => { ROT.push([t, () => { fala(''); relance(MUNDOS[k]); }]); t += 1.7; });
+  RELANCES.forEach((k, j) => setTimeout(() => { poeNave(POS[k], true); PLS[k].className = 'pl aceso'; rotaAte([...COMPLETOS, ...RELANCES.slice(0, j + 1)]); plim(ac.currentTime, 600 + j * 60, .08); }, 300 + j * 560));
+}]); t += 4.2;
 ROT.push([t, () => cartela(CART.c4)]); t += durCart(CART.c4);
 // 7 · todos os planetas salvos, a volta para a escola
 ROT.push([t, () => {
