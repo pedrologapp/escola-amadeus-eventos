@@ -1,11 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Pause, Play, SkipBack, SkipForward } from "lucide-react";
 import { comecarReuniao, liberarHistorias, situacaoTelao } from "../actions";
 
 /**
  * Telão: pronto → (Começar reunião) apresentação → QR com contagem → (Liberar) estreia → (Encerrar) fim.
- * Atalhos para ensaiar: → pula para a próxima etapa sem apertar nada no banco · ← volta · F tela cheia.
+ * Na apresentação: → / PageDown avança um slide, ← / PageUp volta um slide, espaço dá play/pausa (os slides vêm de slides.json).
+ * Fora dela: → / ← passam de tela sem apertar nada no banco (para ensaiar) · F tela cheia.
  * A apresentação (public/arboria/apresentacao/parte1.mp4) já vem com as falas da Arbória e a trilha; qr-fala.mp3 toca na tela do QR.
  */
 type Etapa = "pronto" | "video" | "qr" | "estreia" | "fim";
@@ -18,6 +20,30 @@ export function Telao({ qr }: { qr: string }) {
   const [erro, setErro] = useState<string | null>(null);
   const video = useRef<HTMLVideoElement>(null);
   const fala = useRef<HTMLAudioElement>(null);
+  const [slides, setSlides] = useState<number[]>([0]);
+  const [slide, setSlide] = useState(0);
+  const [tocando, setTocando] = useState(false);
+  const [controles, setControles] = useState(false);
+  const esconde = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // onde começa cada slide dentro do vídeo
+  useEffect(() => { fetch("/arboria/apresentacao/slides.json").then((r) => r.json()).then((j) => setSlides(j.slides)).catch(() => {}); }, []);
+  const qualSlide = useCallback((t: number) => { let k = 0; slides.forEach((ini, i) => { if (t >= ini - 0.05) k = i; }); return k; }, [slides]);
+  const proximo = useCallback(() => {
+    const v = video.current; if (!v) return;
+    const k = qualSlide(v.currentTime);
+    if (k >= slides.length - 1) { setEtapa("qr"); return; }
+    v.currentTime = slides[k + 1] + 0.01; setSlide(k + 1);
+  }, [qualSlide, slides]);
+  const anterior = useCallback(() => {
+    const v = video.current; if (!v) return;
+    const k = qualSlide(v.currentTime);
+    // no meio do slide, volta para o começo dele; logo no começo, vai para o anterior
+    const alvo = v.currentTime - slides[k] > 1.5 ? k : Math.max(0, k - 1);
+    v.currentTime = slides[alvo] + 0.01; setSlide(alvo);
+  }, [qualSlide, slides]);
+  const playPausa = useCallback(() => { const v = video.current; if (!v) return; if (v.paused) v.play().catch(() => {}); else v.pause(); }, []);
+  const mostraControles = () => { setControles(true); if (esconde.current) clearTimeout(esconde.current); esconde.current = setTimeout(() => setControles(false), 2500); };
 
   const telaCheia = () => { document.documentElement.requestFullscreen?.().catch(() => {}); };
 
@@ -44,16 +70,27 @@ export function Telao({ qr }: { qr: string }) {
   };
   const liberar = async () => { if (await acao(liberarHistorias)) setEtapa("estreia"); };
 
-  const anda = useCallback((d: number) => setEtapa((e) => ORDEM[Math.min(ORDEM.length - 1, Math.max(0, ORDEM.indexOf(e) + d))]), []);
+  const anda = useCallback((d: number) => setEtapa((e) => {
+    const nova = ORDEM[Math.min(ORDEM.length - 1, Math.max(0, ORDEM.indexOf(e) + d))];
+    // voltando do QR, a apresentação reabre no último slide
+    if (e === "qr" && nova === "video") { const v = video.current; if (v) { v.currentTime = slides[slides.length - 1] + 0.01; setSlide(slides.length - 1); } }
+    return nova;
+  }), [slides]);
   useEffect(() => {
     const tecla = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight") anda(1);
-      else if (e.key === "ArrowLeft") anda(-1);
+      const frente = e.key === "ArrowRight" || e.key === "PageDown", tras = e.key === "ArrowLeft" || e.key === "PageUp";
+      if (etapa === "video" && (frente || tras || e.key === " ")) {
+        e.preventDefault(); mostraControles();
+        if (frente) proximo(); else if (tras) anterior(); else playPausa();
+        return;
+      }
+      if (frente) anda(1);
+      else if (tras) anda(-1);
       else if (e.key === "f" || e.key === "F") telaCheia();
     };
     window.addEventListener("keydown", tecla);
     return () => window.removeEventListener("keydown", tecla);
-  }, [anda]);
+  }, [anda, etapa, proximo, anterior, playPausa]);
 
   useEffect(() => {
     if (etapa === "video") video.current?.play().catch(() => {}); else video.current?.pause();
@@ -83,7 +120,19 @@ export function Telao({ qr }: { qr: string }) {
 
       {/* a apresentação fica sempre carregada, para começar sem esperar */}
       <video ref={video} src="/arboria/apresentacao/parte1.mp4" preload="auto" playsInline onEnded={() => setEtapa("qr")}
+        onPlay={() => setTocando(true)} onPause={() => setTocando(false)} onTimeUpdate={(e) => setSlide(qualSlide(e.currentTarget.currentTime))}
         className={`absolute inset-0 h-full w-full bg-black object-contain ${etapa === "video" ? "" : "invisible"}`} />
+
+      {etapa === "video" && (
+        <div className="absolute inset-0 z-10" onMouseMove={mostraControles} onClick={mostraControles}>
+          <div className={`absolute bottom-[2vw] left-1/2 flex -translate-x-1/2 items-center gap-[1.2vw] rounded-full bg-black/70 px-[1.6vw] py-[.7vw] text-white transition-opacity duration-300 ${controles ? "opacity-100" : "pointer-events-none opacity-0"}`}>
+            <button onClick={(e) => { e.stopPropagation(); anterior(); mostraControles(); }} aria-label="Slide anterior" className="p-[.4vw] hover:text-[#2dd4bf]"><SkipBack className="size-[1.8vw]" /></button>
+            <button onClick={(e) => { e.stopPropagation(); playPausa(); mostraControles(); }} aria-label={tocando ? "Pausar" : "Continuar"} className="p-[.4vw] hover:text-[#2dd4bf]">{tocando ? <Pause className="size-[2.2vw]" /> : <Play className="size-[2.2vw]" />}</button>
+            <button onClick={(e) => { e.stopPropagation(); proximo(); mostraControles(); }} aria-label="Próximo slide" className="p-[.4vw] hover:text-[#2dd4bf]"><SkipForward className="size-[1.8vw]" /></button>
+            <span className="min-w-[7vw] text-center font-mono text-[1vw] text-white/70">slide {slide + 1} de {slides.length}</span>
+          </div>
+        </div>
+      )}
 
       <audio ref={fala} src="/arboria/apresentacao/qr-fala.mp3" preload="auto" />
 
