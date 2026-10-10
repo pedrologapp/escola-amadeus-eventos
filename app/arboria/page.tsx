@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { Caveat, Fredoka } from "next/font/google";
+import { Atkinson_Hyperlegible, Young_Serif } from "next/font/google";
 import { SERIES } from "@/lib/arboria-historia";
 import { AppArboria } from "./app";
 import type { CriancaHistoria } from "./actions";
 
-const fredoka = Fredoka({ subsets: ["latin"], weight: ["400", "500", "600", "700"] });
-const caveat = Caveat({ subsets: ["latin"], weight: ["600", "700"], variable: "--font-caderno" }); // letra de caderno das falas
+// as mesmas letras do trailer: Atkinson no texto, Young Serif nos títulos
+const atkinson = Atkinson_Hyperlegible({ subsets: ["latin"], weight: ["400", "700"] });
+const youngSerif = Young_Serif({ subsets: ["latin"], weight: "400", variable: "--font-serie" });
 
 export const metadata: Metadata = {
   title: "Arboria · a jornada do seu filho",
@@ -19,7 +20,7 @@ export const metadata: Metadata = {
  * (admin → Campanhas → História do Arboria).
  *
  * Prévia de uma história, sem cadastro:
- *   /arboria?demo=1º ano&nome=Maria&g=menina&p=morena&c=cacheado
+ *   /arboria?demo=1º ano&nome=Maria&g=menina&k=mus,log
  */
 export default async function ArboriaPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const q = await searchParams;
@@ -27,10 +28,9 @@ export default async function ArboriaPage({ searchParams }: { searchParams: Prom
     ? {
         id: "demo", nome: q.nome || "Maria", serie: q.demo,
         genero: q.g === "menino" ? "menino" : "menina",
-        pele: q.p === "clara" || q.p === "negra" ? q.p : "morena",
-        cabelo: q.c === "liso" || q.c === "crespo" ? q.c : "cacheado",
-        respostas: [], boneco_url: null,
+        pele: null, cabelo: null,
+        respostas: (q.k || "").split(",").filter(Boolean) as CriancaHistoria["respostas"], boneco_url: null,
       }
     : null;
-  return <div className={`${fredoka.className} ${caveat.variable}`}><AppArboria demo={demo} /></div>;
+  return <div className={`${atkinson.className} ${youngSerif.variable}`}><AppArboria demo={demo} /></div>;
 }

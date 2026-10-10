@@ -13,8 +13,8 @@ export interface FilhoEntrada {
   nome: string;
   serie: string;
   genero: string;
-  pele: string;
-  cabelo: string;
+  pele?: string | null;      // não é mais perguntado (a fantasia cobre rosto e cabelo)
+  cabelo?: string | null;
   respostas: (Chave | null)[];
   foto?: string | null;        // data:image/jpeg;base64,… (já reduzida no celular)
   fotoAutorizada?: boolean;
@@ -25,8 +25,8 @@ export interface CriancaHistoria {
   nome: string;
   serie: string;
   genero: "menino" | "menina";
-  pele: "clara" | "morena" | "negra";
-  cabelo: "liso" | "cacheado" | "crespo";
+  pele: "clara" | "morena" | "negra" | null;
+  cabelo: "liso" | "cacheado" | "crespo" | null;
   respostas: (Chave | null)[];
   boneco_url: string | null;
 }
@@ -47,8 +47,6 @@ export async function cadastrar(e: { familia: string; responsavel: string; filho
     if (nome.length < 2) return { ok: false as const, erro: "Escreva o nome de cada filho." };
     if (!SERIES.includes(f.serie as (typeof SERIES)[number])) return { ok: false as const, erro: `Escolha a série de ${nome}.` };
     if (!["menino", "menina"].includes(f.genero)) return { ok: false as const, erro: `Marque se ${nome} é menino ou menina.` };
-    if (!["clara", "morena", "negra"].includes(f.pele) || !["liso", "cacheado", "crespo"].includes(f.cabelo))
-      return { ok: false as const, erro: `Escolha a pele e o cabelo de ${nome}.` };
     const respostas = ATIVIDADE.map((_, i) => (CHAVES.has(String(f.respostas?.[i])) ? f.respostas[i] : null));
 
     let foto_path: string | null = null;
@@ -61,7 +59,7 @@ export async function cadastrar(e: { familia: string; responsavel: string; filho
         if (!error) foto_path = caminho;
       }
     }
-    linhas.push({ familia, responsavel, nome, serie: f.serie, genero: f.genero, pele: f.pele, cabelo: f.cabelo, respostas, foto_path, foto_autorizada: autorizada && !!foto_path });
+    linhas.push({ familia, responsavel, nome, serie: f.serie, genero: f.genero, pele: null, cabelo: null, respostas, foto_path, foto_autorizada: autorizada && !!foto_path });
   }
 
   const { error } = await db.from("arboria_exp_criancas").insert(linhas);
