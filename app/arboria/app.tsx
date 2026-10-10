@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { ATIVIDADE, SERIES, primeiroNome, type Chave } from "@/lib/arboria-historia";
-import { RAMOS, SITUACOES } from "@/lib/arboria-atividade";
-import { cadastrar, estado, responderAtividade, type CriancaHistoria, type FilhoEntrada } from "./actions";
+import { FORMAS, grade } from "@/lib/arboria-atividade";
+import { cadastrar, estado, registrarAtividade, type CriancaHistoria, type Fase, type FilhoEntrada } from "./actions";
 import { Trailer } from "./trailer";
 
 /**
@@ -283,27 +283,39 @@ function Espera({ familia, nomes }: { familia: string; nomes: string[] }) {
   const [antes, setAntes] = useState(false);
   const [aberta, setAberta] = useState<CriancaHistoria | null>(null);
   const [revelando, setRevelando] = useState(false);
-  const [atividade, setAtividade] = useState(false);
-  const [fez, setFez] = useState(false);
-  const [fazendo, setFazendo] = useState(false);
+  const [fase, setFase] = useState<Fase>(null);
+  const [feito, setFeito] = useState<{ r1: boolean; forma: string | null; r2: boolean }>({ r1: false, forma: null, r2: false });
+  const [fazendo, setFazendo] = useState<Fase>(null);
 
   useEffect(() => {
     let vivo = true;
     const ver = async () => {
       const r = await estado(familia).catch(() => null);
       if (!vivo || !r) return;
-      setAntes(r.antes); setAtividade(r.atividade); if (r.fezAtividade) setFez(true);
+      setAntes(r.antes); setFase(r.fase); setFeito(r.feito);
       if (r.liberado && r.criancas.length) {
         setCriancas((atual) => { if (!atual.length) { setRevelando(true); setTimeout(() => setRevelando(false), 3200); } return r.criancas; });
       } else setCriancas([]);
     };
     ver();
-    const t = setInterval(ver, 4000);
+    const t = setInterval(ver, 3000);
     return () => { vivo = false; clearInterval(t); };
   }, [familia]);
 
   if (aberta) return <Trailer crianca={aberta} fechar={() => setAberta(null)} />;
-  if (fazendo && !criancas.length) return <AtividadePais familia={familia} voltar={(ok) => { if (ok) setFez(true); setFazendo(false); }} />;
+  if (fazendo && !criancas.length) {
+    const fim = (ok: boolean) => { if (ok) setFeito((f) => ({ ...f, [fazendo === "forma" ? "forma" : fazendo]: fazendo === "forma" ? "ok" : true })); setFazendo(null); };
+    if (fazendo === "forma") return <EscolheForma familia={familia} voltar={fim} />;
+    return <Lembrar familia={familia} rodada={fazendo === "r1" ? 0 : 1} voltar={fim} />;
+  }
+
+  // o cartão da atividade: aparece quando o telão abre cada etapa
+  const pendente = fase && !(fase === "forma" ? feito.forma : feito[fase]);
+  const cartao: Record<"r1" | "forma" | "r2", [string, string]> = {
+    r1: ["A atividade começou", "Toque nas palavras de que você lembra"],
+    forma: ["Escolha a sua forma", "Qual das 8 formas você quer usar agora?"],
+    r2: ["Agora, com a sua forma", "Toque nas palavras de que você lembra"],
+  };
 
   if (!criancas.length) {
     return (
@@ -314,13 +326,13 @@ function Espera({ familia, nomes }: { familia: string; nomes: string[] }) {
           <Titulo>{antes ? "Esse cadastro foi feito antes do encontro começar." : <>A série de <Ouro>{nomes.join(" e ")}</Ouro> estreia no fim do encontro.</>}</Titulo>
           <p className="arb-in-3 mt-6 text-[15px] leading-relaxed text-white/60">{antes ? "Fale com a equipe na sala." : "Deixe esta página aberta."}</p>
           {!antes && <div className="arb-in-3 mt-10 flex gap-2">{[0, 1, 2].map((k) => <span key={k} className="size-2 animate-pulse rounded-full" style={{ background: OURO, animationDelay: `${k * 0.3}s` }} />)}</div>}
-          {!antes && atividade && (
-            fez
-              ? <p className="arb-in mt-10 rounded-2xl border border-white/15 px-5 py-4 text-[15px] text-white/70">✓ Você já fez a atividade. <b className="text-[#FFE4A0]">Olhe a TV:</b> cada pai da sala está desenhando um caminho.</p>
-              : <button onClick={() => setFazendo(true)} className="arb-in mt-10 flex w-full items-center gap-4 rounded-2xl border border-[#FFC94A]/60 bg-[#FFC94A]/10 p-4 text-left active:scale-[.98]">
+          {!antes && fase && (
+            pendente
+              ? <button key={fase} onClick={() => setFazendo(fase)} className="arb-in mt-10 flex w-full items-center gap-4 rounded-2xl border border-[#FFC94A]/60 bg-[#FFC94A]/10 p-4 text-left active:scale-[.98]">
                   <span className="relative flex size-12 shrink-0 items-center justify-center rounded-full text-2xl" style={{ background: OURO }}><span className="absolute inset-0 animate-ping rounded-full" style={{ background: "rgba(255,201,74,.35)" }} />✦</span>
-                  <span><b className="block font-[family-name:var(--font-serie)] text-xl font-normal text-[#FFE4A0]">A atividade começou</b><span className="text-sm text-white/65">3 situações rápidas sobre você · toque para participar</span></span>
+                  <span><b className="block font-[family-name:var(--font-serie)] text-xl font-normal text-[#FFE4A0]">{cartao[fase][0]}</b><span className="text-sm text-white/65">{cartao[fase][1]} · toque aqui</span></span>
                 </button>
+              : <p className="arb-in mt-10 rounded-2xl border border-white/15 px-5 py-4 text-[15px] text-white/70">✓ Pronto! <b className="text-[#FFE4A0]">Olhe a TV.</b></p>
           )}
         </div>
       </Preto>
@@ -346,59 +358,94 @@ function Espera({ familia, nomes }: { familia: string; nomes: string[] }) {
   );
 }
 
-/* ---------------- atividade ao vivo dos pais ---------------- */
+/* ---------------- atividade das 15 palavras ---------------- */
 
-function AtividadePais({ familia, voltar }: { familia: string; voltar: (ok: boolean) => void }) {
-  // as opções vêm embaralhadas em cada celular (a posição não puxa a resposta)
-  const opcoes = useMemo(() => SITUACOES.map((s) => Object.entries(s.opcoes).sort(() => Math.random() - 0.5)), []);
-  const [resp, setResp] = useState<string[]>([]);
+// as palavras de que o pai lembra: uma grade com as 15 certas misturadas a 15 parecidas
+function Lembrar({ familia, rodada, voltar }: { familia: string; rodada: number; voltar: (ok: boolean) => void }) {
+  const palavras = useMemo(() => grade(rodada), [rodada]);
+  const [marcadas, setMarcadas] = useState<string[]>([]);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [pronto, setPronto] = useState(false);
-  const p = resp.length;
-
-  const escolhe = async (k: string) => {
-    const nova = [...resp, k]; setResp(nova);
-    if (nova.length < SITUACOES.length) return;
+  const alterna = (p: string) => setMarcadas((m) => (m.includes(p) ? m.filter((x) => x !== p) : [...m, p]));
+  const enviar = async () => {
     setEnviando(true); setErro(null);
-    const r = await responderAtividade(familia, nova).catch(() => null);
+    const r = await registrarAtividade(familia, rodada === 0 ? "r1" : "r2", marcadas).catch(() => null);
     setEnviando(false);
-    if (!r?.ok) { setResp(nova.slice(0, -1)); return setErro("Não consegui enviar. Confira a internet e toque de novo."); }
+    if (!r?.ok) return setErro("Não consegui enviar. Confira a internet e toque de novo.");
     setPronto(true);
   };
-
   if (pronto) {
-    const conta = new Map<string, number>(); resp.forEach((k) => conta.set(k, (conta.get(k) ?? 0) + 1));
-    const mais = [...conta.entries()].sort((a, b) => b[1] - a[1]);
-    const jeito = (k: string) => RAMOS.find((r) => r.chave === k)!;
-    const frase = mais[0][1] > 1
-      ? <>Você pensa muito com <span style={{ color: jeito(mais[0][0]).cor }}>{jeito(mais[0][0]).jeito}</span>.</>
-      : <>Você usou três jeitos diferentes: {mais.map(([k], i) => <span key={k}><span style={{ color: jeito(k).cor }}>{jeito(k).jeito}</span>{i === 0 ? ", " : i === 1 ? " e " : "."}</span>)}</>;
     return (
       <Preto>
-        <Selo>O seu jeito</Selo>
+        <Selo>{rodada === 0 ? "1ª parte" : "2ª parte"}</Selo>
         <div className="flex flex-1 flex-col justify-center pb-10">
-          <Titulo>{frase}</Titulo>
-          <p className="arb-in-3 mt-6 text-center text-[16px] leading-relaxed text-white/70">Olhe a TV: cada pai da sala está desenhando um caminho diferente. O seu filho também tem o jeito dele, e o Arboria vai ajudar a descobrir.</p>
+          <Titulo>Enviado. <Ouro>Olhe a TV.</Ouro></Titulo>
+          <p className="arb-in-3 mt-6 text-center text-[16px] leading-relaxed text-white/70">{rodada === 0 ? "Agora vêm 8 formas diferentes de guardar palavras. Veja qual combina mais com você." : "Cada pai da sala lembrou do seu jeito. O seu filho também tem o dele."}</p>
         </div>
         <div className="arb-in-3 pb-10"><Botao onClick={() => voltar(true)}>Voltar para a espera</Botao></div>
       </Preto>
     );
   }
-
-  // as 3 respondidas: enquanto envia, fica numa tela de espera (e volta para a 3ª se der erro)
-  if (p >= SITUACOES.length) return <Preto><div className="flex flex-1 items-center justify-center gap-2 text-white/60"><Loader2 className="size-5 animate-spin" /> Enviando…</div></Preto>;
-  const q = SITUACOES[p];
   return (
     <Preto>
-      <Voltar onClick={() => (p ? setResp(resp.slice(0, -1)) : voltar(false))} />
-      <Selo>Atividade · {p + 1} de {SITUACOES.length}</Selo>
-      <div className="arb-in mt-5 flex gap-1">{SITUACOES.map((_, k) => <div key={k} className="h-[3px] flex-1 rounded-full" style={{ background: k < p ? OURO : k === p ? "rgba(255,201,74,.5)" : "rgba(255,255,255,.15)" }} />)}</div>
-      <Titulo k={`a${p}`}>{q.pergunta}</Titulo>
-      <div key={`ao${p}`} className="arb-in-3 mt-7 space-y-2.5 pb-8">
-        {opcoes[p].map(([k, texto]) => <Opcao key={k} disabled={enviando} onClick={() => escolhe(k)}>{texto}</Opcao>)}
+      <Voltar onClick={() => voltar(false)} />
+      <Selo>{rodada === 0 ? "1ª parte" : "2ª parte · com a sua forma"}</Selo>
+      <Titulo>Toque nas palavras <Ouro>de que você lembra.</Ouro></Titulo>
+      <p className="arb-in-3 mt-3 text-center text-[14px] text-white/55">Algumas delas não estavam na TV. Ninguém vê as suas respostas.</p>
+      <div className="arb-in-3 mt-6 flex flex-wrap justify-center gap-2 pb-4">
+        {palavras.map((p) => {
+          const m = marcadas.includes(p);
+          return <button key={p} onClick={() => alterna(p)} className={`rounded-full border px-3.5 py-2 text-[15px] font-semibold transition active:scale-95 ${m ? "border-[#FFC94A] bg-[#FFC94A] text-[#1B1405]" : "border-white/20 bg-white/[.04] text-[#F4EAD8]"}`}>{p}</button>;
+        })}
+      </div>
+      {erro && <p className="rounded-2xl border border-red-400/40 bg-red-500/10 p-3 text-center text-sm text-red-200">{erro}</p>}
+      <div className="mt-auto pb-8 pt-4"><Botao disabled={enviando || !marcadas.length} onClick={enviar}><span className="inline-flex items-center gap-2">{enviando && <Loader2 className="size-5 animate-spin" />} Enviar {marcadas.length ? `(${marcadas.length})` : ""}</span></Botao></div>
+    </Preto>
+  );
+}
+
+// a forma que o pai mais gostou (a TV mostra só quantos escolheram cada uma)
+function EscolheForma({ familia, voltar }: { familia: string; voltar: (ok: boolean) => void }) {
+  const [enviando, setEnviando] = useState<string | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+  const [escolhida, setEscolhida] = useState<string | null>(null);
+  const escolhe = async (k: string) => {
+    setEnviando(k); setErro(null);
+    const r = await registrarAtividade(familia, "forma", k).catch(() => null);
+    setEnviando(null);
+    if (!r?.ok) return setErro("Não consegui enviar. Confira a internet e toque de novo.");
+    setEscolhida(k);
+  };
+  if (escolhida) {
+    const f = FORMAS.find((x) => x.chave === escolhida)!;
+    return (
+      <Preto>
+        <Selo>A sua forma</Selo>
+        <div className="flex flex-1 flex-col justify-center pb-10">
+          <Titulo><span style={{ color: f.cor }}>{f.titulo}</span></Titulo>
+          <p className="arb-in-3 mt-6 text-center text-[16px] leading-relaxed text-white/70">{f.como}</p>
+          <p className="arb-in-3 mt-3 text-center text-[15px] italic text-white/55">{f.exemplo}</p>
+          <p className="arb-in-3 mt-6 text-center text-[15px] text-[#FFE4A0]">Guarde a sua forma: as próximas 15 palavras vão aparecer na TV.</p>
+        </div>
+        <div className="arb-in-3 pb-10"><Botao onClick={() => voltar(true)}>Voltar para a espera</Botao></div>
+      </Preto>
+    );
+  }
+  return (
+    <Preto>
+      <Voltar onClick={() => voltar(false)} />
+      <Selo>Escolha a sua forma</Selo>
+      <Titulo>Qual forma você <Ouro>quer usar agora?</Ouro></Titulo>
+      <div className="arb-in-3 mt-6 space-y-2.5 pb-8">
+        {FORMAS.map((f) => (
+          <button key={f.chave} disabled={!!enviando} onClick={() => escolhe(f.chave)} className="flex w-full items-start gap-3 rounded-2xl border border-white/20 bg-white/[.04] px-4 py-3.5 text-left active:scale-[.98] disabled:opacity-50">
+            <span className="mt-1 size-3.5 shrink-0 rounded-full" style={{ background: f.cor }} />
+            <span><b className="block text-[16px] text-[#F4EAD8]">{f.titulo}</b><span className="text-[13px] leading-snug text-white/60">{f.como}</span></span>
+            {enviando === f.chave && <Loader2 className="ml-auto size-5 shrink-0 animate-spin text-white/60" />}
+          </button>
+        ))}
         {erro && <p className="rounded-2xl border border-red-400/40 bg-red-500/10 p-3 text-center text-sm text-red-200">{erro}</p>}
-        {enviando && <p className="flex items-center justify-center gap-2 text-sm text-white/60"><Loader2 className="size-4 animate-spin" /> Enviando…</p>}
       </div>
     </Preto>
   );

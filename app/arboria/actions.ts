@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ATIVIDADE, SERIES, type Chave } from "@/lib/arboria-historia";
+import { RODADAS } from "@/lib/arboria-atividade";
 
 /**
  * Experiência Amadeus (10/10/2026) · a história do Arboria de cada criança.
@@ -69,12 +70,12 @@ export async function cadastrar(e: { familia: string; responsavel: string; filho
 
 /** O celular pergunta a cada poucos segundos se a história já pode abrir (e se a atividade dos pais está aberta). */
 export async function estado(familia: string) {
-  if (!/^[0-9a-f-]{36}$/i.test(String(familia ?? ""))) return { liberado: false, criancas: [] as CriancaHistoria[], antes: false, atividade: false, fezAtividade: false };
+  if (!/^[0-9a-f-]{36}$/i.test(String(familia ?? ""))) return { liberado: false, criancas: [] as CriancaHistoria[], antes: false, fase: null as Fase, feito: { r1: false, forma: null as string | null, r2: false } };
   const db = createAdminClient();
   const [{ data: r }, { data: cs }, { data: at }] = await Promise.all([
-    db.from("arboria_exp_reuniao").select("iniciada_em, liberada_em, atividade_em").eq("id", 1).single(),
+    db.from("arboria_exp_reuniao").select("iniciada_em, liberada_em, atividade_em, atividade_fase").eq("id", 1).single(),
     db.from("arboria_exp_criancas").select("id, nome, serie, genero, pele, cabelo, respostas, boneco_url, criado_em").eq("familia", familia).order("criado_em"),
-    db.from("arboria_exp_atividade").select("criado_em").eq("familia", familia).maybeSingle(),
+    db.from("arboria_exp_atividade").select("criado_em, r1, forma, r2").eq("familia", familia).maybeSingle(),
   ]);
   const todas = cs ?? [];
   // Só quem se cadastrou depois de "Começar reunião" recebe a história.
@@ -85,17 +86,39 @@ export async function estado(familia: string) {
     antes: todas.length > 0 && validas.length === 0 && !!r?.liberada_em,
     criancas: (liberado ? validas : []).map(({ criado_em: _c, ...c }) => c as CriancaHistoria),
     cadastradas: todas.map((c) => c.nome),
-    // a atividade aparece na tela de espera de quem se cadastrou nesta reunião, enquanto as séries não foram liberadas
-    atividade: !!(r?.atividade_em && validas.length),
-    fezAtividade: !!(at && r?.atividade_em && Date.parse(at.criado_em) >= Date.parse(r.atividade_em)),
+    // a atividade aparece na tela de espera de quem se cadastrou nesta reunião (cada fase quando o telão abrir)
+    fase: (validas.length && r?.atividade_em ? r.atividade_fase : null) as Fase,
+    feito: (() => {
+      const vale = !!(at && r?.atividade_em && Date.parse(at.criado_em) >= Date.parse(r.atividade_em));
+      return { r1: vale && at!.r1 !== null, forma: vale ? (at!.forma as string | null) : null, r2: vale && at!.r2 !== null };
+    })(),
   };
 }
 
-/** A resposta do pai na atividade ao vivo (3 situações). Uma por celular; responder de novo substitui. */
-export async function responderAtividade(familia: string, respostas: string[]) {
+export type Fase = "r1" | "forma" | "r2" | null;
+
+/**
+ * Atividade das 15 palavras: o celular manda as palavras marcadas (rodada 1 ou 2) ou a forma escolhida.
+ * O servidor só guarda quantas acertou (ninguém vê o de ninguém) e a forma (a TV mostra só as formas).
+ */
+export async function registrarAtividade(familia: string, campo: "r1" | "forma" | "r2", valor: string | string[]) {
   if (!/^[0-9a-f-]{36}$/i.test(String(familia ?? ""))) return { ok: false as const };
-  const lista = (respostas ?? []).slice(0, 3);
-  if (lista.length !== 3 || !lista.every((k) => CHAVES.has(String(k)))) return { ok: false as const };
-  const { error } = await createAdminClient().from("arboria_exp_atividade").upsert({ familia, respostas: lista, criado_em: new Date().toISOString() });
+  const db = createAdminClient();
+  const { data: r } = await db.from("arboria_exp_reuniao").select("atividade_em").eq("id", 1).single();
+  if (!r?.atividade_em) return { ok: false as const };
+  const { data: at } = await db.from("arboria_exp_atividade").select("criado_em").eq("familia", familia).maybeSingle();
+  // uma resposta de uma atividade anterior (ensaio) não conta: começa a linha do zero
+  const nova = !at || Date.parse(at.criado_em) < Date.parse(r.atividade_em);
+  const base = nova ? { familia, respostas: null, r1: null, forma: null, r2: null, criado_em: new Date().toISOString() } : { familia };
+  let dado: Record<string, unknown>;
+  if (campo === "forma") {
+    if (!CHAVES.has(String(valor))) return { ok: false as const };
+    dado = { forma: valor };
+  } else {
+    const certas = new Set(RODADAS[campo === "r1" ? 0 : 1].palavras);
+    const marcadas = [...new Set(Array.isArray(valor) ? valor : [])];
+    dado = { [campo]: marcadas.filter((p) => certas.has(p)).length };
+  }
+  const { error } = await db.from("arboria_exp_atividade").upsert({ ...base, ...dado });
   return { ok: !error };
 }

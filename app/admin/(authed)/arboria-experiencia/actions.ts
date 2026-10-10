@@ -16,7 +16,7 @@ async function logado() {
 export async function comecarReuniao() {
   await logado();
   const agora = new Date().toISOString();
-  await createAdminClient().from("arboria_exp_reuniao").update({ iniciada_em: agora, liberada_em: null, atividade_em: null, atualizado_em: agora }).eq("id", 1);
+  await createAdminClient().from("arboria_exp_reuniao").update({ iniciada_em: agora, liberada_em: null, atividade_em: null, atividade_fase: null, atualizado_em: agora }).eq("id", 1);
   revalidatePath(CAMINHO);
 }
 
@@ -39,24 +39,27 @@ export async function recolherHistorias() {
 export async function situacaoTelao() {
   await logado();
   const db = createAdminClient();
-  const { data: r } = await db.from("arboria_exp_reuniao").select("iniciada_em, liberada_em, atividade_em").eq("id", 1).single();
-  let criancas = 0, familias = 0, caminhos: string[][] = [];
+  const { data: r } = await db.from("arboria_exp_reuniao").select("iniciada_em, liberada_em, atividade_em, atividade_fase").eq("id", 1).single();
+  let criancas = 0, familias = 0, r1 = 0, r2 = 0; const formas: Record<string, number> = {};
   if (r?.iniciada_em) {
     const { data: cs } = await db.from("arboria_exp_criancas").select("familia").gte("criado_em", r.iniciada_em);
     criancas = cs?.length ?? 0;
     familias = new Set((cs ?? []).map((c) => c.familia)).size;
   }
   if (r?.atividade_em) {
-    // os caminhos chegam na ordem em que os pais responderam (o telão desenha um por um)
-    const { data: at } = await db.from("arboria_exp_atividade").select("respostas, criado_em").gte("criado_em", r.atividade_em).order("criado_em");
-    caminhos = (at ?? []).map((x) => x.respostas as string[]);
+    // só contagens: quantos já fizeram cada rodada e quantos escolheram cada forma (nunca o resultado de ninguém)
+    const { data: at } = await db.from("arboria_exp_atividade").select("r1, forma, r2").gte("criado_em", r.atividade_em);
+    for (const x of at ?? []) { if (x.r1 !== null) r1++; if (x.r2 !== null) r2++; if (x.forma) formas[x.forma] = (formas[x.forma] ?? 0) + 1; }
   }
-  return { iniciada: r?.iniciada_em ?? null, liberada: r?.liberada_em ?? null, atividade: r?.atividade_em ?? null, criancas, familias, caminhos };
+  return { iniciada: r?.iniciada_em ?? null, liberada: r?.liberada_em ?? null, fase: (r?.atividade_fase ?? null) as string | null, criancas, familias, r1, r2, formas };
 }
 
-/** "Abrir a atividade": aparece na tela de espera de cada pai. */
-export async function abrirAtividade() {
+/** Abre uma fase da atividade no celular dos pais: "r1" (1ª rodada), "forma" (escolher a forma), "r2" (2ª rodada), null (fecha). */
+export async function faseAtividade(fase: "r1" | "forma" | "r2" | null) {
   await logado();
+  const db = createAdminClient();
   const agora = new Date().toISOString();
-  await createAdminClient().from("arboria_exp_reuniao").update({ atividade_em: agora, atualizado_em: agora }).eq("id", 1);
+  const { data: r } = await db.from("arboria_exp_reuniao").select("atividade_em").eq("id", 1).single();
+  // a primeira fase marca o começo da atividade (respostas de ensaios antes disso não contam)
+  await db.from("arboria_exp_reuniao").update({ atividade_fase: fase, ...(fase === "r1" || !r?.atividade_em ? { atividade_em: agora } : {}), atualizado_em: agora }).eq("id", 1);
 }
