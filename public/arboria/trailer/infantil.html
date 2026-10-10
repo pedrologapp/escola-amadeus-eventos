@@ -142,6 +142,58 @@
   #creditos.on > div > *:nth-child(7) { animation-delay: 3.2s; }
   #creditos button { margin-top: 30px; background: none; border: 1.5px solid rgba(255,255,255,.5); color: #fff; padding: 9px 20px; border-radius: 99px; font: 700 13px "Atkinson Hyperlegible"; }
 
+  /* mapa do espaço com os 8 planetinhas (a "tela de missão") */
+  #mapa { background: radial-gradient(circle at 50% 50%, #17286b 0%, #070e2e 70%); }
+  #mapa .pl { position: absolute; width: 17%; translate: -50% -50%; opacity: .4; filter: grayscale(.6) brightness(.8); transition: opacity .5s ease, filter .5s ease; }
+  #mapa .pl.aceso { opacity: 1; filter: drop-shadow(0 0 14px rgba(255,214,120,.65)); }
+  #mapa .pl.alvo { opacity: 1; filter: drop-shadow(0 0 18px rgba(255,214,120,.95)); animation: alvo .6s ease-in-out infinite alternate; }
+  @keyframes alvo { to { scale: 1.18; } }
+  #mapa .pl.nasce { animation: nasce .6s cubic-bezier(.2,1.6,.4,1) var(--a) both; opacity: 1; filter: none; }
+  @keyframes nasce { from { scale: 0; } to { scale: 1; } }
+  #mapa .escolinha { position: absolute; width: 16%; translate: -50% -50%; }
+  #mapa .navemapa { position: absolute; width: 13%; translate: -50% -60%; filter: drop-shadow(0 0 12px rgba(255,214,120,.8)); transition: left 1.5s cubic-bezier(.5,0,.4,1), top 1.5s cubic-bezier(.5,0,.4,1); }
+  #mapa svg.rota { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #mapa svg.rota path { fill: none; stroke: var(--ouro); stroke-width: .6; stroke-dasharray: 1.4 1.4; stroke-linecap: round; }
+  #mapa .rotulo { position: absolute; left: 0; right: 0; top: 4.5%; text-align: center; font: 700 11px "Atkinson Hyperlegible"; letter-spacing: .32em; color: rgba(255,255,255,.7); }
+  #mapa .missao { position: absolute; left: 50%; bottom: 6%; translate: -50% 0; font-family: Bangers, sans-serif; font-size: clamp(24px, 8vw, 34px); letter-spacing: .05em; color: var(--ouro);
+    -webkit-text-stroke: 1.5px #1B2550; paint-order: stroke fill; text-shadow: 3px 3px 0 #1B2550; white-space: nowrap; }
+
+  /* a escola, o chamado e a nave que fala */
+  #escola { background: linear-gradient(#1b2a6b 0%, #3d5cb8 55%, #f5b979 100%); }
+  #escola .naveesc { position: absolute; left: 50%; width: 44%; translate: -50% 0; top: -40%; filter: drop-shadow(0 0 30px rgba(255,214,120,.6)); }
+  #escola.on .naveesc { animation: desceEsc 3s cubic-bezier(.3,.6,.25,1) .4s forwards, flutuaNave 2.4s ease-in-out 3.4s infinite alternate; }
+  @keyframes desceEsc { to { top: 8%; } }
+  @keyframes flutuaNave { from { top: 8%; } to { top: 9.5%; } }
+  #escola .desenho { position: absolute; left: 50%; bottom: 4%; height: 36%; translate: -50% 0; filter: drop-shadow(0 8px 10px rgba(0,0,0,.4)); }
+  #escola .chamado { animation: none; }
+  #escola.chama .chamado { animation: chama 1.6s ease-in-out var(--a) 2 both; }
+  .balao { position: absolute; left: 6%; right: 6%; top: 31%; z-index: 33; background: #fff; color: #1B2550; border: 3px solid #1B2550; border-radius: 22px; padding: 14px 16px; text-align: center;
+    font: 700 clamp(16px, 4.8vw, 21px)/1.3 "Atkinson Hyperlegible", sans-serif; box-shadow: 5px 5px 0 rgba(10,15,40,.5); opacity: 0; transform: scale(.4); transform-origin: 50% 0; transition: opacity .2s ease, transform .45s cubic-bezier(.2,1.6,.4,1); }
+  .balao::before { content: ""; position: absolute; left: 50%; top: -26px; border: 12px solid transparent; border-bottom: 14px solid #1B2550; translate: -50% 0; }
+  .balao::after { content: ""; position: absolute; left: 50%; top: -19px; border: 9px solid transparent; border-bottom: 11px solid #fff; translate: -50% 0; }
+  .balao b { color: #C2410C; }
+  #escola.fala .balao { opacity: 1; transform: none; }
+  #escola.fala .desenho { animation: susto .4s ease 2; }
+  @keyframes susto { 50% { transform: translateY(-8px); } }
+
+  /* a transformação (peça por peça, como num desenho de resgate) */
+  #transforma { background: radial-gradient(circle at 50% 50%, #FFE38A 0%, #F59E0B 30%, #7C2D12 70%, #1B0A05 100%); }
+  #transforma .raios { position: absolute; left: 50%; top: 50%; width: 180%; aspect-ratio: 1; translate: -50% -50%; background: repeating-conic-gradient(rgba(255,255,255,.22) 0 6deg, transparent 6deg 18deg); animation: gira 8s linear infinite; }
+  @keyframes gira { to { rotate: 360deg; } }
+  #transforma .antes, #transforma .depois { position: absolute; left: 50%; bottom: 13%; height: 52%; translate: -50% 0; }
+  #transforma.on .antes { animation: rodopia 1.8s cubic-bezier(.6,0,.4,1) .3s forwards; }
+  @keyframes rodopia { 0% { transform: rotateY(0) scale(1); } 80% { transform: rotateY(900deg) scale(.9); opacity: 1; filter: brightness(1.6); } 100% { transform: rotateY(1080deg) scale(.6); opacity: 0; filter: brightness(3); } }
+  #transforma .depois { opacity: 0; }
+  #transforma.on .depois { animation: aparece 1s cubic-bezier(.2,1.5,.4,1) 2.1s forwards; }
+  @keyframes aparece { 0% { opacity: 0; transform: scale(.4); filter: brightness(3); } 60% { opacity: 1; filter: brightness(1.4); } 100% { opacity: 1; transform: none; filter: none; } }
+  #transforma .peca { position: absolute; z-index: 5; font-family: Bangers, sans-serif; font-size: 22px; color: #fff; -webkit-text-stroke: 1px #1B2550; paint-order: stroke fill; text-shadow: 2px 2px 0 #1B2550; opacity: 0; }
+  #transforma.on .peca { animation: peca .5s cubic-bezier(.2,1.6,.4,1) var(--a) forwards; }
+  @keyframes peca { from { opacity: 0; transform: scale(.3) rotate(-20deg); } to { opacity: 1; transform: rotate(var(--r, -6deg)); } }
+  #transforma .flash { position: absolute; inset: 0; background: #fff; opacity: 0; }
+  #transforma.on .flash { animation: flash .7s ease 1.85s forwards; }
+  @keyframes flash { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; } }
+  #transforma .onomt { left: 6%; top: 9%; rotate: -8deg; }
+  #transforma.on .onomt { animation: pop .5s cubic-bezier(.2,1.8,.4,1) 2.2s forwards; }
   #comecar { position: absolute; inset: 0; z-index: 60; display: grid; place-items: center; background: #000; text-align: center; padding: 0 12%; }
   #comecar p { font: 700 11px "Atkinson Hyperlegible"; letter-spacing: .4em; color: rgba(255,255,255,.6); }
   #comecar h1 { font-family: "Young Serif", serif; font-size: 40px; line-height: 1.05; margin: 14px 0 6px; font-weight: 400; }
@@ -153,6 +205,44 @@
 <body>
 <div id="palco">
   <section class="cena" id="titulo"><div><p class="o">UMA SÉRIE ORIGINAL ARBORIA</p><p class="n nome"></p><p class="e">e a Nave Vagalume</p></div></section>
+
+  <section class="cena" id="mapa">
+    <div class="estrelas"></div>
+    <p class="rotulo">LÁ NO ALTO, OITO PLANETINHAS…</p>
+    <svg class="rota" viewBox="0 0 100 100" preserveAspectRatio="none"><path id="rota" d="" /></svg>
+    <svg class="escolinha" viewBox="0 0 100 80" fill="none" stroke="#FFF6E0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 75 V40 H85 V75 M8 42 L50 15 L92 42 M42 75 V58 H58 V75" /><path d="M50 15 V3 l12 4 l-12 4" stroke="#FFC94A" /></svg>
+    <img class="navemapa" src="../artes/nave-vagalume.webp" alt="">
+    <p class="missao"></p>
+  </section>
+
+  <section class="cena" id="escola">
+    <div class="cam">
+      <svg class="traco desenhar" viewBox="0 0 360 640" preserveAspectRatio="xMidYMid slice">
+        <path class="d" pathLength="1" d="M-10 560 C80 548 220 568 370 552" />
+        <path class="d" pathLength="1" style="--a:.2s" d="M40 560 V420 H320 V560 M20 426 L180 340 L340 426" />
+        <path class="d" pathLength="1" style="--a:.6s" d="M155 560 V490 H205 V560 M70 450 h46 v36 h-46 z M244 450 h46 v36 h-46 z" />
+        <path class="d ouro" pathLength="1" style="--a:.9s" d="M180 340 V290 l40 12 l-40 14" />
+        <circle class="d ouro" pathLength="1" style="--a:1.1s" cx="180" cy="390" r="20" />
+      </svg>
+      <img class="naveesc" src="../artes/nave-vagalume.webp" alt="">
+      <span class="chamado nome" style="--a:.2s;left:4%;top:7%;font-size:30px;rotate:-12deg"></span>
+      <span class="chamado nome" style="--a:.7s;right:4%;top:15%;font-size:36px;rotate:9deg"></span>
+      <span class="chamado nome" style="--a:1.2s;left:8%;top:23%;font-size:24px;rotate:6deg"></span>
+      <img class="desenho" alt="">
+      <div class="balao"></div>
+    </div>
+  </section>
+
+  <section class="cena" id="transforma">
+    <div class="raios"></div>
+    <img class="antes" alt="">
+    <img class="depois" alt="">
+    <span class="peca" style="--a:.5s;left:10%;top:30%;--r:-10deg">CAPACETE!</span>
+    <span class="peca" style="--a:.9s;right:8%;top:38%;--r:8deg">LUVAS!</span>
+    <span class="peca" style="--a:1.3s;left:12%;top:50%;--r:6deg">ASINHAS!</span>
+    <div class="flash"></div>
+    <div class="onom onomt">TCHARAAAM!</div>
+  </section>
 
   <section class="cena" id="pouso">
     <div class="cam">
@@ -310,23 +400,70 @@ function mundo(m, i) {
   s.classList.remove('on'); cena('mundo'); void s.offsetWidth; s.classList.add('on'); void tr.offsetWidth; tr.classList.add('desenhar');
   plim(ac.currentTime + .3, 660 + i * 40, .12);
   const on = s.querySelector('.onom'); on.textContent = m.onom; on.style.left = m.ox; on.style.top = m.oy; on.classList.remove('pop'); setTimeout(() => { void on.offsetWidth; on.classList.add('pop'); tum(ac.currentTime, 160, .35); }, 2300);
-  setTimeout(() => fala(b ? m.brilho : m.frase, i % 2 ? 'baixo' : ''), 3000);
+  setTimeout(() => { if (s.classList.contains('on')) fala(b ? m.brilho : m.frase, i % 2 ? 'baixo' : ''); }, 3000);
+}
+
+// a criança desenhada (antes de vestir a roupa): pele e cabelo vêm do formulário; se faltar, usa a padrão
+const PELE = q.get('p') || '', CAB = q.get('c') || '';
+const desenhoPadrao = menino ? 'desenho-menino.webp' : 'desenho-menina.webp';
+document.querySelectorAll('#escola .desenho, #transforma .antes').forEach((img) => {
+  img.src = PELE && CAB ? `desenho-${menino ? 'menino' : 'menina'}-${PELE}-${CAB}.webp` : desenhoPadrao;
+  img.onerror = () => { img.onerror = null; img.src = desenhoPadrao; };
+});
+document.querySelector('#transforma .depois').src = POSE[0];
+
+// o mapa: a escola embaixo e os 8 planetinhas espalhados (posições em %)
+const ESCOLA = [50, 88];
+const POS = [[22, 68], [76, 70], [84, 47], [55, 52], [17, 44], [26, 20], [72, 23], [49, 33]];
+const mapa = document.getElementById('mapa');
+const ESC = mapa.querySelector('.escolinha'); ESC.style.left = ESCOLA[0] + '%'; ESC.style.top = ESCOLA[1] + '%';
+const PLS = MUNDOS.map((m, i) => { const img = document.createElement('img'); img.className = 'pl'; img.src = `../artes/${m.arte}.webp`; img.style.left = POS[i][0] + '%'; img.style.top = POS[i][1] + '%'; mapa.insertBefore(img, mapa.querySelector('.navemapa')); return img; });
+const naveMapa = mapa.querySelector('.navemapa');
+const poeNave = (p, anima) => { naveMapa.style.transition = anima ? '' : 'none'; naveMapa.style.left = p[0] + '%'; naveMapa.style.top = p[1] + '%'; void naveMapa.offsetWidth; naveMapa.style.transition = ''; };
+const rotaAte = (k) => { const pts = [ESCOLA, ...POS.slice(0, k)]; document.getElementById('rota').setAttribute('d', pts.length > 1 ? 'M' + pts.map((p) => p.join(' ')).join(' L') : ''); };
+
+function abreMapa() {
+  cena('mapa'); naveMapa.style.opacity = 0; rotaAte(0); mapa.querySelector('.missao').textContent = '';
+  PLS.forEach((p, k) => { p.className = 'pl nasce'; p.style.setProperty('--a', (0.4 + k * 0.32) + 's'); setTimeout(() => plim(ac.currentTime, 523 + k * 70, .08), 400 + k * 320); });
+}
+function mapaMissao(i) {
+  cena('mapa'); naveMapa.style.opacity = 1;
+  PLS.forEach((p, k) => { p.className = 'pl' + (k < i ? ' aceso' : k === i ? ' alvo' : ''); });
+  rotaAte(i); poeNave(i === 0 ? ESCOLA : POS[i - 1], false);
+  mapa.querySelector('.missao').textContent = `MISSÃO ${i + 1}: ${MUNDOS[i].planeta.toUpperCase()}`; mapa.querySelector('.rotulo').textContent = 'MAPA DA NAVE VAGALUME';
+  setTimeout(() => { poeNave(POS[i], true); vuuush(ac.currentTime, 1.5); }, 350);
 }
 
 const ROT = [];
 let t = 0;
 ROT.push([t, () => { cena('titulo'); const a = ac.currentTime; tum(a + .2); tum(a + .6); }]); t += 4.2;
-ROT.push([t, () => { cena('pouso'); reinicia(document.getElementById('pouso')); zumbido(ac.currentTime + 3.4, 3.4); document.getElementById('trilha').play().catch(() => {}); [0.8, 1.3, 1.8, 2.2, 2.4, 2.9].forEach((d, k) => plim(ac.currentTime + d, k % 2 ? 988 : 784, .08)); fala(`Toda noite, ${A} ${N} olhava pro céu…`, 'baixo'); setTimeout(() => fala(`…até que uma noite, o céu chamou o nome ${DELA}.`, 'baixo'), 3400); }]); t += 7.2;
-ROT.push([t, () => { cena('cabine'); reinicia(document.getElementById('cabine')); fala(`Esta é a nave ${DE} ${N}.`); plim(ac.currentTime + 1.3, 880); }]); t += 3.4;
-ROT.push([t, () => fala(`Oito planetinhas estão esperando por ${ELA}.`)]); t += 3.4;
+// 1 · o mapa com os 8 planetinhas
+ROT.push([t, () => { abreMapa(); document.getElementById('trilha').play().catch(() => {}); fala('Lá no alto, oito planetinhas brincavam em paz…', 'baixo'); }]); t += 3.8;
+ROT.push([t, () => { PLS.forEach((p) => { p.className = 'pl alvo'; }); tum(ac.currentTime, 70, .6); fala('…até que, um dia, todos começaram a piscar.', 'baixo'); }]); t += 3.2;
+// 2 · na Escola Amadeus, a nave chega chamando
+ROT.push([t, () => { const e = document.getElementById('escola'); e.className = 'cena'; cena('escola'); reinicia(e); zumbido(ac.currentTime, 6); fala(`Na Escola Amadeus, ${A} ${N} brincava…`, 'baixo'); }]); t += 3.2;
+ROT.push([t, () => { document.getElementById('escola').classList.add('chama'); fala(''); [0, .5, 1, 1.6, 2.1, 2.6].forEach((d, k) => plim(ac.currentTime + d, k % 2 ? 988 : 784, .09)); }]); t += 3.4;
+// 3 · a nave fala
+ROT.push([t, () => { const e = document.getElementById('escola'); e.classList.remove('chama'); e.querySelector('.balao').innerHTML = `${N}! Os planetas estão em apuros!<br>Precisamos de você para salvá-los!`; e.classList.add('fala'); plim(ac.currentTime, 660); plim(ac.currentTime + .15, 880); }]); t += 4.6;
+// 4 · a transformação
+ROT.push([t, () => { cena('transforma'); reinicia(document.getElementById('transforma')); fala(''); vuuush(ac.currentTime, 1.9); [0.5, 0.9, 1.3].forEach((d) => tum(ac.currentTime + d, 180, .4)); setTimeout(() => { plim(ac.currentTime, 784); plim(ac.currentTime + .12, 1047); }, 2100); }]); t += 3.6;
+ROT.push([t, () => fala(`${A === 'a' ? 'A' : 'O'} ${N} vestiu sua roupa de piloto…`, 'baixo')]); t += 2.4;
+// 5 · a cabine com o nome
+ROT.push([t, () => { cena('cabine'); reinicia(document.getElementById('cabine')); fala('…e embarcou na Nave Vagalume!'); plim(ac.currentTime + 1.3, 880); }]); t += 3.6;
+// 6 · de planeta em planeta, sempre passando pelo mapa
 MUNDOS.forEach((m, i) => {
-  ROT.push([t, () => { fala(''); viagem(m); }]); t += 1.5;
+  ROT.push([t, () => { fala(''); mapaMissao(i); }]); t += 2.4;
   ROT.push([t, () => mundo(m, i)]); t += 6.6;
 });
+// 7 · todos os planetas salvos, a volta para a escola
 ROT.push([t, () => {
-  fala(''); cena('final'); reinicia(document.getElementById('final'));
-  document.querySelectorAll('#final .anel img').forEach((img, k) => { img.classList.remove('aceso'); setTimeout(() => { img.classList.add('aceso'); plim(ac.currentTime, 523 + k * 60, .1); }, 300 + k * 330); });
-}]); t += 7.4;
+  fala(''); cena('mapa'); rotaAte(8); PLS.forEach((p) => { p.className = 'pl aceso'; }); poeNave(POS[7], false);
+  mapa.querySelector('.missao').textContent = 'MISSÃO CUMPRIDA!';
+  setTimeout(() => { poeNave(ESCOLA, true); vuuush(ac.currentTime, 1.5); }, 500);
+  PLS.forEach((p, k) => setTimeout(() => plim(ac.currentTime, 523 + k * 60, .1), 200 + k * 160));
+}]); t += 3.6;
+ROT.push([t, () => { cena('final'); reinicia(document.getElementById('final'));
+  document.querySelectorAll('#final .anel img').forEach((img, k) => { img.classList.remove('aceso'); setTimeout(() => img.classList.add('aceso'), 200 + k * 200); }); }]); t += 6;
 ROT.push([t, () => { cena('creditos'); reinicia(document.getElementById('creditos')); }]);
 
 document.getElementById('play').onclick = () => {
