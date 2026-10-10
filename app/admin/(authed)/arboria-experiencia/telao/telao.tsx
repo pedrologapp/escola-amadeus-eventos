@@ -10,7 +10,7 @@ import { AtividadeTV } from "./atividade-tv";
  * (atividade-tv.tsx: convite, palavras, as 8 formas, escolha, 2ª rodada, as formas da sala) → (Liberar) estreia → (Encerrar) fim.
  * Na apresentação: → / PageDown avança um slide, ← / PageUp volta um slide, espaço dá play/pausa (os slides vêm de slides.json).
  * Fora dela: → / ← passam de tela sem apertar nada no banco (para ensaiar) · F tela cheia.
- * A apresentação (public/arboria/apresentacao/parte1.mp4) já vem com as falas da Arbória e a trilha; qr-fala.mp3 toca na tela do QR.
+ * A apresentação (public/arboria/apresentacao/parte1.mp4) já vem com as falas do Arboria e a trilha; qr-fala.mp3 toca na tela do QR.
  */
 type Etapa = "pronto" | "video" | "qr" | "atividade" | "estreia" | "fim";
 const ORDEM: Etapa[] = ["pronto", "video", "qr", "atividade", "estreia", "fim"];
@@ -99,7 +99,7 @@ export function Telao({ qr }: { qr: string }) {
 
   useEffect(() => {
     if (etapa === "video") video.current?.play().catch(() => {}); else video.current?.pause();
-    // na tela do QR, a Arbória pede para preencherem
+    // na tela do QR, o Arboria pede para preencherem
     const a = fala.current; if (!a) return;
     if (etapa === "qr") { a.currentTime = 0; a.play().catch(() => {}); } else a.pause();
   }, [etapa]);

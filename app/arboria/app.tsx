@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 import { ATIVIDADE, SERIES, primeiroNome, type Chave } from "@/lib/arboria-historia";
 import { FORMAS, grade } from "@/lib/arboria-atividade";
 import { cadastrar, estado, registrarAtividade, type CriancaHistoria, type Fase, type FilhoEntrada } from "./actions";
-import { Trailer } from "./trailer";
+import { Trailer, urlTrailer } from "./trailer";
 
 /**
  * O celular do pai na Experiência, com a cara do trailer (tela preta, uma pergunta por vez):
@@ -304,7 +304,7 @@ function Espera({ familia, nomes }: { familia: string; nomes: string[] }) {
 
   if (aberta) return <Trailer crianca={aberta} fechar={() => setAberta(null)} />;
   if (fazendo && !criancas.length) {
-    const fim = (ok: boolean) => { if (ok) setFeito((f) => ({ ...f, [fazendo === "forma" ? "forma" : fazendo]: fazendo === "forma" ? "ok" : true })); setFazendo(null); };
+    const fim = (ok: boolean, forma?: string) => { if (ok) setFeito((f) => (fazendo === "forma" ? { ...f, forma: forma ?? "ok" } : { ...f, [fazendo]: true })); setFazendo(null); };
     if (fazendo === "forma") return <EscolheForma familia={familia} voltar={fim} />;
     return <Lembrar familia={familia} rodada={fazendo === "r1" ? 0 : 1} voltar={fim} />;
   }
@@ -332,7 +332,11 @@ function Espera({ familia, nomes }: { familia: string; nomes: string[] }) {
                   <span className="relative flex size-12 shrink-0 items-center justify-center rounded-full text-2xl" style={{ background: OURO }}><span className="absolute inset-0 animate-ping rounded-full" style={{ background: "rgba(255,201,74,.35)" }} />✦</span>
                   <span><b className="block font-[family-name:var(--font-serie)] text-xl font-normal text-[#FFE4A0]">{cartao[fase][0]}</b><span className="text-sm text-white/65">{cartao[fase][1]} · toque aqui</span></span>
                 </button>
-              : <p className="arb-in mt-10 rounded-2xl border border-white/15 px-5 py-4 text-[15px] text-white/70">✓ Pronto! <b className="text-[#FFE4A0]">Olhe a TV.</b></p>
+              : <p key={"ok" + fase} className="arb-in mt-10 rounded-2xl border border-white/15 px-5 py-4 text-[15px] leading-relaxed text-white/75">
+                  {fase === "forma" && feito.forma
+                    ? <>✓ A sua forma: <b style={{ color: FORMAS.find((x) => x.chave === feito.forma)?.cor ?? OURO }}>{FORMAS.find((x) => x.chave === feito.forma)?.titulo ?? "escolhida"}</b>.<br />Use ela nas próximas palavras. <b className="text-[#FFE4A0]">Olhe a TV.</b></>
+                    : <>✓ Enviado! <b className="text-[#FFE4A0]">Agora olhe a TV.</b></>}
+                </p>
           )}
         </div>
       </Preto>
@@ -352,6 +356,7 @@ function Espera({ familia, nomes }: { familia: string; nomes: string[] }) {
               <span><b className="block font-[family-name:var(--font-serie)] text-xl font-normal text-[#FFE4A0]">{primeiroNome(c.nome)}</b><span className="text-sm text-white/60">{c.serie} · toque para assistir</span></span>
             </button>
           ))}
+          <Guardar criancas={criancas} />
         </div>
       </div>
     </Preto>
@@ -361,32 +366,19 @@ function Espera({ familia, nomes }: { familia: string; nomes: string[] }) {
 /* ---------------- atividade das 15 palavras ---------------- */
 
 // as palavras de que o pai lembra: uma grade com as 15 certas misturadas a 15 parecidas
-function Lembrar({ familia, rodada, voltar }: { familia: string; rodada: number; voltar: (ok: boolean) => void }) {
+function Lembrar({ familia, rodada, voltar }: { familia: string; rodada: number; voltar: (ok: boolean, forma?: string) => void }) {
   const palavras = useMemo(() => grade(rodada), [rodada]);
   const [marcadas, setMarcadas] = useState<string[]>([]);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const [pronto, setPronto] = useState(false);
   const alterna = (p: string) => setMarcadas((m) => (m.includes(p) ? m.filter((x) => x !== p) : [...m, p]));
   const enviar = async () => {
     setEnviando(true); setErro(null);
     const r = await registrarAtividade(familia, rodada === 0 ? "r1" : "r2", marcadas).catch(() => null);
     setEnviando(false);
     if (!r?.ok) return setErro("Não consegui enviar. Confira a internet e toque de novo.");
-    setPronto(true);
+    voltar(true);
   };
-  if (pronto) {
-    return (
-      <Preto>
-        <Selo>{rodada === 0 ? "1ª parte" : "2ª parte"}</Selo>
-        <div className="flex flex-1 flex-col justify-center pb-10">
-          <Titulo>Enviado. <Ouro>Olhe a TV.</Ouro></Titulo>
-          <p className="arb-in-3 mt-6 text-center text-[16px] leading-relaxed text-white/70">{rodada === 0 ? "Agora vêm 8 formas diferentes de guardar palavras. Veja qual combina mais com você." : "Cada pai da sala lembrou do seu jeito. O seu filho também tem o dele."}</p>
-        </div>
-        <div className="arb-in-3 pb-10"><Botao onClick={() => voltar(true)}>Voltar para a espera</Botao></div>
-      </Preto>
-    );
-  }
   return (
     <Preto>
       <Voltar onClick={() => voltar(false)} />
@@ -406,32 +398,16 @@ function Lembrar({ familia, rodada, voltar }: { familia: string; rodada: number;
 }
 
 // a forma que o pai mais gostou (a TV mostra só quantos escolheram cada uma)
-function EscolheForma({ familia, voltar }: { familia: string; voltar: (ok: boolean) => void }) {
+function EscolheForma({ familia, voltar }: { familia: string; voltar: (ok: boolean, forma?: string) => void }) {
   const [enviando, setEnviando] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
-  const [escolhida, setEscolhida] = useState<string | null>(null);
   const escolhe = async (k: string) => {
     setEnviando(k); setErro(null);
     const r = await registrarAtividade(familia, "forma", k).catch(() => null);
     setEnviando(null);
     if (!r?.ok) return setErro("Não consegui enviar. Confira a internet e toque de novo.");
-    setEscolhida(k);
+    voltar(true, k);
   };
-  if (escolhida) {
-    const f = FORMAS.find((x) => x.chave === escolhida)!;
-    return (
-      <Preto>
-        <Selo>A sua forma</Selo>
-        <div className="flex flex-1 flex-col justify-center pb-10">
-          <Titulo><span style={{ color: f.cor }}>{f.titulo}</span></Titulo>
-          <p className="arb-in-3 mt-6 text-center text-[16px] leading-relaxed text-white/70">{f.como}</p>
-          <p className="arb-in-3 mt-3 text-center text-[15px] italic text-white/55">{f.exemplo}</p>
-          <p className="arb-in-3 mt-6 text-center text-[15px] text-[#FFE4A0]">Guarde a sua forma: as próximas 15 palavras vão aparecer na TV.</p>
-        </div>
-        <div className="arb-in-3 pb-10"><Botao onClick={() => voltar(true)}>Voltar para a espera</Botao></div>
-      </Preto>
-    );
-  }
   return (
     <Preto>
       <Voltar onClick={() => voltar(false)} />
@@ -448,6 +424,25 @@ function EscolheForma({ familia, voltar }: { familia: string; voltar: (ok: boole
         {erro && <p className="rounded-2xl border border-red-400/40 bg-red-500/10 p-3 text-center text-sm text-red-200">{erro}</p>}
       </div>
     </Preto>
+  );
+}
+
+// guarda o link da série: abre o menu de compartilhar do celular (WhatsApp, salvar…); sem ele, copia o link
+function Guardar({ criancas }: { criancas: CriancaHistoria[] }) {
+  const [aviso, setAviso] = useState<string | null>(null);
+  const guardar = async () => {
+    const links = criancas.map((c) => `${primeiroNome(c.nome)}: ${location.origin}${urlTrailer(c)}`).join("\n");
+    const texto = `A série do Arboria 💛\n${links}`;
+    try {
+      if (navigator.share) { await navigator.share({ title: "A série do Arboria", text: texto }); return; }
+      await navigator.clipboard.writeText(texto); setAviso("Link copiado. Cole no seu WhatsApp para guardar.");
+    } catch { /* fechou o menu sem escolher */ }
+  };
+  return (
+    <div className="pt-3 text-center">
+      <button onClick={guardar} className="w-full rounded-full border border-white/25 py-3.5 font-semibold text-white/85">Guardar no meu celular</button>
+      <p className="mt-2 text-xs text-white/45">{aviso ?? "Mande o link para você mesmo no WhatsApp e assista quando quiser."}</p>
+    </div>
   );
 }
 
