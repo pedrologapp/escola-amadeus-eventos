@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { ATIVIDADE, SERIES, primeiroNome, type Chave } from "@/lib/arboria-historia";
-import { FORMAS, grade } from "@/lib/arboria-atividade";
+import { FORMAS, RODADAS, grade } from "@/lib/arboria-atividade";
 import { cadastrar, estado, registrarAtividade, type CriancaHistoria, type Fase, type FilhoEntrada } from "./actions";
 import { Trailer, urlTrailer } from "./trailer";
 
@@ -285,6 +285,8 @@ function Espera({ familia, nomes }: { familia: string; nomes: string[] }) {
   const [revelando, setRevelando] = useState(false);
   const [fase, setFase] = useState<Fase>(null);
   const [feito, setFeito] = useState<{ r1: boolean; forma: string | null; r2: boolean }>({ r1: false, forma: null, r2: false });
+  // quantas palavras o pai acertou em cada parte: só aparece no celular dele (a TV nunca mostra)
+  const [acertos, setAcertos] = useState<{ r1?: number; r2?: number }>({});
   const [fazendo, setFazendo] = useState<Fase>(null);
 
   useEffect(() => {
@@ -304,7 +306,11 @@ function Espera({ familia, nomes }: { familia: string; nomes: string[] }) {
 
   if (aberta) return <Trailer crianca={aberta} fechar={() => setAberta(null)} />;
   if (fazendo && !criancas.length) {
-    const fim = (ok: boolean, forma?: string) => { if (ok) setFeito((f) => (fazendo === "forma" ? { ...f, forma: forma ?? "ok" } : { ...f, [fazendo]: true })); setFazendo(null); };
+    const fim = (ok: boolean, forma?: string, n?: number) => {
+      if (ok) setFeito((f) => (fazendo === "forma" ? { ...f, forma: forma ?? "ok" } : { ...f, [fazendo]: true }));
+      if (ok && n !== undefined && fazendo !== "forma") setAcertos((a) => ({ ...a, [fazendo]: n }));
+      setFazendo(null);
+    };
     if (fazendo === "forma") return <EscolheForma familia={familia} voltar={fim} />;
     return <Lembrar familia={familia} rodada={fazendo === "r1" ? 0 : 1} voltar={fim} />;
   }
@@ -335,7 +341,17 @@ function Espera({ familia, nomes }: { familia: string; nomes: string[] }) {
               : <p key={"ok" + fase} className="arb-in mt-10 rounded-2xl border border-white/15 px-5 py-4 text-[15px] leading-relaxed text-white/75">
                   {fase === "forma" && feito.forma
                     ? <>✓ A sua forma: <b style={{ color: FORMAS.find((x) => x.chave === feito.forma)?.cor ?? OURO }}>{FORMAS.find((x) => x.chave === feito.forma)?.titulo ?? "escolhida"}</b>.<br />Use ela nas próximas palavras. <b className="text-[#FFE4A0]">Olhe a TV.</b></>
-                    : <>✓ Enviado! <b className="text-[#FFE4A0]">Agora olhe a TV.</b></>}
+                    : (() => {
+                        const n = fase === "r2" ? acertos.r2 : acertos.r1;
+                        if (n === undefined) return <>✓ Enviado! <b className="text-[#FFE4A0]">Agora olhe a TV.</b></>;
+                        const antes = fase === "r2" ? acertos.r1 : undefined;
+                        return <>
+                          <span className="block text-[13px] uppercase tracking-[0.2em] text-white/45">Só você vê</span>
+                          <span className="mt-1 block font-[family-name:var(--font-serie)] text-[26px] text-[#FFE4A0]">{n} de 15 palavras</span>
+                          {antes !== undefined && <span className="mt-1 block">Na 1ª parte foram {antes}.{n > antes ? " Você lembrou mais com a sua forma! 💛" : ""}</span>}
+                          <span className="mt-2 block"><b className="text-[#FFE4A0]">Agora olhe a TV.</b></span>
+                        </>;
+                      })()}
                 </p>
           )}
         </div>
@@ -366,7 +382,7 @@ function Espera({ familia, nomes }: { familia: string; nomes: string[] }) {
 /* ---------------- atividade das 15 palavras ---------------- */
 
 // as palavras de que o pai lembra: uma grade com as 15 certas misturadas a 15 parecidas
-function Lembrar({ familia, rodada, voltar }: { familia: string; rodada: number; voltar: (ok: boolean, forma?: string) => void }) {
+function Lembrar({ familia, rodada, voltar }: { familia: string; rodada: number; voltar: (ok: boolean, forma?: string, acertos?: number) => void }) {
   const palavras = useMemo(() => grade(rodada), [rodada]);
   const [marcadas, setMarcadas] = useState<string[]>([]);
   const [enviando, setEnviando] = useState(false);
@@ -377,7 +393,8 @@ function Lembrar({ familia, rodada, voltar }: { familia: string; rodada: number;
     const r = await registrarAtividade(familia, rodada === 0 ? "r1" : "r2", marcadas).catch(() => null);
     setEnviando(false);
     if (!r?.ok) return setErro("Não consegui enviar. Confira a internet e toque de novo.");
-    voltar(true);
+    const certas = new Set(RODADAS[rodada].palavras);
+    voltar(true, undefined, marcadas.filter((p) => certas.has(p)).length);
   };
   return (
     <Preto>
