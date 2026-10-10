@@ -432,7 +432,8 @@ function Guardar({ criancas }: { criancas: CriancaHistoria[] }) {
   const [aviso, setAviso] = useState<string | null>(null);
   const guardar = async () => {
     const links = criancas.map((c) => `${primeiroNome(c.nome)}: ${location.origin}${urlTrailer(c)}`).join("\n");
-    const texto = `A série do Arboria 💛\n${links}`;
+    // junto vai o folder público da escola (a versão sem os valores de 2027)
+    const texto = `A série do Arboria 💛\n${links}\n\nConheça o Amadeus 2027: https://www.escolaamadeus.com/conheca`;
     try {
       if (navigator.share) { await navigator.share({ title: "A série do Arboria", text: texto }); return; }
       await navigator.clipboard.writeText(texto); setAviso("Link copiado. Cole no seu WhatsApp para guardar.");
