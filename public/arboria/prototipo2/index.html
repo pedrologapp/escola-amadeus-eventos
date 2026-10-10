@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Maria e a Nave Vagalume · protótipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<!--
+  Protótipo 2 da série do Arboria (~34 s): mistura de pouca imagem gerada (a criança de fantasia e um Batuquinho)
+  com cenário que já temos e TRAÇO VIVO desenhado e animado em código (grátis). Sem narração.
+  ?nome=Maria
+-->
+<style>
+  :root { --ouro: #FFC94A; --traco: #FFF6E0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #000; overflow: hidden; }
+  body { font-family: "Atkinson Hyperlegible", system-ui, sans-serif; color: #fff; -webkit-font-smoothing: antialiased; }
+  #palco { position: fixed; inset: 0; margin: auto; width: min(100vw, calc(100svh * 9 / 16)); height: min(100svh, calc(100vw * 16 / 9)); overflow: hidden; background: #050a24; }
+  .cena { position: absolute; inset: 0; visibility: hidden; overflow: hidden; }
+  .cena.on { visibility: visible; }
+  .cam { position: absolute; inset: 0; transform-origin: 50% 60%; }
+  .fundo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  svg.traco { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  svg.traco .d { fill: none; stroke: var(--traco); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; filter: drop-shadow(0 0 3px rgba(255,240,200,.55)); }
+  .cena.on svg.traco .d { animation: desenha var(--t, 1.4s) cubic-bezier(.6,.1,.3,1) var(--a, 0s) forwards; }
+  svg.traco .ouro { stroke: var(--ouro); filter: drop-shadow(0 0 5px rgba(255,201,74,.8)); }
+  @keyframes desenha { to { stroke-dashoffset: 0; } }
+
+  /* legenda de série */
+  #legenda { position: absolute; left: 8%; right: 8%; bottom: 9%; z-index: 40; text-align: center; font: 700 clamp(15px, 4.4vw, 21px)/1.35 "Atkinson Hyperlegible", sans-serif;
+    text-shadow: 0 2px 8px rgba(0,0,0,.95); opacity: 0; transition: opacity .35s ease; }
+  #legenda.on { opacity: 1; }
+  .grao { position: absolute; inset: -50%; z-index: 35; pointer-events: none; opacity: .08; mix-blend-mode: overlay; animation: grao 1s steps(5) infinite;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  @keyframes grao { 0% { transform: translate(0,0); } 50% { transform: translate(-3%,2%); } 100% { transform: translate(2%,-3%); } }
+  .vinheta { position: absolute; inset: 0; z-index: 34; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0,0,0,.55) 100%); }
+
+  /* títulos */
+  .titulo { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; background: #000; }
+  .titulo .o { font: 700 11px "Atkinson Hyperlegible"; letter-spacing: .45em; color: rgba(255,255,255,.6); opacity: 0; }
+  .titulo .n { font-family: "Young Serif", serif; font-size: clamp(54px, 18vw, 86px); line-height: 1; margin-top: 18px; opacity: 0; letter-spacing: .01em; }
+  .titulo .e { font-family: "Young Serif", serif; font-size: clamp(18px, 5.4vw, 24px); color: var(--ouro); margin-top: 10px; opacity: 0; }
+  .cena.on .titulo .o { animation: surge .8s ease .2s forwards; }
+  .cena.on .titulo .n { animation: nome 1.4s cubic-bezier(.2,.8,.2,1) .9s forwards; }
+  .cena.on .titulo .e { animation: surge 1s ease 1.8s forwards; }
+  @keyframes surge { to { opacity: 1; } }
+  @keyframes nome { from { opacity: 0; transform: scale(1.12); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
+
+  /* noite no quintal (tudo desenhado) */
+  #quintal { background: linear-gradient(#060b2a 0%, #0f1f5c 58%, #1b2f6e 72%, #0d1a3a 100%); }
+  .estrela { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: #fff; animation: pisca 2s ease-in-out infinite alternate; }
+  @keyframes pisca { to { opacity: .2; } }
+  .janela-luz { position: absolute; left: 28.5%; top: 63.3%; width: 9%; height: 6%; background: #FFD877; box-shadow: 0 0 30px 10px rgba(255,210,110,.45); opacity: 0; }
+  .cena.on .janela-luz { animation: surge .6s ease 2.2s forwards; }
+  .vagalume { position: absolute; left: 70%; top: 18%; width: 12px; height: 12px; border-radius: 50%; background: var(--ouro); box-shadow: 0 0 22px 8px rgba(255,201,74,.75); opacity: 0; }
+  .cena.on .vagalume { animation: pisca3 1.8s ease 1.6s forwards; }
+  @keyframes pisca3 { 0%,20%,40%,60%,80% { opacity: 0; } 10%,30%,50%,70%,100% { opacity: 1; } }
+  #quintal .cam { animation: subir 4.4s ease-in-out both paused; }
+  #quintal.on .cam { animation-play-state: running; }
+  @keyframes subir { from { transform: translateY(6%) scale(1.08); } to { transform: none; } }
+
+  /* a nave chega */
+  #chegada { background: linear-gradient(#060b2a 0%, #0f1f5c 62%, #0d1a3a 100%); }
+  #chegada .nave { position: absolute; left: 50%; width: 64%; translate: -50% 0; top: -40%; filter: drop-shadow(0 0 40px rgba(255,214,120,.5)); }
+  #chegada.on .nave { animation: pousa 3.6s cubic-bezier(.3,.6,.25,1) forwards; }
+  @keyframes pousa { 0% { top: -40%; transform: rotate(-8deg); } 70% { top: 34%; transform: rotate(3deg); } 100% { top: 31%; transform: rotate(0); } }
+  #chegada .crianca { position: absolute; left: 50%; bottom: 6%; height: 30%; translate: -50% 0; }
+  #chegada .crianca img { height: 100%; filter: drop-shadow(0 8px 10px rgba(0,0,0,.6)); }
+  #chegada.on .cam { animation: aproxima 4.4s ease-out both; }
+  @keyframes aproxima { from { transform: scale(1); } to { transform: scale(1.12) translateY(3%); } }
+  .poeira { position: absolute; left: 50%; bottom: 30%; width: 70%; height: 10%; translate: -50% 0; background: radial-gradient(ellipse, rgba(255,230,170,.45), transparent 70%); opacity: 0; filter: blur(4px); }
+  #chegada.on .poeira { animation: surge .8s ease 2.4s forwards; }
+
+  /* a poltrona com o nome */
+  #poltrona { background: radial-gradient(circle at 50% 45%, #233b8c, #070e2e 75%); }
+  #poltrona .nomepoltrona { position: absolute; left: 0; right: 0; top: 47%; text-align: center; font-family: "Young Serif", serif; font-size: clamp(28px, 9vw, 42px); color: var(--ouro); letter-spacing: .12em; opacity: 0; text-shadow: 0 0 18px rgba(255,201,74,.6); }
+  #poltrona.on .nomepoltrona { animation: surge .8s ease 1.4s forwards; }
+  #poltrona.on .cam { animation: aproxima 3.2s ease-out both; }
+
+  /* viagem */
+  #viagem canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #viagem .planeta { position: absolute; left: 50%; top: 42%; width: 70%; translate: -50% -50%; scale: .1; opacity: 0; }
+  #viagem.on .planeta { animation: cresce 4s cubic-bezier(.5,0,.6,1) .4s forwards; }
+  @keyframes cresce { 0% { scale: .1; opacity: 0; } 20% { opacity: 1; } 100% { scale: 1.6; opacity: 1; } }
+  #viagem .navinha { position: absolute; left: 50%; top: 70%; width: 30%; translate: -50% 0; animation: balanca .5s ease-in-out infinite alternate; filter: drop-shadow(0 0 20px rgba(255,214,120,.6)); }
+  @keyframes balanca { from { transform: rotate(-3deg) translateY(0); } to { transform: rotate(3deg) translateY(-6px); } }
+
+  /* Planeta-Tambor */
+  #tambor .cam { transform-origin: 50% 70%; }
+  #tambor.on .cam { animation: desce 5s ease-out both; }
+  @keyframes desce { from { transform: scale(1.3) translateY(-6%); } to { transform: scale(1.04); } }
+  #tambor.caos .cam { animation: treme .09s linear infinite; }
+  @keyframes treme { 0% { transform: scale(1.04) translate(0,0); } 50% { transform: scale(1.04) translate(3px,-2px); } 100% { transform: scale(1.04) translate(-2px,2px); } }
+  #tambor .urso { position: absolute; left: 4%; bottom: 14%; width: 52%; filter: drop-shadow(0 10px 14px rgba(0,0,0,.5)); }
+  #tambor .crianca { position: absolute; right: 6%; bottom: 10%; height: 34%; opacity: 0; }
+  #tambor.on .crianca { animation: pula 1s cubic-bezier(.2,1.4,.4,1) 1.2s forwards; }
+  @keyframes pula { 0% { opacity: 1; transform: translateY(-140%); } 70% { opacity: 1; transform: translateY(3%) scaleY(.92); } 100% { opacity: 1; transform: none; } }
+  #tambor .crianca img { height: 100%; filter: drop-shadow(0 10px 12px rgba(0,0,0,.5)); }
+  .nota { position: absolute; font-family: "Young Serif", serif; color: #fff; font-size: 30px; text-shadow: 0 0 8px rgba(0,0,0,.6); }
+  #tambor.caos .nota { animation: notaLouca .45s ease-in-out infinite alternate; }
+  @keyframes notaLouca { from { transform: translate(0,0) rotate(-18deg) scale(1); } to { transform: translate(8px,-14px) rotate(16deg) scale(1.25); } }
+  #tambor .rabisco .d { stroke: #FF6B6B; }
+
+  /* a Pausa */
+  #tambor.pausa .cam { animation: none; transform: scale(1.12) translateY(-2%); transition: transform 3s ease-out; filter: saturate(.25) brightness(.8); }
+  #tambor.pausa .nota { animation: none !important; opacity: .7; }
+  #tambor.pausa video { filter: saturate(.2); }
+  .anel { position: absolute; right: 6%; bottom: 10%; height: 34%; aspect-ratio: 2/3; pointer-events: none; }
+  .anel circle { fill: none; stroke: var(--ouro); stroke-width: 2; stroke-dasharray: 1; stroke-dashoffset: 1; filter: drop-shadow(0 0 8px rgba(255,201,74,.9)); }
+  #tambor.pausa .anel circle { animation: desenha 2.2s ease .4s forwards; }
+  #tambor.calma .cam { filter: none; transform: scale(1.04); transition: transform 2s ease, filter 1.5s ease; }
+  #tambor.calma .nota { animation: notaCalma 2.4s ease-in-out infinite alternate !important; color: var(--ouro); }
+  @keyframes notaCalma { from { transform: translateY(0); opacity: .9; } to { transform: translateY(-18px); opacity: .5; } }
+  .ondas { position: absolute; right: 2%; bottom: 22%; width: 52%; height: 22%; opacity: 0; }
+  #tambor.calma .ondas { opacity: 1; }
+  #tambor.calma .ondas .d { animation: desenha 1.2s ease forwards, onda 1.6s ease-in-out 1.2s infinite alternate; }
+  @keyframes onda { to { opacity: .35; } }
+  .zzz { position: absolute; left: 20%; top: 46%; font-family: "Young Serif", serif; font-size: 26px; color: var(--traco); opacity: 0; }
+  #tambor.dorme .zzz { animation: zz 2.4s ease-in-out infinite; }
+  @keyframes zz { 0% { opacity: 0; transform: translate(0,0); } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(20px,-40px); } }
+
+  /* fim */
+  #fim { background: #000; display: grid; place-items: center; text-align: center; padding: 0 12%; }
+  #fim .ep { font: 700 11px "Atkinson Hyperlegible"; letter-spacing: .4em; color: rgba(255,255,255,.6); }
+  #fim .t { font-family: "Young Serif", serif; font-size: clamp(26px, 8vw, 36px); margin-top: 12px; line-height: 1.1; }
+  #fim .cred { margin-top: 26px; font-size: 14px; color: rgba(255,255,255,.75); line-height: 1.6; }
+  #fim .cred b { color: #fff; }
+  #fim .c { margin-top: 22px; font-family: "Young Serif", serif; color: var(--ouro); font-size: 18px; }
+  #fim button { margin-top: 26px; background: none; border: 1.5px solid rgba(255,255,255,.5); color: #fff; padding: 9px 20px; border-radius: 99px; font: 700 13px "Atkinson Hyperlegible"; }
+  #fim > div > * { opacity: 0; }
+  #fim.on > div > * { animation: surge 1s ease forwards; }
+  #fim.on .t { animation-delay: .5s; } #fim.on .cred { animation-delay: 1.4s; } #fim.on .c { animation-delay: 2.4s; } #fim.on button { animation-delay: 3s; }
+
+  #comecar { position: absolute; inset: 0; z-index: 60; display: grid; place-items: center; background: #000; text-align: center; padding: 0 12%; }
+  #comecar p { font: 700 11px "Atkinson Hyperlegible"; letter-spacing: .4em; color: rgba(255,255,255,.6); }
+  #comecar h1 { font-family: "Young Serif", serif; font-size: 36px; line-height: 1.05; margin: 14px 0 6px; font-weight: 400; }
+  #comecar h2 { font-family: "Young Serif", serif; font-weight: 400; color: var(--ouro); font-size: 18px; margin-bottom: 30px; }
+  #comecar button { background: var(--ouro); color: #1a1300; border: 0; border-radius: 99px; padding: 15px 28px; font: 700 16px "Atkinson Hyperlegible"; }
+  #comecar small { display: block; margin-top: 14px; color: rgba(255,255,255,.5); font-size: 12px; }
+</style>
+</head>
+<body>
+<div id="palco">
+
+  <section class="cena" id="titulo"><div class="titulo"><div><p class="o">UMA SÉRIE ORIGINAL ARBORIA</p><p class="n nome">Maria</p><p class="e">e a Nave Vagalume</p></div></div></section>
+
+  <!-- 1 · o quintal à noite, desenhado em traço -->
+  <section class="cena" id="quintal">
+    <div class="cam">
+      <div class="estrelas"></div>
+      <svg class="traco" viewBox="0 0 360 640" preserveAspectRatio="xMidYMid slice">
+        <path class="d" pathLength="1" style="--a:.1s;--t:1.6s" d="M-10 470 C80 455 200 480 370 462" />
+        <path class="d" pathLength="1" style="--a:.4s" d="M70 470 V380 H170 V470 M58 384 L120 330 L182 384" />
+        <path class="d" pathLength="1" style="--a:.9s" d="M102 405 h32 v38 h-32 z M118 405 v38 M102 424 h32" />
+        <path class="d" pathLength="1" style="--a:1.1s" d="M190 470 v-26 M205 470 v-26 M220 470 v-26 M235 470 v-26 M250 470 v-26 M265 470 v-26 M182 452 h92" />
+        <path class="d" pathLength="1" style="--a:1.3s;--t:1.8s" d="M300 470 V400 M300 410 C270 400 262 360 282 342 C276 318 300 300 322 312 C346 300 366 326 352 348 C368 368 352 400 322 400" />
+      </svg>
+      <div class="janela-luz"></div>
+      <div class="vagalume"></div>
+    </div>
+  </section>
+
+  <!-- 2 · a nave chega no quintal -->
+  <section class="cena" id="chegada">
+    <div class="cam">
+      <div class="estrelas"></div>
+      <svg class="traco" viewBox="0 0 360 640" preserveAspectRatio="xMidYMid slice">
+        <path class="d" pathLength="1" style="--a:0s" d="M-10 520 C80 505 200 530 370 512" />
+        <path class="d ouro" pathLength="1" style="--a:2.3s;--t:.9s" d="M150 380 L110 520 M180 385 L180 525 M210 380 L250 520" />
+        <path class="d ouro" pathLength="1" style="--a:2.6s;--t:1s" d="M90 520 C120 505 150 532 180 518 C210 505 240 530 270 518" />
+      </svg>
+      <div class="poeira"></div>
+      <img class="nave" src="../artes/nave-vagalume.webp" alt="">
+      <div class="crianca"><img src="crianca.webp" alt=""></div>
+    </div>
+  </section>
+
+  <!-- 3 · a poltrona com o nome -->
+  <section class="cena" id="poltrona">
+    <div class="cam">
+      <svg class="traco" viewBox="0 0 360 640" preserveAspectRatio="xMidYMid slice">
+        <circle class="d ouro" pathLength="1" style="--a:0s;--t:1.2s" cx="180" cy="300" r="150" />
+        <path class="d" pathLength="1" style="--a:.5s" d="M110 400 V270 C110 220 250 220 250 270 V400" />
+        <path class="d" pathLength="1" style="--a:.8s" d="M95 400 H265 M110 360 H250" />
+        <path class="d" pathLength="1" style="--a:1s" d="M70 230 L100 215 M290 230 L260 215 M180 150 V175" />
+      </svg>
+      <p class="nomepoltrona nome">MARIA</p>
+    </div>
+  </section>
+
+  <!-- 4 · a viagem -->
+  <section class="cena" id="viagem">
+    <canvas class="ceu"></canvas>
+    <img class="planeta" src="../artes/mundo-musical.webp" alt="">
+    <img class="navinha" src="../artes/nave-vagalume.webp" alt="">
+  </section>
+
+  <!-- 5 · Planeta-Tambor: o caos, a Pausa e a solução -->
+  <section class="cena" id="tambor">
+    <div class="cam">
+      <video class="fundo" src="../vivos/inf-musical.mp4" muted playsinline loop preload="auto"></video>
+      <img class="urso" src="batuquinho.webp" alt="">
+      <span class="nota" style="left:12%;top:30%">♪</span><span class="nota" style="left:40%;top:24%">♫</span><span class="nota" style="left:64%;top:34%">♪</span><span class="nota" style="left:28%;top:40%">♬</span><span class="nota" style="left:78%;top:22%">♫</span>
+      <svg class="traco rabisco" viewBox="0 0 360 640" preserveAspectRatio="xMidYMid slice">
+        <path class="d" pathLength="1" style="--a:1.6s;--t:.6s" d="M40 300 l14 -10 l-6 18 l16 -12 l-4 20 M150 250 l12 -14 l0 20 l14 -12 M250 280 l16 -8 l-8 16 l18 -6" />
+      </svg>
+      <div class="crianca"><img src="crianca.webp" alt=""></div>
+      <svg class="anel" viewBox="0 0 100 150"><circle pathLength="1" cx="50" cy="40" r="38" /></svg>
+      <svg class="traco ondas" viewBox="0 0 200 100"><path class="d ouro" pathLength="1" d="M190 60 C170 40 150 80 130 60 C110 40 90 80 70 60 C50 40 30 80 10 60" /><path class="d ouro" pathLength="1" style="--a:.3s" d="M190 80 C170 62 150 98 130 80 C110 62 90 98 70 80" /></svg>
+      <span class="zzz">z z z</span>
+    </div>
+  </section>
+
+  <section class="cena" id="fim">
+    <div>
+      <p class="ep">EPISÓDIO 1</p>
+      <p class="t">O bebê que não dormia</p>
+      <p class="cred">História original:<br><b>a família da <span class="nome">Maria</span></b></p>
+      <p class="c">continua…</p>
+      <button onclick="location.reload()">assistir de novo</button>
+    </div>
+  </section>
+
+  <div class="vinheta"></div><div class="grao"></div>
+  <div id="legenda"></div>
+
+  <div id="comecar"><div><p>UMA SÉRIE ORIGINAL ARBORIA</p><h1 class="nome">Maria</h1><h2>e a Nave Vagalume</h2><button id="play">▶ Assistir</button><small>aumente o volume 🔊</small></div></div>
+</div>
+
+<script>
+const q = new URLSearchParams(location.search);
+const nome = (q.get('nome') || 'Maria').replace(/[<>]/g, '');
+document.querySelectorAll('.nome').forEach((e) => e.textContent = e.classList.contains('nomepoltrona') ? nome.toUpperCase() : nome);
+
+// estrelas paradas (quintal e chegada)
+document.querySelectorAll('.estrelas').forEach((box) => {
+  for (let i = 0; i < 70; i++) { const s = document.createElement('i'); s.className = 'estrela'; s.style.left = Math.random() * 100 + '%'; s.style.top = Math.random() * 62 + '%'; s.style.animationDelay = Math.random() * 2 + 's'; if (i % 9 === 0) { s.style.width = s.style.height = '3px'; } box.appendChild(s); }
+});
+// estrelas passando na viagem
+const cv = document.querySelector('#viagem canvas'), cx = cv.getContext('2d');
+const pts = Array.from({ length: 200 }, () => ({ x: Math.random() * 2 - 1, y: Math.random() * 2 - 1, z: Math.random() }));
+(function voa() {
+  const w = cv.width = cv.clientWidth * devicePixelRatio, h = cv.height = cv.clientHeight * devicePixelRatio;
+  cx.fillStyle = '#050a24'; cx.fillRect(0, 0, w, h);
+  for (const p of pts) { p.z -= .016; if (p.z < .02) { p.z = 1; p.x = Math.random() * 2 - 1; p.y = Math.random() * 2 - 1; }
+    const sx = w / 2 + p.x / p.z * w * .5, sy = h * .42 + p.y / p.z * h * .5, ex = w / 2 + p.x / (p.z + .05) * w * .5, ey = h * .42 + p.y / (p.z + .05) * h * .5;
+    cx.strokeStyle = `rgba(255,240,210,${1 - p.z})`; cx.lineWidth = (1 - p.z) * 2.5 * devicePixelRatio; cx.beginPath(); cx.moveTo(sx, sy); cx.lineTo(ex, ey); cx.stroke(); }
+  requestAnimationFrame(voa);
+})();
+
+// som feito no navegador
+let ac, mestre;
+const ruido = (dur) => { const b = ac.createBuffer(1, ac.sampleRate * dur, ac.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; const s = ac.createBufferSource(); s.buffer = b; return s; };
+function tum(t, f = 100, v = 1) { const o = ac.createOscillator(), g = ac.createGain(); o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * .35, t + .4); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.001, t + .55); o.connect(g).connect(mestre); o.start(t); o.stop(t + .6); }
+function grilos(t, dur) { for (let k = 0; k < dur * 3; k++) { const o = ac.createOscillator(), g = ac.createGain(); const tt = t + k / 3 + Math.random() * .1; o.frequency.value = 4200 + Math.random() * 400; g.gain.setValueAtTime(0, tt); [0, .04, .08].forEach((d) => { g.gain.setValueAtTime(.025, tt + d); g.gain.setValueAtTime(0, tt + d + .02); }); o.connect(g).connect(mestre); o.start(tt); o.stop(tt + .12); } }
+function zumbido(t, dur) { const o = ac.createOscillator(), o2 = ac.createOscillator(), g = ac.createGain(); o.type = 'sine'; o2.type = 'triangle'; o.frequency.value = 110; o2.frequency.value = 220.6; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.12, t + 1); g.gain.linearRampToValueAtTime(0, t + dur); o.connect(g); o2.connect(g); g.connect(mestre); o.start(t); o2.start(t); o.stop(t + dur); o2.stop(t + dur); }
+function vuuush(t, dur) { const n = ruido(dur), f = ac.createBiquadFilter(), g = ac.createGain(); f.type = 'bandpass'; f.frequency.setValueAtTime(250, t); f.frequency.exponentialRampToValueAtTime(2600, t + dur * .7); g.gain.setValueAtTime(.001, t); g.gain.exponentialRampToValueAtTime(.45, t + dur * .6); g.gain.exponentialRampToValueAtTime(.001, t + dur); n.connect(f).connect(g).connect(mestre); n.start(t); }
+function plim(t, f) { const o = ac.createOscillator(), g = ac.createGain(); o.type = 'triangle'; o.frequency.value = f; g.gain.setValueAtTime(.18, t); g.gain.exponentialRampToValueAtTime(.001, t + 1.2); o.connect(g).connect(mestre); o.start(t); o.stop(t + 1.3); }
+function caos(t, dur) { for (let k = 0; k < dur * 7; k++) tum(t + k / 7 + Math.random() * .06, 70 + Math.random() * 90, .5 + Math.random() * .4); const n = ruido(dur), f = ac.createBiquadFilter(), g = ac.createGain(); f.type = 'highpass'; f.frequency.value = 900; g.gain.value = .06; n.connect(f).connect(g).connect(mestre); n.start(t); n.stop(t + dur); }
+function respira(t) { [0, 1.8].forEach((d) => { const n = ruido(1.4), f = ac.createBiquadFilter(), g = ac.createGain(); f.type = 'bandpass'; f.frequency.value = 500; f.Q.value = .7; g.gain.setValueAtTime(0, t + d); g.gain.linearRampToValueAtTime(.22, t + d + .6); g.gain.linearRampToValueAtTime(0, t + d + 1.4); n.connect(f).connect(g).connect(mestre); n.start(t + d); }); }
+function batuqueBaixinho(t, dur) { for (let k = 0; k < dur * 1.6; k++) tum(t + k / 1.6, 90, .28); [523, 659, 784].forEach((f, i) => plim(t + .4 + i * .9, f)); }
+
+const legenda = document.getElementById('legenda');
+const fala = (txt) => { legenda.classList.remove('on'); if (txt) setTimeout(() => { legenda.innerHTML = txt; legenda.classList.add('on'); }, 200); };
+const cena = (id) => { document.querySelectorAll('.cena').forEach((c) => c.classList.toggle('on', c.id === id)); document.querySelectorAll(`#${id} video`).forEach((v) => { v.currentTime = 0; v.play().catch(() => {}); }); };
+const tambor = document.getElementById('tambor');
+
+const ROTEIRO = [
+  [0.0, () => { cena('titulo'); const t = ac.currentTime; tum(t + .2); tum(t + .6); }],
+  [3.4, () => { cena('quintal'); grilos(ac.currentTime, 4.4); fala(`Toda noite, a <b>${nome}</b> olhava pro céu.`); }],
+  [7.6, () => { cena('chegada'); zumbido(ac.currentTime, 4.4); fala('Até que, uma noite… o céu respondeu.'); }],
+  [12.0, () => { cena('poltrona'); fala(''); plim(ac.currentTime + 1.4, 880); }],
+  [15.2, () => { cena('viagem'); vuuush(ac.currentTime, 3.6); fala('Destino: o Planeta-Tambor.'); }],
+  [19.4, () => { cena('tambor'); fala('O bebê Batuquinho não parava de chorar…'); }],
+  [21.6, () => { tambor.classList.add('caos'); caos(ac.currentTime, 2.8); fala('…e todo mundo batucava cada vez mais forte.'); }],
+  [24.4, () => { tambor.classList.remove('caos'); tambor.classList.add('pausa'); fala(`A <b>${nome}</b> parou.`); respira(ac.currentTime + .3); }],
+  [28.4, () => { tambor.classList.remove('pausa'); tambor.classList.add('calma'); batuqueBaixinho(ac.currentTime, 4); fala('E batucou baixinho, do jeitinho que faz em casa.'); }],
+  [31.4, () => { tambor.classList.add('dorme'); fala('O bebê dormiu.'); }],
+  [33.6, () => { fala(''); cena('fim'); plim(ac.currentTime + .4, 659); plim(ac.currentTime + 1, 784); }],
+];
+
+document.getElementById('play').onclick = () => {
+  ac = new (window.AudioContext || window.webkitAudioContext)(); mestre = ac.createGain(); mestre.gain.value = .9; mestre.connect(ac.destination);
+  document.getElementById('comecar').remove();
+  ROTEIRO.forEach(([t, f]) => setTimeout(f, t * 1000));
+};
+</script>
+</body>
+</html>
