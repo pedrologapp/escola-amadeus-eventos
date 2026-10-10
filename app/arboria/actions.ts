@@ -67,13 +67,14 @@ export async function cadastrar(e: { familia: string; responsavel: string; filho
   return { ok: true as const };
 }
 
-/** O celular pergunta a cada poucos segundos se a história já pode abrir. */
+/** O celular pergunta a cada poucos segundos se a história já pode abrir (e se a atividade dos pais está aberta). */
 export async function estado(familia: string) {
-  if (!/^[0-9a-f-]{36}$/i.test(String(familia ?? ""))) return { liberado: false, criancas: [] as CriancaHistoria[], antes: false };
+  if (!/^[0-9a-f-]{36}$/i.test(String(familia ?? ""))) return { liberado: false, criancas: [] as CriancaHistoria[], antes: false, atividade: false, fezAtividade: false };
   const db = createAdminClient();
-  const [{ data: r }, { data: cs }] = await Promise.all([
-    db.from("arboria_exp_reuniao").select("iniciada_em, liberada_em").eq("id", 1).single(),
+  const [{ data: r }, { data: cs }, { data: at }] = await Promise.all([
+    db.from("arboria_exp_reuniao").select("iniciada_em, liberada_em, atividade_em").eq("id", 1).single(),
     db.from("arboria_exp_criancas").select("id, nome, serie, genero, pele, cabelo, respostas, boneco_url, criado_em").eq("familia", familia).order("criado_em"),
+    db.from("arboria_exp_atividade").select("criado_em").eq("familia", familia).maybeSingle(),
   ]);
   const todas = cs ?? [];
   // Só quem se cadastrou depois de "Começar reunião" recebe a história.
@@ -84,5 +85,17 @@ export async function estado(familia: string) {
     antes: todas.length > 0 && validas.length === 0 && !!r?.liberada_em,
     criancas: (liberado ? validas : []).map(({ criado_em: _c, ...c }) => c as CriancaHistoria),
     cadastradas: todas.map((c) => c.nome),
+    // a atividade aparece na tela de espera de quem se cadastrou nesta reunião, enquanto as séries não foram liberadas
+    atividade: !!(r?.atividade_em && validas.length),
+    fezAtividade: !!(at && r?.atividade_em && Date.parse(at.criado_em) >= Date.parse(r.atividade_em)),
   };
+}
+
+/** A resposta do pai na atividade ao vivo (3 situações). Uma por celular; responder de novo substitui. */
+export async function responderAtividade(familia: string, respostas: string[]) {
+  if (!/^[0-9a-f-]{36}$/i.test(String(familia ?? ""))) return { ok: false as const };
+  const lista = (respostas ?? []).slice(0, 3);
+  if (lista.length !== 3 || !lista.every((k) => CHAVES.has(String(k)))) return { ok: false as const };
+  const { error } = await createAdminClient().from("arboria_exp_atividade").upsert({ familia, respostas: lista, criado_em: new Date().toISOString() });
+  return { ok: !error };
 }

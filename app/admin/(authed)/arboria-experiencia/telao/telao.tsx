@@ -2,21 +2,23 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pause, Play, SkipBack, SkipForward } from "lucide-react";
-import { comecarReuniao, liberarHistorias, situacaoTelao } from "../actions";
+import { abrirAtividade, comecarReuniao, liberarHistorias, situacaoTelao } from "../actions";
+import { Caminhos } from "./caminhos";
 
 /**
- * Telão: pronto → (Começar reunião) apresentação → QR com contagem → (Liberar) estreia → (Encerrar) fim.
+ * Telão: pronto → (Começar reunião) apresentação → QR do cadastro com contagem → (Abrir a atividade) os caminhos dos pais ao vivo
+ * → (Mostrar o resultado) "N pais, M caminhos" → (Liberar) estreia → (Encerrar) fim.
  * Na apresentação: → / PageDown avança um slide, ← / PageUp volta um slide, espaço dá play/pausa (os slides vêm de slides.json).
  * Fora dela: → / ← passam de tela sem apertar nada no banco (para ensaiar) · F tela cheia.
  * A apresentação (public/arboria/apresentacao/parte1.mp4) já vem com as falas da Arbória e a trilha; qr-fala.mp3 toca na tela do QR.
  */
-type Etapa = "pronto" | "video" | "qr" | "estreia" | "fim";
-const ORDEM: Etapa[] = ["pronto", "video", "qr", "estreia", "fim"];
+type Etapa = "pronto" | "video" | "qr" | "atividade" | "resultado" | "estreia" | "fim";
+const ORDEM: Etapa[] = ["pronto", "video", "qr", "atividade", "resultado", "estreia", "fim"];
 
 export function Telao({ qr }: { qr: string }) {
   const [etapa, setEtapa] = useState<Etapa>("pronto");
   const [ocupado, setOcupado] = useState(false);
-  const [sit, setSit] = useState({ criancas: 0, familias: 0, iniciada: null as string | null, liberada: null as string | null });
+  const [sit, setSit] = useState({ criancas: 0, familias: 0, iniciada: null as string | null, liberada: null as string | null, atividade: null as string | null, caminhos: [] as string[][] });
   const [erro, setErro] = useState<string | null>(null);
   const video = useRef<HTMLVideoElement>(null);
   const fala = useRef<HTMLAudioElement>(null);
@@ -65,10 +67,12 @@ export function Telao({ qr }: { qr: string }) {
     telaCheia();
     const v = video.current; if (v) { v.currentTime = 0; v.play().catch(() => {}); }
     setEtapa("video");
-    if (await acao(comecarReuniao)) setSit((s) => ({ ...s, criancas: 0, familias: 0 }));
+    if (await acao(comecarReuniao)) setSit((s) => ({ ...s, criancas: 0, familias: 0, caminhos: [] }));
     else { v?.pause(); setEtapa("pronto"); }
   };
   const liberar = async () => { if (await acao(liberarHistorias)) setEtapa("estreia"); };
+  const atividade = async () => { if (await acao(abrirAtividade)) { setSit((s) => ({ ...s, caminhos: [] })); setEtapa("atividade"); } };
+  const unicos = new Set(sit.caminhos.map((c) => c.join(">"))).size;
 
   const anda = useCallback((d: number) => setEtapa((e) => {
     const nova = ORDEM[Math.min(ORDEM.length - 1, Math.max(0, ORDEM.indexOf(e) + d))];
@@ -170,7 +174,41 @@ export function Telao({ qr }: { qr: string }) {
             </div>
           </div>
           <div className="marca">Arb</div>
-          <div className="discreto"><button onClick={liberar} disabled={ocupado} className="botao">{ocupado ? "Liberando…" : "Liberar as séries"}</button></div>
+          <div className="discreto"><button onClick={atividade} disabled={ocupado} className="botao">{ocupado ? "Abrindo…" : "Abrir a atividade"}</button></div>
+        </div>
+      )}
+
+      {(etapa === "atividade" || etapa === "resultado") && (
+        <div className="absolute inset-0">
+          <div className="fundo" />
+          <Caminhos caminhos={sit.caminhos} apagado={etapa === "resultado"} />
+          {etapa === "atividade" ? (
+            <div className="entra absolute left-[3.1vw] top-[2.4vw]">
+              <p className="rot">Prática · agora</p>
+              <p className="serif mt-[.4vw] text-[3.4vw] leading-none">Como <span className="it">vocês</span> pensam?</p>
+              <p className="mt-[.8vw] text-[1.25vw] text-[#8fa3a0]">Toque em &ldquo;A atividade começou&rdquo; na tela do celular.</p>
+            </div>
+          ) : (
+            <div className="absolute inset-0 grid place-items-center text-center">
+              <div className="rounded-[2vw] bg-[#0b1112]/80 px-[4vw] py-[2.6vw]">
+                <p className="rot entra">Na mesma sala</p>
+                <p className="serif entra2 mt-[1vw] text-[5.6vw] leading-[1.02]">{sit.caminhos.length} {sit.caminhos.length === 1 ? "pai" : "pais"}, <span className="it">{unicos} {unicos === 1 ? "caminho" : "caminhos"}.</span></p>
+                <p className="entra2 mt-[1.6vw] text-[2vw] text-[#8fa3a0]">As mesmas situações, jeitos diferentes de pensar.<br />Agora imagine o seu filho.</p>
+              </div>
+            </div>
+          )}
+          {etapa === "atividade" && (
+            <div className="absolute right-[3.1vw] top-[2.4vw] text-right">
+              <b key={sit.caminhos.length} className="serif block text-[5vw] leading-none text-[#2dd4bf]" style={{ animation: "tlPulso .6s ease" }}>{sit.caminhos.length}</b>
+              <span className="text-[1.3vw] text-[#8fa3a0]">{sit.caminhos.length === 1 ? "pai já respondeu" : "pais já responderam"}</span>
+            </div>
+          )}
+          <div className="marca">Arb</div>
+          <div className="discreto">
+            {etapa === "atividade"
+              ? <button onClick={() => setEtapa("resultado")} className="botao">Mostrar o resultado</button>
+              : <button onClick={liberar} disabled={ocupado} className="botao">{ocupado ? "Liberando…" : "Liberar as séries"}</button>}
+          </div>
         </div>
       )}
 

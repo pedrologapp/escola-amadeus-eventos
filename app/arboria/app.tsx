@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { ATIVIDADE, SERIES, primeiroNome, type Chave } from "@/lib/arboria-historia";
-import { cadastrar, estado, type CriancaHistoria, type FilhoEntrada } from "./actions";
+import { RAMOS, SITUACOES } from "@/lib/arboria-atividade";
+import { cadastrar, estado, responderAtividade, type CriancaHistoria, type FilhoEntrada } from "./actions";
 import { Trailer } from "./trailer";
 
 /**
@@ -282,13 +283,16 @@ function Espera({ familia, nomes }: { familia: string; nomes: string[] }) {
   const [antes, setAntes] = useState(false);
   const [aberta, setAberta] = useState<CriancaHistoria | null>(null);
   const [revelando, setRevelando] = useState(false);
+  const [atividade, setAtividade] = useState(false);
+  const [fez, setFez] = useState(false);
+  const [fazendo, setFazendo] = useState(false);
 
   useEffect(() => {
     let vivo = true;
     const ver = async () => {
       const r = await estado(familia).catch(() => null);
       if (!vivo || !r) return;
-      setAntes(r.antes);
+      setAntes(r.antes); setAtividade(r.atividade); if (r.fezAtividade) setFez(true);
       if (r.liberado && r.criancas.length) {
         setCriancas((atual) => { if (!atual.length) { setRevelando(true); setTimeout(() => setRevelando(false), 3200); } return r.criancas; });
       } else setCriancas([]);
@@ -299,6 +303,7 @@ function Espera({ familia, nomes }: { familia: string; nomes: string[] }) {
   }, [familia]);
 
   if (aberta) return <Trailer crianca={aberta} fechar={() => setAberta(null)} />;
+  if (fazendo && !criancas.length) return <AtividadePais familia={familia} voltar={(ok) => { if (ok) setFez(true); setFazendo(false); }} />;
 
   if (!criancas.length) {
     return (
@@ -309,6 +314,14 @@ function Espera({ familia, nomes }: { familia: string; nomes: string[] }) {
           <Titulo>{antes ? "Esse cadastro foi feito antes do encontro começar." : <>A série de <Ouro>{nomes.join(" e ")}</Ouro> estreia no fim do encontro.</>}</Titulo>
           <p className="arb-in-3 mt-6 text-[15px] leading-relaxed text-white/60">{antes ? "Fale com a equipe na sala." : "Deixe esta página aberta."}</p>
           {!antes && <div className="arb-in-3 mt-10 flex gap-2">{[0, 1, 2].map((k) => <span key={k} className="size-2 animate-pulse rounded-full" style={{ background: OURO, animationDelay: `${k * 0.3}s` }} />)}</div>}
+          {!antes && atividade && (
+            fez
+              ? <p className="arb-in mt-10 rounded-2xl border border-white/15 px-5 py-4 text-[15px] text-white/70">✓ Você já fez a atividade. <b className="text-[#FFE4A0]">Olhe a TV:</b> cada pai da sala está desenhando um caminho.</p>
+              : <button onClick={() => setFazendo(true)} className="arb-in mt-10 flex w-full items-center gap-4 rounded-2xl border border-[#FFC94A]/60 bg-[#FFC94A]/10 p-4 text-left active:scale-[.98]">
+                  <span className="relative flex size-12 shrink-0 items-center justify-center rounded-full text-2xl" style={{ background: OURO }}><span className="absolute inset-0 animate-ping rounded-full" style={{ background: "rgba(255,201,74,.35)" }} />✦</span>
+                  <span><b className="block font-[family-name:var(--font-serie)] text-xl font-normal text-[#FFE4A0]">A atividade começou</b><span className="text-sm text-white/65">3 situações rápidas sobre você · toque para participar</span></span>
+                </button>
+          )}
         </div>
       </Preto>
     );
@@ -328,6 +341,64 @@ function Espera({ familia, nomes }: { familia: string; nomes: string[] }) {
             </button>
           ))}
         </div>
+      </div>
+    </Preto>
+  );
+}
+
+/* ---------------- atividade ao vivo dos pais ---------------- */
+
+function AtividadePais({ familia, voltar }: { familia: string; voltar: (ok: boolean) => void }) {
+  // as opções vêm embaralhadas em cada celular (a posição não puxa a resposta)
+  const opcoes = useMemo(() => SITUACOES.map((s) => Object.entries(s.opcoes).sort(() => Math.random() - 0.5)), []);
+  const [resp, setResp] = useState<string[]>([]);
+  const [enviando, setEnviando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const [pronto, setPronto] = useState(false);
+  const p = resp.length;
+
+  const escolhe = async (k: string) => {
+    const nova = [...resp, k]; setResp(nova);
+    if (nova.length < SITUACOES.length) return;
+    setEnviando(true); setErro(null);
+    const r = await responderAtividade(familia, nova).catch(() => null);
+    setEnviando(false);
+    if (!r?.ok) { setResp(nova.slice(0, -1)); return setErro("Não consegui enviar. Confira a internet e toque de novo."); }
+    setPronto(true);
+  };
+
+  if (pronto) {
+    const conta = new Map<string, number>(); resp.forEach((k) => conta.set(k, (conta.get(k) ?? 0) + 1));
+    const mais = [...conta.entries()].sort((a, b) => b[1] - a[1]);
+    const jeito = (k: string) => RAMOS.find((r) => r.chave === k)!;
+    const frase = mais[0][1] > 1
+      ? <>Você pensa muito com <span style={{ color: jeito(mais[0][0]).cor }}>{jeito(mais[0][0]).jeito}</span>.</>
+      : <>Você usou três jeitos diferentes: {mais.map(([k], i) => <span key={k}><span style={{ color: jeito(k).cor }}>{jeito(k).jeito}</span>{i === 0 ? ", " : i === 1 ? " e " : "."}</span>)}</>;
+    return (
+      <Preto>
+        <Selo>O seu jeito</Selo>
+        <div className="flex flex-1 flex-col justify-center pb-10">
+          <Titulo>{frase}</Titulo>
+          <p className="arb-in-3 mt-6 text-center text-[16px] leading-relaxed text-white/70">Olhe a TV: cada pai da sala está desenhando um caminho diferente. O seu filho também tem o jeito dele, e o Arboria vai ajudar a descobrir.</p>
+        </div>
+        <div className="arb-in-3 pb-10"><Botao onClick={() => voltar(true)}>Voltar para a espera</Botao></div>
+      </Preto>
+    );
+  }
+
+  // as 3 respondidas: enquanto envia, fica numa tela de espera (e volta para a 3ª se der erro)
+  if (p >= SITUACOES.length) return <Preto><div className="flex flex-1 items-center justify-center gap-2 text-white/60"><Loader2 className="size-5 animate-spin" /> Enviando…</div></Preto>;
+  const q = SITUACOES[p];
+  return (
+    <Preto>
+      <Voltar onClick={() => (p ? setResp(resp.slice(0, -1)) : voltar(false))} />
+      <Selo>Atividade · {p + 1} de {SITUACOES.length}</Selo>
+      <div className="arb-in mt-5 flex gap-1">{SITUACOES.map((_, k) => <div key={k} className="h-[3px] flex-1 rounded-full" style={{ background: k < p ? OURO : k === p ? "rgba(255,201,74,.5)" : "rgba(255,255,255,.15)" }} />)}</div>
+      <Titulo k={`a${p}`}>{q.pergunta}</Titulo>
+      <div key={`ao${p}`} className="arb-in-3 mt-7 space-y-2.5 pb-8">
+        {opcoes[p].map(([k, texto]) => <Opcao key={k} disabled={enviando} onClick={() => escolhe(k)}>{texto}</Opcao>)}
+        {erro && <p className="rounded-2xl border border-red-400/40 bg-red-500/10 p-3 text-center text-sm text-red-200">{erro}</p>}
+        {enviando && <p className="flex items-center justify-center gap-2 text-sm text-white/60"><Loader2 className="size-4 animate-spin" /> Enviando…</p>}
       </div>
     </Preto>
   );

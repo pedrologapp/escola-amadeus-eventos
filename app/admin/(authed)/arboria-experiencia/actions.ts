@@ -16,7 +16,7 @@ async function logado() {
 export async function comecarReuniao() {
   await logado();
   const agora = new Date().toISOString();
-  await createAdminClient().from("arboria_exp_reuniao").update({ iniciada_em: agora, liberada_em: null, atualizado_em: agora }).eq("id", 1);
+  await createAdminClient().from("arboria_exp_reuniao").update({ iniciada_em: agora, liberada_em: null, atividade_em: null, atualizado_em: agora }).eq("id", 1);
   revalidatePath(CAMINHO);
 }
 
@@ -39,12 +39,24 @@ export async function recolherHistorias() {
 export async function situacaoTelao() {
   await logado();
   const db = createAdminClient();
-  const { data: r } = await db.from("arboria_exp_reuniao").select("iniciada_em, liberada_em").eq("id", 1).single();
-  let criancas = 0, familias = 0;
+  const { data: r } = await db.from("arboria_exp_reuniao").select("iniciada_em, liberada_em, atividade_em").eq("id", 1).single();
+  let criancas = 0, familias = 0, caminhos: string[][] = [];
   if (r?.iniciada_em) {
     const { data: cs } = await db.from("arboria_exp_criancas").select("familia").gte("criado_em", r.iniciada_em);
     criancas = cs?.length ?? 0;
     familias = new Set((cs ?? []).map((c) => c.familia)).size;
   }
-  return { iniciada: r?.iniciada_em ?? null, liberada: r?.liberada_em ?? null, criancas, familias };
+  if (r?.atividade_em) {
+    // os caminhos chegam na ordem em que os pais responderam (o telão desenha um por um)
+    const { data: at } = await db.from("arboria_exp_atividade").select("respostas, criado_em").gte("criado_em", r.atividade_em).order("criado_em");
+    caminhos = (at ?? []).map((x) => x.respostas as string[]);
+  }
+  return { iniciada: r?.iniciada_em ?? null, liberada: r?.liberada_em ?? null, atividade: r?.atividade_em ?? null, criancas, familias, caminhos };
+}
+
+/** "Abrir a atividade": aparece na tela de espera de cada pai. */
+export async function abrirAtividade() {
+  await logado();
+  const agora = new Date().toISOString();
+  await createAdminClient().from("arboria_exp_reuniao").update({ atividade_em: agora, atualizado_em: agora }).eq("id", 1);
 }
