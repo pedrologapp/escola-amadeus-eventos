@@ -76,6 +76,9 @@ const panorama = `<section class="s" data-who="sonia" data-block="sonia" data-la
 </section>`;
 escolhidas.splice(escolhidas.length - 1, 0, panorama);
 
+// a promoção vai até 28 de outubro (o deck da reunião dizia 30)
+for (let i = 0; i < escolhidas.length; i++) escolhidas[i] = escolhidas[i].replaceAll('30 de outubro', '28 de outubro');
+
 // elementos que o script do deck desenha em telas que ficaram de fora (escondidos, só para o script não quebrar)
 const sobras = '<div hidden>' + ['anos', 'casas', 'oito', 'papel', 'plan', 'year'].map((id) => `<div id="${id}"></div>`).join('') + '</div>';
 const html = topo + '<main>\n' + escolhidas.join('\n\n') + '\n' + sobras + '\n' + pe;
