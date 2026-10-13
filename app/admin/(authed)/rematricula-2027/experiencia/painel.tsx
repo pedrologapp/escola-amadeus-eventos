@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { BadgeCheck, BellRing, CalendarCheck, Download, Loader2, Send, Trash2, UserPlus, Users } from "lucide-react";
+import { BadgeCheck, BellRing, Download, Loader2, Send, Trash2, UserPlus, Users } from "lucide-react";
 import {
   confirmarLembrete,
   enviarExperiencia,
@@ -156,59 +156,6 @@ function PainelConfirmacoes({ contatos }: { contatos: ContatoExp[] }) {
   );
 }
 
-// 1ª edição (10/10): o Pedro marca quem veio. Quem veio não recebe mais o convite nem o lembrete do dia 17.
-function PresencaDia10({ contatos }: { contatos: ContatoExp[] }) {
-  const [ocupado, iniciar] = useTransition();
-  const [aberto, setAberto] = useState(!contatos.some((c) => c.veio_1010 != null));
-  const quem = (c: ContatoExp) => (c.responsavel && !/escola|amadeus/i.test(c.responsavel) ? c.responsavel : c.crianca ? `Família de ${c.crianca}` : tel(c.telefone));
-  const ordem = [...contatos].sort((a, b) => (b.dia10 ? 1 : 0) - (a.dia10 ? 1 : 0) || quem(a).localeCompare(quem(b), "pt-BR"));
-  const veio = contatos.filter((c) => c.veio_1010 === true).length, naoVeio = contatos.filter((c) => c.veio_1010 === false).length;
-  const matricularam = contatos.filter((c) => c.matriculou_em).length;
-  const botao = (c: ContatoExp, valor: boolean, rotulo: string, cor: string) => (
-    <button type="button" disabled={ocupado} onClick={() => iniciar(async () => { await marcarVeio(c.telefone, c.veio_1010 === valor ? null : valor); })}
-      className={`rounded-lg border px-2.5 py-1 text-xs font-bold disabled:opacity-40 ${c.veio_1010 === valor ? cor : "border-border bg-white text-muted-foreground hover:bg-slate-50"}`}>{rotulo}</button>
-  );
-  return (
-    <section className="rounded-2xl border-2 border-amadeus-blue/30 bg-white p-5">
-      <button type="button" onClick={() => setAberto(!aberto)} className="flex w-full flex-wrap items-center justify-between gap-2 text-left">
-        <span className="flex items-center gap-2 text-sm font-bold text-amadeus-blue"><CalendarCheck className="size-4" /> Quem veio no dia 10/10</span>
-        <span className="text-xs font-semibold text-muted-foreground">{veio} vieram · {naoVeio} não vieram · {contatos.length - veio - naoVeio} sem marcar · <b className="text-amadeus-blue">{matricularam} matricularam</b> {aberto ? "▲" : "▼"}</span>
-      </button>
-      {aberto && (
-        <>
-          <p className="mt-2 text-xs text-muted-foreground">Quem você marcar como <b>Veio</b> não recebe o convite nem o lembrete do dia 17/10. <b>Matriculou</b> é uma marcação à parte (pode ter vindo e não matriculado, ou o contrário); quem matriculou também não recebe mais. Clicar de novo desmarca.</p>
-          <ul className="mt-3 divide-y divide-border/60">
-            {ordem.map((c) => (
-              <li key={c.telefone} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
-                <span className="min-w-0 flex-1">
-                  <b className="text-amadeus-blue">{quem(c)}</b>
-                  {c.crianca && c.responsavel && !/escola|amadeus/i.test(c.responsavel) ? <span className="text-muted-foreground"> · {c.crianca}</span> : null}
-                  <span className="text-muted-foreground"> · {tel(c.telefone)}</span>
-                  {c.dia10 && <span className={`ml-2 rounded-md px-1.5 py-0.5 text-xs font-bold ${c.dia10.startsWith("confirmou") ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>10/10: {c.dia10}</span>}
-                  <input
-                    key={c.observacao ?? ""}
-                    defaultValue={c.observacao ?? ""}
-                    placeholder="Observação (ex.: vem só a mãe, matrícula na segunda…)"
-                    onBlur={(e) => { const v = e.target.value; if (v.trim() !== (c.observacao ?? "")) iniciar(async () => { await salvarObservacao(c.telefone, v); }); }}
-                    onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
-                    className="mt-1 block w-full max-w-md rounded-lg border border-border/70 bg-slate-50/60 px-2 py-1 text-xs outline-none focus:border-amadeus-blue focus:bg-white"
-                  />
-                </span>
-                <span className="flex shrink-0 gap-1.5">
-                  {botao(c, true, "✓ Veio", "border-emerald-600 bg-emerald-600 text-white")}
-                  {botao(c, false, "✗ Não veio", "border-red-500 bg-red-500 text-white")}
-                  <button type="button" disabled={ocupado} onClick={() => iniciar(async () => { await marcarMatriculou(c.telefone, !c.matriculou_em); })}
-                    className={`ml-2 rounded-lg border px-2.5 py-1 text-xs font-bold disabled:opacity-40 ${c.matriculou_em ? "border-amadeus-blue bg-amadeus-blue text-white" : "border-border bg-white text-muted-foreground hover:bg-slate-50"}`}>🎓 Matriculou</button>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-    </section>
-  );
-}
-
 export function PainelExperiencia({ contatos, candidatos, automatico }: { contatos: ContatoExp[]; candidatos: Candidato[]; automatico: boolean }) {
   const [escolha, setEscolha] = useState("video");
   const [marcados, setMarcados] = useState<Set<string>>(new Set());
@@ -225,6 +172,19 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
   const vaoReceber = contatos.filter((c) => c.lembrar && !c.lembrete_em && !fora(c));
   const selecionados = contatos.filter((c) => marcados.has(c.telefone));
   const nomeEncarte = escolha === "video" ? "o vídeo do convite" : escolha === "os_dois" ? "os dois encartes" : escolha === "original" ? "o encarte original" : "o convite “Mãe, pai”";
+
+  // a lista agrupada pelo que aconteceu no dia 10/10; dentro de cada grupo, por nome
+  const nome = (c: ContatoExp) => (c.responsavel && !/escola|amadeus/i.test(c.responsavel) ? c.responsavel : c.crianca ?? "");
+  const porNome = (x: ContatoExp, y: ContatoExp) => nome(x).localeCompare(nome(y), "pt-BR");
+  const GRUPOS: [string, string, ContatoExp[]][] = [
+    ["Sem marcar", "bg-slate-50 text-slate-600", contatos.filter((c) => c.veio_1010 == null).sort(porNome)],
+    ["Não vieram no dia 10/10", "bg-red-50 text-red-700", contatos.filter((c) => c.veio_1010 === false).sort(porNome)],
+    ["Vieram no dia 10/10 (não recebem de novo)", "bg-emerald-50 text-emerald-800", contatos.filter((c) => c.veio_1010 === true).sort(porNome)],
+  ];
+  const botaoVeio = (c: ContatoExp, valor: boolean, rotulo: string, cor: string) => (
+    <button type="button" disabled={ocupado} onClick={() => iniciar(async () => { await marcarVeio(c.telefone, c.veio_1010 === valor ? null : valor); })}
+      className={`rounded-lg border px-2 py-1 text-xs font-bold disabled:opacity-40 ${c.veio_1010 === valor ? cor : "border-border bg-white text-muted-foreground hover:bg-slate-50"}`}>{rotulo}</button>
+  );
 
   const enviarSelecionados = () => {
     const ja = selecionados.filter((c) => c.convite_em).length;
@@ -270,7 +230,6 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
   return (
     <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
       <div className="space-y-6">
-        <PresencaDia10 contatos={contatos} />
         <PainelConfirmacoes contatos={contatos} />
 
         {/* Novo número */}
@@ -312,17 +271,19 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
               )}
             </div>
           </div>
+          <p className="mt-2 text-xs text-muted-foreground">Marque em cada família se <b>veio</b> ou <b>não veio</b> no dia 10/10 e, à parte, se <b>matriculou</b>. Quem veio ou matriculou não recebe o convite nem o lembrete do dia 17/10. Clicar de novo desmarca. A observação salva sozinha ao sair do campo.</p>
           {contatos.length === 0 ? (
             <p className="mt-4 text-sm text-muted-foreground">Ninguém ainda. Todo número que receber o encarte entra aqui sozinho.</p>
           ) : (
             <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[640px] text-sm">
+              <table className="w-full min-w-[860px] text-sm">
                 <thead>
                   <tr className="border-b border-border/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
                     <th className="py-2 pr-2">
                       <input type="checkbox" className="size-4 accent-[#083078]" checked={marcados.size > 0 && marcados.size === contatos.filter((c) => !fora(c)).length} onChange={(e) => setMarcados(e.target.checked ? new Set(contatos.filter((c) => !fora(c)).map((c) => c.telefone)) : new Set())} />
                     </th>
                     <th className="py-2 pr-3">Família</th>
+                    <th className="py-2 pr-3">Dia 10/10</th>
                     <th className="py-2 pr-3">Telefone</th>
                     <th className="py-2 pr-3">Vai?</th>
                     <th className="py-2 pr-3">Encarte</th>
@@ -332,15 +293,33 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
                   </tr>
                 </thead>
                 <tbody>
-                  {contatos.map((c) => (
+                  {GRUPOS.filter(([, , l]) => l.length).flatMap(([titulo, cor, lista]) => [
+                    <tr key={"g-" + titulo}><td colSpan={9} className={`px-2 py-1.5 text-xs font-bold uppercase tracking-wider ${cor}`}>{titulo} · {lista.length}</td></tr>,
+                    ...lista.map((c) => (
                     <tr key={c.telefone} className="border-b border-border/40 last:border-0">
                       <td className="py-2.5 pr-2">
                         <input type="checkbox" className="size-4 accent-[#083078]" disabled={fora(c)} title={fora(c) ? (c.matriculou_em ? "Já matriculou: não recebe mais" : "Veio no dia 10/10: não recebe de novo") : undefined} checked={marcados.has(c.telefone)} onChange={(e) => { const s = new Set(marcados); if (e.target.checked) s.add(c.telefone); else s.delete(c.telefone); setMarcados(s); }} />
                       </td>
                       <td className="py-2.5 pr-3">
                         <p className="font-semibold">{c.crianca ?? "—"}{c.serie ? <span className="font-normal text-muted-foreground"> · {c.serie}</span> : null}</p>
-                        <p className="text-xs text-muted-foreground">{c.responsavel ?? "responsável não informado"} · {ORIGEM[c.origem] ?? c.origem}{c.veio_1010 === true ? <span className="ml-1 rounded-md bg-slate-100 px-1.5 py-0.5 font-bold text-slate-600">veio no dia 10/10</span> : null}{c.matriculou_em ? <span className="ml-1 rounded-md bg-amadeus-blue px-1.5 py-0.5 font-bold text-white">matriculou</span> : null}</p>
-                        {c.observacao && <p className="mt-0.5 max-w-[260px] text-xs italic text-amber-800">{c.observacao}</p>}
+                        <p className="text-xs text-muted-foreground">{c.responsavel ?? "responsável não informado"} · {ORIGEM[c.origem] ?? c.origem}</p>
+                        <input
+                          key={c.observacao ?? ""}
+                          defaultValue={c.observacao ?? ""}
+                          placeholder="Observação…"
+                          onBlur={(e) => { const v = e.target.value; if (v.trim() !== (c.observacao ?? "")) iniciar(async () => { await salvarObservacao(c.telefone, v); }); }}
+                          onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                          className="mt-1 block w-full min-w-[200px] rounded-lg border border-border/70 bg-slate-50/60 px-2 py-1 text-xs outline-none focus:border-amadeus-blue focus:bg-white"
+                        />
+                      </td>
+                      <td className="py-2.5 pr-3">
+                        <div className="flex flex-wrap gap-1">
+                          {botaoVeio(c, true, "✓ Veio", "border-emerald-600 bg-emerald-600 text-white")}
+                          {botaoVeio(c, false, "✗ Não veio", "border-red-500 bg-red-500 text-white")}
+                        </div>
+                        <button type="button" disabled={ocupado} onClick={() => iniciar(async () => { await marcarMatriculou(c.telefone, !c.matriculou_em); })}
+                          className={`mt-1 rounded-lg border px-2 py-1 text-xs font-bold disabled:opacity-40 ${c.matriculou_em ? "border-amadeus-blue bg-amadeus-blue text-white" : "border-border bg-white text-muted-foreground hover:bg-slate-50"}`}>🎓 Matriculou</button>
+                        {c.dia10 && <p className={`mt-1 text-[11px] font-semibold ${c.dia10.startsWith("confirmou") ? "text-emerald-700" : "text-red-700"}`}>tinha {c.dia10}</p>}
                       </td>
                       <td className="py-2.5 pr-3 tabular-nums">{tel(c.telefone)}</td>
                       <td className="py-2.5 pr-3">
@@ -366,7 +345,8 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
                         </button>
                       </td>
                     </tr>
-                  ))}
+                  )),
+                  ])}
                 </tbody>
               </table>
             </div>
