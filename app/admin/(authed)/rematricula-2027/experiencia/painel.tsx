@@ -2,13 +2,14 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { BadgeCheck, BellRing, Download, Loader2, Send, Trash2, UserPlus, Users } from "lucide-react";
+import { BadgeCheck, BellRing, CalendarCheck, Download, Loader2, Send, Trash2, UserPlus, Users } from "lucide-react";
 import {
   confirmarLembrete,
   enviarExperiencia,
   incluirContatos,
   lembreteAgora,
   marcarLembrar,
+  marcarVeio,
   mudarAutomatico,
   removerContato,
   type ResultadoExp,
@@ -32,6 +33,8 @@ export interface ContatoExp {
   resposta_em?: string | null;
   conferir?: boolean;
   pedido_confirmacao_em?: string | null;
+  veio_1010?: boolean | null;
+  dia10?: string | null;
   criado_em: string;
   ultimo?: string | null;
 }
@@ -40,8 +43,8 @@ export interface Candidato { telefone: string; responsavel: string | null; crian
 const tel = (t: string) => (t.length === 11 ? `(${t.slice(0, 2)}) ${t.slice(2, 7)}-${t.slice(7)}` : t.length === 10 ? `(${t.slice(0, 2)}) ${t.slice(2, 6)}-${t.slice(6)}` : t);
 const dia = (d: string | null) => (d ? new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", timeZone: "America/Fortaleza" }) : null);
 const ORIGEM: Record<string, string> = { novato: "novato", simulador: "rematrícula", avulso: "avulso", manual: "manual", whatsapp: "encaminhado no WhatsApp", site: "inscrição pelo site" };
-const SELO: Record<string, string> = { enviado: "bg-emerald-50 text-emerald-700", sem_whatsapp: "bg-amber-100 text-amber-800", erro: "bg-red-50 text-red-700" };
-const TXT: Record<string, string> = { enviado: "Enviado", sem_whatsapp: "Sem WhatsApp", erro: "Erro" };
+const SELO: Record<string, string> = { enviado: "bg-emerald-50 text-emerald-700", sem_whatsapp: "bg-amber-100 text-amber-800", erro: "bg-red-50 text-red-700", pulado: "bg-slate-100 text-slate-600" };
+const TXT: Record<string, string> = { enviado: "Enviado", sem_whatsapp: "Sem WhatsApp", erro: "Erro", pulado: "Não enviado: veio no dia 10/10" };
 const campo = "mt-1 w-full rounded-xl border border-border bg-white px-3 py-2 font-normal outline-none focus:border-amadeus-blue";
 
 /** Qual encarte vai: o vídeo do convite (padrão desde 05/10), o convite "Mãe, pai", o original ou os dois. */
@@ -94,7 +97,7 @@ function Resultados({ r }: { r: { erro?: string; resultados: ResultadoExp[] } | 
   );
 }
 
-// Quem respondeu ao pedido de confirmação da véspera (09/10): quem vai e com quantas pessoas, quem não vai e o que conferir.
+// Quem respondeu ao pedido de confirmação da véspera (16/10): quem vai e com quantas pessoas, quem não vai e o que conferir.
 // A tela se atualiza sozinha a cada minuto (o monitor do WhatsApp lê as respostas a cada 5 minutos).
 function PainelConfirmacoes({ contatos }: { contatos: ContatoExp[] }) {
   const router = useRouter();
@@ -115,7 +118,7 @@ function PainelConfirmacoes({ contatos }: { contatos: ContatoExp[] }) {
   );
   return (
     <section className="rounded-2xl border-2 border-emerald-200 bg-white p-5">
-      <p className="flex items-center gap-2 text-sm font-bold text-amadeus-blue"><BadgeCheck className="size-4 text-emerald-600" /> Confirmações · sábado, 10/10, 14h</p>
+      <p className="flex items-center gap-2 text-sm font-bold text-amadeus-blue"><BadgeCheck className="size-4 text-emerald-600" /> Confirmações · sábado, 17/10, 14h</p>
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {numero(pessoas, semQuantos ? `pessoas (+${semQuantos} sem dizer quantos)` : "pessoas confirmadas", "bg-emerald-50 text-emerald-800")}
         {numero(vao.length, vao.length === 1 ? "família vai" : "famílias vão", "bg-emerald-50 text-emerald-800")}
@@ -149,6 +152,48 @@ function PainelConfirmacoes({ contatos }: { contatos: ContatoExp[] }) {
   );
 }
 
+// 1ª edição (10/10): o Pedro marca quem veio. Quem veio não recebe mais o convite nem o lembrete do dia 17.
+function PresencaDia10({ contatos }: { contatos: ContatoExp[] }) {
+  const [ocupado, iniciar] = useTransition();
+  const [aberto, setAberto] = useState(!contatos.some((c) => c.veio_1010 != null));
+  const quem = (c: ContatoExp) => (c.responsavel && !/escola|amadeus/i.test(c.responsavel) ? c.responsavel : c.crianca ? `Família de ${c.crianca}` : tel(c.telefone));
+  const ordem = [...contatos].sort((a, b) => (b.dia10 ? 1 : 0) - (a.dia10 ? 1 : 0) || quem(a).localeCompare(quem(b), "pt-BR"));
+  const veio = contatos.filter((c) => c.veio_1010 === true).length, naoVeio = contatos.filter((c) => c.veio_1010 === false).length;
+  const botao = (c: ContatoExp, valor: boolean, rotulo: string, cor: string) => (
+    <button type="button" disabled={ocupado} onClick={() => iniciar(async () => { await marcarVeio(c.telefone, c.veio_1010 === valor ? null : valor); })}
+      className={`rounded-lg border px-2.5 py-1 text-xs font-bold disabled:opacity-40 ${c.veio_1010 === valor ? cor : "border-border bg-white text-muted-foreground hover:bg-slate-50"}`}>{rotulo}</button>
+  );
+  return (
+    <section className="rounded-2xl border-2 border-amadeus-blue/30 bg-white p-5">
+      <button type="button" onClick={() => setAberto(!aberto)} className="flex w-full flex-wrap items-center justify-between gap-2 text-left">
+        <span className="flex items-center gap-2 text-sm font-bold text-amadeus-blue"><CalendarCheck className="size-4" /> Quem veio no dia 10/10</span>
+        <span className="text-xs font-semibold text-muted-foreground">{veio} vieram · {naoVeio} não vieram · {contatos.length - veio - naoVeio} sem marcar {aberto ? "▲" : "▼"}</span>
+      </button>
+      {aberto && (
+        <>
+          <p className="mt-2 text-xs text-muted-foreground">Quem você marcar como <b>Veio</b> não recebe o convite nem o lembrete do dia 17/10. Clicar de novo desmarca.</p>
+          <ul className="mt-3 divide-y divide-border/60">
+            {ordem.map((c) => (
+              <li key={c.telefone} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+                <span className="min-w-0">
+                  <b className="text-amadeus-blue">{quem(c)}</b>
+                  {c.crianca && c.responsavel && !/escola|amadeus/i.test(c.responsavel) ? <span className="text-muted-foreground"> · {c.crianca}</span> : null}
+                  <span className="text-muted-foreground"> · {tel(c.telefone)}</span>
+                  {c.dia10 && <span className={`ml-2 rounded-md px-1.5 py-0.5 text-xs font-bold ${c.dia10.startsWith("confirmou") ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>10/10: {c.dia10}</span>}
+                </span>
+                <span className="flex shrink-0 gap-1.5">
+                  {botao(c, true, "✓ Veio", "border-emerald-600 bg-emerald-600 text-white")}
+                  {botao(c, false, "✗ Não veio", "border-red-500 bg-red-500 text-white")}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </section>
+  );
+}
+
 export function PainelExperiencia({ contatos, candidatos, automatico }: { contatos: ContatoExp[]; candidatos: Candidato[]; automatico: boolean }) {
   const [escolha, setEscolha] = useState("video");
   const [marcados, setMarcados] = useState<Set<string>>(new Set());
@@ -158,10 +203,10 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
   const [ocupado, iniciar] = useTransition();
 
   // Lembrete: só vai para quem foi confirmado na lista; mexeu no "Lembrar?" depois, precisa confirmar de novo.
-  const confirmados = contatos.filter((c) => c.lembrete_confirmado && !c.lembrete_em);
+  const confirmados = contatos.filter((c) => c.lembrete_confirmado && !c.lembrete_em && c.veio_1010 !== true);
   const pendentesLembrete = confirmados.length;
   const aConfirmar = contatos.filter((c) => !c.lembrete_em && c.lembrar !== c.lembrete_confirmado);
-  const vaoReceber = contatos.filter((c) => c.lembrar && !c.lembrete_em);
+  const vaoReceber = contatos.filter((c) => c.lembrar && !c.lembrete_em && c.veio_1010 !== true);
   const selecionados = contatos.filter((c) => marcados.has(c.telefone));
   const nomeEncarte = escolha === "video" ? "o vídeo do convite" : escolha === "os_dois" ? "os dois encartes" : escolha === "original" ? "o encarte original" : "o convite “Mãe, pai”";
 
@@ -209,6 +254,7 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
   return (
     <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
       <div className="space-y-6">
+        <PresencaDia10 contatos={contatos} />
         <PainelConfirmacoes contatos={contatos} />
 
         {/* Novo número */}
@@ -229,7 +275,7 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
               <UserPlus className="size-4" /> Só guardar o contato
             </button>
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">A mensagem convida para sábado, 10/10, às 14h, pede para confirmar respondendo e leva o endereço com o mapa.</p>
+          <p className="mt-2 text-xs text-muted-foreground">A mensagem convida para sábado, 17/10, às 14h, pede para confirmar respondendo e leva o endereço com o mapa.</p>
           <Resultados r={retorno} />
         </section>
 
@@ -258,7 +304,7 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
                 <thead>
                   <tr className="border-b border-border/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
                     <th className="py-2 pr-2">
-                      <input type="checkbox" className="size-4 accent-[#083078]" checked={marcados.size === contatos.length} onChange={(e) => setMarcados(e.target.checked ? new Set(contatos.map((c) => c.telefone)) : new Set())} />
+                      <input type="checkbox" className="size-4 accent-[#083078]" checked={marcados.size > 0 && marcados.size === contatos.filter((c) => c.veio_1010 !== true).length} onChange={(e) => setMarcados(e.target.checked ? new Set(contatos.filter((c) => c.veio_1010 !== true).map((c) => c.telefone)) : new Set())} />
                     </th>
                     <th className="py-2 pr-3">Família</th>
                     <th className="py-2 pr-3">Telefone</th>
@@ -273,11 +319,11 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
                   {contatos.map((c) => (
                     <tr key={c.telefone} className="border-b border-border/40 last:border-0">
                       <td className="py-2.5 pr-2">
-                        <input type="checkbox" className="size-4 accent-[#083078]" checked={marcados.has(c.telefone)} onChange={(e) => { const s = new Set(marcados); if (e.target.checked) s.add(c.telefone); else s.delete(c.telefone); setMarcados(s); }} />
+                        <input type="checkbox" className="size-4 accent-[#083078]" disabled={c.veio_1010 === true} title={c.veio_1010 === true ? "Veio no dia 10/10: não recebe de novo" : undefined} checked={marcados.has(c.telefone)} onChange={(e) => { const s = new Set(marcados); if (e.target.checked) s.add(c.telefone); else s.delete(c.telefone); setMarcados(s); }} />
                       </td>
                       <td className="py-2.5 pr-3">
                         <p className="font-semibold">{c.crianca ?? "—"}{c.serie ? <span className="font-normal text-muted-foreground"> · {c.serie}</span> : null}</p>
-                        <p className="text-xs text-muted-foreground">{c.responsavel ?? "responsável não informado"} · {ORIGEM[c.origem] ?? c.origem}</p>
+                        <p className="text-xs text-muted-foreground">{c.responsavel ?? "responsável não informado"} · {ORIGEM[c.origem] ?? c.origem}{c.veio_1010 === true ? <span className="ml-1 rounded-md bg-slate-100 px-1.5 py-0.5 font-bold text-slate-600">veio no dia 10/10</span> : null}</p>
                       </td>
                       <td className="py-2.5 pr-3 tabular-nums">{tel(c.telefone)}</td>
                       <td className="py-2.5 pr-3">
@@ -317,10 +363,10 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
           <p className="flex items-center gap-2 text-sm font-bold text-amadeus-blue"><BellRing className="size-4" /> Lembrete da véspera</p>
           <label className="mt-3 flex cursor-pointer items-center gap-3 text-sm">
             <input type="checkbox" className="size-4 accent-[#083078]" checked={automatico} disabled={ocupado} onChange={(e) => iniciar(() => mudarAutomatico(e.target.checked))} />
-            <span><b>Automático</b> na sexta, 09/10, às 9h</span>
+            <span><b>Automático</b> na sexta, 16/10, às 9h</span>
           </label>
           <p className="mt-2 text-xs text-muted-foreground">
-            Só vai para a lista que você <b>confirmar</b> aqui. Mensagem: “é amanhã, sábado (10/10), às 14h…” com o convite e o mapa.
+            Só vai para a lista que você <b>confirmar</b> aqui. Mensagem: “é amanhã, sábado (17/10), às 14h…” com o convite e o mapa.
           </p>
 
           <div className="mt-4 rounded-xl bg-amadeus-blue-50/50 p-3">

@@ -24,7 +24,7 @@ const EM_ANDAMENTO: Modulo[] = [
     href: "/admin/arboria-experiencia",
     icone: Sparkles,
     titulo: "História do Arboria",
-    descricao: "Experiência Amadeus (10/10): QR da sala, quem se cadastrou e o botão que libera a história de cada criança.",
+    descricao: "Experiência Amadeus: QR da sala, quem se cadastrou e o botão que libera a história de cada criança.",
     selo: "Sábado",
   },
   {

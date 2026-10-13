@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Véspera da Experiência Amadeus</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=DM+Sans:wght@500;700;800&family=Fraunces:opsz,wght@9..144,800&display=swap" rel="stylesheet">
+<style>
+  /* Imagem da véspera da Experiência Amadeus (09/10/2026), estilo caderno do encarte. 1080 x 1350 (4:5, WhatsApp). */
+  :root { --papel: #FCFAF4; --linha: #DCE3F0; --margem: #F2A6A6; --marinho: #0A2F7A; --azul: #1D55D8; --amarelo: #FFC21A; --nota-am: #FFE7A0; --nota-az: #CFE2F7; --cinza: #4A5878; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1350px; }
+  body { background: var(--papel); position: relative; overflow: hidden; font-family: "DM Sans", sans-serif; color: var(--marinho);
+    background-image: repeating-linear-gradient(to bottom, transparent 0 51px, var(--linha) 51px 53px); background-position: 0 30px; }
+  .margem { position: absolute; top: 0; bottom: 0; left: 108px; width: 3px; background: var(--margem); }
+  .furo { position: absolute; left: 34px; width: 38px; height: 38px; border-radius: 50%; background: #E9E4D6; box-shadow: inset 0 3px 5px rgba(0,0,0,.12); }
+  .logo { position: absolute; left: 150px; top: 40px; width: 860px; filter: drop-shadow(0 10px 18px rgba(10,47,122,.18)); }
+  .oi { position: absolute; left: 160px; right: 60px; top: 420px; font: 700 128px/0.95 Caveat, cursive; color: var(--azul); transform: rotate(-3deg); }
+  .oi span { display: inline-block; transform: rotate(14deg); }
+  .frase { position: absolute; left: 165px; right: 70px; top: 560px; font: 800 64px/1.12 Fraunces, serif; color: var(--marinho); letter-spacing: -.01em; }
+  .frase mark { background: linear-gradient(transparent 58%, rgba(255,194,26,.75) 58%); color: inherit; padding: 0 6px; }
+  .pergunta { position: absolute; left: 160px; top: 790px; font: 700 96px/1 Caveat, cursive; color: var(--azul); transform: rotate(-2deg); }
+  .notas { position: absolute; left: 160px; right: 70px; top: 930px; display: flex; gap: 34px; }
+  .nota { position: relative; flex: 1; padding: 34px 20px 26px; text-align: center; box-shadow: 0 12px 20px rgba(10,47,122,.14); }
+  .nota.am { background: var(--nota-am); transform: rotate(-2.5deg); }
+  .nota.az { background: var(--nota-az); transform: rotate(2deg); }
+  .nota b { display: block; font: 800 66px/1 Fraunces, serif; color: var(--marinho); }
+  .nota small { display: block; margin-top: 10px; font: 800 24px "DM Sans"; letter-spacing: .3em; color: var(--cinza); }
+  .fita { position: absolute; top: -20px; left: 50%; width: 140px; height: 38px; transform: translateX(-50%) rotate(-3deg); opacity: .85;
+    background: repeating-linear-gradient(90deg, rgba(255,255,255,.35) 0 6px, transparent 6px 12px); }
+  .am .fita { background-color: #8FB6EA; } .az .fita { background-color: #FFC94A; }
+  .filhos { position: absolute; left: 160px; right: 330px; top: 1140px; font: 700 52px/1.12 Caveat, cursive; color: var(--marinho); }
+  .filhos em { font-style: normal; color: var(--azul); }
+  .desenho { position: absolute; right: 40px; bottom: 26px; width: 270px; }
+  .coracao { position: absolute; }
+</style>
+</head>
+<body>
+<div class="margem"></div>
+<div class="furo" style="top:200px"></div><div class="furo" style="top:560px"></div><div class="furo" style="top:920px"></div><div class="furo" style="top:1250px"></div>
+
+<img class="logo" src="../EXPERIENCIA SER AMADEUS LOGO 2026 - VERSÃO PARA FUNDO AMARELO.png" alt="Experiência Ser Amadeus">
+
+<div class="oi">Oiê! <span>👋</span></div>
+<div class="frase">Amanhã é a nossa <mark>Experiência Amadeus</mark>!</div>
+<div class="pergunta">Você vem, né? 💛</div>
+
+<div class="notas">
+  <div class="nota am"><div class="fita"></div><b>17/10</b><small>SÁBADO</small></div>
+  <div class="nota az"><div class="fita"></div><b>14h</b><small>NA ESCOLA</small></div>
+</div>
+
+<div class="filhos">Venha com seus filhos(as),<br><em>eles vão amar conhecer<br>a nova escola!</em></div>
+
+<!-- desenho de criança em giz: escolinha, sol e coração -->
+<svg class="desenho" viewBox="0 0 300 260" aria-hidden="true">
+  <defs><filter id="giz"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="3"/></filter></defs>
+  <g filter="url(#giz)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 240 C80 232 170 248 290 236" stroke="#3FA66B" stroke-width="6"/>
+    <path d="M60 238 V160 H190 V238" stroke="#0A2F7A" stroke-width="6" fill="#0A2F7A10"/>
+    <path d="M48 164 L125 108 L202 164" stroke="#E0524C" stroke-width="7"/>
+    <path d="M110 238 V200 H140 V238" stroke="#FFB000" stroke-width="6"/>
+    <path d="M155 178 h22 v22 h-22 z M166 178 v22 M155 189 h22" stroke="#1D55D8" stroke-width="4"/>
+    <path d="M125 108 V70 M125 72 l30 10 l-30 10" stroke="#E0524C" stroke-width="5" fill="#E0524C40"/>
+    <path d="M250 60 m-26 0 a26 26 0 1 0 52 0 a26 26 0 1 0 -52 0" stroke="#FFB000" stroke-width="6" fill="#FFB00033"/>
+    <path d="M250 16v-10 M250 104v10 M206 60h-10 M294 60h10 M219 29l-7-7 M281 29l7-7" stroke="#FFB000" stroke-width="5"/>
+    <path d="M240 190 c-14 -16 -34 -2 -20 16 l20 20 l20 -20 c14 -18 -6 -32 -20 -16 z" stroke="#E86FA6" stroke-width="5" fill="#E86FA640"/>
+  </g>
+</svg>
+</body>
+</html>

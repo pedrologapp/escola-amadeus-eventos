@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Experiência Amadeus · vídeo</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,600&family=DM+Sans:opsz,wght@9..40,500;9..40,700;9..40,800&display=block" rel="stylesheet">
+<style>
+  /* Vídeo da Experiência Amadeus (reels 1080×1920, 20 s), 05/10/2026.
+     O convite "Mãe, pai" ganha vida: o filho leva os pais para ver a escola por dentro.
+     window.render(t) desenha o quadro do segundo t (determinístico); montar.mjs grava os quadros.
+     ?filho=menino | menina   ·   ?t=8 mostra o segundo 8 parado. */
+  :root { --navy: #0B2A66; --azul: #1D4FA0; --escola: #083078; --sol: #FFB000; --verde: #5F9683; --verm: #E0524C; --creme: #FBF6EC; --ouro: #B07A10; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--creme); }
+  #palco { position: absolute; inset: 0; width: 1080px; height: 1920px; overflow: hidden; background: radial-gradient(ellipse at 50% 30%, #fffaf0, #f6eedd 75%); }
+  .abs { position: absolute; }
+  #card { position: absolute; left: 0; top: 0; width: 794px; height: 1123px; transform-origin: 0 0; }
+  #card img { position: absolute; left: 0; top: 0; width: 794px; height: 1123px; }
+  #cardTxt { clip-path: inset(190px 100px 760px 0); }
+  #selo { left: 50%; top: 150px; translate: -50% 0; font: 800 44px "DM Sans"; color: var(--navy); background: #FFC94D; padding: 18px 36px; border-radius: 99px;
+          box-shadow: 0 8px 0 rgba(176,122,16,.35); letter-spacing: .01em; white-space: nowrap; }
+  #mundo { position: absolute; inset: 0; transform-origin: 0 0; }
+  #papel { position: absolute; inset: 0; background-color: #fffdf8;
+           background-image: linear-gradient(90deg, transparent 118px, #f2a7a3 118px, #f2a7a3 121px, transparent 121px),
+                             repeating-linear-gradient(180deg, transparent 0 126px, #c9d8ee 126px 129px); }
+  #desenho { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; overflow: visible; }
+  #desenho g, #desenho path, #desenho circle { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .txt { position: absolute; left: 150px; right: 70px; color: var(--navy); }
+  .mao { font: 700 112px/1.13 "Caveat", cursive; color: var(--azul); }
+  .linha { display: block; white-space: nowrap; }
+  .grifo { background: linear-gradient(180deg, transparent 58%, rgba(255,201,77,.85) 58%, rgba(255,201,77,.85) 88%, transparent 88%); }
+  .narr { font: 600 76px/1.12 "Fraunces", serif; color: var(--navy); }
+  .narr i { font-style: italic; color: var(--azul); }
+  #balao { font: 700 86px/1 "Caveat"; color: var(--navy); background: #fff; border: 6px solid var(--navy); border-radius: 46px; padding: 26px 40px 30px; white-space: nowrap; }
+  #balao::after { content: ''; position: absolute; left: 70px; bottom: -34px; border: 18px solid transparent; border-top: 22px solid var(--navy); }
+  #branco { position: absolute; inset: 0; background: #fffdf8; opacity: 0; pointer-events: none; }
+  /* cartão final */
+  #final { position: absolute; inset: 0; opacity: 0; }
+  #final .rot { font: 700 34px "DM Sans"; letter-spacing: .26em; color: var(--ouro); text-transform: uppercase; }
+  #final .tit { font: 700 104px/1 "Fraunces", serif; color: var(--navy); letter-spacing: -.01em; white-space: nowrap; }
+  #final .tit i { font-style: italic; font-weight: 600; }
+  .cal { width: 230px; border-radius: 26px; background: #fff; box-shadow: 0 12px 30px rgba(11,42,102,.18); overflow: hidden; text-align: center; }
+  .cal .m { background: var(--navy); color: #fff; font: 800 28px "DM Sans"; letter-spacing: .14em; padding: 14px 0; }
+  .cal .d { font: 700 120px/1 "Fraunces", serif; color: var(--navy); padding-top: 14px; }
+  .cal .s { font: 700 28px "DM Sans"; letter-spacing: .2em; color: var(--navy); padding: 6px 0 20px; }
+  .quando { font: 700 78px/1.05 "Fraunces", serif; color: var(--navy); }
+  .quando small { display: block; font: 600 52px "Fraunces", serif; font-style: italic; color: var(--azul); margin-top: 10px; }
+  .chip { display: inline-block; font: 700 36px "DM Sans"; color: var(--navy); border: 4px solid var(--navy); border-radius: 99px; padding: 10px 26px; margin-right: 12px; }
+  .cta { font: 800 50px "DM Sans"; color: var(--navy); background: #FFC94D; border-radius: 28px; padding: 26px 40px; box-shadow: 0 10px 0 rgba(176,122,16,.3); white-space: nowrap; }
+  .end { font: 500 34px/1.4 "DM Sans"; color: #3d4b66; }
+  .end b { color: var(--navy); }
+  .pop { opacity: 0; }
+</style>
+</head>
+<body>
+<div id="palco">
+  <div id="card"><img src="card-sem.png" alt=""><img id="cardFull" src="card-full.png" alt=""><img id="cardTxt" src="card-full.png" alt=""></div>
+  <div id="selo" class="abs">Convite pra você 💌</div>
+
+  <div id="mundo">
+    <div id="papel"></div>
+    <svg id="desenho" viewBox="0 0 1080 1920">
+      <defs><filter id="vivo" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence id="turb" type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="1"/><feDisplacementMap in="SourceGraphic" scale="5"/></filter></defs>
+      <g id="cena" filter="url(#vivo)"></g>
+    </svg>
+    <div id="t1" class="txt mao" style="top:290px"><span class="linha">Mãe, pai…</span><span class="linha">vamos conhecer</span><span class="linha">a escola <span class="grifo">comigo?</span></span></div>
+    <div id="t2" class="txt narr" style="top:330px">Escolher escola<br>dá um <i>friozinho</i><br>na barriga…</div>
+    <div id="t3" class="txt narr" style="top:330px">Por um dia,<br>vocês veem<br><i>tudo por dentro.</i></div>
+    <div id="balao" class="abs">Posso voltar amanhã?</div>
+    <div id="branco"></div>
+  </div>
+
+  <div id="final">
+    <img src="logo30.png" class="abs pop" id="logo" style="left:836px;top:120px;width:190px" alt="">
+    <div class="abs pop rot" id="f1" style="left:90px;top:800px">Você está convidado</div>
+    <div class="abs pop tit" id="f2" style="left:86px;top:850px">Experiência <i>Amadeus</i></div>
+    <div class="abs pop cal" id="f3" style="left:90px;top:1005px"><div class="m">OUTUBRO 2026</div><div class="d">17</div><div class="s">SÁBADO</div></div>
+    <div class="abs pop quando" id="f4" style="left:370px;top:1025px">Sábado, 17/10<br>às 14h<small>na escola · gratuito</small></div>
+    <div class="abs pop" id="f5" style="left:90px;top:1300px"><span class="chip">Ed. Infantil</span><span class="chip">Fund. 1</span><span class="chip">Fund. 2</span></div>
+    <div class="abs pop cta" id="f6" style="left:90px;top:1405px">✅ Confirme pela mensagem</div>
+    <div class="abs pop end" id="f7" style="left:90px;top:1560px"><b>Centro Educacional Amadeus</b><br>Av. Benedito Santana, 09 · Amarante · São Gonçalo do Amarante</div>
+  </div>
+</div>
+
+<script>
+const Q = new URLSearchParams(location.search);
+const FILHO = Q.get('filho') === 'menina' ? 'menina' : 'menino';
+const $ = (s) => document.querySelector(s);
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const lin = (t, a, b) => clamp((t - a) / (b - a));
+const ease = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+const back = (x) => { const c = 1.6; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const mix = (a, b, p) => a + (b - a) * p;
+
+// ------------------------------------------------------------- linha do tempo (s)
+const T = {
+  zoom: [1.9, 3.0], txtSai: [2.3, 2.7], toma: [2.8, 3.6],
+  t1: [3.1, 4.7], t1sai: [5.3, 5.6], duvida: 5.3,
+  t2: [5.6, 7.5], puxa: [5.6, 6.1], anda: [6.3, 7.8],
+  porta: [7.6, 8.0], entra: [7.8, 8.55], interior: 8.45,
+  t3: [8.7, 11.0], corre: [8.8, 9.8], amigo: 9.9,
+  virada: 11.0, volta: [11.2, 12.0], balao: [11.8, 13.3],
+  fim: [13.2, 14.0], info: 13.6, dur: 20.2,
+};
+
+// ------------------------------------------------------------- câmera sobre o convite (mundo = 794×1123)
+function camera(t) {
+  const p0 = lin(t, 0, T.zoom[0]), p1 = ease(lin(t, T.zoom[0], T.zoom[1]));
+  let s = mix(1.1335, 1.165, p0), cx = 397, cy = 556;
+  s = mix(s, 1.62, p1); cx = mix(cx, 400, p1); cy = mix(cy, 430, p1);
+  return { s, tx: 540 - cx * s, ty: 960 - cy * s };
+}
+// unidades do desenho (viewBox 200×92 do convite) → tela
+function mapCard(t) { const c = camera(t), k = 543.42 / 200; return { k: k * c.s, ox: c.tx + 146.02 * c.s, oy: c.ty + (359.2 + (261.78 - 92 * k) / 2) * c.s }; }
+const CENA = { k: 5.4, ox: 0, oy: 1270 - 86 * 5.4 };
+
+// ------------------------------------------------------------- bonequinhos (unidades do desenho)
+const P = (x, y) => `${x.toFixed(2)} ${y.toFixed(2)}`;
+const seg = (x1, y1, a, l) => [x1 + Math.sin(a) * l, y1 + Math.cos(a) * l];
+// tipo: pai | mae | menino | menina | prof | colega · pe = y do chão · passo = fase da caminhada (rad) · bracos = [esq, dir] em rad (0 = para baixo)
+function boneco({ tipo, x, pe = 84, passo = null, bracos = null, agacha = 0, pulo = 0, cor = '#1D4FA0' }) {
+  const crianca = tipo === 'menino' || tipo === 'menina' || tipo === 'colega';
+  const L = crianca ? { r: 5, cab: 32, ombro: 23, quadril: 13, perna: 14.5, braco: 10 } : { r: 6, cab: 48, ombro: 36, quadril: 20, perna: 21, braco: 13 };
+  const y0 = pe - pulo;
+  const bob = passo != null ? Math.abs(Math.sin(passo)) * (crianca ? .9 : 1.1) : 0;
+  const hipY = y0 - L.quadril - bob + agacha * 9, shY = y0 - L.ombro - bob + agacha * 9, headY = y0 - L.cab - bob + agacha * 9;
+  const sw = passo != null ? Math.sin(passo) * .5 : 0;
+  let d = '';
+  // pernas
+  if (agacha > 0) {
+    const kx = 7 * agacha;
+    d += `M${P(x, hipY)}L${P(x - 3 + kx, hipY + 7)}L${P(x - 4, y0)}M${P(x, hipY)}L${P(x + 3 + kx, hipY + 6)}L${P(x + 4, y0)}`;
+  } else {
+    const base = crianca ? .32 : .28;
+    const [a1, b1] = seg(x, hipY, -base + sw, L.perna), [a2, b2] = seg(x, hipY, base - sw, L.perna);
+    d += `M${P(x, hipY)}L${P(a1, Math.min(b1, y0))}M${P(x, hipY)}L${P(a2, Math.min(b2, y0))}`;
+  }
+  // corpo
+  d += `M${P(x, headY + L.r)}L${P(x, hipY)}`;
+  // braços (ângulo a partir de "para baixo"; positivo = para a direita)
+  const br = bracos || (passo != null ? [-.5 - sw * .8, .5 + sw * .8] : [-.75, .75]);
+  const [c1, d1] = seg(x, shY, br[0], L.braco), [c2, d2] = seg(x, shY, br[1], L.braco);
+  d += `M${P(x, shY)}L${P(c1, d1)}M${P(x, shY)}L${P(c2, d2)}`;
+  let extra = '';
+  if (tipo === 'mae') extra += `<path d="M${P(x - 7, hipY - 3)}h14l-3-12h-8z"/>`;
+  if (tipo === 'prof') extra += `<path d="M${P(x - 7, hipY - 2)}h14l-3-12h-8z"/><path d="M${P(x - 6, headY - 2)}q-2 10 -4 14M${P(x + 6, headY - 2)}q2 10 4 14"/>`;
+  if (tipo === 'pai') extra += `<path d="M${P(x - 6, headY - 2)}c2-6 10-7 13-1"/>`;
+  if (tipo === 'menino') extra += `<path d="M${P(x - 4, headY - 3)}c2-3 7-3 9 0"/>`;
+  if (tipo === 'menina') extra += `<path d="M${P(x - 4.5, headY - 3)}c2-3 7-3 9 0"/><path d="M${P(x - 5, headY - 1)}q-5 1 -5 6M${P(x + 5, headY - 1)}q5 1 5 6"/><path d="M${P(x - 5, hipY + 1)}L${P(x, hipY - 7)}L${P(x + 5, hipY + 1)}z"/>`;
+  if (tipo === 'colega') extra += `<path d="M${P(x - 4, headY - 3)}l2-3 2 2 2-3 2 3"/>`;
+  return { svg: `<g stroke="${cor}"><circle cx="${x.toFixed(2)}" cy="${headY.toFixed(2)}" r="${L.r}"/><path d="${d}"/>${extra}</g>`, maoDir: [c2, d2], maoEsq: [c1, d1], topo: headY - L.r };
+}
+const coracao = (x, y, s = 1, alfa = 1) => `<path transform="translate(${x} ${y}) scale(${s}) translate(-104 -34)" opacity="${alfa}" stroke="#E0524C" fill="rgba(224,82,76,.18)" d="M104 34c-3-5-11-3-10 3 1 5 10 10 10 10s9-5 10-10c1-6-7-8-10-3z"/>`;
+const interroga = (x, y, s = 1, alfa = 1) => `<text x="${x}" y="${y}" font-family="Caveat" font-weight="700" font-size="${16 * s}" text-anchor="middle" fill="#1D4FA0" opacity="${alfa}" stroke="none">?</text>`;
+
+// ------------------------------------------------------------- a cena de fora (o convite que ganha vida)
+function fora(t) {
+  const anda = ease(lin(t, T.anda[0], T.anda[1])), andando = t > T.anda[0] && t < T.anda[1];
+  const passo = andando ? (t - T.anda[0]) * 11 : null;
+  const dx = anda * 26;
+  const pai = boneco({ tipo: 'pai', x: 30 + dx, passo });
+  const puxa = ease(lin(t, T.puxa[0], T.puxa[1]));
+  // o filho vira para a escola e estica o braço para a mãe; depois puxa
+  const filho = boneco({ tipo: FILHO, x: 90 + dx + (andando ? 2 : 0), passo: passo != null ? passo + 1 : null, pulo: t > T.anda[1] && t < T.porta[1] ? Math.abs(Math.sin((t - T.anda[1]) * 9)) * 3 : 0,
+    bracos: t < T.puxa[0] ? [-1.1, .9] : [mix(-1.1, -1.45, puxa), 1.9] });
+  const mae = boneco({ tipo: 'mae', x: 62 + dx, passo: passo != null ? passo + .6 : null, bracos: t < T.puxa[0] ? [-.6, 1.0] : [-.6, mix(1.0, 1.25, puxa)] });
+  const maoDada = t >= T.puxa[0] + .3 ? `<path stroke="#1D4FA0" d="M${P(...mae.maoDir)}L${P(...filho.maoEsq)}"/>` : '';
+  // pai e mãe de mãos dadas também
+  const maoPais = `<path stroke="#1D4FA0" d="M${P(...pai.maoDir)}Q${P((pai.maoDir[0] + mae.maoEsq[0]) / 2, Math.max(pai.maoDir[1], mae.maoEsq[1]) + 2)} ${P(...mae.maoEsq)}"/>`;
+  // dúvida: "?" sobre a cabeça dos pais
+  const dv = back(lin(t, T.duvida, T.duvida + .45));
+  const flut = Math.sin(t * 3) * .8;
+  const duvida = t > T.duvida ? interroga(pai.topo > 0 ? 30 + dx : 0, pai.topo - 4 + flut, dv) + interroga(62 + dx, mae.topo - 4 - flut, dv) : '';
+  // o coração do convite sobe e some quando a cena começa
+  const cor = lin(t, 3.0, 4.2);
+  const heart = cor < 1 ? coracao(104, 34 - cor * 18, 1 + cor * .2, 1 - cor) : '';
+  // sol: raios giram devagar; porta abre
+  const giro = t * 12;
+  const ab = ease(lin(t, T.porta[0], T.porta[1]));
+  const porta = `<path d="M146 86V70h12v16"/>` + (ab > 0 ? `<path stroke="none" fill="rgba(255,201,77,${.55 * ab})" d="M146.6 85.4V70.6h10.8v14.8z"/><path d="M146 86V70l${(-6 * ab).toFixed(2)} ${(1.5 * ab).toFixed(2)}v${(16 - 1.5 * ab).toFixed(2)}z"/>` : '');
+  return `<g stroke-width="1.5">
+    <g stroke="#5F9683"><path d="M4 86c30-3 60 2 96-1s70 2 96-1"/></g>
+    <g stroke="#FFB000" stroke-width="1.8"><circle cx="176" cy="18" r="9"/><path transform="rotate(${giro} 176 18)" d="M176 3v-3M176 36v-3M161 18h-3M194 18h-3M165 7l-2-2M187 29l2 2M187 7l2-2M165 29l-2 2"/></g>
+    <g stroke="#083078"><path d="M126 86V52h52v34M122 54l30-22 30 22"/>${porta}<path d="M132 60h8v7h-8zM164 60h8v7h-8z"/><path d="M152 32V16l${(12 + Math.sin(t * 6) * 1.5).toFixed(2)} 4-12 4"/></g>
+    ${heart}${maoPais}${pai.svg}${mae.svg}${filho.svg}${maoDada}${duvida}
+  </g>`;
+}
+
+// ------------------------------------------------------------- a cena de dentro (a escola por dentro)
+function dentro(t) {
+  const c = ease(lin(t, T.corre[0], T.corre[1])), correndo = t > T.corre[0] && t < T.corre[1];
+  const v = ease(lin(t, T.volta[0], T.volta[1])), voltando = t > T.volta[0] && t < T.volta[1];
+  let fx = mix(48, 118, c); fx = mix(fx, 50, v);
+  const passo = correndo || voltando ? t * 15 : null;
+  const juntos = t > T.amigo && t < T.volta[0];
+  const pulo = juntos ? Math.abs(Math.sin((t - T.amigo) * 8)) * 3 : t > T.volta[1] ? Math.abs(Math.sin((t - T.volta[1]) * 7)) * 2.5 : 0;
+  const filho = boneco({ tipo: FILHO, x: fx, passo, pulo, bracos: juntos ? [-.6, 1.4] : voltando ? [-1.6, .6] : t > T.volta[1] ? [-2.4, 2.4] : null });
+  const prof = boneco({ tipo: 'prof', x: 150, agacha: 1, bracos: [-1.0 - (t > T.corre[1] - .3 ? .3 : 0), .6] });
+  const colega = boneco({ tipo: 'colega', x: 134, pulo: juntos ? Math.abs(Math.sin((t - T.amigo) * 8 + 1)) * 3 : 0, bracos: [-1.5 - Math.sin(t * 5) * (t < T.amigo ? .25 : 0), .7] });
+  const maos = juntos ? `<path stroke="#1D4FA0" d="M${P(...filho.maoDir)}L${P(...colega.maoEsq)}"/>` : '';
+  // pais na porta (à esquerda): "?" vira coração na virada
+  const pai = boneco({ tipo: 'pai', x: 18, bracos: t > T.volta[1] ? [-.6, 1.2] : null });
+  const mae = boneco({ tipo: 'mae', x: 34, bracos: t > T.volta[1] ? [-1.2, .6] : null });
+  const vir = lin(t, T.virada, T.virada + .5);
+  const fl = Math.sin(t * 3) * .8;
+  let sobre = '';
+  for (const [x, top, f] of [[18, pai.topo, fl], [34, mae.topo, -fl]]) {
+    sobre += vir < .5 ? interroga(x, top - 4 + f, 1 - vir * 2, 1 - vir * 2) : coracao(x, top - 8 + f, back(lin(vir, .5, 1)) * .7);
+  }
+  // coraçõezinhos que sobem depois da virada
+  let sobe = '';
+  if (t > T.virada + .3) for (let i = 0; i < 6; i++) { const ti = (t - T.virada - .3 - i * .35); if (ti > 0) { const y = 60 - ti * 14, a = clamp(1 - ti / 2.2); if (a > 0) sobe += coracao(26 + Math.sin(i * 2.1 + ti * 2) * 10 + i * 3, y, .35 + i % 3 * .1, a); } }
+  return `<g stroke-width="1.5">
+    <g stroke="#5F9683"><path d="M2 86h196"/></g>
+    <g stroke="#083078"><path d="M6 86V48h40v38" stroke-dasharray="2 3"/></g>
+    <g stroke="#083078"><path d="M66 26h60v28H66z"/><path stroke="#5F9683" d="M72 34q4-5 8 0t8 0M74 44h18M98 36h20M98 44l8 0"/><path d="M78 54v4M114 54v4"/></g>
+    <g stroke="#FFB000" stroke-width="1.6"><path d="M150 18h30v22h-30zM165 18v22M150 29h30"/><circle cx="173" cy="24" r="3"/></g>
+    <g stroke="#E0524C"><path d="M98 76h14v10H98zM100 76v-5h10v5"/></g>
+    ${pai.svg}${mae.svg}${prof.svg}${colega.svg}${filho.svg}${maos}${sobre}${sobe}
+  </g>`;
+}
+
+// ------------------------------------------------------------- render
+const ESC = 794 / 794;
+function render(t) {
+  const cam = camera(t);
+  const card = $('#card');
+  card.style.transform = `translate(${cam.tx}px,${cam.ty}px) scale(${cam.s})`;
+  $('#cardFull').style.opacity = t < T.zoom[0] ? 1 : 0;              // até aqui, o convite como foi impresso
+  $('#cardTxt').style.opacity = t < T.zoom[0] ? 0 : 1 - lin(t, ...T.txtSai);
+  $('#selo').style.opacity = 1 - lin(t, 1.5, 1.9);
+  $('#selo').style.transform = `translateY(${(1 - easeOut(lin(t, .05, .5))) * -30}px) rotate(-2deg)`;
+
+  // o papel toma a tela
+  const toma = ease(lin(t, ...T.toma));
+  $('#papel').style.opacity = toma;
+  card.style.opacity = t < T.toma[1] ? 1 : 0;
+
+  // mapeamento do desenho: do convite (com a câmera) para a cena
+  const mc = mapCard(t);
+  let k = mix(mc.k, CENA.k, toma), ox = mix(mc.ox, CENA.ox, toma), oy = mix(mc.oy, CENA.oy, toma);
+  // entrar pela porta
+  const en = Math.pow(lin(t, ...T.entra), 2.2);
+  if (en > 0 && t < T.interior) { const z = 1 + en * 14, px = 152, py = 78; const sx = px * k + ox, sy = py * k + oy;
+    const tx = mix(sx, 540, en), ty = mix(sy, 960, en); k *= z; ox = tx - px * k; oy = ty - py * k; }
+  const cena = t < T.interior ? fora(t) : dentro(t);
+  $('#cena').innerHTML = `<g transform="translate(${ox.toFixed(2)} ${oy.toFixed(2)}) scale(${k.toFixed(4)})">${cena}</g>`;
+  $('#turb').setAttribute('seed', 1 + Math.floor(t * 8) % 5);   // traço "vivo", como desenho animado à mão
+
+  // flash da porta
+  $('#branco').style.opacity = t < T.interior ? lin(t, 8.25, 8.45) : 1 - lin(t, T.interior, T.interior + .3);
+
+  // textos
+  const t1 = $('#t1'); const linhas = t1.querySelectorAll('.linha');
+  const pe = lin(t, ...T.t1);
+  linhas.forEach((l, i) => { const a = clamp(pe * 3 - i); l.style.clipPath = `inset(-20px ${(100 - a * 100).toFixed(1)}% -30px 0)`; });
+  t1.style.opacity = t < T.t1[0] ? 0 : 1 - lin(t, ...T.t1sai);
+  for (const [id, [a, b]] of [['#t2', T.t2], ['#t3', T.t3]]) {
+    const el = $(id), e = easeOut(lin(t, a, a + .45)), s = lin(t, b - .3, b);
+    el.style.opacity = e * (1 - s); el.style.transform = `translateY(${(1 - e) * 40 - s * 20}px)`;
+  }
+  // balão do filho
+  const bl = $('#balao'); const bi = back(lin(t, T.balao[0], T.balao[0] + .4)), bo = lin(t, T.balao[1] - .3, T.balao[1]);
+  bl.style.opacity = t > T.balao[0] ? 1 - bo : 0;
+  bl.style.left = (50 * CENA.k + 10) + 'px'; bl.style.top = (CENA.oy + 30 * CENA.k - 120) + 'px';
+  bl.style.transform = `scale(${t > T.balao[0] ? bi : 0})`; bl.style.transformOrigin = '60px 120%';
+
+  // final: a cena encolhe para uma tira de papel no alto e as informações entram
+  const fm = ease(lin(t, ...T.fim));
+  const mundo = $('#mundo');
+  const s = mix(1, .76, fm), y0 = 690, y1 = 1310;          // a faixa da cena (família) que fica visível
+  mundo.style.clipPath = `inset(${(y0 * fm).toFixed(1)}px 0 ${((1920 - y1) * fm).toFixed(1)}px 0 round ${(40 * fm).toFixed(0)}px)`;
+  mundo.style.transform = `translate(${(540 - 540 * s).toFixed(1)}px,${mix(0, 250 - y0 * s, fm).toFixed(1)}px) scale(${s})`;
+  mundo.style.boxShadow = 'none';
+  $('#final').style.opacity = lin(t, T.fim[0], T.fim[0] + .4);
+  ['#logo', '#f1', '#f2', '#f3', '#f4', '#f5', '#f6', '#f7'].forEach((id, i) => {
+    const a = back(lin(t, T.info + i * .16, T.info + i * .16 + .45)), el = $(id);
+    el.style.opacity = clamp(a); el.style.transform = `translateY(${(1 - a) * 50}px)`;
+  });
+  // na tira final, os textos da cena não aparecem
+  if (t > T.fim[0]) { ['#t1', '#t2', '#t3'].forEach((s) => $(s).style.opacity = 0); }
+}
+window.render = render;
+document.fonts.ready.then(() => { render(+(Q.get('t') || 0)); window.pronto = true; });
+</script>
+</body>
+</html>

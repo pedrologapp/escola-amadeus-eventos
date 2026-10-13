@@ -3,14 +3,14 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { WEBHOOK_ENVIO } from "@/lib/rematricula-2027";
 
 /**
- * Experiência Amadeus (sáb 10/10/2026, 14h). Envio do encarte pelo WhatsApp da escola usando o
+ * Experiência Amadeus · 2ª edição (sáb 17/10/2026, 14h; a 1ª foi em 10/10). Envio do encarte pelo WhatsApp da escola usando o
  * MESMO fluxo do n8n da carta da rematrícula (webhook rematricula-carta): "capa" vai como imagem
  * com o "texto" na legenda; se "imagem" vier preenchida, sai uma segunda imagem. Se "video" vier
  * preenchido, sai o vídeo (com o "texto" na legenda) no lugar da imagem (05/10: o vídeo do convite é o padrão).
  * Todo número que recebe entra em experiencia_contatos (lembrete da véspera + não perder o contato).
  */
 
-export const DIA_LEMBRETE = "2026-10-09"; // sexta, véspera: o cron só manda neste dia
+export const DIA_LEMBRETE = "2026-10-16"; // sexta, véspera da 2ª edição: o cron só manda neste dia
 export const ENCARTES = {
   video: { rotulo: "Vídeo do convite", arquivo: "/materiais/experiencia-video.mp4" },
   convite: { rotulo: "Convite “Mãe, pai”", arquivo: "/materiais/experiencia-convite.png" },
@@ -31,7 +31,7 @@ export const textoConvite = (crianca?: string | null, video = false) => {
   const p = primeiro(crianca);
   return `${video ? chamadaVideo(p) + "\n\n" : ""}Olá, família${p ? ` de *${p}*` : ""}! 💛 Aqui é o Centro Educacional Amadeus.
 
-Vocês estão convidados para a *Experiência Amadeus*: no *sábado, 10 de outubro, às 14h*, venham viver um dia dentro da nossa escola junto com ${p || "seu filho ou sua filha"} e sentir na prática um pouco do que vai viver aqui. É *gratuito*.
+Vocês estão convidados para a *Experiência Amadeus*: no *sábado, 17 de outubro, às 14h*, venham viver um dia dentro da nossa escola junto com ${p || "seu filho ou sua filha"} e sentir na prática um pouco do que vai viver aqui. É *gratuito*.
 
 Para confirmar a presença, responda *EU VOU* nesta mensagem. Vai ser uma alegria receber vocês!
 
@@ -41,7 +41,7 @@ ${COMO_CHEGAR}`;
 
 export const textoLembrete = (crianca?: string | null) => {
   const p = primeiro(crianca);
-  return `Olá, família${p ? ` de *${p}*` : ""}! 😊 Passando para lembrar: é *amanhã, sábado (10/10), às 14h*, a *Experiência Amadeus*.
+  return `Olá, família${p ? ` de *${p}*` : ""}! 😊 Passando para lembrar: é *amanhã, sábado (17/10), às 14h*, a *Experiência Amadeus*.
 
 Estamos preparando tudo com muito carinho para receber vocês${p ? ` e ${p}` : ""}. Até amanhã! 💛
 
@@ -51,7 +51,7 @@ ${COMO_CHEGAR}`;
 
 export const limparTelefone = (t: string) => t.replace(/\D/g, "").replace(/^55(?=\d{10,11}$)/, "");
 
-export type StatusEnvio = "enviado" | "sem_whatsapp" | "erro";
+export type StatusEnvio = "enviado" | "sem_whatsapp" | "erro" | "pulado";
 export interface Contato {
   telefone: string;
   responsavel?: string | null;
@@ -101,6 +101,8 @@ export async function guardarContato(c: Contato) {
 /** Manda o encarte escolhido e guarda o contato (mesmo se der erro, para não perder o número). */
 export async function enviarEncarte(c: Contato, escolha: EscolhaEncarte, enviadoPor: string | null) {
   const telefone = await guardarContato(c);
+  // quem veio na 1ª edição (10/10) não recebe o convite de novo (o Pedro marca no admin)
+  if (await veioNoDia10(telefone)) return { telefone, status: "pulado" as StatusEnvio, detalhe: "veio no dia 10/10" };
   const o = origemDoSite();
   const capa = o + (escolha === "original" ? ENCARTES.original.arquivo : ENCARTES.convite.arquivo);
   const segunda = escolha === "os_dois" ? o + ENCARTES.original.arquivo : "";
@@ -118,7 +120,7 @@ export const textoConfirmacaoSite = (nome?: string | null) => {
   return `Olá${p ? `, ${p}` : ""}! 💛 Aqui é o Centro Educacional Amadeus.
 
 Sua inscrição na *Experiência Amadeus* está confirmada! 🎉
-📅 *Sábado, 10 de outubro, às 14h*
+📅 *Sábado, 17 de outubro, às 14h*
 👨‍👩‍👧 Venha com seu filho ou sua filha. É gratuito.
 
 Enquanto o sábado não chega, conheça a escola por dentro no nosso folder digital:
@@ -153,15 +155,29 @@ export async function enviarLembrete(telefone: string, crianca: string | null, e
   return { telefone, ...r };
 }
 
-/** Quem vai receber o lembrete: só quem o Pedro CONFIRMOU na lista e ainda não foi lembrado. */
+/** Quem vai receber o lembrete: só quem o Pedro CONFIRMOU na lista, ainda não foi lembrado e não veio no dia 10/10. */
 export async function pendentesDoLembrete() {
   const { data } = await createAdminClient()
     .from("experiencia_contatos")
-    .select("telefone, crianca")
+    .select("telefone, crianca, veio_1010")
     .eq("lembrete_confirmado", true)
     .is("lembrete_em", null)
     .order("criado_em");
-  return data ?? [];
+  return (data ?? []).filter((c) => c.veio_1010 !== true).map(({ telefone, crianca }) => ({ telefone, crianca }));
+}
+
+/** O mesmo celular aparece com e sem o 9 (8487905400 e 84987905400): as duas formas. */
+export const formasDoNumero = (t: string) => {
+  const n = limparTelefone(t);
+  if (n.length === 11) return [n, n.slice(0, 2) + n.slice(3)];
+  if (n.length === 10) return [n, n.slice(0, 2) + "9" + n.slice(2)];
+  return [n];
+};
+
+/** Marcado no admin como "veio" na 1ª edição (10/10)? Vale para o número com ou sem o 9. */
+export async function veioNoDia10(telefone: string) {
+  const { data } = await createAdminClient().from("experiencia_contatos").select("veio_1010").in("telefone", formasDoNumero(telefone));
+  return (data ?? []).some((c) => c.veio_1010 === true);
 }
 
 /** Pausa entre envios em lote, para o WhatsApp da escola não ser marcado como spam. */
@@ -177,7 +193,9 @@ const normal = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
 export function eConviteDaExperiencia(m: { fromMe: boolean; body: string; mimetype: string | null; ts: number }) {
   if (!m.fromMe) return false;
   if (normal(m.body).includes("experiencia amadeus")) return true;
-  return (m.mimetype ?? "").startsWith("video") && m.ts * 1000 < Date.parse("2026-10-11T03:00:00Z");
+  // vídeo mandado pela escola até a 1ª edição (10/10) ou entre 13/10 e a 2ª edição (17/10)
+  const t = m.ts * 1000;
+  return (m.mimetype ?? "").startsWith("video") && (t < Date.parse("2026-10-11T03:00:00Z") || (t >= Date.parse("2026-10-13T03:00:00Z") && t < Date.parse("2026-10-18T03:00:00Z")));
 }
 export async function registrarEncaminhado(telefone: string, nome: string | null, em: string) {
   const tel = limparTelefone(telefone);
@@ -196,7 +214,7 @@ export async function registrarEncaminhado(telefone: string, nome: string | null
  */
 const CONFIRMA = /\b(eu vou|vou sim|vou ir|nos vamos|a gente vai|vamos sim|vamos ir|vamos la|confirmad[oa]s?|confirmo|confirmando|estarei|estaremos|presenca confirmada|pode contar|com certeza vamos)\b/;
 export function eConfirmacaoDaExperiencia(m: { fromMe: boolean; body: string; ts: number }, naLista: boolean) {
-  if (m.fromMe || m.ts * 1000 > Date.parse("2026-10-10T20:00:00Z")) return false;
+  if (m.fromMe || m.ts * 1000 > Date.parse("2026-10-17T20:00:00Z")) return false; // até o dia da 2ª edição
   const t = normal(m.body).replace(/[^a-z0-9 ]+/g, " ").replace(/ +/g, " ").trim();
   if (!t || !CONFIRMA.test(t)) return false;
   if (t.includes("experiencia")) return true;
@@ -235,9 +253,9 @@ export function lerResposta(texto: string): { vai: boolean | null; pessoas: numb
   const vai = pessoas !== null || VEM.test(t) ? true : null;
   return { vai, pessoas };
 }
-const PEDIDO_EM = Date.parse("2026-10-09T11:00:00Z"); // quando a escola mandou o pedido de confirmação
+const PEDIDO_EM = Date.parse("2026-10-13T00:00:00Z"); // 2ª edição: respostas a partir de 13/10 (a 1ª usava 09/10)
 export async function registrarResposta(telefone: string, nome: string | null, texto: string, em: string, ts: number) {
-  if (ts * 1000 < PEDIDO_EM || ts * 1000 > Date.parse("2026-10-10T20:00:00Z")) return;
+  if (ts * 1000 < PEDIDO_EM || ts * 1000 > Date.parse("2026-10-17T20:00:00Z")) return;
   const limpo = limparTelefone(telefone);
   // o WhatsApp às vezes entrega o número sem o 9 (8487905400) e o pedido foi marcado na versão com o 9 (84987905400), ou vice-versa
   const formas = [limpo, limpo.length === 10 ? limpo.slice(0, 2) + "9" + limpo.slice(2) : limpo.length === 11 ? limpo.slice(0, 2) + limpo.slice(3) : limpo];

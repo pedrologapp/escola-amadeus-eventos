@@ -4,8 +4,9 @@ import { AbasRematricula } from "../abas";
 import { PainelExperiencia, type Candidato, type ContatoExp } from "./painel";
 
 /**
- * Experiência Amadeus (sáb 10/10, 14h): enviar o encarte pelo WhatsApp da escola, guardar todo mundo
+ * Experiência Amadeus · 2ª edição (sáb 17/10, 14h): enviar o encarte pelo WhatsApp da escola, guardar todo mundo
  * que recebeu (lista de contatos para lembrar e não perder o contato) e o lembrete da véspera.
+ * A 1ª edição (10/10) está guardada em experiencia_contatos_1010; o Pedro marca aqui quem veio, e quem veio não recebe de novo.
  */
 export const metadata = { title: "Experiência Amadeus · Admin Amadeus" };
 export const dynamic = "force-dynamic";
@@ -22,7 +23,7 @@ function juntarRepetidos(lista: ContatoExp[]): ContatoExp[] {
     const g = c.telefone.length === 11 ? porTel.get(c.telefone.slice(0, 2) + c.telefone.slice(3)) : undefined;
     if (!g) { fica.push(c); continue; }
     const j: ContatoExp = { ...c };
-    for (const k of ["crianca", "serie", "convite_em", "lembrete_em", "vai_em", "vai_texto", "pessoas", "nao_vai_em", "resposta_texto", "pedido_confirmacao_em"] as const)
+    for (const k of ["crianca", "serie", "convite_em", "lembrete_em", "vai_em", "vai_texto", "pessoas", "nao_vai_em", "resposta_texto", "pedido_confirmacao_em", "veio_1010", "dia10"] as const)
       if (j[k] == null && g[k] != null) (j as unknown as Record<string, unknown>)[k] = g[k];
     if (semNome(j.responsavel) && !semNome(g.responsavel)) j.responsavel = g.responsavel;
     j.lembrar = c.lembrar || g.lembrar;
@@ -35,14 +36,17 @@ function juntarRepetidos(lista: ContatoExp[]): ContatoExp[] {
 
 export default async function ExperienciaPage() {
   const admin = createAdminClient();
-  const [contatos, config, envios, novatos] = await Promise.all([
+  const [contatos, config, envios, novatos, ed1] = await Promise.all([
     admin.from("experiencia_contatos").select("*").order("criado_em", { ascending: false }),
     admin.from("experiencia_config").select("lembrete_automatico").eq("id", 1).single(),
     admin.from("experiencia_envios").select("telefone, tipo, status, created_at").order("created_at", { ascending: false }).limit(500),
     admin.from("rematricula_envios").select("aluno_nome, serie_2027, responsavel, telefone, created_at").is("aluno_id", null).eq("status", "enviado").order("created_at", { ascending: false }),
+    admin.from("experiencia_contatos_1010").select("telefone, vai_em, pessoas, nao_vai_em"),
   ]);
+  // o que cada família respondeu para o dia 10/10 (ajuda a marcar quem veio)
+  const dia10 = new Map((ed1.data ?? []).map((c) => [c.telefone as string, c.nao_vai_em ? "disse que não ia" : c.vai_em ? `confirmou${c.pessoas ? ` · ${c.pessoas} pessoas` : ""}` : null]));
 
-  const lista = juntarRepetidos((contatos.data ?? []) as ContatoExp[]);
+  const lista = juntarRepetidos(((contatos.data ?? []) as ContatoExp[]).map((c) => ({ ...c, dia10: dia10.get(c.telefone) ?? null })));
   const naLista = new Set((contatos.data ?? []).map((c) => c.telefone as string));
   // Último erro por número (para mostrar "sem WhatsApp"/"erro" quando o encarte não chegou).
   const ultimoConvite = new Map<string, string>();
@@ -62,8 +66,8 @@ export default async function ExperienciaPage() {
       <h1 className="text-2xl font-extrabold text-amadeus-blue">Rematrícula 2027</h1>
       <AbasRematricula ativa="experiencia" />
       <p className="mt-4 text-sm text-muted-foreground">
-        Experiência Amadeus · <b className="text-amadeus-blue">sábado, 10/10, às 14h</b>. Quem recebe o encarte fica guardado aqui, com nome e número, para o
-        lembrete da véspera e para a escola não perder o contato.
+        Experiência Amadeus · 2ª edição · <b className="text-amadeus-blue">sábado, 17/10, às 14h</b>. Quem recebe o encarte fica guardado aqui, com nome e número, para o
+        lembrete da véspera e para a escola não perder o contato. Quem você marcar que <b>veio no dia 10/10</b> não recebe o convite de novo.
       </p>
       <PainelExperiencia
         contatos={lista.map((c) => ({ ...c, ultimo: ultimoConvite.get(c.telefone) ?? null }))}

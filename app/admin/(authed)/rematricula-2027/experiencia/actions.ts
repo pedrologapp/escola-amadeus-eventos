@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   enviarEncarte,
+  formasDoNumero,
   enviarLembrete,
   escolhaValida,
   guardarContato,
@@ -106,4 +107,12 @@ export async function lembreteAgora(): Promise<{ ok: boolean; erro?: string; res
   }
   revalidatePath(CAMINHO);
   return { ok: true, resultados };
+}
+
+/** Marca se a família veio (true), não veio (false) ou ainda não marcado (null) na 1ª edição (10/10). Vale para o número com e sem o 9. */
+export async function marcarVeio(telefone: string, veio: boolean | null) {
+  if (!(await quem())) return { ok: false, erro: "Sessão expirada." };
+  await createAdminClient().from("experiencia_contatos").update({ veio_1010: veio, atualizado_em: new Date().toISOString() }).in("telefone", formasDoNumero(telefone));
+  revalidatePath(CAMINHO);
+  return { ok: true };
 }

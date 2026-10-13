@@ -182,7 +182,7 @@ function EnviarWhatsApp({ responsaveis, envios, enviar, rotuloCarta, soFolder: s
   enviar: (destinos: Destino[], soFolder: boolean) => Promise<{ ok: boolean; erro?: string; resultados: ResultadoEnvio[] }>;
   rotuloCarta?: string;
   soFolder?: boolean;
-  /** Oferece mandar junto o encarte da Experiência Amadeus (10/10); `marcado` = já vem ligado (novato). */
+  /** Oferece mandar junto o encarte da Experiência Amadeus (17/10); `marcado` = já vem ligado (novato). */
   experiencia?: { crianca: string; serie: string | null; origem: "novato" | "simulador" | "avulso"; marcado: boolean };
 }) {
   const [marcados, setMarcados] = useState<Set<string>>(new Set());
@@ -277,12 +277,12 @@ function EnviarWhatsApp({ responsaveis, envios, enviar, rotuloCarta, soFolder: s
         <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/60 p-3">
           <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-amadeus-blue">
             <input type="checkbox" className="size-4 accent-[#083078]" checked={comExperiencia} onChange={(e) => setComExperiencia(e.target.checked)} />
-            Enviar também o encarte da Experiência Amadeus (sáb 10/10, 14h)
+            Enviar também o encarte da Experiência Amadeus (sáb 17/10, 14h)
           </label>
           {comExperiencia && (
             <div className="mt-3">
               <EscolhaEncarte valor={encarteExp} mudar={setEncarteExp} />
-              <p className="mt-2 text-xs text-muted-foreground">Os números entram na lista da Experiência. O lembrete da sexta (09/10) só vai depois que você confirmar a lista na aba Experiência Amadeus.</p>
+              <p className="mt-2 text-xs text-muted-foreground">Os números entram na lista da Experiência. O lembrete da sexta (16/10) só vai depois que você confirmar a lista na aba Experiência Amadeus.</p>
             </div>
           )}
         </div>
