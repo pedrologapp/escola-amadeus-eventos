@@ -13,7 +13,7 @@ const mascara = (v: string) => {
   if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
   return `(${d.slice(0, 2)}) ${d.slice(2, 3)} ${d.slice(3, 7)}-${d.slice(7)}`;
 };
-const AGENDA = "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Experi%C3%AAncia+Amadeus&dates=20261010T170000Z/20261010T200000Z&location=Centro+Educacional+Amadeus,+Av.+Benedito+Santana,+09,+Amarante,+S%C3%A3o+Gon%C3%A7alo+do+Amarante&details=Venha+viver+um+dia+dentro+da+nossa+escola+junto+com+seu+filho+ou+sua+filha.";
+const AGENDA = "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Experi%C3%AAncia+Amadeus&dates=20261017T170000Z/20261017T200000Z&location=Centro+Educacional+Amadeus,+Av.+Benedito+Santana,+09,+Amarante,+S%C3%A3o+Gon%C3%A7alo+do+Amarante&details=Venha+viver+um+dia+dentro+da+nossa+escola+junto+com+seu+filho+ou+sua+filha.";
 
 export function Inscricao() {
   const [nome, setNome] = useState("");
