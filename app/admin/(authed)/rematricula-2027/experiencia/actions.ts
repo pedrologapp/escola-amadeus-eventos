@@ -116,3 +116,19 @@ export async function marcarVeio(telefone: string, veio: boolean | null) {
   revalidatePath(CAMINHO);
   return { ok: true };
 }
+
+/** Marca (ou desmarca) que a família matriculou depois da Experiência. Independe de ter vindo ou não. */
+export async function marcarMatriculou(telefone: string, matriculou: boolean) {
+  if (!(await quem())) return { ok: false, erro: "Sessão expirada." };
+  await createAdminClient().from("experiencia_contatos").update({ matriculou_em: matriculou ? new Date().toISOString() : null, atualizado_em: new Date().toISOString() }).in("telefone", formasDoNumero(telefone));
+  revalidatePath(CAMINHO);
+  return { ok: true };
+}
+
+/** Observação livre sobre a família (ex.: "vem só a mãe", "matrícula na segunda"). */
+export async function salvarObservacao(telefone: string, observacao: string) {
+  if (!(await quem())) return { ok: false, erro: "Sessão expirada." };
+  await createAdminClient().from("experiencia_contatos").update({ observacao: observacao.trim().slice(0, 500) || null, atualizado_em: new Date().toISOString() }).in("telefone", formasDoNumero(telefone));
+  revalidatePath(CAMINHO);
+  return { ok: true };
+}

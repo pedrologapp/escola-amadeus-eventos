@@ -49,7 +49,11 @@ Estamos preparando tudo com muito carinho para receber vocês${p ? ` e ${p}` : "
 ${COMO_CHEGAR}`;
 };
 
-export const limparTelefone = (t: string) => t.replace(/\D/g, "").replace(/^55(?=\d{10,11}$)/, "");
+export const limparTelefone = (t: string) => {
+  const n = t.replace(/\D/g, "").replace(/^55(?=\d{10,11}$)/, "");
+  // celular no formato antigo (DDD + 8 dígitos começando com 6–9) vira o formato com o 9: um número só por família
+  return n.length === 10 && /[6-9]/.test(n[2]) ? n.slice(0, 2) + "9" + n.slice(2) : n;
+};
 
 export type StatusEnvio = "enviado" | "sem_whatsapp" | "erro" | "pulado";
 export interface Contato {
@@ -102,7 +106,8 @@ export async function guardarContato(c: Contato) {
 export async function enviarEncarte(c: Contato, escolha: EscolhaEncarte, enviadoPor: string | null) {
   const telefone = await guardarContato(c);
   // quem veio na 1ª edição (10/10) não recebe o convite de novo (o Pedro marca no admin)
-  if (await veioNoDia10(telefone)) return { telefone, status: "pulado" as StatusEnvio, detalhe: "veio no dia 10/10" };
+  const fora = await foraDoConvite(telefone);
+  if (fora) return { telefone, status: "pulado" as StatusEnvio, detalhe: fora };
   const o = origemDoSite();
   const capa = o + (escolha === "original" ? ENCARTES.original.arquivo : ENCARTES.convite.arquivo);
   const segunda = escolha === "os_dois" ? o + ENCARTES.original.arquivo : "";
@@ -159,11 +164,11 @@ export async function enviarLembrete(telefone: string, crianca: string | null, e
 export async function pendentesDoLembrete() {
   const { data } = await createAdminClient()
     .from("experiencia_contatos")
-    .select("telefone, crianca, veio_1010")
+    .select("telefone, crianca, veio_1010, matriculou_em")
     .eq("lembrete_confirmado", true)
     .is("lembrete_em", null)
     .order("criado_em");
-  return (data ?? []).filter((c) => c.veio_1010 !== true).map(({ telefone, crianca }) => ({ telefone, crianca }));
+  return (data ?? []).filter((c) => c.veio_1010 !== true && !c.matriculou_em).map(({ telefone, crianca }) => ({ telefone, crianca }));
 }
 
 /** O mesmo celular aparece com e sem o 9 (8487905400 e 84987905400): as duas formas. */
@@ -174,10 +179,12 @@ export const formasDoNumero = (t: string) => {
   return [n];
 };
 
-/** Marcado no admin como "veio" na 1ª edição (10/10)? Vale para o número com ou sem o 9. */
-export async function veioNoDia10(telefone: string) {
-  const { data } = await createAdminClient().from("experiencia_contatos").select("veio_1010").in("telefone", formasDoNumero(telefone));
-  return (data ?? []).some((c) => c.veio_1010 === true);
+/** Não recebe mais o convite: veio na 1ª edição (10/10) ou já matriculou (marcado no admin). Vale para o número com ou sem o 9. */
+export async function foraDoConvite(telefone: string): Promise<string | null> {
+  const { data } = await createAdminClient().from("experiencia_contatos").select("veio_1010, matriculou_em").in("telefone", formasDoNumero(telefone));
+  if ((data ?? []).some((c) => c.matriculou_em)) return "já matriculou";
+  if ((data ?? []).some((c) => c.veio_1010 === true)) return "veio no dia 10/10";
+  return null;
 }
 
 /** Pausa entre envios em lote, para o WhatsApp da escola não ser marcado como spam. */

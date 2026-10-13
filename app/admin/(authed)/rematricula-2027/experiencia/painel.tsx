@@ -9,6 +9,8 @@ import {
   incluirContatos,
   lembreteAgora,
   marcarLembrar,
+  marcarMatriculou,
+  salvarObservacao,
   marcarVeio,
   mudarAutomatico,
   removerContato,
@@ -34,6 +36,8 @@ export interface ContatoExp {
   conferir?: boolean;
   pedido_confirmacao_em?: string | null;
   veio_1010?: boolean | null;
+  matriculou_em?: string | null;
+  observacao?: string | null;
   dia10?: string | null;
   criado_em: string;
   ultimo?: string | null;
@@ -44,7 +48,7 @@ const tel = (t: string) => (t.length === 11 ? `(${t.slice(0, 2)}) ${t.slice(2, 7
 const dia = (d: string | null) => (d ? new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", timeZone: "America/Fortaleza" }) : null);
 const ORIGEM: Record<string, string> = { novato: "novato", simulador: "rematrícula", avulso: "avulso", manual: "manual", whatsapp: "encaminhado no WhatsApp", site: "inscrição pelo site" };
 const SELO: Record<string, string> = { enviado: "bg-emerald-50 text-emerald-700", sem_whatsapp: "bg-amber-100 text-amber-800", erro: "bg-red-50 text-red-700", pulado: "bg-slate-100 text-slate-600" };
-const TXT: Record<string, string> = { enviado: "Enviado", sem_whatsapp: "Sem WhatsApp", erro: "Erro", pulado: "Não enviado: veio no dia 10/10" };
+const TXT: Record<string, string> = { enviado: "Enviado", sem_whatsapp: "Sem WhatsApp", erro: "Erro", pulado: "Não enviado (veio no dia 10/10 ou já matriculou)" };
 const campo = "mt-1 w-full rounded-xl border border-border bg-white px-3 py-2 font-normal outline-none focus:border-amadeus-blue";
 
 /** Qual encarte vai: o vídeo do convite (padrão desde 05/10), o convite "Mãe, pai", o original ou os dois. */
@@ -159,6 +163,7 @@ function PresencaDia10({ contatos }: { contatos: ContatoExp[] }) {
   const quem = (c: ContatoExp) => (c.responsavel && !/escola|amadeus/i.test(c.responsavel) ? c.responsavel : c.crianca ? `Família de ${c.crianca}` : tel(c.telefone));
   const ordem = [...contatos].sort((a, b) => (b.dia10 ? 1 : 0) - (a.dia10 ? 1 : 0) || quem(a).localeCompare(quem(b), "pt-BR"));
   const veio = contatos.filter((c) => c.veio_1010 === true).length, naoVeio = contatos.filter((c) => c.veio_1010 === false).length;
+  const matricularam = contatos.filter((c) => c.matriculou_em).length;
   const botao = (c: ContatoExp, valor: boolean, rotulo: string, cor: string) => (
     <button type="button" disabled={ocupado} onClick={() => iniciar(async () => { await marcarVeio(c.telefone, c.veio_1010 === valor ? null : valor); })}
       className={`rounded-lg border px-2.5 py-1 text-xs font-bold disabled:opacity-40 ${c.veio_1010 === valor ? cor : "border-border bg-white text-muted-foreground hover:bg-slate-50"}`}>{rotulo}</button>
@@ -167,23 +172,33 @@ function PresencaDia10({ contatos }: { contatos: ContatoExp[] }) {
     <section className="rounded-2xl border-2 border-amadeus-blue/30 bg-white p-5">
       <button type="button" onClick={() => setAberto(!aberto)} className="flex w-full flex-wrap items-center justify-between gap-2 text-left">
         <span className="flex items-center gap-2 text-sm font-bold text-amadeus-blue"><CalendarCheck className="size-4" /> Quem veio no dia 10/10</span>
-        <span className="text-xs font-semibold text-muted-foreground">{veio} vieram · {naoVeio} não vieram · {contatos.length - veio - naoVeio} sem marcar {aberto ? "▲" : "▼"}</span>
+        <span className="text-xs font-semibold text-muted-foreground">{veio} vieram · {naoVeio} não vieram · {contatos.length - veio - naoVeio} sem marcar · <b className="text-amadeus-blue">{matricularam} matricularam</b> {aberto ? "▲" : "▼"}</span>
       </button>
       {aberto && (
         <>
-          <p className="mt-2 text-xs text-muted-foreground">Quem você marcar como <b>Veio</b> não recebe o convite nem o lembrete do dia 17/10. Clicar de novo desmarca.</p>
+          <p className="mt-2 text-xs text-muted-foreground">Quem você marcar como <b>Veio</b> não recebe o convite nem o lembrete do dia 17/10. <b>Matriculou</b> é uma marcação à parte (pode ter vindo e não matriculado, ou o contrário); quem matriculou também não recebe mais. Clicar de novo desmarca.</p>
           <ul className="mt-3 divide-y divide-border/60">
             {ordem.map((c) => (
               <li key={c.telefone} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
-                <span className="min-w-0">
+                <span className="min-w-0 flex-1">
                   <b className="text-amadeus-blue">{quem(c)}</b>
                   {c.crianca && c.responsavel && !/escola|amadeus/i.test(c.responsavel) ? <span className="text-muted-foreground"> · {c.crianca}</span> : null}
                   <span className="text-muted-foreground"> · {tel(c.telefone)}</span>
                   {c.dia10 && <span className={`ml-2 rounded-md px-1.5 py-0.5 text-xs font-bold ${c.dia10.startsWith("confirmou") ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>10/10: {c.dia10}</span>}
+                  <input
+                    key={c.observacao ?? ""}
+                    defaultValue={c.observacao ?? ""}
+                    placeholder="Observação (ex.: vem só a mãe, matrícula na segunda…)"
+                    onBlur={(e) => { const v = e.target.value; if (v.trim() !== (c.observacao ?? "")) iniciar(async () => { await salvarObservacao(c.telefone, v); }); }}
+                    onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                    className="mt-1 block w-full max-w-md rounded-lg border border-border/70 bg-slate-50/60 px-2 py-1 text-xs outline-none focus:border-amadeus-blue focus:bg-white"
+                  />
                 </span>
                 <span className="flex shrink-0 gap-1.5">
                   {botao(c, true, "✓ Veio", "border-emerald-600 bg-emerald-600 text-white")}
                   {botao(c, false, "✗ Não veio", "border-red-500 bg-red-500 text-white")}
+                  <button type="button" disabled={ocupado} onClick={() => iniciar(async () => { await marcarMatriculou(c.telefone, !c.matriculou_em); })}
+                    className={`ml-2 rounded-lg border px-2.5 py-1 text-xs font-bold disabled:opacity-40 ${c.matriculou_em ? "border-amadeus-blue bg-amadeus-blue text-white" : "border-border bg-white text-muted-foreground hover:bg-slate-50"}`}>🎓 Matriculou</button>
                 </span>
               </li>
             ))}
@@ -203,10 +218,11 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
   const [ocupado, iniciar] = useTransition();
 
   // Lembrete: só vai para quem foi confirmado na lista; mexeu no "Lembrar?" depois, precisa confirmar de novo.
-  const confirmados = contatos.filter((c) => c.lembrete_confirmado && !c.lembrete_em && c.veio_1010 !== true);
+  const fora = (c: ContatoExp) => c.veio_1010 === true || !!c.matriculou_em; // veio no dia 10 ou já matriculou: não recebe mais
+  const confirmados = contatos.filter((c) => c.lembrete_confirmado && !c.lembrete_em && !fora(c));
   const pendentesLembrete = confirmados.length;
   const aConfirmar = contatos.filter((c) => !c.lembrete_em && c.lembrar !== c.lembrete_confirmado);
-  const vaoReceber = contatos.filter((c) => c.lembrar && !c.lembrete_em && c.veio_1010 !== true);
+  const vaoReceber = contatos.filter((c) => c.lembrar && !c.lembrete_em && !fora(c));
   const selecionados = contatos.filter((c) => marcados.has(c.telefone));
   const nomeEncarte = escolha === "video" ? "o vídeo do convite" : escolha === "os_dois" ? "os dois encartes" : escolha === "original" ? "o encarte original" : "o convite “Mãe, pai”";
 
@@ -243,7 +259,7 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
   };
 
   const baixarPlanilha = () => {
-    const linhas = [["Responsável", "Criança", "Série", "Telefone", "Origem", "Vai?", "Pessoas", "Resposta", "Encarte", "Lembrete"], ...contatos.map((c) => [c.responsavel ?? "", c.crianca ?? "", c.serie ?? "", tel(c.telefone), ORIGEM[c.origem] ?? c.origem, c.nao_vai_em ? "NÃO VAI" : c.vai_em ? "VAI" : "", c.pessoas ? String(c.pessoas) : "", c.resposta_texto ?? "", dia(c.convite_em) ?? "", dia(c.lembrete_em) ?? ""])];
+    const linhas = [["Responsável", "Criança", "Série", "Telefone", "Origem", "Veio 10/10?", "Matriculou?", "Observação", "Vai 17/10?", "Pessoas", "Resposta", "Encarte", "Lembrete"], ...contatos.map((c) => [c.responsavel ?? "", c.crianca ?? "", c.serie ?? "", tel(c.telefone), ORIGEM[c.origem] ?? c.origem, c.veio_1010 === true ? "VEIO" : c.veio_1010 === false ? "NÃO VEIO" : "", c.matriculou_em ? "SIM" : "", c.observacao ?? "", c.nao_vai_em ? "NÃO VAI" : c.vai_em ? "VAI" : "", c.pessoas ? String(c.pessoas) : "", c.resposta_texto ?? "", dia(c.convite_em) ?? "", dia(c.lembrete_em) ?? ""])];
     const csv = "﻿" + linhas.map((l) => l.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";")).join("\n");
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
@@ -304,7 +320,7 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
                 <thead>
                   <tr className="border-b border-border/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
                     <th className="py-2 pr-2">
-                      <input type="checkbox" className="size-4 accent-[#083078]" checked={marcados.size > 0 && marcados.size === contatos.filter((c) => c.veio_1010 !== true).length} onChange={(e) => setMarcados(e.target.checked ? new Set(contatos.filter((c) => c.veio_1010 !== true).map((c) => c.telefone)) : new Set())} />
+                      <input type="checkbox" className="size-4 accent-[#083078]" checked={marcados.size > 0 && marcados.size === contatos.filter((c) => !fora(c)).length} onChange={(e) => setMarcados(e.target.checked ? new Set(contatos.filter((c) => !fora(c)).map((c) => c.telefone)) : new Set())} />
                     </th>
                     <th className="py-2 pr-3">Família</th>
                     <th className="py-2 pr-3">Telefone</th>
@@ -319,11 +335,12 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
                   {contatos.map((c) => (
                     <tr key={c.telefone} className="border-b border-border/40 last:border-0">
                       <td className="py-2.5 pr-2">
-                        <input type="checkbox" className="size-4 accent-[#083078]" disabled={c.veio_1010 === true} title={c.veio_1010 === true ? "Veio no dia 10/10: não recebe de novo" : undefined} checked={marcados.has(c.telefone)} onChange={(e) => { const s = new Set(marcados); if (e.target.checked) s.add(c.telefone); else s.delete(c.telefone); setMarcados(s); }} />
+                        <input type="checkbox" className="size-4 accent-[#083078]" disabled={fora(c)} title={fora(c) ? (c.matriculou_em ? "Já matriculou: não recebe mais" : "Veio no dia 10/10: não recebe de novo") : undefined} checked={marcados.has(c.telefone)} onChange={(e) => { const s = new Set(marcados); if (e.target.checked) s.add(c.telefone); else s.delete(c.telefone); setMarcados(s); }} />
                       </td>
                       <td className="py-2.5 pr-3">
                         <p className="font-semibold">{c.crianca ?? "—"}{c.serie ? <span className="font-normal text-muted-foreground"> · {c.serie}</span> : null}</p>
-                        <p className="text-xs text-muted-foreground">{c.responsavel ?? "responsável não informado"} · {ORIGEM[c.origem] ?? c.origem}{c.veio_1010 === true ? <span className="ml-1 rounded-md bg-slate-100 px-1.5 py-0.5 font-bold text-slate-600">veio no dia 10/10</span> : null}</p>
+                        <p className="text-xs text-muted-foreground">{c.responsavel ?? "responsável não informado"} · {ORIGEM[c.origem] ?? c.origem}{c.veio_1010 === true ? <span className="ml-1 rounded-md bg-slate-100 px-1.5 py-0.5 font-bold text-slate-600">veio no dia 10/10</span> : null}{c.matriculou_em ? <span className="ml-1 rounded-md bg-amadeus-blue px-1.5 py-0.5 font-bold text-white">matriculou</span> : null}</p>
+                        {c.observacao && <p className="mt-0.5 max-w-[260px] text-xs italic text-amber-800">{c.observacao}</p>}
                       </td>
                       <td className="py-2.5 pr-3 tabular-nums">{tel(c.telefone)}</td>
                       <td className="py-2.5 pr-3">

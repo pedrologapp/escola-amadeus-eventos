@@ -23,7 +23,7 @@ function juntarRepetidos(lista: ContatoExp[]): ContatoExp[] {
     const g = c.telefone.length === 11 ? porTel.get(c.telefone.slice(0, 2) + c.telefone.slice(3)) : undefined;
     if (!g) { fica.push(c); continue; }
     const j: ContatoExp = { ...c };
-    for (const k of ["crianca", "serie", "convite_em", "lembrete_em", "vai_em", "vai_texto", "pessoas", "nao_vai_em", "resposta_texto", "pedido_confirmacao_em", "veio_1010", "dia10"] as const)
+    for (const k of ["crianca", "serie", "convite_em", "lembrete_em", "vai_em", "vai_texto", "pessoas", "nao_vai_em", "resposta_texto", "pedido_confirmacao_em", "veio_1010", "matriculou_em", "observacao", "dia10"] as const)
       if (j[k] == null && g[k] != null) (j as unknown as Record<string, unknown>)[k] = g[k];
     if (semNome(j.responsavel) && !semNome(g.responsavel)) j.responsavel = g.responsavel;
     j.lembrar = c.lembrar || g.lembrar;
