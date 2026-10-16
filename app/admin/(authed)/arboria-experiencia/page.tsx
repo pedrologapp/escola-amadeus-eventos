@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { universoDaSerie, UNIVERSOS } from "@/lib/arboria-historia";
 import { Painel } from "./painel";
+import { linkTelaoPublico } from "@/lib/arboria-telao-chave";
 
 /**
  * Experiência Amadeus (10/10/2026) · a história do Arboria de cada criança.
@@ -14,7 +15,8 @@ export const dynamic = "force-dynamic";
 const APRESENTACOES = [
   { titulo: "Educação Infantil", quem: "Gislene", href: "https://eventos.escolaamadeus.com/experiencia-geekie-ef881fab/infantil.html", leitura: "https://eventos.escolaamadeus.com/experiencia-geekie-ef881fab/leitura-infantil.html", cor: "#F59E0B" },
   { titulo: "Fundamental 1 e 2", quem: "Adriana", href: "https://eventos.escolaamadeus.com/experiencia-geekie-ef881fab/fundamental.html", leitura: "https://eventos.escolaamadeus.com/experiencia-geekie-ef881fab/leitura-fundamental.html", cor: "#3B82F6" },
-  { titulo: "Arboria", quem: "Pedro · telão com a apresentação, a atividade e as séries", href: "/admin/arboria-experiencia/telao", leitura: null, cor: "#2dd4bf" },
+  // link público do telão (sem login); a chave sai do segredo do servidor, então o endereço é montado na hora
+  { titulo: "Arboria", quem: "Pedro · telão com a apresentação, a atividade e as séries", href: "TELAO", leitura: null, cor: "#2dd4bf" },
   { titulo: "Financeiro", quem: "30 anos, Manifesto, programas e valores de 2027", href: "https://eventos.escolaamadeus.com/experiencia-geekie-ef881fab/financeiro.html", leitura: null, cor: "#FFC21A" },
 ];
 
@@ -51,7 +53,7 @@ export default async function ArboriaExperienciaPage({ searchParams }: { searchP
         <div className="mt-5">
           <p className="text-sm text-muted-foreground">Abra na TV e aperte <b>F</b> para tela cheia. <b>→</b> avança, <b>←</b> volta.</p>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            {APRESENTACOES.map((a) => (
+            {APRESENTACOES.map((x) => (x.href === "TELAO" ? { ...x, href: linkTelaoPublico() } : x)).map((a) => (
               <div key={a.titulo} className="flex flex-col rounded-2xl border bg-white p-5 shadow-sm" style={{ borderTop: `6px solid ${a.cor}` }}>
                 <p className="mt-1 text-xl font-extrabold text-amadeus-blue">{a.titulo}</p>
                 <p className="mt-1 text-sm text-muted-foreground">{a.quem}</p>

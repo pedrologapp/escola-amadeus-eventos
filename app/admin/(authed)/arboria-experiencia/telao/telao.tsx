@@ -15,7 +15,8 @@ import { AtividadeTV } from "./atividade-tv";
 type Etapa = "pronto" | "video" | "qr" | "atividade" | "estreia" | "fim";
 const ORDEM: Etapa[] = ["pronto", "video", "qr", "atividade", "estreia", "fim"];
 
-export function Telao({ qr }: { qr: string }) {
+/** `chave`: aberto pelo link público (sem login), as ações vão com ela. */
+export function Telao({ qr, chave }: { qr: string; chave?: string }) {
   const [etapa, setEtapa] = useState<Etapa>("pronto");
   const [ocupado, setOcupado] = useState(false);
   const [sit, setSit] = useState({ criancas: 0, familias: 0, iniciada: null as string | null, liberada: null as string | null, fase: null as string | null, r1: 0, r2: 0, formas: {} as Record<string, number> });
@@ -52,11 +53,11 @@ export function Telao({ qr }: { qr: string }) {
   // contagem ao vivo enquanto a reunião está acontecendo
   useEffect(() => {
     let vivo = true;
-    const ver = () => situacaoTelao().then((s) => { if (vivo) setSit(s); }).catch(() => {});
+    const ver = () => situacaoTelao(chave).then((s) => { if (vivo) setSit(s); }).catch(() => {});
     ver();
     const t = setInterval(ver, 3000);
     return () => { vivo = false; clearInterval(t); };
-  }, []);
+  }, [chave]);
 
   const acao = async (f: () => Promise<void>) => {
     setOcupado(true); setErro(null);
@@ -67,12 +68,12 @@ export function Telao({ qr }: { qr: string }) {
     telaCheia();
     const v = video.current; if (v) { v.currentTime = 0; v.play().catch(() => {}); }
     setEtapa("video");
-    if (await acao(comecarReuniao)) setSit((s) => ({ ...s, criancas: 0, familias: 0, r1: 0, r2: 0, formas: {} }));
+    if (await acao(() => comecarReuniao(chave))) setSit((s) => ({ ...s, criancas: 0, familias: 0, r1: 0, r2: 0, formas: {} }));
     else { v?.pause(); setEtapa("pronto"); }
   };
-  const liberar = async () => { if (await acao(liberarHistorias)) setEtapa("estreia"); };
+  const liberar = async () => { if (await acao(() => liberarHistorias(chave))) setEtapa("estreia"); };
   // abre uma etapa da atividade no celular dos pais
-  const fase = (f: "r1" | "forma" | "r2") => acao(() => faseAtividade(f));
+  const fase = (f: "r1" | "forma" | "r2") => acao(() => faseAtividade(f, chave));
 
   const anda = useCallback((d: number) => setEtapa((e) => {
     const nova = ORDEM[Math.min(ORDEM.length - 1, Math.max(0, ORDEM.indexOf(e) + d))];

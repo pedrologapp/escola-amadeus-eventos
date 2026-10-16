@@ -3,26 +3,29 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { chaveTelaoValida } from "@/lib/arboria-telao-chave";
 
 const CAMINHO = "/admin/arboria-experiencia";
 
-async function logado() {
+/** Logado no admin, ou o telão aberto pelo link público (com a chave certa). */
+async function logado(chave?: string) {
+  if (chave && chaveTelaoValida(chave)) return;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Faça login de novo.");
 }
 
 /** "Começar reunião": marca a hora. Só quem se cadastrar depois disso recebe a história. */
-export async function comecarReuniao() {
-  await logado();
+export async function comecarReuniao(chave?: string) {
+  await logado(chave);
   const agora = new Date().toISOString();
   await createAdminClient().from("arboria_exp_reuniao").update({ iniciada_em: agora, liberada_em: null, atividade_em: null, atividade_fase: null, atualizado_em: agora }).eq("id", 1);
   revalidatePath(CAMINHO);
 }
 
 /** "Liberar histórias": todos os celulares cadastrados depois do começo abrem a história. */
-export async function liberarHistorias() {
-  await logado();
+export async function liberarHistorias(chave?: string) {
+  await logado(chave);
   const agora = new Date().toISOString();
   await createAdminClient().from("arboria_exp_reuniao").update({ liberada_em: agora, atualizado_em: agora }).eq("id", 1);
   revalidatePath(CAMINHO);
@@ -36,8 +39,8 @@ export async function recolherHistorias() {
 }
 
 /** Para o telão: em que pé está a reunião e quantas crianças já foram cadastradas depois do começo. */
-export async function situacaoTelao() {
-  await logado();
+export async function situacaoTelao(chave?: string) {
+  await logado(chave);
   const db = createAdminClient();
   const { data: r } = await db.from("arboria_exp_reuniao").select("iniciada_em, liberada_em, atividade_em, atividade_fase").eq("id", 1).single();
   let criancas = 0, familias = 0, r1 = 0, r2 = 0; const formas: Record<string, number> = {};
@@ -55,8 +58,8 @@ export async function situacaoTelao() {
 }
 
 /** Abre uma fase da atividade no celular dos pais: "r1" (1ª rodada), "forma" (escolher a forma), "r2" (2ª rodada), null (fecha). */
-export async function faseAtividade(fase: "r1" | "forma" | "r2" | null) {
-  await logado();
+export async function faseAtividade(fase: "r1" | "forma" | "r2" | null, chave?: string) {
+  await logado(chave);
   const db = createAdminClient();
   const agora = new Date().toISOString();
   const { data: r } = await db.from("arboria_exp_reuniao").select("atividade_em").eq("id", 1).single();
