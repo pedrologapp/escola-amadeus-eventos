@@ -18,6 +18,11 @@ export function perguntaValor(texto: string): boolean {
   );
 }
 
+/** Tocou o botão "Quero renovar" do modelo da rematrícula (ou escreveu isso). */
+export function querRenovar(texto: string): boolean {
+  return /^(eu )?quero renovar\b/.test(normalizar(texto));
+}
+
 /** Semelhança de 0 a 1 pela distância de edição (letras trocadas, faltando ou sobrando). */
 export function semelhanca(a: string, b: string): number {
   if (a === b) return 1;

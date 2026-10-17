@@ -2,13 +2,14 @@
 -- rematrícula, o sistema pede o nome do filho e, se bater com o cadastro
 -- daquele número, manda a carta de 2027. Cada passo fica aqui: serve de
 -- "memória" da conversa (estamos esperando o nome?) e de histórico.
+-- Quem toca "Quero renovar" no modelo da rematrícula recebe a confirmação (evento quer_renovar).
 -- msg_id evita responder duas vezes quando a YCloud reenvia o mesmo evento.
 -- Só o service role lê/escreve (RLS sem políticas).
 create table if not exists public.whatsapp_auto (
   id uuid primary key default gen_random_uuid(),
   telefone text not null,          -- DDD + número, só dígitos (sem 55)
   msg_id text unique,              -- id da mensagem recebida na YCloud
-  evento text not null check (evento in ('pediu_nome', 'nome_errado', 'enviou_carta', 'secretaria', 'ignorado')),
+  evento text not null check (evento in ('pediu_nome', 'nome_errado', 'enviou_carta', 'secretaria', 'quer_renovar', 'ignorado')),
   aluno_id integer,
   aluno_nome text,
   detalhe text,

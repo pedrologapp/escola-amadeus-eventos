@@ -6,7 +6,7 @@ import { linkDaCarta, type DadosCarta } from "@/lib/rematricula-2027-link";
 import { legendaCarta, primeiroNome, trocaDeSegmento } from "@/lib/rematricula-2027";
 import { chaveTelefone } from "@/lib/whatsapp-contatos";
 import { enviarImagem, enviarTexto, type MensagemRecebida } from "@/lib/ycloud";
-import { filhosCitados, perguntaValor, type Filho } from "@/lib/whatsapp-auto-regras";
+import { filhosCitados, perguntaValor, querRenovar, type Filho } from "@/lib/whatsapp-auto-regras";
 
 /**
  * Resposta automática da rematrícula no WhatsApp oficial (pedido do Pedro em
@@ -16,6 +16,8 @@ import { filhosCitados, perguntaValor, type Filho } from "@/lib/whatsapp-auto-re
  *     Activesoft → manda a carta de 2027 de TODOS os filhos daquele número;
  *  3. não bate duas vezes, número sem cadastro ou caso fora do padrão →
  *     "a secretaria vai te enviar", e a secretaria responde pelo Inbox da YCloud.
+ * Quem toca "Quero renovar" (botão do modelo da rematrícula) recebe na hora a
+ * confirmação de que a secretaria vai falar com ele (pedido do Pedro, 17/10).
  * Qualquer outra mensagem fica para a equipe (nada é respondido).
  *
  * O desconto é o do ano passado, mantido (o que o Isaac tira no pagamento
@@ -35,6 +37,7 @@ const TEXTO = {
   secretaria: "A secretaria vai te enviar os valores por aqui em instantes.",
   semCadastro: "Não encontrei este número no cadastro dos alunos. A secretaria vai te enviar os valores por aqui em instantes.",
   depois: "Os descontos valem pagando até o dia 05 de cada mês. Para renovar, é só responder *Quero renovar* que a secretaria fala com você por aqui.",
+  renovar: "Recebemos seu pedido de renovação para 2027. A secretaria vai falar com você por aqui em breve para concluir.\n\nEscola Amadeus",
   alguns: (nomes: string[]) => `Os valores de ${nomes.join(" e ")} a secretaria vai te enviar por aqui em instantes.`,
 };
 
@@ -100,7 +103,7 @@ export async function cartaDoAluno(id: number): Promise<{ link: string; nome: st
   return { link: linkDaCarta(origemDoSite(), dados), nome };
 }
 
-type Evento = "pediu_nome" | "nome_errado" | "enviou_carta" | "secretaria" | "ignorado";
+type Evento = "pediu_nome" | "nome_errado" | "enviou_carta" | "secretaria" | "quer_renovar" | "ignorado";
 
 export async function processarMensagem(m: MensagemRecebida): Promise<Evento | "repetida" | "bloqueado"> {
   const tel = m.de.replace(/\D/g, "").replace(/^55(?=\d{10,11}$)/, "");
@@ -125,6 +128,14 @@ export async function processarMensagem(m: MensagemRecebida): Promise<Evento | "
     .limit(5);
   const ultimo = recentes?.[0]?.evento as Evento | undefined;
   const aguardandoNome = ultimo === "pediu_nome" || ultimo === "nome_errado";
+
+  if (querRenovar(m.texto)) {
+    // Tocou de novo logo depois: não repete a confirmação.
+    if (recentes?.some((r) => r.evento === "quer_renovar")) return "ignorado";
+    const r = await enviarTexto(m.de, TEXTO.renovar);
+    await marcar("quer_renovar", { detalhe: r.ok ? null : `envio falhou: ${r.detalhe}` });
+    return "quer_renovar";
+  }
 
   if (aguardandoNome) {
     const filhos = await filhosDoTelefone(tel);
