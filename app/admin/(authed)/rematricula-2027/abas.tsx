@@ -1,10 +1,11 @@
 import Link from "next/link";
 
 /** Abas da rematrícula: o simulador (vai para o pai) e a tabela de consulta (só da equipe). */
-export function AbasRematricula({ ativa }: { ativa: "simulador" | "valores" | "experiencia" }) {
+export function AbasRematricula({ ativa }: { ativa: "simulador" | "valores" | "whatsapp" | "experiencia" }) {
   const abas = [
     { id: "simulador", href: "/admin/rematricula-2027", rotulo: "Simulador" },
     { id: "valores", href: "/admin/rematricula-2027/valores", rotulo: "Tabela de valores" },
+    { id: "whatsapp", href: "/admin/rematricula-2027/whatsapp", rotulo: "WhatsApp" },
     { id: "experiencia", href: "/admin/rematricula-2027/experiencia", rotulo: "Experiência Amadeus" },
   ] as const;
   return (

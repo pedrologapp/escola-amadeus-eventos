@@ -16,8 +16,8 @@ import { filhosCitados, perguntaValor, querRenovar, type Filho } from "@/lib/wha
  *     Activesoft → manda a carta de 2027 de TODOS os filhos daquele número;
  *  3. não bate duas vezes, número sem cadastro ou caso fora do padrão →
  *     "a secretaria vai te enviar", e a secretaria responde pelo Inbox da YCloud.
- * Quem toca "Quero renovar" (botão do modelo da rematrícula) recebe na hora a
- * confirmação de que a secretaria vai falar com ele (pedido do Pedro, 17/10).
+ * Quem toca "Quero renovar" (botão do modelo da rematrícula) recebe na hora o
+ * aviso de que a condição já vale e a escola o espera para renovar (Pedro, 17/10).
  * Qualquer outra mensagem fica para a equipe (nada é respondido).
  *
  * O desconto é o do ano passado, mantido (o que o Isaac tira no pagamento
@@ -39,7 +39,8 @@ const TEXTO = {
   secretaria: "A secretaria vai te enviar os valores por aqui em instantes.",
   semCadastro: "Não encontrei este número no cadastro dos alunos. A secretaria vai te enviar os valores por aqui em instantes.",
   depois: "Aqui estão os valores para o próximo ano. Qualquer dúvida, é só chamar a secretaria por aqui.\n\nVamos renovar? É só responder *Quero renovar*.",
-  renovar: "Recebemos seu pedido de renovação para 2027. A secretaria vai falar com você por aqui em breve para concluir.\n\nEscola Amadeus",
+  renovar:
+    "Que ótimo! A condição especial da rematrícula 2027 já está valendo, até quarta-feira, 28 de outubro.\n\nEsperamos você na escola para fazer a renovação.\n\nEscola Amadeus",
   alguns: (nomes: string[]) => `Os valores de ${nomes.join(" e ")} a secretaria vai te enviar por aqui em instantes.`,
 };
 
@@ -74,6 +75,26 @@ export async function filhosDoTelefone(telefone: string): Promise<Filho[]> {
     const ids = [c.responsavel_id, c.responsavel_secundario_id, c.filiacao_1_id, c.filiacao_2_id, ...((c.responsaveis_adicionais_ids as number[]) ?? [])];
     const a = porId.get(c.id as number);
     if (a && ids.some((i) => meus.has(i as number)) && !saida.some((s) => s.id === a.id)) saida.push({ id: a.id, nome: a.nome });
+  }
+  return saida;
+}
+
+/** Para o painel do admin: quem é o responsável de cada número e quais alunos estão ligados a ele. */
+export async function familiasDosTelefones(telefones: string[]): Promise<Map<string, { responsavel: string | null; alunos: string[] }>> {
+  const [cad, resp, ativos] = await Promise.all([buscar("v1/lista_alunos/", 3600), buscar("v1/lista_responsaveis/", 3600), listarAlunos()]);
+  const porId = new Map(ativos.map((a) => [a.id, a]));
+  const saida = new Map<string, { responsavel: string | null; alunos: string[] }>();
+  for (const tel of telefones) {
+    const k = chaveTelefone(tel);
+    const rs = lista(resp).filter((r) => k && chaveTelefone(String(r.celular ?? "")) === k);
+    const ids = new Set(rs.map((r) => r.id as number));
+    const alunos = lista(cad)
+      .filter((c) => [c.responsavel_id, c.responsavel_secundario_id, c.filiacao_1_id, c.filiacao_2_id, ...((c.responsaveis_adicionais_ids as number[]) ?? [])].some((i) => ids.has(i as number)))
+      .flatMap((c) => {
+        const a = porId.get(c.id as number);
+        return a ? [`${a.nome}${a.serie ? ` (${a.serie})` : ""}`] : [];
+      });
+    saida.set(tel, { responsavel: rs[0] ? String(rs[0].nome ?? "").trim() : null, alunos: [...new Set(alunos)] });
   }
   return saida;
 }
