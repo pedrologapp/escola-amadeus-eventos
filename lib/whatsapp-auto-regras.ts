@@ -10,6 +10,8 @@ export const normalizar = (s: string) =>
 /** Pergunta sobre valor da rematrícula ("qual o valor?", "quanto fica?", "e a mensalidade?"). */
 export function perguntaValor(texto: string): boolean {
   const t = normalizar(texto);
+  // Valor de outra coisa (farda, passeio, evento...) não é a rematrícula: fica com a equipe.
+  if (/\b(farda|fardamento|uniforme|camisa|camiseta|passeio|excursao|evento|festa|ingresso|senha|lanche|cantina|transporte|van|onibus|karate|futsal|bale|ballet|judo|natacao|aula de|curso|atividade|boleto|segunda via|pix|parcela atrasada)\b/.test(t)) return false;
   return (
     /\b(valor|valores|preco|precos|mensalidade|mensalidades|orcamento|anuidade)\b/.test(t) ||
     /\bquanto\b.*\b(fica|ficaria|vai ficar|custa|custaria|sai|seria|e|vou pagar|pago|paga|da)\b/.test(t) ||

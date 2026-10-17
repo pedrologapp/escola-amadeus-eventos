@@ -178,17 +178,21 @@ export async function processarMensagem(m: MensagemRecebida): Promise<Evento | "
     // Nome confirmado: vai a carta de todos os filhos daquele número.
     const enviados: string[] = [];
     const paraSecretaria: { nome: string; motivo: string }[] = [];
+    const semEncarte: string[] = [];
     for (const f of filhos) {
       const c = await cartaDoAluno(f.id).catch((e) => ({ motivo: (e as Error).message, nome: f.nome }));
       if ("link" in c) {
         const r = await enviarImagem(m.de, c.link, legendaCarta(primeiroNome(c.nome)));
         if (r.ok) enviados.push(c.nome);
         else paraSecretaria.push({ nome: c.nome, motivo: `envio falhou: ${r.detalhe}` });
+      } else if (/já rematriculado|sem série em 2027/.test(c.motivo)) {
+        // Irmão que já renovou ou está no 9º ano: não tem encarte de 2027, e não há o que falar dele.
+        semEncarte.push(`${c.nome || f.nome}: ${c.motivo}`);
       } else paraSecretaria.push({ nome: c.nome || f.nome, motivo: c.motivo });
     }
     if (enviados.length) await enviarTexto(m.de, TEXTO.depois);
-    if (paraSecretaria.length) await enviarTexto(m.de, enviados.length ? TEXTO.alguns(paraSecretaria.map((p) => primeiroNome(p.nome))) : TEXTO.secretaria);
-    const detalhe = paraSecretaria.map((p) => `${p.nome}: ${p.motivo}`).join(" · ") || null;
+    if (paraSecretaria.length || !enviados.length) await enviarTexto(m.de, enviados.length ? TEXTO.alguns(paraSecretaria.map((p) => primeiroNome(p.nome))) : TEXTO.secretaria);
+    const detalhe = [...paraSecretaria.map((p) => `${p.nome}: ${p.motivo}`), ...semEncarte].join(" · ") || null;
     await marcar(enviados.length ? "enviou_carta" : "secretaria", { aluno_id: citados[0].id, aluno_nome: [...enviados, ...paraSecretaria.map((p) => p.nome)].join(", "), detalhe });
     return enviados.length ? "enviou_carta" : "secretaria";
   }
