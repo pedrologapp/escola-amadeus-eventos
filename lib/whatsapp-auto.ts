@@ -85,7 +85,7 @@ export async function cartaDoAluno(id: number): Promise<{ link: string; nome: st
   const nome = l.aluno.nome;
   if (!l.serie2027) return { motivo: "sem série em 2027 (9º ano ou série desconhecida)", nome };
   if ((await historicoDoAluno(id)).some((a) => a.ano === 2027)) return { motivo: "já rematriculado para 2027", nome };
-  if (l.pendencias.length) return { motivo: "pendência financeira", nome };
+  // Pendência financeira não impede o encarte (Pedro, 17/10): só a rematrícula, e isso a secretaria trata; a mensagem não fala disso.
   // "Provável" vai com a mesma base que a tela já traz preenchida; só "Precisa de você" fica com a secretaria.
   if (l.base === null || l.confianca === "revisar") return { motivo: `conferir a mensalidade (${l.explicacao})`, nome };
   const troca = trocaDeSegmento(l.aluno.serie, l.serie2027);
