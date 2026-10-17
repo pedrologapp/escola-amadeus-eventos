@@ -38,7 +38,7 @@ const TEXTO = {
   nomeErrado: "Não encontrei esse nome no cadastro deste número. Pode escrever o nome completo do aluno, como está na matrícula?",
   secretaria: "A secretaria vai te enviar os valores por aqui em instantes.",
   semCadastro: "Não encontrei este número no cadastro dos alunos. A secretaria vai te enviar os valores por aqui em instantes.",
-  depois: "Os descontos valem pagando até o dia 05 de cada mês. Para renovar, é só responder *Quero renovar* que a secretaria fala com você por aqui.",
+  depois: "Aqui estão os valores para o próximo ano. Qualquer dúvida, é só chamar a secretaria por aqui.\n\nVamos renovar? É só responder *Quero renovar*.",
   renovar: "Recebemos seu pedido de renovação para 2027. A secretaria vai falar com você por aqui em breve para concluir.\n\nEscola Amadeus",
   alguns: (nomes: string[]) => `Os valores de ${nomes.join(" e ")} a secretaria vai te enviar por aqui em instantes.`,
 };
