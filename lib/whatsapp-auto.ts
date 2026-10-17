@@ -26,6 +26,8 @@ import { filhosCitados, perguntaValor, querRenovar, type Filho } from "@/lib/wha
  *
  * Liga/desliga na Vercel: WHATSAPP_AUTO = "todos" ou uma lista de números
  * separados por vírgula (teste). Sem a variável, não responde ninguém.
+ * A parte do valor/encarte só liga com WHATSAPP_AUTO_VALOR = "sim" (o Pedro
+ * pediu em 17/10 para começar só com o "Quero renovar").
  */
 
 const ESPERA_NOME_MIN = 60;
@@ -136,6 +138,8 @@ export async function processarMensagem(m: MensagemRecebida): Promise<Evento | "
     await marcar("quer_renovar", { detalhe: r.ok ? null : `envio falhou: ${r.detalhe}` });
     return "quer_renovar";
   }
+
+  if (process.env.WHATSAPP_AUTO_VALOR !== "sim") return "ignorado";
 
   if (aguardandoNome) {
     const filhos = await filhosDoTelefone(tel);
