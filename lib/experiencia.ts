@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { WEBHOOK_ENVIO } from "@/lib/rematricula-2027";
 
 /**
- * Experiência Amadeus · 2ª edição (sáb 17/10/2026, 14h; a 1ª foi em 10/10). Envio do encarte pelo WhatsApp da escola usando o
+ * Experiência Amadeus · 3ª edição (sáb 24/10/2026, 14h; as anteriores foram em 10/10 e 17/10). Envio do encarte pelo WhatsApp da escola usando o
  * MESMO fluxo do n8n da carta da rematrícula (webhook rematricula-carta): "capa" vai como imagem
  * com o "texto" na legenda; se "imagem" vier preenchida, sai uma segunda imagem. Se "video" vier
  * preenchido, sai o vídeo (com o "texto" na legenda) no lugar da imagem (05/10: o vídeo do convite é o padrão).
@@ -31,7 +31,7 @@ export const textoConvite = (crianca?: string | null, video = false) => {
   const p = primeiro(crianca);
   return `${video ? chamadaVideo(p) + "\n\n" : ""}Olá, família${p ? ` de *${p}*` : ""}! 💛 Aqui é o Centro Educacional Amadeus.
 
-Vocês estão convidados para a *Experiência Amadeus*: no *sábado, 17 de outubro, às 14h*, venham viver um dia dentro da nossa escola junto com ${p || "seu filho ou sua filha"} e sentir na prática um pouco do que vai viver aqui. É *gratuito*.
+Vocês estão convidados para a *Experiência Amadeus*: no *sábado, 24 de outubro, às 14h*, venham viver um dia dentro da nossa escola junto com ${p || "seu filho ou sua filha"} e sentir na prática um pouco do que vai viver aqui. É *gratuito*.
 
 Para confirmar a presença, responda *EU VOU* nesta mensagem. Vai ser uma alegria receber vocês!
 
@@ -41,7 +41,7 @@ ${COMO_CHEGAR}`;
 
 export const textoLembrete = (crianca?: string | null) => {
   const p = primeiro(crianca);
-  return `Olá, família${p ? ` de *${p}*` : ""}! 😊 Passando para lembrar: é *amanhã, sábado (17/10), às 14h*, a *Experiência Amadeus*.
+  return `Olá, família${p ? ` de *${p}*` : ""}! 😊 Passando para lembrar: é *amanhã, sábado (24/10), às 14h*, a *Experiência Amadeus*.
 
 Estamos preparando tudo com muito carinho para receber vocês${p ? ` e ${p}` : ""}. Até amanhã! 💛
 
@@ -125,7 +125,7 @@ export const textoConfirmacaoSite = (nome?: string | null) => {
   return `Olá${p ? `, ${p}` : ""}! 💛 Aqui é o Centro Educacional Amadeus.
 
 Sua inscrição na *Experiência Amadeus* está confirmada! 🎉
-📅 *Sábado, 17 de outubro, às 14h*
+📅 *Sábado, 24 de outubro, às 14h*
 👨‍👩‍👧 Venha com seu filho ou sua filha. É gratuito.
 
 Enquanto o sábado não chega, conheça a escola por dentro no nosso folder digital:

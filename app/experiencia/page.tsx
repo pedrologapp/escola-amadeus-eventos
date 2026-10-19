@@ -9,10 +9,10 @@ const letra = Caveat({ subsets: ["latin"], weight: ["600", "700"] });
 const serifa = Fraunces({ subsets: ["latin"], weight: ["600", "700"], style: ["normal", "italic"] });
 
 export const metadata: Metadata = {
-  title: "Experiência Amadeus · sábado, 17 de outubro, 14h",
+  title: "Experiência Amadeus · sábado, 24 de outubro, 14h",
   description: "Venha viver um dia dentro da nossa escola junto com seu filho ou sua filha. Gratuito. Inscreva-se.",
   openGraph: {
-    title: "Experiência Amadeus · sábado, 17/10, às 14h",
+    title: "Experiência Amadeus · sábado, 24/10, às 14h",
     description: "Venha viver um dia dentro da nossa escola junto com seu filho ou sua filha. É gratuito: inscreva-se.",
     images: [{ url: "https://eventos.escolaamadeus.com/materiais/experiencia-convite.png", width: 1100, height: 1556 }],
     type: "website",
@@ -37,7 +37,7 @@ export default function ExperienciaPage() {
           </div>
         </div>
         <p className={`${letra.className} mt-2 text-[24px] font-bold leading-tight text-[#1B3B7C]`}>
-          Sábado, <span className="bg-[linear-gradient(transparent_55%,#FFD66B_55%)]">17 de outubro, às 14h</span> · gratuito
+          Sábado, <span className="bg-[linear-gradient(transparent_55%,#FFD66B_55%)]">24 de outubro, às 14h</span> · gratuito
         </p>
 
         <Inscricao />

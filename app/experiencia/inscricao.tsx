@@ -13,7 +13,7 @@ const mascara = (v: string) => {
   if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
   return `(${d.slice(0, 2)}) ${d.slice(2, 3)} ${d.slice(3, 7)}-${d.slice(7)}`;
 };
-const AGENDA = "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Experi%C3%AAncia+Amadeus&dates=20261017T170000Z/20261017T200000Z&location=Centro+Educacional+Amadeus,+Av.+Benedito+Santana,+09,+Amarante,+S%C3%A3o+Gon%C3%A7alo+do+Amarante&details=Venha+viver+um+dia+dentro+da+nossa+escola+junto+com+seu+filho+ou+sua+filha.";
+const AGENDA = "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Experi%C3%AAncia+Amadeus&dates=20261024T170000Z/20261024T200000Z&location=Centro+Educacional+Amadeus,+Av.+Benedito+Santana,+09,+Amarante,+S%C3%A3o+Gon%C3%A7alo+do+Amarante&details=Venha+viver+um+dia+dentro+da+nossa+escola+junto+com+seu+filho+ou+sua+filha.";
 
 export function Inscricao() {
   const [nome, setNome] = useState("");
@@ -39,7 +39,7 @@ export function Inscricao() {
         <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-emerald-50"><Check className="size-7 text-emerald-600" /></div>
         <p className="mt-4 text-xl font-extrabold text-[#1B3B7C]">Obrigado, {pronto}! Inscrição feita 💛</p>
         <p className="mt-2 text-sm leading-relaxed text-[#5A6478]">
-          Esperamos vocês no <b className="text-[#1B3B7C]">sábado, 17 de outubro, às 14h</b>. Vai ser uma alegria receber sua família!<br /><br />Em instantes chega no seu WhatsApp a confirmação, com o nosso folder para você conhecer a escola por dentro.
+          Esperamos vocês no <b className="text-[#1B3B7C]">sábado, 24 de outubro, às 14h</b>. Vai ser uma alegria receber sua família!<br /><br />Em instantes chega no seu WhatsApp a confirmação, com o nosso folder para você conhecer a escola por dentro.
         </p>
         <a href={AGENDA} target="_blank" className="mt-5 inline-flex items-center gap-2 rounded-2xl border-2 border-[#1B3B7C] px-4 py-2.5 text-sm font-bold text-[#1B3B7C]">
           <CalendarPlus className="size-4" /> Salvar na agenda
