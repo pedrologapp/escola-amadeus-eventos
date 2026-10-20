@@ -210,7 +210,7 @@ export async function enviarDescricao(codigo: string, aluno: string, texto: stri
   const t = String(texto ?? "").trim().slice(0, 700);
   if (t.length < 15) return { ok: false as const, erro: "Escreva um pouco mais: o colega só vai ter as suas palavras." };
   const cor = rodada === 3 ? corProibida(t) : null;
-  if (cor) return { ok: false as const, erro: `Nesta rodada não vale falar de cor ("${cor}…"): os 8 retratos têm as mesmas cores. Descreva o que o rosto está dizendo.` };
+  if (cor) return { ok: false as const, erro: `"${cor}…": nesta rodada não vale falar de cor. Nos 8 retratos o cabelo, a roupa, o fundo e as cores são iguais, então isso não ajuda o colega. O que muda é o rosto: o que ele está dizendo?` };
   const { data: vs } = await db().from("arboria_quadro_descricoes").select("id, versao").eq("aluno", aluno).eq("rodada", rodada).order("versao");
   const lista = (vs ?? []) as { id: string; versao: number }[];
   const ultima = lista[lista.length - 1];

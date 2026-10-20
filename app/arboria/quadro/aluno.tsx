@@ -207,6 +207,8 @@ function Escrever({ est, sessao, atualizar, cabecalho }: { est: EmRodada; sessao
   const [texto, setTexto] = useState(ultima?.texto ?? "");
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
+  // só as falas do próprio aluno na conversa (as do Arbória nunca viram sugestão de texto)
+  const [minhas, setMinhas] = useState<string[]>(() => (ultima?.conversa ?? []).filter((f) => f.de === "aluno").map((f) => f.texto));
   const mandar = async () => {
     setEnviando(true); setErro("");
     const r = await enviarDescricao(sessao.codigo, sessao.aluno, texto).catch(() => null);
@@ -234,7 +236,16 @@ function Escrever({ est, sessao, atualizar, cabecalho }: { est: EmRodada; sessao
       ) : (
         <Pintura id={est.quadro} className="mx-auto mt-5 max-h-[42vh]" />
       )}
-      {reescrita && <Guia key={ultima.versao} sessao={sessao} inicial={ultima.conversa} />}
+      {reescrita && <Guia key={ultima.versao} sessao={sessao} inicial={ultima.conversa} mudou={setMinhas} />}
+      {reescrita && minhas.length > 0 && (
+        <div className="mt-4">
+          <p className="text-xs font-bold uppercase tracking-[0.12em]" style={{ color: c.turq }}>O que você disse ao Arbória</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {minhas.map((m, i) => <span key={i} className="rounded-full px-3 py-1 font-[family-name:var(--f-serif)] text-lg" style={{ background: "#0f2a27", color: c.turq }}>“{m}”</span>)}
+          </div>
+          <p className="mt-1 text-xs" style={{ color: c.suave }}>São palavras suas. Alguma delas cabe na nova descrição?</p>
+        </div>
+      )}
       <textarea value={texto} onChange={(e) => setTexto(e.target.value)} rows={5} maxLength={700} placeholder="Descreva aqui…"
         className="mt-5 w-full rounded-2xl p-4 font-[family-name:var(--f-serif)] text-xl leading-snug outline-none" style={{ background: "#f6f1e4", color: "#1d2a3a" }} />
       {reescrita && <p className="mt-1 text-xs" style={{ color: c.suave }}>A versão anterior fica guardada: você está escrevendo uma nova.</p>}
@@ -247,7 +258,7 @@ function Escrever({ est, sessao, atualizar, cabecalho }: { est: EmRodada; sessao
 }
 
 /** A conversa com o Arbória: ele pergunta, o aluno responde. Abre sozinha ao chegar na reescrita. */
-function Guia({ sessao, inicial }: { sessao: Sessao; inicial: Fala[] }) {
+function Guia({ sessao, inicial, mudou }: { sessao: Sessao; inicial: Fala[]; mudou: (minhas: string[]) => void }) {
   const [conversa, setConversa] = useState<Fala[]>(inicial);
   const [resposta, setResposta] = useState("");
   const [pensando, setPensando] = useState(false);
@@ -264,6 +275,7 @@ function Guia({ sessao, inicial }: { sessao: Sessao; inicial: Fala[] }) {
 
   useEffect(() => { if (!inicial.length) falar(); }, [inicial.length, falar]);
   useEffect(() => { fim.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }); }, [conversa, pensando]);
+  useEffect(() => { mudou(conversa.filter((f) => f.de === "aluno").map((f) => f.texto)); }, [conversa, mudou]);
 
   const mandar = () => { const r = resposta.trim(); if (!r || pensando) return; setResposta(""); falar(r); };
   return (
