@@ -1,36 +1,49 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { Check, Loader2, X } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Check, Loader2, Send, X } from "lucide-react";
 import { MAX_VERSOES, TODOS, imagem } from "@/lib/arboria-quadro";
-import { enviarDescricao, entrar, estadoAluno, listaDaTurma, responder } from "./actions";
+import { MAX_TROCAS, type Fala } from "@/lib/arboria-guia";
+import { conversar, enviarDescricao, entrar, estadoAluno, listaDaTurma, responder } from "./actions";
 
 /**
- * O tablet do aluno em "Qual é o quadro?". Uma coisa por tela:
- * escrever a descrição do quadro secreto → adivinhar a descrição de um colega → (rodadas 2 e 3) reescrever
- * quando o colega erra, com uma pergunta da IA. O aluno entra tocando no próprio nome na lista da turma. A sessão fica guardada no tablet: recarregar a página não perde nada.
+ * O tablet do aluno em "Qual é o quadro?", com a cara das aulas do Arboria (fundo escuro, Instrument Serif,
+ * turquesa e âmbar). Uma coisa por tela: escrever a descrição do quadro secreto → adivinhar a de um colega →
+ * (rodadas 2 e 3) reescrever quando o colega erra, conversando com o Arbória, que pergunta e nunca escreve pelo aluno.
+ * O aluno entra tocando no próprio nome na lista da turma. Recarregar a página não perde nada.
  */
 
 const CHAVE = "arboria-quadro";
 type Sessao = { codigo: string; aluno: string };
 type Estado = Awaited<ReturnType<typeof estadoAluno>>;
 type EmRodada = Extract<Estado, { rodada: 1 | 2 | 3 }>;
-const SUBTITULO = { 1: "4 QUADROS BEM DIFERENTES", 2: "8 QUADROS PARECIDOS", 3: "8 RETRATOS QUASE IGUAIS" } as const;
+const SUBTITULO = { 1: "4 quadros bem diferentes", 2: "8 quadros parecidos", 3: "8 retratos quase iguais" } as const;
 
 const ler = (): Sessao | null => { try { return JSON.parse(localStorage.getItem(CHAVE) || "null"); } catch { return null; } };
 const gravar = (v: Sessao | null) => { try { if (v) localStorage.setItem(CHAVE, JSON.stringify(v)); else localStorage.removeItem(CHAVE); } catch { /* sem armazenamento */ } };
 
+// as cores das aulas do Arboria (Aulas/F2-Linguistica)
+const c = { bg: "#0b1112", card: "#14201f", linha: "#2a3d3b", creme: "#eef3ef", suave: "#8fa3a0", turq: "#2dd4bf", amar: "#fbbf24" };
+
 const Tela = ({ children }: { children: React.ReactNode }) => (
-  <main className="min-h-screen bg-[#F4F1EA] px-4 py-6 text-[#1d2b2a]"><div className="mx-auto max-w-3xl">{children}</div></main>
+  <main className="min-h-screen px-5 py-6 font-[family-name:var(--f-tight)]" style={{ background: `radial-gradient(ellipse at 30% 0%, #12201f, ${c.bg} 60%)`, color: c.creme }}>
+    <div className="mx-auto max-w-3xl">{children}</div>
+  </main>
 );
-const Titulo = ({ children }: { children: React.ReactNode }) => <h1 className="font-[family-name:var(--font-serie)] text-3xl leading-tight text-[#0b5c55]">{children}</h1>;
+const Rotulo = ({ children }: { children: React.ReactNode }) => <p className="mb-1 text-xs font-bold uppercase tracking-[0.18em]" style={{ color: c.turq }}>{children}</p>;
+const Titulo = ({ children }: { children: React.ReactNode }) => <h1 className="font-[family-name:var(--f-serif)] text-4xl leading-[1.05]">{children}</h1>;
+const Texto = ({ children }: { children: React.ReactNode }) => <p className="mt-2 font-[family-name:var(--f-serif)] text-xl leading-snug" style={{ color: c.suave }}>{children}</p>;
 const Botao = ({ children, ...p }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
-  <button {...p} className={`mt-4 w-full rounded-2xl bg-[#0b5c55] py-4 text-lg font-bold text-white disabled:opacity-40 ${p.className ?? ""}`}>{children}</button>
+  <button {...p} className={`mt-4 w-full rounded-2xl py-4 text-lg font-extrabold disabled:opacity-30 ${p.className ?? ""}`} style={{ background: c.turq, color: "#05201d" }}>{children}</button>
+);
+const Ficha = ({ children, cor = c.linha }: { children: React.ReactNode; cor?: string }) => (
+  <div className="rounded-2xl border-[3px] p-4" style={{ background: c.card, borderColor: cor }}>{children}</div>
 );
 const Pintura = ({ id, className = "" }: { id: string; className?: string }) => (
   // eslint-disable-next-line @next/next/no-img-element
-  <img src={imagem(id)} alt="" width={TODOS[id]?.w} height={TODOS[id]?.h} className={`rounded-xl object-contain ${className}`} />
+  <img src={imagem(id)} alt="" width={TODOS[id]?.w} height={TODOS[id]?.h} className={`rounded-lg object-contain ${className}`} style={{ boxShadow: "0 18px 40px rgba(0,0,0,.55)" }} />
 );
+const Carregando = () => <Tela><Loader2 className="mx-auto mt-24 size-8 animate-spin" style={{ color: c.turq }} /></Tela>;
 
 export function Aluno({ codigoInicial }: { codigoInicial: string }) {
   const [sessao, setSessao] = useState<Sessao | null>(null);
@@ -59,17 +72,17 @@ export function Aluno({ codigoInicial }: { codigoInicial: string }) {
     return () => clearInterval(t);
   }, [sessao, atualizar]);
 
-  if (!pronto) return <Tela><Loader2 className="mx-auto mt-20 size-8 animate-spin text-[#0b5c55]" /></Tela>;
+  if (!pronto) return <Carregando />;
   if (!sessao) return <Entrada codigoInicial={codigoInicial} entrou={(s) => { gravar(s); setSessao(s); }} />;
-  if (!est || !est.ok) return <Tela><Loader2 className="mx-auto mt-20 size-8 animate-spin text-[#0b5c55]" /></Tela>;
+  if (!est || !est.ok) return <Carregando />;
 
   if (est.fase === "entrada") return (
-    <Tela><Titulo>Pronto, {est.nome}!</Titulo><p className="mt-3 text-lg">Espere o professor começar. Olhe para a TV.</p></Tela>
+    <Tela><Rotulo>Arboria · Linguística</Rotulo><Titulo>Pronto, <i style={{ color: c.turq }}>{est.nome}</i>!</Titulo><Texto>Espere o professor começar. Olhe para a TV.</Texto></Tela>
   );
   if (est.fase === "final") return (
-    <Tela><Titulo>Olhe para a TV</Titulo><p className="mt-3 text-lg">Agora vamos ver juntos algumas descrições da turma.</p></Tela>
+    <Tela><Rotulo>Arboria · Linguística</Rotulo><Titulo>Olhe para a <i style={{ color: c.turq }}>TV</i></Titulo><Texto>Agora vamos ver juntos algumas descrições da turma.</Texto></Tela>
   );
-  // key: o resultado de um palpite da rodada 1 não fica na tela quando começa a rodada 2
+  // key: o resultado de um palpite de uma rodada não fica na tela quando começa a próxima
   return <Rodada key={(est as EmRodada).rodada} est={est as EmRodada} sessao={sessao} atualizar={atualizar} />;
 }
 
@@ -103,62 +116,57 @@ function Entrada({ codigoInicial, entrou }: { codigoInicial: string; entrou: (s:
   const nomeEscolhido = lista?.alunos.find((a) => a.id === escolhido)?.nome;
   return (
     <Tela>
-      <p className="text-sm font-bold tracking-[0.2em] text-[#B07A12]">ARBORIA</p>
-      <Titulo>Qual é o quadro?</Titulo>
-      <label className="mt-6 block text-sm font-bold">Código da sala (está na TV)</label>
+      <p className="text-center text-5xl font-extrabold tracking-[-0.045em]">arbor<b style={{ color: c.turq }}>ia</b></p>
+      <div className="mt-6"><Rotulo>Fase Linguística</Rotulo><Titulo>Qual é o <i style={{ color: c.turq }}>quadro</i>?</Titulo></div>
+      <label className="mt-6 block text-xs font-bold uppercase tracking-[0.14em]" style={{ color: c.amar }}>Código da sala (está na TV)</label>
       <input value={codigo} onChange={(e) => { setCodigo(e.target.value.replace(/\D/g, "").slice(0, 4)); setEscolhido(null); }} inputMode="numeric"
-        className="mt-1 w-full rounded-xl border-2 border-[#0b5c55]/30 bg-white p-3 text-2xl tracking-[0.3em]" />
+        className="mt-1 w-full rounded-xl border-[3px] p-3 text-3xl font-extrabold tracking-[0.35em] outline-none" style={{ background: c.card, borderColor: c.linha, color: c.creme }} />
       {lista && (
         <>
-          <p className="mt-5 text-sm font-bold">Toque no seu nome · {lista.turma}</p>
+          <p className="mt-6 text-xs font-bold uppercase tracking-[0.14em]" style={{ color: c.amar }}>Toque no seu nome · {lista.turma}</p>
           <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {lista.alunos.map((a) => (
-              <button key={a.id} onClick={() => setEscolhido(a.id)} disabled={a.dentro && escolhido !== a.id}
-                className={`rounded-xl border-2 px-3 py-3 text-left text-base ${escolhido === a.id ? "border-[#0b5c55] bg-[#0b5c55] text-white" : a.dentro ? "border-transparent bg-white/50 text-[#9aa3ad]" : "border-[#0b5c55]/20 bg-white"}`}>
-                {a.nome}{a.dentro && <span className="block text-xs">já entrou</span>}
-              </button>
-            ))}
+            {lista.alunos.map((a) => {
+              const meu = escolhido === a.id;
+              return (
+                <button key={a.id} onClick={() => setEscolhido(a.id)} disabled={a.dentro && !meu}
+                  className="rounded-xl border-[3px] px-3 py-3 text-left text-base font-semibold disabled:opacity-35"
+                  style={{ background: meu ? c.turq : c.card, borderColor: meu ? c.turq : c.linha, color: meu ? "#05201d" : c.creme }}>
+                  {a.nome}{a.dentro && <span className="block text-xs font-normal">já entrou</span>}
+                </button>
+              );
+            })}
           </div>
-          <label className="mt-4 flex items-center gap-3 text-base">
-            <input type="checkbox" checked={mostrar} onChange={(e) => setMostrar(e.target.checked)} className="size-5" />
+          <label className="mt-4 flex items-center gap-3 text-base" style={{ color: c.suave }}>
+            <input type="checkbox" checked={mostrar} onChange={(e) => setMostrar(e.target.checked)} className="size-5 accent-[#2dd4bf]" />
             Pode mostrar meu nome na TV no final
           </label>
         </>
       )}
-      {erro && <p className="mt-3 rounded-lg bg-red-50 p-3 text-red-700">{erro}</p>}
+      {erro && <p className="mt-3 rounded-lg border border-red-400/40 bg-red-500/10 p-3 text-red-200">{erro}</p>}
       <Botao onClick={ir} disabled={enviando || !escolhido}>{enviando ? "Entrando…" : nomeEscolhido ? `Entrar como ${nomeEscolhido}` : "Entrar"}</Botao>
     </Tela>
   );
 }
 
 function Rodada({ est, sessao, atualizar }: { est: EmRodada; sessao: Sessao; atualizar: () => Promise<void> }) {
-  const [resultado, setResultado] = useState<{ acertou: boolean; certo: string; escolha: string } | null>(null);
-  const cabecalho = (
-    <p className="mb-2 text-sm font-bold tracking-[0.15em] text-[#B07A12]">
-      RODADA {est.rodada} · {SUBTITULO[est.rodada]}
-    </p>
-  );
+  const [resultado, setResultado] = useState<{ acertou: boolean; certo: string } | null>(null);
+  const cabecalho = <Rotulo>Rodada {est.rodada} · {SUBTITULO[est.rodada]}</Rotulo>;
 
   // 1) o resultado do palpite que acabei de dar
   if (resultado) return (
     <Tela>{cabecalho}
-      <Titulo>{resultado.acertou ? "Você acertou!" : "Não era esse."}</Titulo>
-      <p className="mt-2 text-lg">{resultado.acertou ? "A descrição do seu colega funcionou." : `O quadro descrito era este.${est.rodada >= 2 ? " Seu colega vai poder reescrever." : ""}`}</p>
-      <Pintura id={resultado.certo} className="mt-4 max-h-[50vh] w-full" />
+      <Titulo>{resultado.acertou ? <>Você <i style={{ color: c.turq }}>acertou</i>!</> : <>Não era <i style={{ color: c.amar }}>esse</i>.</>}</Titulo>
+      <Texto>{resultado.acertou ? "As palavras do seu colega funcionaram." : `O quadro descrito era este.${est.rodada >= 2 ? " Seu colega vai poder reescrever." : ""}`}</Texto>
+      <Pintura id={resultado.certo} className="mx-auto mt-5 max-h-[50vh]" />
       <Botao onClick={() => { setResultado(null); atualizar(); }}>Continuar</Botao>
     </Tela>
   );
 
-  // 2) escrever a primeira versão
   if (!est.versoes.length) return <Escrever est={est} sessao={sessao} atualizar={atualizar} cabecalho={cabecalho} />;
-
-  // 3) adivinhar a descrição de um colega
   if (est.tarefa) return <Adivinhar tarefa={est.tarefa} sessao={sessao} cabecalho={cabecalho} respondeu={setResultado} />;
-
-  // 4) reescrever: o colega errou
   if (est.reescrever) return <Escrever est={est} sessao={sessao} atualizar={atualizar} cabecalho={cabecalho} />;
 
-  // 5) esperando
+  // esperando
   const ultima = est.versoes[est.versoes.length - 1];
   const situacao = ultima.acertou === true
     ? (ultima.versao === 1 ? "Seu colega acertou de primeira!" : `Seu colega acertou na versão ${ultima.versao}!`)
@@ -166,12 +174,12 @@ function Rodada({ est, sessao, atualizar }: { est: EmRodada; sessao: Sessao; atu
   return (
     <Tela>{cabecalho}
       <Titulo>{situacao}</Titulo>
-      <div className="mt-4 flex gap-4">
+      <div className="mt-5 flex gap-4">
         <Pintura id={est.quadro} className="max-h-48 w-1/3" />
         <Versoes versoes={est.versoes} />
       </div>
-      <p className="mt-6 flex items-center gap-2 text-lg text-[#0b5c55]"><Loader2 className="size-5 animate-spin" /> Esperando a descrição de um colega para você adivinhar…</p>
-      {est.adivinhei.feitas > 0 && <p className="mt-2 text-sm text-[#5a6478]">Você já adivinhou {est.adivinhei.feitas} {est.adivinhei.feitas === 1 ? "descrição" : "descrições"} e acertou {est.adivinhei.acertos}.</p>}
+      <p className="mt-6 flex items-center gap-2 text-lg font-semibold" style={{ color: c.turq }}><Loader2 className="size-5 animate-spin" /> Esperando a descrição de um colega para você adivinhar…</p>
+      {est.adivinhei.feitas > 0 && <p className="mt-2 text-sm" style={{ color: c.suave }}>Você já adivinhou {est.adivinhei.feitas} {est.adivinhei.feitas === 1 ? "descrição" : "descrições"} e acertou {est.adivinhei.acertos}.</p>}
     </Tela>
   );
 }
@@ -180,11 +188,13 @@ function Versoes({ versoes }: { versoes: EmRodada["versoes"] }) {
   return (
     <ol className="flex-1 space-y-2">
       {versoes.map((v) => (
-        <li key={v.versao} className="rounded-xl bg-white p-3 text-sm">
-          <span className="font-bold text-[#0b5c55]">Versão {v.versao} </span>
-          {v.acertou === true && <Check className="inline size-4 text-emerald-600" />}
-          {v.acertou === false && <X className="inline size-4 text-red-600" />}
-          <p className="mt-1 whitespace-pre-wrap">{v.texto}</p>
+        <li key={v.versao}>
+          <Ficha cor={v.acertou ? c.turq : c.linha}>
+            <span className="text-xs font-bold uppercase tracking-[0.12em]" style={{ color: c.amar }}>Versão {v.versao} </span>
+            {v.acertou === true && <Check className="inline size-4" style={{ color: c.turq }} />}
+            {v.acertou === false && <X className="inline size-4 text-red-300" />}
+            <p className="mt-1 whitespace-pre-wrap font-[family-name:var(--f-serif)] text-lg leading-snug">{v.texto}</p>
+          </Ficha>
         </li>
       ))}
     </ol>
@@ -205,35 +215,30 @@ function Escrever({ est, sessao, atualizar, cabecalho }: { est: EmRodada; sessao
   };
   return (
     <Tela>{cabecalho}
-      <Titulo>{reescrita ? `Reescreva (versão ${ultima.versao + 1} de ${MAX_VERSOES})` : "Descreva o seu quadro secreto"}</Titulo>
-      <p className="mt-2 text-base text-[#3e4a61]">
+      <Titulo>{reescrita ? <>Reescreva <i style={{ color: c.turq }}>(versão {ultima.versao + 1} de {MAX_VERSOES})</i></> : <>Descreva o seu <i style={{ color: c.turq }}>quadro secreto</i></>}</Titulo>
+      <Texto>
         {reescrita
-          ? "Seu colega escolheu o da direita. O que faltou nas suas palavras para ele achar o certo?"
+          ? "Seu colega escolheu o da direita. Converse com o Arbória e reescreva com as suas palavras."
           : est.rodada === 1
             ? "Só você está vendo este quadro. Escreva de um jeito que um colega consiga achá-lo entre outros quatro."
             : est.rodada === 2
               ? "Agora são 8 quadros muito parecidos. Lembre do jeito dos pintores: a cor exata, onde fica cada coisa e o sentimento."
-              : "São 8 retratos da mesma moça, com as mesmas cores. Aqui não vale falar de cor: o que o rosto dela está dizendo? Olhe os olhos, a boca, as sobrancelhas."}
+              : "São 8 retratos da mesma moça, com as mesmas cores. Aqui não vale falar de cor: o que o rosto dela está dizendo?"}
         {est.rodada < 3 && " Não vale escrever o nome do quadro nem do pintor."}
-      </p>
+      </Texto>
       {reescrita ? (
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <div><p className="mb-1 text-sm font-bold text-emerald-700">O seu quadro</p><Pintura id={est.quadro} className="max-h-56 w-full" /></div>
-          <div><p className="mb-1 text-sm font-bold text-red-700">O que o colega escolheu</p>{ultima.escolha && <Pintura id={ultima.escolha} className="max-h-56 w-full" />}</div>
+        <div className="mt-5 grid grid-cols-2 gap-4">
+          <div><p className="mb-2 text-xs font-bold uppercase tracking-[0.12em]" style={{ color: c.turq }}>O seu</p><Pintura id={est.quadro} className="max-h-56 w-full" /></div>
+          <div><p className="mb-2 text-xs font-bold uppercase tracking-[0.12em]" style={{ color: c.amar }}>O que o colega escolheu</p>{ultima.escolha && <Pintura id={ultima.escolha} className="max-h-56 w-full" />}</div>
         </div>
       ) : (
-        <Pintura id={est.quadro} className="mt-4 max-h-[42vh] w-full" />
+        <Pintura id={est.quadro} className="mx-auto mt-5 max-h-[42vh]" />
       )}
-      {reescrita && (
-        <div className="mt-3 rounded-2xl border-2 border-[#B07A12]/40 bg-[#fff8e8] p-3 text-base">
-          <p className="text-xs font-bold tracking-[0.15em] text-[#B07A12]">UMA PERGUNTA PARA VOCÊ</p>
-          {ultima.dica && ultima.dica !== "…" ? <p className="mt-1">{ultima.dica}</p> : <p className="mt-1 flex items-center gap-2 text-[#5a6478]"><Loader2 className="size-4 animate-spin" /> Olhando os dois quadros…</p>}
-        </div>
-      )}
-      <textarea value={texto} onChange={(e) => setTexto(e.target.value)} rows={5} maxLength={700}
-        className="mt-4 w-full rounded-xl border-2 border-[#0b5c55]/30 bg-white p-3 text-lg" placeholder="Descreva aqui…" />
-      {reescrita && <p className="text-xs text-[#5a6478]">A versão anterior fica guardada: você está escrevendo uma nova.</p>}
-      {erro && <p className="mt-2 rounded-lg bg-red-50 p-3 text-red-700">{erro}</p>}
+      {reescrita && <Guia key={ultima.versao} sessao={sessao} inicial={ultima.conversa} />}
+      <textarea value={texto} onChange={(e) => setTexto(e.target.value)} rows={5} maxLength={700} placeholder="Descreva aqui…"
+        className="mt-5 w-full rounded-2xl p-4 font-[family-name:var(--f-serif)] text-xl leading-snug outline-none" style={{ background: "#f6f1e4", color: "#1d2a3a" }} />
+      {reescrita && <p className="mt-1 text-xs" style={{ color: c.suave }}>A versão anterior fica guardada: você está escrevendo uma nova.</p>}
+      {erro && <p className="mt-2 rounded-lg border border-red-400/40 bg-red-500/10 p-3 text-red-200">{erro}</p>}
       <Botao onClick={mandar} disabled={enviando || texto.trim().length < 15 || (reescrita && texto.trim() === ultima.texto.trim())}>
         {enviando ? "Mandando…" : "Mandar para um colega"}
       </Botao>
@@ -241,9 +246,53 @@ function Escrever({ est, sessao, atualizar, cabecalho }: { est: EmRodada; sessao
   );
 }
 
+/** A conversa com o Arbória: ele pergunta, o aluno responde. Abre sozinha ao chegar na reescrita. */
+function Guia({ sessao, inicial }: { sessao: Sessao; inicial: Fala[] }) {
+  const [conversa, setConversa] = useState<Fala[]>(inicial);
+  const [resposta, setResposta] = useState("");
+  const [pensando, setPensando] = useState(false);
+  const fim = useRef<HTMLDivElement>(null);
+  const perguntas = conversa.filter((f) => f.de === "arboria").length;
+
+  const falar = useCallback(async (r?: string) => {
+    setPensando(true);
+    if (r) setConversa((v) => [...v, { de: "aluno", texto: r }]);
+    const res = await conversar(sessao.codigo, sessao.aluno, r).catch(() => null);
+    if (res?.ok) setConversa(res.conversa);
+    setPensando(false);
+  }, [sessao]);
+
+  useEffect(() => { if (!inicial.length) falar(); }, [inicial.length, falar]);
+  useEffect(() => { fim.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }); }, [conversa, pensando]);
+
+  const mandar = () => { const r = resposta.trim(); if (!r || pensando) return; setResposta(""); falar(r); };
+  return (
+    <div className="mt-5">
+      <Ficha cor={c.amar}>
+        <p className="font-[family-name:var(--f-mao)] text-3xl leading-none" style={{ color: c.amar }}>Arbória</p>
+        <div className="mt-2 space-y-3">
+          {conversa.map((f, i) => f.de === "arboria"
+            ? <p key={i} className="font-[family-name:var(--f-serif)] text-xl leading-snug">{f.texto}</p>
+            : <p key={i} className="ml-8 rounded-xl px-3 py-2 text-base" style={{ background: "#0f2a27", color: c.turq }}>{f.texto}</p>)}
+          {pensando && <p className="flex items-center gap-2" style={{ color: c.suave }}><Loader2 className="size-4 animate-spin" /> pensando…</p>}
+          <div ref={fim} />
+        </div>
+        {perguntas > 0 && perguntas < MAX_TROCAS && conversa[conversa.length - 1]?.de === "arboria" && (
+          <div className="mt-3 flex gap-2">
+            <input value={resposta} onChange={(e) => setResposta(e.target.value)} onKeyDown={(e) => e.key === "Enter" && mandar()} maxLength={300}
+              placeholder="Responda o Arbória…" className="flex-1 rounded-xl border-2 px-3 py-2 text-base outline-none" style={{ background: c.bg, borderColor: c.linha, color: c.creme }} />
+            <button onClick={mandar} disabled={!resposta.trim() || pensando} className="rounded-xl px-4 disabled:opacity-30" style={{ background: c.amar, color: "#2a1d05" }}><Send className="size-5" /></button>
+          </div>
+        )}
+        {perguntas >= MAX_TROCAS && <p className="mt-3 text-sm" style={{ color: c.suave }}>Agora é com você: reescreva com as suas palavras.</p>}
+      </Ficha>
+    </div>
+  );
+}
+
 function Adivinhar({ tarefa, sessao, cabecalho, respondeu }: {
   tarefa: NonNullable<EmRodada["tarefa"]>; sessao: Sessao; cabecalho: React.ReactNode;
-  respondeu: (r: { acertou: boolean; certo: string; escolha: string }) => void;
+  respondeu: (r: { acertou: boolean; certo: string }) => void;
 }) {
   const [escolha, setEscolha] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -252,17 +301,16 @@ function Adivinhar({ tarefa, sessao, cabecalho, respondeu }: {
     setEnviando(true);
     const r = await responder(sessao.codigo, sessao.aluno, tarefa.id, escolha).catch(() => null);
     setEnviando(false);
-    if (r?.ok) respondeu({ acertou: r.acertou, certo: r.certo, escolha });
+    if (r?.ok) respondeu({ acertou: r.acertou, certo: r.certo });
   };
   return (
     <Tela>{cabecalho}
-      <Titulo>Qual é o quadro?</Titulo>
-      <p className="mt-1 text-sm text-[#5a6478]">Leia a descrição de um colega{tarefa.versao > 1 ? ` (ele já reescreveu: versão ${tarefa.versao})` : ""} e toque no quadro que ele descreveu.</p>
-      <blockquote className="mt-3 whitespace-pre-wrap rounded-2xl bg-white p-4 text-xl leading-relaxed shadow-sm">{tarefa.texto}</blockquote>
-      <div className={`mt-4 grid gap-2 ${tarefa.opcoes.length > 4 ? "grid-cols-4" : "grid-cols-2"}`}>
+      <Titulo>Qual é o <i style={{ color: c.turq }}>quadro</i>?</Titulo>
+      <Texto>Leia a descrição de um colega{tarefa.versao > 1 ? ` (ele já reescreveu: versão ${tarefa.versao})` : ""} e toque no quadro que ele descreveu.</Texto>
+      <blockquote className="mt-4 whitespace-pre-wrap border-l-[6px] pl-5 font-[family-name:var(--f-serif)] text-2xl italic leading-snug" style={{ borderColor: c.turq }}>{tarefa.texto}</blockquote>
+      <div className={`mt-5 grid gap-2 ${tarefa.opcoes.length > 4 ? "grid-cols-4" : "grid-cols-2"}`}>
         {tarefa.opcoes.map((id) => (
-          <button key={id} onClick={() => setEscolha(id)}
-            className={`overflow-hidden rounded-xl border-4 bg-white p-1 ${escolha === id ? "border-[#B07A12]" : "border-transparent"}`}>
+          <button key={id} onClick={() => setEscolha(id)} className="rounded-xl border-4 p-1" style={{ borderColor: escolha === id ? c.amar : "transparent", background: c.card }}>
             <Pintura id={id} className={`w-full ${id.startsWith("r") ? "h-44 sm:h-56" : "h-32 sm:h-40"}`} />
           </button>
         ))}

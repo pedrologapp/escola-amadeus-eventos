@@ -5,6 +5,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { MAX_TROCAS, limparFala, mensagensDoGuia, sistemaDoGuia, type Fala } from "@/lib/arboria-guia";
 import { MAX_VERSOES, TURMAS, corProibida, daTurma, imagem, quadroSecreto, quadrosDaRodada, type Fase, type Rodada } from "@/lib/arboria-quadro";
 
 /**
@@ -16,7 +17,7 @@ import { MAX_VERSOES, TURMAS, corProibida, daTurma, imagem, quadroSecreto, quadr
  */
 
 interface Desc { id: string; aluno: string; rodada: number; versao: number; quadro: string; texto: string; criado_em: string }
-interface Palp { id: string; descricao: string; aluno: string; opcoes: string[]; escolha: string | null; acertou: boolean | null; dica: string | null }
+interface Palp { id: string; descricao: string; aluno: string; opcoes: string[]; escolha: string | null; acertou: boolean | null; conversa: Fala[] }
 interface Sala { codigo: string; chave_prof: string; turma: string; fase: Fase; destaque: string | null; revelado: boolean }
 
 const db = () => createAdminClient();
@@ -42,7 +43,7 @@ async function tudo(codigo: string) {
   const [a, d, p] = await Promise.all([
     c.from("arboria_quadro_alunos").select("id, nome, mostrar_nome, criado_em").eq("sala", codigo).order("criado_em"),
     c.from("arboria_quadro_descricoes").select("id, aluno, rodada, versao, quadro, texto, criado_em").eq("sala", codigo).order("criado_em"),
-    c.from("arboria_quadro_palpites").select("id, descricao, aluno, opcoes, escolha, acertou, dica").eq("sala", codigo),
+    c.from("arboria_quadro_palpites").select("id, descricao, aluno, opcoes, escolha, acertou, conversa").eq("sala", codigo),
   ]);
   return {
     alunos: (a.data ?? []) as { id: string; nome: string; mostrar_nome: boolean }[],
@@ -168,7 +169,7 @@ async function pegarTarefa(s: Sala, aluno: string, rodada: Rodada, x: Awaited<Re
     .sort((a, b) => a.criado_em.localeCompare(b.criado_em));
   for (const d of livres.slice(0, 4)) {
     const opcoes = embaralhar(quadrosDaRodada(rodada, s.turma).map((q) => q.id));
-    const { data, error } = await db().from("arboria_quadro_palpites").insert({ sala: s.codigo, descricao: d.id, aluno, opcoes }).select("id, descricao, aluno, opcoes, escolha, acertou, dica").single();
+    const { data, error } = await db().from("arboria_quadro_palpites").insert({ sala: s.codigo, descricao: d.id, aluno, opcoes }).select("id, descricao, aluno, opcoes, escolha, acertou, conversa").single();
     if (!error && data) return data as Palp;
   }
   return null;
@@ -185,20 +186,9 @@ export async function estadoAluno(codigo: string, aluno: string) {
 
   const quadro = quadroSecreto(aluno, rodada, s.turma);
   const versoes = x.descs.filter((d) => d.aluno === aluno && d.rodada === rodada).sort((a, b) => a.versao - b.versao)
-    .map((d) => { const p = x.palps.find((p) => p.descricao === d.id); return { versao: d.versao, texto: d.texto, escolha: p?.escolha ?? null, acertou: p?.acertou ?? null, comColega: !!p, dica: p?.dica ?? null }; });
+    .map((d) => { const p = x.palps.find((p) => p.descricao === d.id); return { versao: d.versao, texto: d.texto, escolha: p?.escolha ?? null, acertou: p?.acertou ?? null, comColega: !!p, conversa: (p?.conversa ?? []) as Fala[] }; });
   const ultima = versoes[versoes.length - 1];
   const reescrever = rodada >= 2 && !!ultima && ultima.acertou === false && ultima.versao < MAX_VERSOES;
-  // a pergunta da IA para quem vai reescrever: o primeiro pedido marca "…" (os seguintes só esperam) e gera
-  if (reescrever && ultima.dica === null) {
-    const d = x.descs.filter((d) => d.aluno === aluno && d.rodada === rodada).find((d) => d.versao === ultima.versao)!;
-    const p = x.palps.find((p) => p.descricao === d.id)!;
-    const { data: marcou } = await db().from("arboria_quadro_palpites").update({ dica: "…" }).eq("id", p.id).is("dica", null).select("id");
-    if (marcou?.length) {
-      const dica = await gerarDica(d.quadro, p.escolha!, d.texto, rodada).catch(() => null);
-      await db().from("arboria_quadro_palpites").update({ dica: dica || "Compare os dois quadros com calma: o que só o seu tem?" }).eq("id", p.id);
-      ultima.dica = dica || "Compare os dois quadros com calma: o que só o seu tem?";
-    }
-  }
 
   // tarefa de adivinhar: a que já está aberta para mim, ou uma nova (só depois de escrever a minha)
   let tarefa = x.palps.find((p) => p.aluno === aluno && p.escolha === null && x.descs.find((d) => d.id === p.descricao)?.rodada === rodada) ?? null;
@@ -258,34 +248,37 @@ async function fonteDaImagem(id: string) {
 }
 
 /**
- * A dica para reescrever: uma pergunta curta que aponta o TIPO de diferença entre o quadro do autor e o
- * que o colega escolheu (luz, hora, posição, olhar, boca...), sem dar a resposta pronta nem corrigir o texto.
+ * A conversa com o Arbória para quem vai reescrever (lib/arboria-guia.ts): sem resposta, abre a conversa
+ * (uma vez só); com resposta, guarda a fala do aluno e traz a próxima pergunta. Até MAX_TROCAS perguntas.
+ * O guia só vê o quadro do próprio aluno e o texto dele: não sabe qual o colega escolheu.
  */
-async function gerarDica(certo: string, escolhido: string, texto: string, rodada: number): Promise<string | null> {
+export async function conversar(codigo: string, aluno: string, resposta?: string) {
+  const s = await sala(codigo);
+  const rodada = s && rodadaDa(s.fase);
+  if (!s || !rodada || rodada < 2) return { ok: false as const };
+  const c = db();
+  const { data: d } = await c.from("arboria_quadro_descricoes").select("id, versao, quadro, texto").eq("aluno", aluno).eq("rodada", rodada).order("versao", { ascending: false }).limit(1).maybeSingle();
+  if (!d) return { ok: false as const };
+  const { data: p } = await c.from("arboria_quadro_palpites").select("id, acertou, conversa").eq("descricao", d.id).maybeSingle();
+  if (!p || p.acertou !== false) return { ok: false as const };
+  let conversa = (p.conversa ?? []) as Fala[];
+  const r = limpar(resposta, 300);
+  if (!r && conversa.length) return { ok: true as const, conversa };                         // já aberta
+  if (r && conversa[conversa.length - 1]?.de !== "arboria") return { ok: true as const, conversa }; // fora de ordem
+  if (conversa.filter((f) => f.de === "arboria").length >= MAX_TROCAS) return { ok: true as const, conversa };
+  if (r) conversa = [...conversa, { de: "aluno", texto: r }];
   const chave = process.env.ANTHROPIC_API_KEY;
-  if (!chave) return null;
-  const r = await new Anthropic({ apiKey: chave }).messages.create({
-    model: "claude-sonnet-5-5",
-    max_tokens: 200,
-    system:
-      "Você ajuda alunos de 11 a 15 anos numa aula de descrição. Um aluno descreveu uma pintura (IMAGEM A) e um colega, lendo só o texto, " +
-      "escolheu outra pintura parecida (IMAGEM B). Escreva UMA pergunta curta (até 30 palavras), em português do Brasil, falando com o autor, " +
-      "que o faça perceber o que o texto dele deixou em aberto: o tipo de diferença entre A e B (luz, hora do dia, estação, posição das coisas, " +
-      "quantidade, olhar, boca, sobrancelhas, sentimento). Pode dizer que as duas têm algo em comum. Não dê a frase pronta, não liste vários itens, " +
-      "não elogie, não use nome de pintor nem de quadro." +
-      (rodada === 3 ? " As duas são retratos da mesma moça com as mesmas cores: a diferença está na expressão. Não fale de cor." : ""),
-    messages: [{
-      role: "user",
-      content: [
-        { type: "text", text: "IMAGEM A (a que o autor descreveu):" },
-        { type: "image", source: await fonteDaImagem(certo) },
-        { type: "text", text: "IMAGEM B (a que o colega escolheu):" },
-        { type: "image", source: await fonteDaImagem(escolhido) },
-        { type: "text", text: `Texto do autor: "${texto}"\n\nA pergunta (só ela, sem aspas):` },
-      ],
-    }],
-  });
-  const dica = r.content.map((c) => (c.type === "text" ? c.text : "")).join("").trim().replace(/^["“]|["”]$/g, "").slice(0, 300);
-  return dica || null;
+  let fala = "Releia a sua descrição como se você fosse o colega. O que você precisaria ler para ter certeza?";
+  if (chave) {
+    try {
+      const resp = await new Anthropic({ apiKey: chave }).messages.create({
+        model: "claude-sonnet-5-5", max_tokens: 1500, system: sistemaDoGuia(rodada), // folga para o modelo pensar antes da pergunta
+        messages: mensagensDoGuia(await fonteDaImagem(d.quadro), d.texto, d.versao, conversa) as Anthropic.MessageParam[],
+      });
+      fala = limparFala(resp.content.map((x) => (x.type === "text" ? x.text : "")).join("")) || fala;
+    } catch { /* sem IA: fica a pergunta padrão */ }
+  }
+  conversa = [...conversa, { de: "arboria", texto: fala }];
+  await c.from("arboria_quadro_palpites").update({ conversa }).eq("id", p.id);
+  return { ok: true as const, conversa };
 }
-

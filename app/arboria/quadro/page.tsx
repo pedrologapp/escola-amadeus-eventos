@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
-import { Atkinson_Hyperlegible, Young_Serif } from "next/font/google";
+import { Caveat, Instrument_Serif, Inter_Tight } from "next/font/google";
 import { Aluno } from "./aluno";
 
-const atkinson = Atkinson_Hyperlegible({ subsets: ["latin"], weight: ["400", "700"] });
-const youngSerif = Young_Serif({ subsets: ["latin"], weight: "400", variable: "--font-serie" });
+// as letras das aulas do Arboria: Instrument Serif, Inter Tight e Caveat
+const serif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--f-serif" });
+const tight = Inter_Tight({ subsets: ["latin"], weight: ["500", "600", "700", "800"], variable: "--f-tight" });
+const mao = Caveat({ subsets: ["latin"], weight: "700", variable: "--f-mao" });
 
 export const metadata: Metadata = { title: "Qual é o quadro? · Arboria", robots: { index: false, follow: false } };
 
@@ -13,5 +15,5 @@ export const metadata: Metadata = { title: "Qual é o quadro? · Arboria", robot
  */
 export default async function QuadroAlunoPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const q = await searchParams;
-  return <div className={`${atkinson.className} ${youngSerif.variable}`}><Aluno codigoInicial={(q.s ?? "").replace(/\D/g, "").slice(0, 4)} /></div>;
+  return <div className={`${serif.variable} ${tight.variable} ${mao.variable}`}><Aluno codigoInicial={(q.s ?? "").replace(/\D/g, "").slice(0, 4)} /></div>;
 }

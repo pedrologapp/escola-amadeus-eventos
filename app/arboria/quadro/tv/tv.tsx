@@ -25,7 +25,7 @@ const Pintura = ({ id, className = "" }: { id: string; className?: string }) => 
   <img src={imagem(id)} alt="" width={TODOS[id]?.w} height={TODOS[id]?.h} className={`object-contain ${className}`} />
 );
 const Numero = ({ n, rotulo }: { n: number | string; rotulo: string }) => (
-  <div className="rounded-3xl bg-white/10 px-8 py-6 text-center"><div className="text-7xl font-bold">{n}</div><div className="mt-1 text-xl text-white/70">{rotulo}</div></div>
+  <div className="rounded-3xl border-[3px] border-[#2a3d3b] bg-[#14201f] px-8 py-6 text-center"><div className="text-7xl font-extrabold">{n}</div><div className="mt-1 text-lg font-bold uppercase tracking-[0.1em] text-[#fbbf24]">{rotulo}</div></div>
 );
 
 export function Tv() {
@@ -58,7 +58,7 @@ export function Tv() {
   const barra = (
     <div className="fixed bottom-4 right-4 flex gap-2 opacity-30 transition hover:opacity-100">
       {(["entrada", "r1", "r2", "r3", "final"] as Fase[]).map((f, i) => (
-        <button key={f} onClick={() => fase(f)} className={`rounded-full px-4 py-2 text-sm font-bold ${s.fase === f ? "bg-[#E8B54A] text-black" : "bg-white/15"}`}>
+        <button key={f} onClick={() => fase(f)} className={`rounded-full px-4 py-2 text-sm font-bold ${s.fase === f ? "bg-[#fbbf24] text-black" : "bg-white/15"}`}>
           {["Entrada", "Rodada 1", "Rodada 2", "Rodada 3", "Final"][i]}
         </button>
       ))}
@@ -81,10 +81,10 @@ export function Tv() {
 }
 
 function Fundo({ children }: { children: React.ReactNode }) {
-  return <main className="min-h-screen bg-[#0f1f1e] px-10 py-8 text-white"><div className="mx-auto max-w-[1600px]">{children}</div></main>;
+  return <main className="min-h-screen px-10 py-8 font-[family-name:var(--f-tight)] text-[#eef3ef]" style={{ background: "radial-gradient(ellipse at 30% 20%, #12201f, #0b1112 60%)" }}><div className="mx-auto max-w-[1600px]">{children}</div></main>;
 }
 const Cabeca = ({ sobre, titulo }: { sobre: string; titulo: string }) => (
-  <div><p className="text-lg font-bold tracking-[0.25em] text-[#E8B54A]">{sobre}</p><h1 className="font-[family-name:var(--font-serie)] text-6xl leading-tight">{titulo}</h1></div>
+  <div><p className="text-lg font-bold uppercase tracking-[0.18em] text-[#2dd4bf]">{sobre}</p><h1 className="font-[family-name:var(--f-serif)] text-7xl leading-[1.02]">{titulo}</h1></div>
 );
 
 function Abrir({ abriu }: { abriu: (s: Sala) => void }) {
@@ -96,15 +96,16 @@ function Abrir({ abriu }: { abriu: (s: Sala) => void }) {
   };
   return (
     <Fundo>
-      <Cabeca sobre="ARBORIA · LINGUÍSTICA" titulo="Qual é o quadro?" />
+      <p className="mb-10 text-8xl font-extrabold tracking-[-0.045em]">arbor<b className="text-[#2dd4bf]">ia</b></p>
+      <Cabeca sobre="Fase Linguística" titulo="Qual é o quadro?" />
       <p className="mt-8 text-2xl text-white/80">Qual turma vai jogar agora?</p>
       <div className="mt-4 flex gap-4">
         {TURMAS.map((t) => (
-          <button key={t} onClick={() => setTurma(t)} className={`rounded-2xl px-10 py-6 text-4xl font-bold ${turma === t ? "bg-[#E8B54A] text-black" : "bg-white/10"}`}>{t}</button>
+          <button key={t} onClick={() => setTurma(t)} className={`rounded-2xl px-10 py-6 text-4xl font-bold ${turma === t ? "bg-[#fbbf24] text-black" : "bg-white/10"}`}>{t}</button>
         ))}
       </div>
       {erro && <p className="mt-4 text-red-300">{erro}</p>}
-      <button onClick={abrir} disabled={!turma} className="mt-8 rounded-2xl bg-[#0b8f84] px-10 py-5 text-2xl font-bold disabled:opacity-30">Abrir a sala</button>
+      <button onClick={abrir} disabled={!turma} className="mt-8 rounded-2xl bg-[#2dd4bf] text-[#05201d] px-10 py-5 text-2xl font-bold disabled:opacity-30">Abrir a sala</button>
     </Fundo>
   );
 }
@@ -118,7 +119,7 @@ function Entrada({ est, comecar }: { est: Estado; comecar: () => void }) {
       <div className="text-center">
         <div className="w-[420px] rounded-3xl bg-white p-5" dangerouslySetInnerHTML={{ __html: qr }} />
         <p className="mt-5 text-2xl text-white/70">ou digite o código</p>
-        <p className="text-8xl font-bold tracking-[0.15em] text-[#E8B54A]">{est.sala.codigo}</p>
+        <p className="text-8xl font-bold tracking-[0.15em] text-[#fbbf24]">{est.sala.codigo}</p>
         <p className="mt-2 text-lg text-white/50">{link.replace(/^https?:\/\//, "").replace(/\?.*/, "")}</p>
       </div>
       <div>
@@ -128,7 +129,7 @@ function Entrada({ est, comecar }: { est: Estado; comecar: () => void }) {
         <div className="mt-3 flex flex-wrap gap-2">
           {est.alunos.map((a) => <span key={a.id} className="rounded-full bg-white/10 px-4 py-2 text-xl">{a.nome}</span>)}
         </div>
-        <button onClick={comecar} disabled={est.alunos.length < 2} className="mt-10 rounded-2xl bg-[#0b8f84] px-10 py-5 text-2xl font-bold disabled:opacity-30">Começar a rodada 1</button>
+        <button onClick={comecar} disabled={est.alunos.length < 2} className="mt-10 rounded-2xl bg-[#2dd4bf] text-[#05201d] px-10 py-5 text-2xl font-bold disabled:opacity-30">Começar a rodada 1</button>
       </div>
     </div>
   );
@@ -157,7 +158,7 @@ function Andamento({ est, rodada, proxima }: { est: Estado; rodada: 1 | 2 | 3; p
         {rodada >= 2 && <Numero n={r.primeira} rotulo="acertaram de primeira" />}
         {rodada >= 2 && <Numero n={r.melhorou} rotulo="acertaram depois de reescrever" />}
       </div>
-      <button onClick={proxima} className="mt-10 rounded-2xl bg-[#0b8f84] px-10 py-5 text-2xl font-bold">{rodada === 1 ? "Ir para a rodada 2" : rodada === 2 ? "Ir para a rodada 3" : "Ver as melhores descrições"}</button>
+      <button onClick={proxima} className="mt-10 rounded-2xl bg-[#2dd4bf] text-[#05201d] px-10 py-5 text-2xl font-bold">{rodada === 1 ? "Ir para a rodada 2" : rodada === 2 ? "Ir para a rodada 3" : "Ver as melhores descrições"}</button>
     </div>
   );
 }
@@ -183,7 +184,7 @@ function Final({ est, destaque }: { est: Estado; destaque: (id: string | null, r
         <div className="flex items-start justify-between gap-6">
           <Cabeca sobre="QUAL É O QUADRO?" titulo={revelado ? (d.mostrarNome ? `Descrição de ${d.nome.split(" ")[0]}` : "Descrição de um colega") : "Leia e tente achar"} />
           <div className="flex gap-3">
-            {!revelado && <button onClick={() => destaque(final.id, true)} className="flex items-center gap-2 rounded-2xl bg-[#E8B54A] px-8 py-4 text-2xl font-bold text-black"><Eye className="size-6" /> Revelar</button>}
+            {!revelado && <button onClick={() => destaque(final.id, true)} className="flex items-center gap-2 rounded-2xl bg-[#fbbf24] px-8 py-4 text-2xl font-bold text-black"><Eye className="size-6" /> Revelar</button>}
             <button onClick={() => destaque(null)} className="rounded-2xl bg-white/10 px-8 py-4 text-2xl font-bold">Voltar à lista</button>
           </div>
         </div>
@@ -200,7 +201,7 @@ function Final({ est, destaque }: { est: Estado; destaque: (id: string | null, r
         </div>
         <div className="mt-6 grid grid-cols-8 gap-3">
           {d.opcoes.map((id) => (
-            <div key={id} className={`rounded-xl p-1 transition ${revelado ? (id === d.quadro ? "scale-105 bg-[#E8B54A]" : "opacity-25") : "bg-white/5"}`}>
+            <div key={id} className={`rounded-xl p-1 transition ${revelado ? (id === d.quadro ? "scale-105 bg-[#fbbf24]" : "opacity-25") : "bg-white/5"}`}>
               <Pintura id={id} className={`w-full rounded-lg ${d.rodada === 3 ? "h-64" : "h-52"}`} />
             </div>
           ))}
