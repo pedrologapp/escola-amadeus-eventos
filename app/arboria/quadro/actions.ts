@@ -248,7 +248,7 @@ async function fonteDaImagem(id: string) {
 }
 
 /**
- * A conversa com o Arbória para quem vai reescrever (lib/arboria-guia.ts): sem resposta, abre a conversa
+ * A conversa com o Arboria para quem vai reescrever (lib/arboria-guia.ts): sem resposta, abre a conversa
  * (uma vez só); com resposta, guarda a fala do aluno e traz a próxima pergunta. Até MAX_TROCAS perguntas.
  * O guia só vê o quadro do próprio aluno e o texto dele: não sabe qual o colega escolheu.
  */

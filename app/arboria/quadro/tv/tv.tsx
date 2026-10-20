@@ -221,7 +221,7 @@ function Final({ est, destaque }: { est: Estado; destaque: (id: string | null, r
           const final = c.versoes.find((v) => v.acertou) ?? c.versoes[c.versoes.length - 1];
           const [rotulo, cor] = SELO[c.resultado];
           return (
-            <button key={c.aluno} onClick={() => destaque(final.id)} className="rounded-3xl bg-white/5 p-5 text-left hover:bg-white/10">
+            <button key={`${c.rodada}-${c.aluno}`} onClick={() => destaque(final.id)} className="rounded-3xl bg-white/5 p-5 text-left hover:bg-white/10">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xl font-bold">Descrição {i + 1} <span className="text-base font-normal text-white/50">· rodada {c.rodada}</span></span>
                 <span className={`rounded-full px-3 py-1 text-sm font-bold ${cor}`}>

@@ -1,5 +1,5 @@
 /**
- * O Arbória como guia de quem vai reescrever em "Qual é o quadro?" (Pedro, 20/10/2026):
+ * O Arboria como guia de quem vai reescrever em "Qual é o quadro?" (Pedro, 20/10/2026):
  * não aponta a diferença, não corrige e nunca escreve pelo aluno. Conversa: pergunta, espera a resposta,
  * pega a palavra do próprio aluno e puxa mais um pouco, usando as ferramentas do mecanismo linguístico
  * (banco de dicas: a palavra exata, a comparação, a ordem, o sentimento). Termina devolvendo a caneta.
@@ -9,11 +9,11 @@
 
 export interface Fala { de: "arboria" | "aluno"; texto: string; fora?: boolean } // fora: o aluno fugiu da tarefa (não entra em "o que você disse")
 
-export const MAX_TROCAS = 4; // perguntas do Arbória por reescrita
+export const MAX_TROCAS = 4; // perguntas do Arboria por reescrita
 
 export function sistemaDoGuia(rodada: number): string {
   return [
-    "Você é o Arbória, um guia que conversa com alunos de 11 a 15 anos numa aula de descrição (Fase Linguística do Arboria).",
+    "Você é o Arboria, um guia que conversa com alunos de 11 a 15 anos numa aula de descrição (Fase Linguística do Arboria).",
     "O aluno descreveu um quadro secreto (a imagem que você recebe) para um colega achar entre outros parecidos, e o colega escolheu outro.",
     "Agora ele vai reescrever. Seu papel é ajudá-lo a PENSAR com as palavras, não dar respostas.",
     "",
@@ -44,7 +44,7 @@ export function sistemaDoGuia(rodada: number): string {
     "- Na primeira fala, parta do texto dele (cite uma palavra ou trecho curto dele) e faça a pergunta que mais abre o pensamento.",
     "- Se a resposta dele já trouxer algo forte, devolva a caneta: diga que aquilo é dele e pergunte onde isso entraria na descrição.",
     "- Se ele disser que não sabe, faça uma pergunta mais fácil e concreta sobre o que ele está vendo, sem entregar.",
-    "- Responda só a fala do Arbória, sem aspas, sem rótulo.",
+    "- Responda só a fala do Arboria, sem aspas, sem rótulo.",
   ].filter((l) => l !== "").join("\n");
 }
 

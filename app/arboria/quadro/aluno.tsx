@@ -9,7 +9,7 @@ import { conversar, enviarDescricao, entrar, estadoAluno, listaDaTurma, responde
 /**
  * O tablet do aluno em "Qual é o quadro?", com a cara das aulas do Arboria (fundo escuro, Instrument Serif,
  * turquesa e âmbar). Uma coisa por tela: escrever a descrição do quadro secreto → adivinhar a de um colega →
- * (rodadas 2 e 3) reescrever quando o colega erra, conversando com o Arbória, que pergunta e nunca escreve pelo aluno.
+ * (rodadas 2 e 3) reescrever quando o colega erra, conversando com o Arboria, que pergunta e nunca escreve pelo aluno.
  * O aluno entra tocando no próprio nome na lista da turma. Recarregar a página não perde nada.
  */
 
@@ -207,7 +207,7 @@ function Escrever({ est, sessao, atualizar, cabecalho }: { est: EmRodada; sessao
   const [texto, setTexto] = useState(ultima?.texto ?? "");
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
-  // só as falas do próprio aluno na conversa (as do Arbória nunca viram sugestão de texto)
+  // só as falas do próprio aluno na conversa (as do Arboria nunca viram sugestão de texto)
   const [minhas, setMinhas] = useState<string[]>(() => (ultima?.conversa ?? []).filter((f) => f.de === "aluno" && !f.fora).map((f) => f.texto));
   const mandar = async () => {
     setEnviando(true); setErro("");
@@ -220,7 +220,7 @@ function Escrever({ est, sessao, atualizar, cabecalho }: { est: EmRodada; sessao
       <Titulo>{reescrita ? <>Reescreva <i style={{ color: c.turq }}>(versão {ultima.versao + 1} de {MAX_VERSOES})</i></> : <>Descreva o seu <i style={{ color: c.turq }}>quadro secreto</i></>}</Titulo>
       <Texto>
         {reescrita
-          ? "Seu colega escolheu o da direita. Converse com o Arbória e reescreva com as suas palavras."
+          ? "Seu colega escolheu o da direita. Converse com o Arboria e reescreva com as suas palavras."
           : est.rodada === 1
             ? "Só você está vendo este quadro. Escreva de um jeito que um colega consiga achá-lo entre outros quatro."
             : est.rodada === 2
@@ -239,7 +239,7 @@ function Escrever({ est, sessao, atualizar, cabecalho }: { est: EmRodada; sessao
       {reescrita && <Guia key={ultima.versao} sessao={sessao} inicial={ultima.conversa} mudou={setMinhas} />}
       {reescrita && minhas.length > 0 && (
         <div className="mt-4">
-          <p className="text-xs font-bold uppercase tracking-[0.12em]" style={{ color: c.turq }}>O que você disse ao Arbória</p>
+          <p className="text-xs font-bold uppercase tracking-[0.12em]" style={{ color: c.turq }}>O que você disse ao Arboria</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {minhas.map((m, i) => <span key={i} className="rounded-full px-3 py-1 font-[family-name:var(--f-serif)] text-lg" style={{ background: "#0f2a27", color: c.turq }}>“{m}”</span>)}
           </div>
@@ -257,7 +257,7 @@ function Escrever({ est, sessao, atualizar, cabecalho }: { est: EmRodada; sessao
   );
 }
 
-/** A conversa com o Arbória: ele pergunta, o aluno responde. Abre sozinha ao chegar na reescrita. */
+/** A conversa com o Arboria: ele pergunta, o aluno responde. Abre sozinha ao chegar na reescrita. */
 function Guia({ sessao, inicial, mudou }: { sessao: Sessao; inicial: Fala[]; mudou: (minhas: string[]) => void }) {
   const [conversa, setConversa] = useState<Fala[]>(inicial);
   const [resposta, setResposta] = useState("");
@@ -281,7 +281,7 @@ function Guia({ sessao, inicial, mudou }: { sessao: Sessao; inicial: Fala[]; mud
   return (
     <div className="mt-5">
       <Ficha cor={c.amar}>
-        <p className="font-[family-name:var(--f-mao)] text-3xl leading-none" style={{ color: c.amar }}>Arbória</p>
+        <p className="font-[family-name:var(--f-mao)] text-3xl leading-none" style={{ color: c.amar }}>Arboria</p>
         <div className="mt-2 space-y-3">
           {conversa.map((f, i) => f.de === "arboria"
             ? <p key={i} className="font-[family-name:var(--f-serif)] text-xl leading-snug">{f.texto}</p>
@@ -292,7 +292,7 @@ function Guia({ sessao, inicial, mudou }: { sessao: Sessao; inicial: Fala[]; mud
         {perguntas > 0 && perguntas < MAX_TROCAS && conversa[conversa.length - 1]?.de === "arboria" && (
           <div className="mt-3 flex gap-2">
             <input value={resposta} onChange={(e) => setResposta(e.target.value)} onKeyDown={(e) => e.key === "Enter" && mandar()} maxLength={300}
-              placeholder="Responda o Arbória…" className="flex-1 rounded-xl border-2 px-3 py-2 text-base outline-none" style={{ background: c.bg, borderColor: c.linha, color: c.creme }} />
+              placeholder="Responda o Arboria…" className="flex-1 rounded-xl border-2 px-3 py-2 text-base outline-none" style={{ background: c.bg, borderColor: c.linha, color: c.creme }} />
             <button onClick={mandar} disabled={!resposta.trim() || pensando} className="rounded-xl px-4 disabled:opacity-30" style={{ background: c.amar, color: "#2a1d05" }}><Send className="size-5" /></button>
           </div>
         )}
