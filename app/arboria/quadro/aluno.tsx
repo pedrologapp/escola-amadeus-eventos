@@ -3,18 +3,19 @@
 import { useCallback, useEffect, useState } from "react";
 import { Check, Loader2, X } from "lucide-react";
 import { MAX_VERSOES, TODOS, imagem } from "@/lib/arboria-quadro";
-import { enviarDescricao, entrar, estadoAluno, responder } from "./actions";
+import { enviarDescricao, entrar, estadoAluno, listaDaTurma, responder } from "./actions";
 
 /**
  * O tablet do aluno em "Qual é o quadro?". Uma coisa por tela:
- * escrever a descrição do quadro secreto → adivinhar a descrição de um colega → (rodada 2) reescrever
- * quando o colega erra. A sessão fica guardada no tablet: recarregar a página não perde nada.
+ * escrever a descrição do quadro secreto → adivinhar a descrição de um colega → (rodadas 2 e 3) reescrever
+ * quando o colega erra, com uma pergunta da IA. O aluno entra tocando no próprio nome na lista da turma. A sessão fica guardada no tablet: recarregar a página não perde nada.
  */
 
 const CHAVE = "arboria-quadro";
 type Sessao = { codigo: string; aluno: string };
 type Estado = Awaited<ReturnType<typeof estadoAluno>>;
-type EmRodada = Extract<Estado, { rodada: 1 | 2 }>;
+type EmRodada = Extract<Estado, { rodada: 1 | 2 | 3 }>;
+const SUBTITULO = { 1: "4 QUADROS BEM DIFERENTES", 2: "8 QUADROS PARECIDOS", 3: "8 RETRATOS QUASE IGUAIS" } as const;
 
 const ler = (): Sessao | null => { try { return JSON.parse(localStorage.getItem(CHAVE) || "null"); } catch { return null; } };
 const gravar = (v: Sessao | null) => { try { if (v) localStorage.setItem(CHAVE, JSON.stringify(v)); else localStorage.removeItem(CHAVE); } catch { /* sem armazenamento */ } };
@@ -72,33 +73,60 @@ export function Aluno({ codigoInicial }: { codigoInicial: string }) {
   return <Rodada key={(est as EmRodada).rodada} est={est as EmRodada} sessao={sessao} atualizar={atualizar} />;
 }
 
+type Lista = Extract<Awaited<ReturnType<typeof listaDaTurma>>, { ok: true }>;
+
 function Entrada({ codigoInicial, entrou }: { codigoInicial: string; entrou: (s: Sessao) => void }) {
   const [codigo, setCodigo] = useState(codigoInicial);
-  const [nome, setNome] = useState("");
+  const [lista, setLista] = useState<Lista | null>(null);
+  const [escolhido, setEscolhido] = useState<string | null>(null);
   const [mostrar, setMostrar] = useState(true);
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
+
+  // com o código completo, busca a lista da turma (e atualiza quem já entrou)
+  useEffect(() => {
+    if (codigo.length !== 4) { setLista(null); return; }
+    let vivo = true;
+    const ver = () => listaDaTurma(codigo).then((r) => { if (!vivo) return; if (r.ok) { setLista(r); setErro(""); } else { setLista(null); setErro(r.erro); } }).catch(() => {});
+    ver();
+    const t = setInterval(ver, 5000);
+    return () => { vivo = false; clearInterval(t); };
+  }, [codigo]);
+
   const ir = async () => {
+    if (!escolhido) return;
     setEnviando(true); setErro("");
-    const r = await entrar(codigo, nome, mostrar).catch(() => null);
+    const r = await entrar(codigo, escolhido, mostrar).catch(() => null);
     setEnviando(false);
     if (r?.ok) entrou({ codigo: r.codigo, aluno: r.aluno }); else setErro(r?.erro ?? "Sem internet? Tente de novo.");
   };
+  const nomeEscolhido = lista?.alunos.find((a) => a.id === escolhido)?.nome;
   return (
     <Tela>
       <p className="text-sm font-bold tracking-[0.2em] text-[#B07A12]">ARBORIA</p>
       <Titulo>Qual é o quadro?</Titulo>
       <label className="mt-6 block text-sm font-bold">Código da sala (está na TV)</label>
-      <input value={codigo} onChange={(e) => setCodigo(e.target.value.replace(/\D/g, "").slice(0, 4))} inputMode="numeric"
+      <input value={codigo} onChange={(e) => { setCodigo(e.target.value.replace(/\D/g, "").slice(0, 4)); setEscolhido(null); }} inputMode="numeric"
         className="mt-1 w-full rounded-xl border-2 border-[#0b5c55]/30 bg-white p-3 text-2xl tracking-[0.3em]" />
-      <label className="mt-4 block text-sm font-bold">Seu nome</label>
-      <input value={nome} onChange={(e) => setNome(e.target.value)} maxLength={40} className="mt-1 w-full rounded-xl border-2 border-[#0b5c55]/30 bg-white p-3 text-xl" />
-      <label className="mt-4 flex items-center gap-3 text-base">
-        <input type="checkbox" checked={mostrar} onChange={(e) => setMostrar(e.target.checked)} className="size-5" />
-        Pode mostrar meu nome na TV no final
-      </label>
+      {lista && (
+        <>
+          <p className="mt-5 text-sm font-bold">Toque no seu nome · {lista.turma}</p>
+          <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {lista.alunos.map((a) => (
+              <button key={a.id} onClick={() => setEscolhido(a.id)} disabled={a.dentro && escolhido !== a.id}
+                className={`rounded-xl border-2 px-3 py-3 text-left text-base ${escolhido === a.id ? "border-[#0b5c55] bg-[#0b5c55] text-white" : a.dentro ? "border-transparent bg-white/50 text-[#9aa3ad]" : "border-[#0b5c55]/20 bg-white"}`}>
+                {a.nome}{a.dentro && <span className="block text-xs">já entrou</span>}
+              </button>
+            ))}
+          </div>
+          <label className="mt-4 flex items-center gap-3 text-base">
+            <input type="checkbox" checked={mostrar} onChange={(e) => setMostrar(e.target.checked)} className="size-5" />
+            Pode mostrar meu nome na TV no final
+          </label>
+        </>
+      )}
       {erro && <p className="mt-3 rounded-lg bg-red-50 p-3 text-red-700">{erro}</p>}
-      <Botao onClick={ir} disabled={enviando || codigo.length !== 4 || nome.trim().length < 2}>{enviando ? "Entrando…" : "Entrar"}</Botao>
+      <Botao onClick={ir} disabled={enviando || !escolhido}>{enviando ? "Entrando…" : nomeEscolhido ? `Entrar como ${nomeEscolhido}` : "Entrar"}</Botao>
     </Tela>
   );
 }
@@ -107,7 +135,7 @@ function Rodada({ est, sessao, atualizar }: { est: EmRodada; sessao: Sessao; atu
   const [resultado, setResultado] = useState<{ acertou: boolean; certo: string; escolha: string } | null>(null);
   const cabecalho = (
     <p className="mb-2 text-sm font-bold tracking-[0.15em] text-[#B07A12]">
-      RODADA {est.rodada} · {est.rodada === 1 ? "4 QUADROS BEM DIFERENTES" : "8 QUADROS PARECIDOS"}
+      RODADA {est.rodada} · {SUBTITULO[est.rodada]}
     </p>
   );
 
@@ -115,7 +143,7 @@ function Rodada({ est, sessao, atualizar }: { est: EmRodada; sessao: Sessao; atu
   if (resultado) return (
     <Tela>{cabecalho}
       <Titulo>{resultado.acertou ? "Você acertou!" : "Não era esse."}</Titulo>
-      <p className="mt-2 text-lg">{resultado.acertou ? "A descrição do seu colega funcionou." : `O quadro descrito era este.${est.rodada === 2 ? " Seu colega vai poder reescrever." : ""}`}</p>
+      <p className="mt-2 text-lg">{resultado.acertou ? "A descrição do seu colega funcionou." : `O quadro descrito era este.${est.rodada >= 2 ? " Seu colega vai poder reescrever." : ""}`}</p>
       <Pintura id={resultado.certo} className="mt-4 max-h-[50vh] w-full" />
       <Botao onClick={() => { setResultado(null); atualizar(); }}>Continuar</Botao>
     </Tela>
@@ -180,11 +208,13 @@ function Escrever({ est, sessao, atualizar, cabecalho }: { est: EmRodada; sessao
       <Titulo>{reescrita ? `Reescreva (versão ${ultima.versao + 1} de ${MAX_VERSOES})` : "Descreva o seu quadro secreto"}</Titulo>
       <p className="mt-2 text-base text-[#3e4a61]">
         {reescrita
-          ? "Seu colega escolheu o quadro da direita. O que faltou nas suas palavras para ele achar o certo?"
+          ? "Seu colega escolheu o da direita. O que faltou nas suas palavras para ele achar o certo?"
           : est.rodada === 1
             ? "Só você está vendo este quadro. Escreva de um jeito que um colega consiga achá-lo entre outros quatro."
-            : "Agora são 8 quadros muito parecidos. Lembre do jeito dos pintores: a cor exata, onde fica cada coisa e o sentimento."}
-        {" "}Não vale escrever o nome do quadro nem do pintor.
+            : est.rodada === 2
+              ? "Agora são 8 quadros muito parecidos. Lembre do jeito dos pintores: a cor exata, onde fica cada coisa e o sentimento."
+              : "São 8 retratos da mesma moça, com as mesmas cores. Aqui não vale falar de cor: o que o rosto dela está dizendo? Olhe os olhos, a boca, as sobrancelhas."}
+        {est.rodada < 3 && " Não vale escrever o nome do quadro nem do pintor."}
       </p>
       {reescrita ? (
         <div className="mt-4 grid grid-cols-2 gap-3">
@@ -193,6 +223,12 @@ function Escrever({ est, sessao, atualizar, cabecalho }: { est: EmRodada; sessao
         </div>
       ) : (
         <Pintura id={est.quadro} className="mt-4 max-h-[42vh] w-full" />
+      )}
+      {reescrita && (
+        <div className="mt-3 rounded-2xl border-2 border-[#B07A12]/40 bg-[#fff8e8] p-3 text-base">
+          <p className="text-xs font-bold tracking-[0.15em] text-[#B07A12]">UMA PERGUNTA PARA VOCÊ</p>
+          {ultima.dica && ultima.dica !== "…" ? <p className="mt-1">{ultima.dica}</p> : <p className="mt-1 flex items-center gap-2 text-[#5a6478]"><Loader2 className="size-4 animate-spin" /> Olhando os dois quadros…</p>}
+        </div>
       )}
       <textarea value={texto} onChange={(e) => setTexto(e.target.value)} rows={5} maxLength={700}
         className="mt-4 w-full rounded-xl border-2 border-[#0b5c55]/30 bg-white p-3 text-lg" placeholder="Descreva aqui…" />
@@ -227,7 +263,7 @@ function Adivinhar({ tarefa, sessao, cabecalho, respondeu }: {
         {tarefa.opcoes.map((id) => (
           <button key={id} onClick={() => setEscolha(id)}
             className={`overflow-hidden rounded-xl border-4 bg-white p-1 ${escolha === id ? "border-[#B07A12]" : "border-transparent"}`}>
-            <Pintura id={id} className="h-32 w-full sm:h-40" />
+            <Pintura id={id} className={`w-full ${id.startsWith("r") ? "h-44 sm:h-56" : "h-32 sm:h-40"}`} />
           </button>
         ))}
       </div>

@@ -1,24 +1,31 @@
 "use server";
 
 import { randomBytes, randomInt } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import Anthropic from "@anthropic-ai/sdk";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { MAX_VERSOES, TURMAS, quadroSecreto, quadrosDaRodada, type Fase } from "@/lib/arboria-quadro";
+import { MAX_VERSOES, TURMAS, corProibida, daTurma, imagem, quadroSecreto, quadrosDaRodada, type Fase, type Rodada } from "@/lib/arboria-quadro";
 
 /**
  * "Qual é o quadro?" (Arboria · Linguística, semana 3). A TV abre a sala e manda nas fases;
- * cada tablet entra com o código. A troca de descrições é automática: quem já escreveu e está
- * livre recebe a descrição mais antiga que ainda ninguém tentou (nunca a sua, nem a de uma
- * corrente que já tentou). Na rodada 2, se o colega erra, o autor reescreve e a nova versão
- * vai para outro colega.
+ * cada tablet entra com o código e escolhe o próprio nome na lista da turma. A troca de descrições
+ * é automática: quem já escreveu e está livre recebe a descrição mais antiga que ainda ninguém tentou
+ * (nunca a sua, nem a de uma corrente que já tentou). Nas rodadas 2 e 3, se o colega erra, o autor
+ * vê os dois quadros lado a lado, recebe uma pergunta da IA e reescreve; a nova versão vai para outro colega.
  */
 
 interface Desc { id: string; aluno: string; rodada: number; versao: number; quadro: string; texto: string; criado_em: string }
-interface Palp { id: string; descricao: string; aluno: string; opcoes: string[]; escolha: string | null; acertou: boolean | null }
+interface Palp { id: string; descricao: string; aluno: string; opcoes: string[]; escolha: string | null; acertou: boolean | null; dica: string | null }
 interface Sala { codigo: string; chave_prof: string; turma: string; fase: Fase; destaque: string | null; revelado: boolean }
 
 const db = () => createAdminClient();
 const limpar = (s: unknown, max: number) => String(s ?? "").replace(/\s+/g, " ").trim().slice(0, max);
-const rodadaDa = (f: Fase): 1 | 2 | null => (f === "r1" ? 1 : f === "r2" ? 2 : null);
+const rodadaDa = (f: Fase): Rodada | null => (f === "r1" ? 1 : f === "r2" ? 2 : f === "r3" ? 3 : null);
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://eventos.escolaamadeus.com";
+/** "MARIA EDUARDA DOS SANTOS" → "Maria Eduarda" (primeiro e segundo nome, sem "de/da/dos"). */
+const nomeCurto = (n: string) => n.toLowerCase().split(/\s+/).filter((p) => p && !["de", "da", "do", "das", "dos", "e"].includes(p)).slice(0, 2)
+  .map((p) => p[0].toLocaleUpperCase("pt-BR") + p.slice(1)).join(" ");
 const embaralhar = <T,>(v: T[]) => { const a = [...v]; for (let i = a.length - 1; i > 0; i--) { const j = randomInt(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
 async function sala(codigo: string): Promise<Sala | null> {
@@ -35,7 +42,7 @@ async function tudo(codigo: string) {
   const [a, d, p] = await Promise.all([
     c.from("arboria_quadro_alunos").select("id, nome, mostrar_nome, criado_em").eq("sala", codigo).order("criado_em"),
     c.from("arboria_quadro_descricoes").select("id, aluno, rodada, versao, quadro, texto, criado_em").eq("sala", codigo).order("criado_em"),
-    c.from("arboria_quadro_palpites").select("id, descricao, aluno, opcoes, escolha, acertou").eq("sala", codigo),
+    c.from("arboria_quadro_palpites").select("id, descricao, aluno, opcoes, escolha, acertou, dica").eq("sala", codigo),
   ]);
   return {
     alunos: (a.data ?? []) as { id: string; nome: string; mostrar_nome: boolean }[],
@@ -59,7 +66,7 @@ export async function criarSala(turma: string) {
 
 export async function mudarFase(codigo: string, chave: string, fase: Fase) {
   await salaDoProfessor(codigo, chave);
-  if (!["entrada", "r1", "r2", "final"].includes(fase)) return;
+  if (!["entrada", "r1", "r2", "r3", "final"].includes(fase)) return;
   await db().from("arboria_quadro_salas").update({ fase, destaque: null, revelado: false }).eq("codigo", codigo);
 }
 
@@ -68,17 +75,19 @@ export async function destacar(codigo: string, chave: string, descricao: string 
   await db().from("arboria_quadro_salas").update({ destaque: descricao, revelado }).eq("codigo", codigo);
 }
 
+
 export interface Corrente {
   aluno: string;
   nome: string;
   mostrarNome: boolean;
   quadro: string;
+  rodada: Rodada;
   versoes: { id: string; versao: number; texto: string; acertou: boolean | null; escolha: string | null }[];
   resultado: "primeira" | "melhorou" | "nao" | "aberto";
 }
 
 /** Uma corrente = as versões de um aluno numa rodada. */
-function correntes(rodada: 1 | 2, x: Awaited<ReturnType<typeof tudo>>): Corrente[] {
+function correntes(rodada: Rodada, x: Awaited<ReturnType<typeof tudo>>): Corrente[] {
   const out: Corrente[] = [];
   for (const al of x.alunos) {
     const vs = x.descs.filter((d) => d.aluno === al.id && d.rodada === rodada).sort((a, b) => a.versao - b.versao);
@@ -87,7 +96,7 @@ function correntes(rodada: 1 | 2, x: Awaited<ReturnType<typeof tudo>>): Corrente
     const iAcerto = versoes.findIndex((v) => v.acertou === true);
     const ultima = versoes[versoes.length - 1];
     const resultado = iAcerto === 0 ? "primeira" : iAcerto > 0 ? "melhorou" : ultima.acertou === false && (rodada === 1 || ultima.versao >= MAX_VERSOES) ? "nao" : "aberto";
-    out.push({ aluno: al.id, nome: al.nome, mostrarNome: al.mostrar_nome, quadro: vs[0].quadro, versoes, resultado });
+    out.push({ aluno: al.id, nome: al.nome, mostrarNome: al.mostrar_nome, quadro: vs[0].quadro, rodada, versoes, resultado });
   }
   return out;
 }
@@ -95,51 +104,71 @@ function correntes(rodada: 1 | 2, x: Awaited<ReturnType<typeof tudo>>): Corrente
 export async function estadoTv(codigo: string, chave: string) {
   const s = await salaDoProfessor(codigo, chave);
   const x = await tudo(s.codigo);
-  const r1 = correntes(1, x), r2 = correntes(2, x);
+  const r1 = correntes(1, x), r2 = correntes(2, x), r3 = correntes(3, x);
   const resumo = (cs: Corrente[], rodada: number) => {
     const ps = x.palps.filter((p) => x.descs.find((d) => d.id === p.descricao)?.rodada === rodada && p.acertou !== null);
     return { escreveram: cs.length, palpites: ps.length, acertos: ps.filter((p) => p.acertou).length, primeira: cs.filter((c) => c.resultado === "primeira").length, melhorou: cs.filter((c) => c.resultado === "melhorou").length };
   };
-  const todas = [...r1, ...r2];
-  const destaque = s.destaque ? todas.find((c) => c.versoes.some((v) => v.id === s.destaque)) ?? null : null;
+  const destaque = s.destaque ? [...r1, ...r2, ...r3].find((c) => c.versoes.some((v) => v.id === s.destaque)) ?? null : null;
   return {
     sala: { codigo: s.codigo, turma: s.turma, fase: s.fase, revelado: s.revelado, destaque: s.destaque },
     alunos: x.alunos.map((a) => ({ id: a.id, nome: a.nome })),
-    r1: resumo(r1, 1), r2: resumo(r2, 2),
-    correntes2: r2,
-    destaque: destaque && { ...destaque, rodada: r2.includes(destaque) ? 2 : 1, opcoes: quadrosDaRodada(r2.includes(destaque) ? 2 : 1, s.turma).map((q) => q.id) },
+    r1: resumo(r1, 1), r2: resumo(r2, 2), r3: resumo(r3, 3),
+    correntes: [...r2, ...r3],
+    destaque: destaque && { ...destaque, opcoes: quadrosDaRodada(destaque.rodada, s.turma).map((q) => q.id) },
   };
 }
 
 // ---------- tablet (aluno) ----------
 
-export async function entrar(codigo: string, nome: string, mostrarNome: boolean) {
+/** A lista da turma da sala (tabela alunos), com quem já entrou marcado: o aluno toca no próprio nome. */
+export async function listaDaTurma(codigo: string) {
   const s = await sala(codigo);
   if (!s) return { ok: false as const, erro: "Não achei essa sala. Confira o código na TV." };
-  const n = limpar(nome, 40);
-  if (n.length < 2) return { ok: false as const, erro: "Escreva o seu nome." };
-  const { data, error } = await db().from("arboria_quadro_alunos").insert({ sala: s.codigo, nome: n, mostrar_nome: !!mostrarNome }).select("id").single();
+  const { serie, turma } = daTurma(s.turma);
+  const [{ data: lista }, { data: dentro }] = await Promise.all([
+    db().from("alunos").select("id, nome_completo").eq("serie", serie).eq("turma", turma).order("nome_completo"),
+    db().from("arboria_quadro_alunos").select("escola_aluno").eq("sala", s.codigo),
+  ]);
+  const ocupados = new Set((dentro ?? []).map((d) => d.escola_aluno));
+  return {
+    ok: true as const, codigo: s.codigo, turma: s.turma,
+    alunos: (lista ?? []).map((a) => ({ id: a.id as string, nome: nomeCurto(a.nome_completo as string), dentro: ocupados.has(a.id) })),
+  };
+}
+
+/** Entra com o aluno escolhido na lista. Se ele já tinha entrado (tablet trocado ou recarregado), volta para a mesma vaga. */
+export async function entrar(codigo: string, escolaAluno: string, mostrarNome: boolean) {
+  const s = await sala(codigo);
+  if (!s) return { ok: false as const, erro: "Não achei essa sala. Confira o código na TV." };
+  const { serie, turma } = daTurma(s.turma);
+  const { data: a } = await db().from("alunos").select("id, nome_completo").eq("id", escolaAluno).eq("serie", serie).eq("turma", turma).maybeSingle();
+  if (!a) return { ok: false as const, erro: "Toque no seu nome na lista." };
+  const { data: ja } = await db().from("arboria_quadro_alunos").select("id").eq("sala", s.codigo).eq("escola_aluno", a.id).maybeSingle();
+  if (ja) return { ok: true as const, aluno: ja.id as string, codigo: s.codigo };
+  const { data, error } = await db().from("arboria_quadro_alunos")
+    .insert({ sala: s.codigo, escola_aluno: a.id, nome: nomeCurto(a.nome_completo as string), mostrar_nome: !!mostrarNome }).select("id").single();
   if (error || !data) return { ok: false as const, erro: "Não consegui entrar. Tente de novo." };
   return { ok: true as const, aluno: data.id as string, codigo: s.codigo };
 }
 
 /** Pega para este aluno a descrição mais antiga que ainda ninguém tentou (se ele estiver livre). */
-async function pegarTarefa(s: Sala, aluno: string, rodada: 1 | 2, x: Awaited<ReturnType<typeof tudo>>) {
+async function pegarTarefa(s: Sala, aluno: string, rodada: Rodada, x: Awaited<ReturnType<typeof tudo>>) {
   const minhas = new Set(x.palps.filter((p) => p.aluno === aluno).map((p) => p.descricao));
   // a reescrita vai para um colega novo; numa sala muito pequena (teste), pode voltar para o mesmo
   const jaTenteiDe = new Set(x.alunos.length < 4 ? [] : x.descs.filter((d) => minhas.has(d.id)).map((d) => `${d.aluno}:${d.rodada}`));
   const comPalpite = new Set(x.palps.map((p) => p.descricao));
   const ultimaDe = new Map<string, Desc>();
   for (const d of x.descs.filter((d) => d.rodada === rodada)) {
-    const k = d.aluno; const u = ultimaDe.get(k);
-    if (!u || d.versao > u.versao) ultimaDe.set(k, d);
+    const u = ultimaDe.get(d.aluno);
+    if (!u || d.versao > u.versao) ultimaDe.set(d.aluno, d);
   }
   const livres = [...ultimaDe.values()]
     .filter((d) => d.aluno !== aluno && !comPalpite.has(d.id) && !jaTenteiDe.has(`${d.aluno}:${d.rodada}`))
     .sort((a, b) => a.criado_em.localeCompare(b.criado_em));
   for (const d of livres.slice(0, 4)) {
     const opcoes = embaralhar(quadrosDaRodada(rodada, s.turma).map((q) => q.id));
-    const { data, error } = await db().from("arboria_quadro_palpites").insert({ sala: s.codigo, descricao: d.id, aluno, opcoes }).select("id, descricao, aluno, opcoes, escolha, acertou").single();
+    const { data, error } = await db().from("arboria_quadro_palpites").insert({ sala: s.codigo, descricao: d.id, aluno, opcoes }).select("id, descricao, aluno, opcoes, escolha, acertou, dica").single();
     if (!error && data) return data as Palp;
   }
   return null;
@@ -156,9 +185,20 @@ export async function estadoAluno(codigo: string, aluno: string) {
 
   const quadro = quadroSecreto(aluno, rodada, s.turma);
   const versoes = x.descs.filter((d) => d.aluno === aluno && d.rodada === rodada).sort((a, b) => a.versao - b.versao)
-    .map((d) => { const p = x.palps.find((p) => p.descricao === d.id); return { versao: d.versao, texto: d.texto, escolha: p?.escolha ?? null, acertou: p?.acertou ?? null, comColega: !!p }; });
+    .map((d) => { const p = x.palps.find((p) => p.descricao === d.id); return { versao: d.versao, texto: d.texto, escolha: p?.escolha ?? null, acertou: p?.acertou ?? null, comColega: !!p, dica: p?.dica ?? null }; });
   const ultima = versoes[versoes.length - 1];
-  const reescrever = rodada === 2 && !!ultima && ultima.acertou === false && ultima.versao < MAX_VERSOES;
+  const reescrever = rodada >= 2 && !!ultima && ultima.acertou === false && ultima.versao < MAX_VERSOES;
+  // a pergunta da IA para quem vai reescrever: o primeiro pedido marca "…" (os seguintes só esperam) e gera
+  if (reescrever && ultima.dica === null) {
+    const d = x.descs.filter((d) => d.aluno === aluno && d.rodada === rodada).find((d) => d.versao === ultima.versao)!;
+    const p = x.palps.find((p) => p.descricao === d.id)!;
+    const { data: marcou } = await db().from("arboria_quadro_palpites").update({ dica: "…" }).eq("id", p.id).is("dica", null).select("id");
+    if (marcou?.length) {
+      const dica = await gerarDica(d.quadro, p.escolha!, d.texto, rodada).catch(() => null);
+      await db().from("arboria_quadro_palpites").update({ dica: dica || "Compare os dois quadros com calma: o que só o seu tem?" }).eq("id", p.id);
+      ultima.dica = dica || "Compare os dois quadros com calma: o que só o seu tem?";
+    }
+  }
 
   // tarefa de adivinhar: a que já está aberta para mim, ou uma nova (só depois de escrever a minha)
   let tarefa = x.palps.find((p) => p.aluno === aluno && p.escolha === null && x.descs.find((d) => d.id === p.descricao)?.rodada === rodada) ?? null;
@@ -179,6 +219,8 @@ export async function enviarDescricao(codigo: string, aluno: string, texto: stri
   if (!s || !rodada) return { ok: false as const, erro: "Espere o professor começar a rodada." };
   const t = String(texto ?? "").trim().slice(0, 700);
   if (t.length < 15) return { ok: false as const, erro: "Escreva um pouco mais: o colega só vai ter as suas palavras." };
+  const cor = rodada === 3 ? corProibida(t) : null;
+  if (cor) return { ok: false as const, erro: `Nesta rodada não vale falar de cor ("${cor}…"): os 8 retratos têm as mesmas cores. Descreva o que o rosto está dizendo.` };
   const { data: vs } = await db().from("arboria_quadro_descricoes").select("id, versao").eq("aluno", aluno).eq("rodada", rodada).order("versao");
   const lista = (vs ?? []) as { id: string; versao: number }[];
   const ultima = lista[lista.length - 1];
@@ -199,8 +241,51 @@ export async function responder(codigo: string, aluno: string, palpite: string, 
   const { data: p } = await c.from("arboria_quadro_palpites").select("id, descricao, aluno, escolha, opcoes, sala").eq("id", palpite).maybeSingle();
   if (!p || p.aluno !== aluno || p.sala !== limpar(codigo, 4) || p.escolha) return { ok: false as const };
   if (!(p.opcoes as string[]).includes(escolha)) return { ok: false as const };
-  const { data: d } = await c.from("arboria_quadro_descricoes").select("quadro").eq("id", p.descricao).single();
+  const { data: d } = await c.from("arboria_quadro_descricoes").select("quadro, texto, rodada, versao").eq("id", p.descricao).single();
   const acertou = d?.quadro === escolha;
   await c.from("arboria_quadro_palpites").update({ escolha, acertou, respondido_em: new Date().toISOString() }).eq("id", palpite).is("escolha", null);
   return { ok: true as const, acertou, certo: d?.quadro as string };
 }
+
+/** A imagem para a IA: o arquivo do próprio projeto (rodando local) ou, se não der, o endereço público. */
+async function fonteDaImagem(id: string) {
+  try {
+    const dados = await readFile(path.join(process.cwd(), "public", imagem(id)));
+    return { type: "base64" as const, media_type: "image/jpeg" as const, data: dados.toString("base64") };
+  } catch {
+    return { type: "url" as const, url: SITE + imagem(id) };
+  }
+}
+
+/**
+ * A dica para reescrever: uma pergunta curta que aponta o TIPO de diferença entre o quadro do autor e o
+ * que o colega escolheu (luz, hora, posição, olhar, boca...), sem dar a resposta pronta nem corrigir o texto.
+ */
+async function gerarDica(certo: string, escolhido: string, texto: string, rodada: number): Promise<string | null> {
+  const chave = process.env.ANTHROPIC_API_KEY;
+  if (!chave) return null;
+  const r = await new Anthropic({ apiKey: chave }).messages.create({
+    model: "claude-sonnet-5-5",
+    max_tokens: 200,
+    system:
+      "Você ajuda alunos de 11 a 15 anos numa aula de descrição. Um aluno descreveu uma pintura (IMAGEM A) e um colega, lendo só o texto, " +
+      "escolheu outra pintura parecida (IMAGEM B). Escreva UMA pergunta curta (até 30 palavras), em português do Brasil, falando com o autor, " +
+      "que o faça perceber o que o texto dele deixou em aberto: o tipo de diferença entre A e B (luz, hora do dia, estação, posição das coisas, " +
+      "quantidade, olhar, boca, sobrancelhas, sentimento). Pode dizer que as duas têm algo em comum. Não dê a frase pronta, não liste vários itens, " +
+      "não elogie, não use nome de pintor nem de quadro." +
+      (rodada === 3 ? " As duas são retratos da mesma moça com as mesmas cores: a diferença está na expressão. Não fale de cor." : ""),
+    messages: [{
+      role: "user",
+      content: [
+        { type: "text", text: "IMAGEM A (a que o autor descreveu):" },
+        { type: "image", source: await fonteDaImagem(certo) },
+        { type: "text", text: "IMAGEM B (a que o colega escolheu):" },
+        { type: "image", source: await fonteDaImagem(escolhido) },
+        { type: "text", text: `Texto do autor: "${texto}"\n\nA pergunta (só ela, sem aspas):` },
+      ],
+    }],
+  });
+  const dica = r.content.map((c) => (c.type === "text" ? c.text : "")).join("").trim().replace(/^["“]|["”]$/g, "").slice(0, 300);
+  return dica || null;
+}
+

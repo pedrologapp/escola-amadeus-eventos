@@ -7,7 +7,7 @@ import { TODOS, TURMAS, imagem, quadrosDaRodada, type Fase } from "@/lib/arboria
 import { criarSala, destacar, estadoTv, mudarFase, type Corrente } from "../actions";
 
 /**
- * A TV de "Qual é o quadro?": entrada (QR + nomes) → rodada 1 → rodada 2 → as melhores descrições.
+ * A TV de "Qual é o quadro?": entrada (QR + nomes) → rodada 1 → rodada 2 → rodada 3 (retratos) → as melhores descrições.
  * No final o professor escolhe uma descrição: a TV mostra só o texto e os quadros, a turma tenta
  * adivinhar, e "Revelar" mostra o quadro certo e o nome de quem escreveu (se o aluno deixou).
  * A sala fica guardada neste computador; "Nova sala" começa outra turma. F = tela cheia.
@@ -57,9 +57,9 @@ export function Tv() {
   const s = est.sala;
   const barra = (
     <div className="fixed bottom-4 right-4 flex gap-2 opacity-30 transition hover:opacity-100">
-      {(["entrada", "r1", "r2", "final"] as Fase[]).map((f, i) => (
+      {(["entrada", "r1", "r2", "r3", "final"] as Fase[]).map((f, i) => (
         <button key={f} onClick={() => fase(f)} className={`rounded-full px-4 py-2 text-sm font-bold ${s.fase === f ? "bg-[#E8B54A] text-black" : "bg-white/15"}`}>
-          {["Entrada", "Rodada 1", "Rodada 2", "Final"][i]}
+          {["Entrada", "Rodada 1", "Rodada 2", "Rodada 3", "Final"][i]}
         </button>
       ))}
       <button onClick={() => document.documentElement.requestFullscreen?.().catch(() => {})} className="rounded-full bg-white/15 px-3"><Maximize className="size-4" /></button>
@@ -71,7 +71,8 @@ export function Tv() {
     <Fundo>
       {s.fase === "entrada" && <Entrada est={est} comecar={() => fase("r1")} />}
       {s.fase === "r1" && <Andamento est={est} rodada={1} proxima={() => fase("r2")} />}
-      {s.fase === "r2" && <Andamento est={est} rodada={2} proxima={() => fase("final")} />}
+      {s.fase === "r2" && <Andamento est={est} rodada={2} proxima={() => fase("r3")} />}
+      {s.fase === "r3" && <Andamento est={est} rodada={3} proxima={() => fase("final")} />}
       {s.fase === "final" && <Final est={est} destaque={destaque} />}
       {erro && <p className="fixed left-4 top-4 rounded bg-red-900/70 px-3 py-1 text-sm">{erro}</p>}
       {barra}
@@ -99,7 +100,7 @@ function Abrir({ abriu }: { abriu: (s: Sala) => void }) {
       <p className="mt-8 text-2xl text-white/80">Qual turma vai jogar agora?</p>
       <div className="mt-4 flex gap-4">
         {TURMAS.map((t) => (
-          <button key={t} onClick={() => setTurma(t)} className={`rounded-2xl px-10 py-6 text-4xl font-bold ${turma === t ? "bg-[#E8B54A] text-black" : "bg-white/10"}`}>{t} ano</button>
+          <button key={t} onClick={() => setTurma(t)} className={`rounded-2xl px-10 py-6 text-4xl font-bold ${turma === t ? "bg-[#E8B54A] text-black" : "bg-white/10"}`}>{t}</button>
         ))}
       </div>
       {erro && <p className="mt-4 text-red-300">{erro}</p>}
@@ -121,7 +122,7 @@ function Entrada({ est, comecar }: { est: Estado; comecar: () => void }) {
         <p className="mt-2 text-lg text-white/50">{link.replace(/^https?:\/\//, "").replace(/\?.*/, "")}</p>
       </div>
       <div>
-        <Cabeca sobre={`ARBORIA · ${est.sala.turma} ANO`} titulo="Qual é o quadro?" />
+        <Cabeca sobre={`ARBORIA · ${est.sala.turma}`} titulo="Qual é o quadro?" />
         <p className="mt-6 text-3xl text-white/80">Cada um vai receber um quadro secreto e descrever. Um colega vai tentar achar o quadro só pelas suas palavras.</p>
         <p className="mt-8 text-2xl font-bold">{est.alunos.length} {est.alunos.length === 1 ? "aluno entrou" : "alunos entraram"}</p>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -133,28 +134,30 @@ function Entrada({ est, comecar }: { est: Estado; comecar: () => void }) {
   );
 }
 
-function Andamento({ est, rodada, proxima }: { est: Estado; rodada: 1 | 2; proxima: () => void }) {
-  const r = rodada === 1 ? est.r1 : est.r2;
+function Andamento({ est, rodada, proxima }: { est: Estado; rodada: 1 | 2 | 3; proxima: () => void }) {
+  const r = rodada === 1 ? est.r1 : rodada === 2 ? est.r2 : est.r3;
   const quadros = quadrosDaRodada(rodada, est.sala.turma);
   return (
     <div>
-      <Cabeca sobre={`RODADA ${rodada}`} titulo={rodada === 1 ? "4 quadros bem diferentes" : "8 quadros muito parecidos"} />
+      <Cabeca sobre={`RODADA ${rodada}`} titulo={rodada === 1 ? "4 quadros bem diferentes" : rodada === 2 ? "8 quadros muito parecidos" : "8 retratos quase iguais"} />
       <p className="mt-4 text-3xl text-white/80">
         {rodada === 1
           ? "Descreva o seu quadro secreto. Depois, adivinhe o quadro de um colega."
-          : "Agora o atalho não funciona. Use a cor exata, o lugar de cada coisa e o sentimento. Se o colega errar, você reescreve."}
+          : rodada === 2
+            ? "Agora o atalho não funciona. Use a cor exata, o lugar de cada coisa e o sentimento. Se o colega errar, você reescreve."
+            : "A mesma moça, as mesmas cores. Não vale falar de cor: diga o que o rosto dela está dizendo."}
       </p>
       <div className={`mt-8 grid gap-3 ${quadros.length > 4 ? "grid-cols-8" : "grid-cols-4"}`}>
-        {quadros.map((q) => <Pintura key={q.id} id={q.id} className="h-56 w-full rounded-xl bg-black/30" />)}
+        {quadros.map((q) => <Pintura key={q.id} id={q.id} className={`w-full rounded-xl bg-black/30 ${rodada === 3 ? "h-72" : "h-56"}`} />)}
       </div>
       <div className="mt-10 flex flex-wrap gap-6">
         <Numero n={`${r.escreveram}/${est.alunos.length}`} rotulo="já escreveram" />
         <Numero n={r.palpites} rotulo="palpites" />
         <Numero n={r.acertos} rotulo="acertos" />
-        {rodada === 2 && <Numero n={r.primeira} rotulo="acertaram de primeira" />}
-        {rodada === 2 && <Numero n={r.melhorou} rotulo="acertaram depois de reescrever" />}
+        {rodada >= 2 && <Numero n={r.primeira} rotulo="acertaram de primeira" />}
+        {rodada >= 2 && <Numero n={r.melhorou} rotulo="acertaram depois de reescrever" />}
       </div>
-      <button onClick={proxima} className="mt-10 rounded-2xl bg-[#0b8f84] px-10 py-5 text-2xl font-bold">{rodada === 1 ? "Ir para a rodada 2" : "Ver as melhores descrições"}</button>
+      <button onClick={proxima} className="mt-10 rounded-2xl bg-[#0b8f84] px-10 py-5 text-2xl font-bold">{rodada === 1 ? "Ir para a rodada 2" : rodada === 2 ? "Ir para a rodada 3" : "Ver as melhores descrições"}</button>
     </div>
   );
 }
@@ -168,7 +171,7 @@ const SELO: Record<Corrente["resultado"], [string, string]> = {
 
 function Final({ est, destaque }: { est: Estado; destaque: (id: string | null, revelado?: boolean) => void }) {
   const ordem: Corrente["resultado"][] = ["primeira", "melhorou", "aberto", "nao"];
-  const lista = [...est.correntes2].sort((a, b) => ordem.indexOf(a.resultado) - ordem.indexOf(b.resultado));
+  const lista = [...est.correntes].sort((a, b) => b.rodada - a.rodada || ordem.indexOf(a.resultado) - ordem.indexOf(b.resultado));
   const d = est.destaque;
 
   if (d) {
@@ -198,7 +201,7 @@ function Final({ est, destaque }: { est: Estado; destaque: (id: string | null, r
         <div className="mt-6 grid grid-cols-8 gap-3">
           {d.opcoes.map((id) => (
             <div key={id} className={`rounded-xl p-1 transition ${revelado ? (id === d.quadro ? "scale-105 bg-[#E8B54A]" : "opacity-25") : "bg-white/5"}`}>
-              <Pintura id={id} className="h-52 w-full rounded-lg" />
+              <Pintura id={id} className={`w-full rounded-lg ${d.rodada === 3 ? "h-64" : "h-52"}`} />
             </div>
           ))}
         </div>
@@ -211,7 +214,7 @@ function Final({ est, destaque }: { est: Estado; destaque: (id: string | null, r
     <div>
       <Cabeca sobre="AS DESCRIÇÕES DA TURMA" titulo="As que fizeram o colega acertar" />
       <p className="mt-3 text-2xl text-white/70">Toque em uma: a TV mostra só o texto e os quadros. A turma tenta achar e depois vocês revelam.</p>
-      {!lista.length && <p className="mt-10 text-3xl">Ninguém escreveu na rodada 2.</p>}
+      {!lista.length && <p className="mt-10 text-3xl">Ninguém escreveu nas rodadas 2 e 3.</p>}
       <div className="mt-6 grid grid-cols-3 gap-4">
         {lista.map((c, i) => {
           const final = c.versoes.find((v) => v.acertou) ?? c.versoes[c.versoes.length - 1];
@@ -219,7 +222,7 @@ function Final({ est, destaque }: { est: Estado; destaque: (id: string | null, r
           return (
             <button key={c.aluno} onClick={() => destaque(final.id)} className="rounded-3xl bg-white/5 p-5 text-left hover:bg-white/10">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-xl font-bold">Descrição {i + 1}</span>
+                <span className="text-xl font-bold">Descrição {i + 1} <span className="text-base font-normal text-white/50">· rodada {c.rodada}</span></span>
                 <span className={`rounded-full px-3 py-1 text-sm font-bold ${cor}`}>
                   {c.resultado === "primeira" && <Check className="mr-1 inline size-4" />}{c.resultado === "nao" && <X className="mr-1 inline size-4" />}{rotulo}
                 </span>

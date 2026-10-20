@@ -2,7 +2,9 @@
  * Arboria · Fase Linguística, semana 3: "Qual é o quadro?" (19/10/2026).
  * Continua a aula "Descrever como um pintor" (semana 2: cor exata, cada coisa no lugar, o sentimento).
  * Rodada 1: 4 quadros bem diferentes. Rodada 2: 8 quadros muito parecidos (o atalho deixa de funcionar).
- * Todos de domínio público (Wikimedia Commons), em public/arboria/quadros.
+ * Rodada 3: 8 retratos da mesma moça, só a expressão muda, e não vale falar de cor: é preciso dizer o que o rosto diz.
+ * Rodadas 1 e 2: domínio público (Wikimedia Commons). Rodada 3: retratos feitos para a aula (IA, 20/10/2026).
+ * Tudo em public/arboria/quadros.
  */
 
 export interface Quadro {
@@ -46,21 +48,41 @@ const HAMMERSHOI: Quadro[] = [
   q("h12", "Interior com o cavalete do artista", "Vilhelm Hammershøi", 731, 900),
 ];
 
-export const TURMAS = ["6º", "7º", "8º", "9º"] as const;
+// rodada 3: a mesma moça, a mesma luz e as mesmas cores; muda só o que o rosto diz
+const RETRATOS: Quadro[] = [
+  q("r0", "Retrato: calma, olhando para nós", "Retrato feito para a aula", 678, 900),
+  q("r1", "Retrato: um sorriso quase escondido", "Retrato feito para a aula", 678, 900),
+  q("r2", "Retrato: olhar de lado, desconfiado", "Retrato feito para a aula", 678, 900),
+  q("r3", "Retrato: uma sobrancelha erguida, duvidando", "Retrato feito para a aula", 678, 900),
+  q("r4", "Retrato: segurando o choro", "Retrato feito para a aula", 678, 900),
+  q("r5", "Retrato: prestes a dizer alguma coisa", "Retrato feito para a aula", 678, 900),
+  q("r6", "Retrato: olhando para baixo, pensativa", "Retrato feito para a aula", 678, 900),
+  q("r7", "Retrato: testa franzida, decidida", "Retrato feito para a aula", 678, 900),
+];
+
+/** Turmas do F2 como estão no cadastro (tabela alunos: serie + turma). */
+export const TURMAS = ["6º A", "6º B", "7º A", "7º B", "8º A", "9º A"] as const;
 export type Turma = (typeof TURMAS)[number];
-export type Fase = "entrada" | "r1" | "r2" | "final";
+export type Fase = "entrada" | "r1" | "r2" | "r3" | "final";
+export type Rodada = 1 | 2 | 3;
+/** "6º A" → { serie: "6º Ano", turma: "A" } */
+export const daTurma = (t: string) => ({ serie: `${t.split(" ")[0]} Ano`, turma: t.split(" ")[1] ?? "A" });
 
-export const quadrosDaRodada = (rodada: 1 | 2, turma: string): Quadro[] =>
-  rodada === 1 ? RODADA1 : turma === "8º" || turma === "9º" ? HAMMERSHOI : MONET;
+export const quadrosDaRodada = (rodada: Rodada, turma: string): Quadro[] =>
+  rodada === 1 ? RODADA1 : rodada === 3 ? RETRATOS : turma.startsWith("8") || turma.startsWith("9") ? HAMMERSHOI : MONET;
 
-export const TODOS: Record<string, Quadro> = Object.fromEntries([...RODADA1, ...MONET, ...HAMMERSHOI].map((x) => [x.id, x]));
+export const TODOS: Record<string, Quadro> = Object.fromEntries([...RODADA1, ...MONET, ...HAMMERSHOI, ...RETRATOS].map((x) => [x.id, x]));
 export const imagem = (id: string) => `/arboria/quadros/${id}.jpg`;
 
-/** Versões por descrição na rodada 2 (a 1ª e mais duas reescritas). */
+/** Versões por descrição nas rodadas 2 e 3 (a 1ª e mais duas reescritas). */
 export const MAX_VERSOES = 3;
 
+/** Rodada 3: as cores são iguais nos 8 retratos, então não valem (obriga a descrever a expressão). */
+const CORES = /(^|[^a-zà-ú])(amarel|azul|azuis|verde|vermelh|roxo|roxa|rosa|laranja|marrom|marrons|pret[oa]|branc|cinza|bege|dourad|lil[aá]s|castanh|escur|clar[oa])/i;
+export const corProibida = (texto: string) => texto.match(CORES)?.[2] ?? null;
+
 /** O quadro secreto de cada aluno na rodada: sorteio fixo pelo id (recarregar o tablet não troca). */
-export function quadroSecreto(aluno: string, rodada: 1 | 2, turma: string): string {
+export function quadroSecreto(aluno: string, rodada: Rodada, turma: string): string {
   const lista = quadrosDaRodada(rodada, turma);
   let h = 2166136261;
   for (const c of `${aluno}:${rodada}`) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
