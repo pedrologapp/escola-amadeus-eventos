@@ -2,31 +2,37 @@
 
 import { useCallback, useEffect, useState } from "react";
 import QRCode from "qrcode";
-import { Check, Eye, Maximize, RotateCcw, X } from "lucide-react";
-import { TODOS, TURMAS, imagem, quadrosDaRodada, type Fase } from "@/lib/arboria-quadro";
-import { criarSala, destacar, estadoTv, mudarFase, type Corrente } from "../actions";
+import { TODOS, TURMAS, imagem, type Fase } from "@/lib/arboria-quadro";
+import { celebrar, criarSala, estadoTv, mudarFase } from "../actions";
 
 /**
- * A TV de "Qual é o quadro?": entrada (QR + nomes) → rodada 1 → rodada 2 → rodada 3 (retratos) → as melhores descrições.
- * No final o professor escolhe uma descrição: a TV mostra só o texto e os quadros, a turma tenta
- * adivinhar, e "Revelar" mostra o quadro certo e o nome de quem escreveu (se o aluno deixou).
- * A sala fica guardada neste computador; "Nova sala" começa outra turma. F = tela cheia.
+ * A TV de "Qual é o quadro?" (visual em quadro.css). Entrada (QR + nomes) → rodada N em andamento (sem quadros:
+ * só o andamento, para ninguém ver as respostas) → "Encerrar a rodada": aparecem os quadros com a estatística de
+ * cada um → próxima rodada → no fim, a celebração: as 3 melhores descrições de cada rodada, escolhidas pela IA, com os nomes.
+ * A sala fica guardada neste computador. F = tela cheia. A barra discreta no canto deixa pular de fase.
  */
 
 const CHAVE = "arboria-quadro-tv";
 type Sala = { codigo: string; chave: string };
 type Estado = Awaited<ReturnType<typeof estadoTv>>;
+type Rodada = Estado["rodadas"][number];
+const NOME_RODADA = { 1: "4 quadros bem diferentes", 2: "8 quadros parecidos", 3: "8 retratos quase iguais" } as const;
+const ORDEM: Fase[] = ["entrada", "r1", "r1f", "r2", "r2f", "r3", "r3f", "final"];
 
 const ler = (): Sala | null => { try { return JSON.parse(localStorage.getItem(CHAVE) || "null"); } catch { return null; } };
 const gravar = (v: Sala | null) => { try { if (v) localStorage.setItem(CHAVE, JSON.stringify(v)); else localStorage.removeItem(CHAVE); } catch { /* sem armazenamento */ } };
 
-const Pintura = ({ id, className = "" }: { id: string; className?: string }) => (
-  // eslint-disable-next-line @next/next/no-img-element
-  <img src={imagem(id)} alt="" width={TODOS[id]?.w} height={TODOS[id]?.h} className={`object-contain ${className}`} />
-);
-const Numero = ({ n, rotulo }: { n: number | string; rotulo: string }) => (
-  <div className="rounded-3xl border-[3px] border-[#2a3d3b] bg-[#14201f] px-8 py-6 text-center"><div className="text-7xl font-extrabold">{n}</div><div className="mt-1 text-lg font-bold uppercase tracking-[0.1em] text-[#fbbf24]">{rotulo}</div></div>
-);
+function Tela({ children, sala, meta }: { children: React.ReactNode; sala?: string; meta?: React.ReactNode }) {
+  return (
+    <main className="qq-pag qq-pag-tv">
+      <header className="qq-topo">
+        <span className="qq-marca" style={{ fontSize: 34 }}>arbor<b>ia</b></span>
+        <span className="qq-meta" style={{ fontSize: 15 }}>{sala ? <>Sala <strong>{sala}</strong>{meta}</> : "Fase Linguística · semana 3"}</span>
+      </header>
+      {children}
+    </main>
+  );
+}
 
 export function Tv() {
   const [sala, setSala] = useState<Sala | null>(null);
@@ -48,44 +54,33 @@ export function Tv() {
   useEffect(() => { if (!sala) return; atualizar(); const t = setInterval(atualizar, 2000); return () => clearInterval(t); }, [sala, atualizar]);
 
   const fase = async (f: Fase) => { if (!sala) return; await mudarFase(sala.codigo, sala.chave, f); atualizar(); };
-  const destaque = async (id: string | null, revelado = false) => { if (!sala) return; await destacar(sala.codigo, sala.chave, id, revelado); atualizar(); };
 
   if (!pronto) return null;
   if (!sala) return <Abrir abriu={(s) => { gravar(s); setSala(s); }} />;
-  if (!est) return <Fundo><p className="text-3xl">Abrindo a sala {sala.codigo}…</p>{erro && <p className="mt-4 text-red-300">{erro}</p>}</Fundo>;
+  if (!est) return <Tela sala={sala.codigo}><p className="qq-espera">Abrindo a sala</p>{erro && <p className="qq-aviso">{erro}</p>}</Tela>;
 
-  const s = est.sala;
-  const barra = (
-    <div className="fixed bottom-4 right-4 flex gap-2 opacity-30 transition hover:opacity-100">
-      {(["entrada", "r1", "r2", "r3", "final"] as Fase[]).map((f, i) => (
-        <button key={f} onClick={() => fase(f)} className={`rounded-full px-4 py-2 text-sm font-bold ${s.fase === f ? "bg-[#fbbf24] text-black" : "bg-white/15"}`}>
-          {["Entrada", "Rodada 1", "Rodada 2", "Rodada 3", "Final"][i]}
-        </button>
-      ))}
-      <button onClick={() => document.documentElement.requestFullscreen?.().catch(() => {})} className="rounded-full bg-white/15 px-3"><Maximize className="size-4" /></button>
-      <button onClick={() => { if (confirm("Começar uma sala nova? Esta aula sai da TV.")) { gravar(null); setSala(null); setEst(null); } }} className="rounded-full bg-white/15 px-3 text-sm"><RotateCcw className="size-4" /></button>
-    </div>
-  );
-
+  const f = est.sala.fase;
+  const n = f.startsWith("r") ? Number(f[1]) as 1 | 2 | 3 : null;
+  const meta = <> · {est.sala.turma}{n ? <> · Rodada <strong>{n}/3</strong></> : null}</>;
   return (
-    <Fundo>
-      {s.fase === "entrada" && <Entrada est={est} comecar={() => fase("r1")} />}
-      {s.fase === "r1" && <Andamento est={est} rodada={1} proxima={() => fase("r2")} />}
-      {s.fase === "r2" && <Andamento est={est} rodada={2} proxima={() => fase("r3")} />}
-      {s.fase === "r3" && <Andamento est={est} rodada={3} proxima={() => fase("final")} />}
-      {s.fase === "final" && <Final est={est} destaque={destaque} />}
-      {erro && <p className="fixed left-4 top-4 rounded bg-red-900/70 px-3 py-1 text-sm">{erro}</p>}
-      {barra}
-    </Fundo>
+    <Tela sala={est.sala.codigo} meta={meta}>
+      {f === "entrada" && <Entrada est={est} comecar={() => fase("r1")} />}
+      {n && !f.endsWith("f") && <Andamento r={est.rodadas[n - 1]} alunos={est.alunos.length} encerrar={() => fase(`r${n}f` as Fase)} />}
+      {n && f.endsWith("f") && <Encerrada r={est.rodadas[n - 1]} turma={est.sala.turma} proxima={() => fase(n < 3 ? (`r${n + 1}` as Fase) : "final")} />}
+      {f === "final" && <Celebracao est={est} sala={sala} atualizar={atualizar} />}
+      {erro && <p className="qq-aviso" style={{ position: "fixed", left: 16, top: 16 }}>{erro}</p>}
+      <nav className="qq-barra-prof" aria-label="Fases da aula">
+        {ORDEM.map((o) => (
+          <button key={o} className={f === o ? "on" : ""} onClick={() => fase(o)}>
+            {o === "entrada" ? "Entrada" : o === "final" ? "Final" : o.endsWith("f") ? `R${o[1]} fim` : `R${o[1]}`}
+          </button>
+        ))}
+        <button onClick={() => document.documentElement.requestFullscreen?.().catch(() => {})}>Tela cheia</button>
+        <button onClick={() => { gravar(null); setSala(null); setEst(null); }}>Nova sala</button>
+      </nav>
+    </Tela>
   );
 }
-
-function Fundo({ children }: { children: React.ReactNode }) {
-  return <main className="min-h-screen px-10 py-8 font-[family-name:var(--f-tight)] text-[#eef3ef]" style={{ background: "radial-gradient(ellipse at 30% 20%, #12201f, #0b1112 60%)" }}><div className="mx-auto max-w-[1600px]">{children}</div></main>;
-}
-const Cabeca = ({ sobre, titulo }: { sobre: string; titulo: string }) => (
-  <div><p className="text-lg font-bold uppercase tracking-[0.18em] text-[#2dd4bf]">{sobre}</p><h1 className="font-[family-name:var(--f-serif)] text-7xl leading-[1.02]">{titulo}</h1></div>
-);
 
 function Abrir({ abriu }: { abriu: (s: Sala) => void }) {
   const [turma, setTurma] = useState("");
@@ -95,143 +90,145 @@ function Abrir({ abriu }: { abriu: (s: Sala) => void }) {
     if (r?.ok) abriu({ codigo: r.codigo, chave: r.chave }); else setErro(r?.erro ?? "Sem internet?");
   };
   return (
-    <Fundo>
-      <p className="mb-10 text-8xl font-extrabold tracking-[-0.045em]">arbor<b className="text-[#2dd4bf]">ia</b></p>
-      <Cabeca sobre="Fase Linguística" titulo="Qual é o quadro?" />
-      <p className="mt-8 text-2xl text-white/80">Qual turma vai jogar agora?</p>
-      <div className="mt-4 flex gap-4">
-        {TURMAS.map((t) => (
-          <button key={t} onClick={() => setTurma(t)} className={`rounded-2xl px-10 py-6 text-4xl font-bold ${turma === t ? "bg-[#fbbf24] text-black" : "bg-white/10"}`}>{t}</button>
-        ))}
+    <Tela>
+      <p className="qq-rot" style={{ fontSize: 16 }}>Fase Linguística · semana 3</p>
+      <h1 className="qq-tit qq-tit-tv">Qual é o <em>quadro</em>?</h1>
+      <p className="qq-txt qq-txt-tv">Qual turma vai jogar agora?</p>
+      <div className="qq-turmas">
+        {TURMAS.map((t) => <button key={t} className={turma === t ? "on" : ""} onClick={() => setTurma(t)}>{t}</button>)}
       </div>
-      {erro && <p className="mt-4 text-red-300">{erro}</p>}
-      <button onClick={abrir} disabled={!turma} className="mt-8 rounded-2xl bg-[#2dd4bf] text-[#05201d] px-10 py-5 text-2xl font-bold disabled:opacity-30">Abrir a sala</button>
-    </Fundo>
+      {erro && <p className="qq-aviso">{erro}</p>}
+      <div style={{ maxWidth: 520 }}><button className="qq-btn" onClick={abrir} disabled={!turma}>Abrir a sala</button></div>
+    </Tela>
   );
 }
 
 function Entrada({ est, comecar }: { est: Estado; comecar: () => void }) {
   const [qr, setQr] = useState("");
   const link = typeof window !== "undefined" ? `${window.location.origin}/arboria/quadro?s=${est.sala.codigo}` : "";
-  useEffect(() => { if (link) QRCode.toString(link, { type: "svg", margin: 1 }).then(setQr).catch(() => {}); }, [link]);
+  useEffect(() => { if (link) QRCode.toString(link, { type: "svg", margin: 0, color: { dark: "#1d2a3a", light: "#f3ecdd" } }).then(setQr).catch(() => {}); }, [link]);
   return (
-    <div className="grid grid-cols-[auto_1fr] gap-12">
-      <div className="text-center">
-        <div className="w-[420px] rounded-3xl bg-white p-5" dangerouslySetInnerHTML={{ __html: qr }} />
-        <p className="mt-5 text-2xl text-white/70">ou digite o código</p>
-        <p className="text-8xl font-bold tracking-[0.15em] text-[#fbbf24]">{est.sala.codigo}</p>
-        <p className="mt-2 text-lg text-white/50">{link.replace(/^https?:\/\//, "").replace(/\?.*/, "")}</p>
+    <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 64, alignItems: "start" }}>
+      <div>
+        <div className="qq-qr" dangerouslySetInnerHTML={{ __html: qr }} />
+        <p className="qq-legenda" style={{ fontSize: 15 }}>ou digite o código</p>
+        <p className="qq-codigo">{est.sala.codigo}</p>
+        <p className="qq-meta" style={{ textAlign: "left", marginTop: 8 }}>{link.replace(/^https?:\/\//, "").replace(/\?.*/, "")}</p>
       </div>
       <div>
-        <Cabeca sobre={`ARBORIA · ${est.sala.turma}`} titulo="Qual é o quadro?" />
-        <p className="mt-6 text-3xl text-white/80">Cada um vai receber um quadro secreto e descrever. Um colega vai tentar achar o quadro só pelas suas palavras.</p>
-        <p className="mt-8 text-2xl font-bold">{est.alunos.length} {est.alunos.length === 1 ? "aluno entrou" : "alunos entraram"}</p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {est.alunos.map((a) => <span key={a.id} className="rounded-full bg-white/10 px-4 py-2 text-xl">{a.nome}</span>)}
-        </div>
-        <button onClick={comecar} disabled={est.alunos.length < 2} className="mt-10 rounded-2xl bg-[#2dd4bf] text-[#05201d] px-10 py-5 text-2xl font-bold disabled:opacity-30">Começar a rodada 1</button>
+        <p className="qq-rot" style={{ fontSize: 16 }}>Fase Linguística · {est.sala.turma}</p>
+        <h1 className="qq-tit qq-tit-tv">Qual é o <em>quadro</em>?</h1>
+        <p className="qq-txt qq-txt-tv">Cada um recebe um quadro secreto e descreve. Um colega vai tentar achar o quadro só pelas suas palavras.</p>
+        <p className="qq-legenda" style={{ fontSize: 15, marginTop: 40 }}>{est.alunos.length} {est.alunos.length === 1 ? "aluno entrou" : "alunos entraram"}</p>
+        <div className="qq-chips">{est.alunos.map((a) => <span key={a.id}>{a.nome}</span>)}</div>
+        <div style={{ maxWidth: 560 }}><button className="qq-btn" onClick={comecar} disabled={est.alunos.length < 2}>Começar a rodada 1</button></div>
       </div>
     </div>
   );
 }
 
-function Andamento({ est, rodada, proxima }: { est: Estado; rodada: 1 | 2 | 3; proxima: () => void }) {
-  const r = rodada === 1 ? est.r1 : rodada === 2 ? est.r2 : est.r3;
-  const quadros = quadrosDaRodada(rodada, est.sala.turma);
+/** Durante a rodada a TV não mostra quadros: só o andamento da turma. */
+function Andamento({ r, alunos, encerrar }: { r: Rodada; alunos: number; encerrar: () => void }) {
   return (
     <div>
-      <Cabeca sobre={`RODADA ${rodada}`} titulo={rodada === 1 ? "4 quadros bem diferentes" : rodada === 2 ? "8 quadros muito parecidos" : "8 retratos quase iguais"} />
-      <p className="mt-4 text-3xl text-white/80">
-        {rodada === 1
-          ? "Descreva o seu quadro secreto. Depois, adivinhe o quadro de um colega."
-          : rodada === 2
-            ? "Agora o atalho não funciona. Use a cor exata, o lugar de cada coisa e o sentimento. Se o colega errar, você reescreve."
-            : "A mesma moça, as mesmas cores. Não vale falar de cor: diga o que o rosto dela está dizendo."}
+      <p className="qq-rot" style={{ fontSize: 16 }}>Rodada {r.rodada} · {NOME_RODADA[r.rodada as 1 | 2 | 3]} · em andamento</p>
+      <h1 className="qq-tit qq-tit-tv">{r.rodada === 1 ? <>Descrevam o <em>quadro secreto</em>.</> : r.rodada === 2 ? <>Agora o atalho <em>não funciona</em>.</> : <>Não vale <em>falar de cor</em>.</>}</h1>
+      <p className="qq-txt qq-txt-tv">
+        {r.rodada === 1 ? "Escreva para um colega achar o seu quadro. Depois, adivinhe o quadro de um colega."
+          : r.rodada === 2 ? "Use a cor exata, o lugar de cada coisa e o sentimento. Se o colega errar, você reescreve com o Arboria."
+          : "A mesma moça, as mesmas cores. Diga o que o rosto dela está dizendo."}
       </p>
-      <div className={`mt-8 grid gap-3 ${quadros.length > 4 ? "grid-cols-8" : "grid-cols-4"}`}>
-        {quadros.map((q) => <Pintura key={q.id} id={q.id} className={`w-full rounded-xl bg-black/30 ${rodada === 3 ? "h-72" : "h-56"}`} />)}
+      <div className="qq-placar">
+        <div><b>{r.escreveram}<small style={{ fontSize: 48, color: "#8fa3a0" }}>/{alunos}</small></b><span>já escreveram</span></div>
+        <div><b>{r.palpites}</b><span>palpites</span></div>
+        <div><b>{r.acertos}</b><span>acertos</span></div>
+        {r.rodada >= 2 && <div><b>{r.melhorou}</b><span>acertaram ao reescrever</span></div>}
       </div>
-      <div className="mt-10 flex flex-wrap gap-6">
-        <Numero n={`${r.escreveram}/${est.alunos.length}`} rotulo="já escreveram" />
-        <Numero n={r.palpites} rotulo="palpites" />
-        <Numero n={r.acertos} rotulo="acertos" />
-        {rodada >= 2 && <Numero n={r.primeira} rotulo="acertaram de primeira" />}
-        {rodada >= 2 && <Numero n={r.melhorou} rotulo="acertaram depois de reescrever" />}
-      </div>
-      <button onClick={proxima} className="mt-10 rounded-2xl bg-[#2dd4bf] text-[#05201d] px-10 py-5 text-2xl font-bold">{rodada === 1 ? "Ir para a rodada 2" : rodada === 2 ? "Ir para a rodada 3" : "Ver as melhores descrições"}</button>
+      <div style={{ maxWidth: 560 }}><button className="qq-btn" onClick={encerrar}>Encerrar a rodada</button></div>
     </div>
   );
 }
 
-const SELO: Record<Corrente["resultado"], [string, string]> = {
-  primeira: ["Acertaram de primeira", "bg-emerald-500/20 text-emerald-200"],
-  melhorou: ["Acertaram depois de reescrever", "bg-amber-500/20 text-amber-200"],
-  nao: ["Ninguém acertou", "bg-white/10 text-white/60"],
-  aberto: ["Ainda em jogo", "bg-white/10 text-white/60"],
-};
-
-function Final({ est, destaque }: { est: Estado; destaque: (id: string | null, revelado?: boolean) => void }) {
-  const ordem: Corrente["resultado"][] = ["primeira", "melhorou", "aberto", "nao"];
-  const lista = [...est.correntes].sort((a, b) => b.rodada - a.rodada || ordem.indexOf(a.resultado) - ordem.indexOf(b.resultado));
-  const d = est.destaque;
-
-  if (d) {
-    const final = d.versoes.find((v) => v.acertou) ?? d.versoes[d.versoes.length - 1];
-    const primeira = d.versoes[0];
-    const revelado = est.sala.revelado;
-    return (
-      <div>
-        <div className="flex items-start justify-between gap-6">
-          <Cabeca sobre="QUAL É O QUADRO?" titulo={revelado ? (d.mostrarNome ? `Descrição de ${d.nome.split(" ")[0]}` : "Descrição de um colega") : "Leia e tente achar"} />
-          <div className="flex gap-3">
-            {!revelado && <button onClick={() => destaque(final.id, true)} className="flex items-center gap-2 rounded-2xl bg-[#fbbf24] px-8 py-4 text-2xl font-bold text-black"><Eye className="size-6" /> Revelar</button>}
-            <button onClick={() => destaque(null)} className="rounded-2xl bg-white/10 px-8 py-4 text-2xl font-bold">Voltar à lista</button>
-          </div>
-        </div>
-        <div className={`mt-6 grid gap-6 ${revelado && d.versoes.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
-          {revelado && d.versoes.length > 1 && primeira.id !== final.id && (
-            <blockquote className="rounded-3xl bg-white/5 p-6 text-2xl leading-relaxed text-white/70">
-              <p className="mb-2 text-base font-bold tracking-[0.2em] text-red-300">VERSÃO 1 · O COLEGA ERROU</p>{primeira.texto}
-            </blockquote>
-          )}
-          <blockquote className="rounded-3xl bg-white p-8 text-3xl leading-relaxed text-[#1d2b2a]">
-            {revelado && <p className={`mb-2 text-base font-bold tracking-[0.2em] ${final.acertou ? "text-emerald-700" : "text-red-700"}`}>VERSÃO {final.versao} · {final.acertou ? "O COLEGA ACERTOU" : "O COLEGA NÃO ACERTOU"}</p>}
-            {final.texto}
-          </blockquote>
-        </div>
-        <div className="mt-6 grid grid-cols-8 gap-3">
-          {d.opcoes.map((id) => (
-            <div key={id} className={`rounded-xl p-1 transition ${revelado ? (id === d.quadro ? "scale-105 bg-[#fbbf24]" : "opacity-25") : "bg-white/5"}`}>
-              <Pintura id={id} className={`w-full rounded-lg ${d.rodada === 3 ? "h-64" : "h-52"}`} />
-            </div>
-          ))}
-        </div>
-        {revelado && <p className="mt-4 text-2xl text-white/80">{TODOS[d.quadro]?.titulo} · {TODOS[d.quadro]?.autor}</p>}
-      </div>
-    );
-  }
-
+/** Rodada encerrada: agora aparecem os quadros, cada um com quantos o descreveram e como foi a 1ª versão. */
+function Encerrada({ r, turma, proxima }: { r: Rodada; turma: string; proxima: () => void }) {
+  const oito = r.quadros.length > 4;
   return (
     <div>
-      <Cabeca sobre="AS DESCRIÇÕES DA TURMA" titulo="As que fizeram o colega acertar" />
-      <p className="mt-3 text-2xl text-white/70">Toque em uma: a TV mostra só o texto e os quadros. A turma tenta achar e depois vocês revelam.</p>
-      {!lista.length && <p className="mt-10 text-3xl">Ninguém escreveu nas rodadas 2 e 3.</p>}
-      <div className="mt-6 grid grid-cols-3 gap-4">
-        {lista.map((c, i) => {
-          const final = c.versoes.find((v) => v.acertou) ?? c.versoes[c.versoes.length - 1];
-          const [rotulo, cor] = SELO[c.resultado];
+      <p className="qq-rot" style={{ fontSize: 16 }}>Rodada {r.rodada} · encerrada · {turma}</p>
+      <h1 className="qq-tit qq-tit-tv" style={{ fontSize: 72 }}>Como a turma foi em <em>cada quadro</em></h1>
+      <div className={`qq-tv-grade ${oito ? "oito" : ""}`}>
+        {r.quadros.map((q, i) => {
+          const total = Math.max(q.descreveram, 1);
           return (
-            <button key={`${c.rodada}-${c.aluno}`} onClick={() => destaque(final.id)} className="rounded-3xl bg-white/5 p-5 text-left hover:bg-white/10">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xl font-bold">Descrição {i + 1} <span className="text-base font-normal text-white/50">· rodada {c.rodada}</span></span>
-                <span className={`rounded-full px-3 py-1 text-sm font-bold ${cor}`}>
-                  {c.resultado === "primeira" && <Check className="mr-1 inline size-4" />}{c.resultado === "nao" && <X className="mr-1 inline size-4" />}{rotulo}
-                </span>
+            <figure key={q.id} className="qq-moldura" style={{ margin: 0 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={imagem(q.id)} alt="" width={TODOS[q.id]?.w} height={TODOS[q.id]?.h} />
+              <figcaption className="qq-etiqueta"><b>Nº {String(i + 1).padStart(2, "0")}</b><span>{q.descreveram} {q.descreveram === 1 ? "descreveu" : "descreveram"}</span></figcaption>
+              <div className="qq-conta" aria-hidden="true">
+                <i style={{ width: `${(100 * q.primeira) / total}%`, background: "#0f766e" }} />
+                <i style={{ width: `${(100 * q.depois) / total}%`, background: "#d4a017" }} />
+                <i style={{ width: `${(100 * q.nunca) / total}%`, background: "#b4432f" }} />
               </div>
-              <p className="mt-2 line-clamp-3 text-lg text-white/70">{final.texto}</p>
-            </button>
+              <div className="qq-numeros">
+                <span className="ok">✓ {q.primeira} de 1ª</span>
+                <span className="x">✗ {q.errou1} errou na 1ª</span>
+                {r.rodada >= 2 && <span className="dep">↻ {q.depois} depois</span>}
+              </div>
+            </figure>
           );
         })}
+      </div>
+      <div style={{ maxWidth: 560 }}><button className="qq-btn" onClick={proxima}>{r.rodada < 3 ? `Começar a rodada ${r.rodada + 1}` : "Celebrar as melhores descrições"}</button></div>
+    </div>
+  );
+}
+
+/** A celebração: a IA escolhe as 3 melhores de cada rodada; a TV mostra uma rodada por vez, com o nome de quem escreveu. */
+function Celebracao({ est, sala, atualizar }: { est: Estado; sala: Sala; atualizar: () => Promise<void> }) {
+  const [rodada, setRodada] = useState(1);
+  const [lendo, setLendo] = useState(false);
+  useEffect(() => {
+    if (est.sala.celebrado || lendo) return;
+    setLendo(true);
+    celebrar(sala.codigo, sala.chave).catch(() => {}).finally(() => { setLendo(false); atualizar(); });
+  }, [est.sala.celebrado, lendo, sala, atualizar]);
+
+  if (!est.sala.celebrado) return (
+    <div>
+      <p className="qq-rot" style={{ fontSize: 16 }}>Fim das rodadas</p>
+      <h1 className="qq-tit qq-tit-tv">O Arboria está lendo <em>todas as descrições</em>.</h1>
+      <p className="qq-espera" style={{ fontSize: 18 }}>Escolhendo três de cada rodada</p>
+    </div>
+  );
+  const destas = est.melhores.filter((m) => m.rodada === rodada);
+  const rodadasComMelhores = [1, 2, 3].filter((r) => est.melhores.some((m) => m.rodada === r));
+  return (
+    <div>
+      <div className="qq-folhas" aria-hidden="true">
+        {Array.from({ length: 22 }, (_, i) => <i key={i} style={{ left: `${(i * 4.7) % 100}%`, animationDuration: `${7 + (i % 5)}s`, animationDelay: `${(i % 7) * 0.9}s`, ["--x" as string]: `${(i % 2 ? 1 : -1) * (30 + (i % 4) * 25)}px` }} />)}
+      </div>
+      <p className="qq-rot" style={{ fontSize: 16 }}>Celebração · rodada {rodada} · {NOME_RODADA[rodada as 1 | 2 | 3]}</p>
+      <h1 className="qq-tit qq-tit-tv" style={{ fontSize: 80 }}>Três descrições <em>para lembrar</em></h1>
+      {destas.length ? (
+        <div className="qq-celebra">
+          {destas.map((m, i) => (
+            <article key={i}>
+              <figure className="qq-moldura" style={{ margin: 0 }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={imagem(m.quadro)} alt="" width={TODOS[m.quadro]?.w} height={TODOS[m.quadro]?.h} />
+                <figcaption className="qq-etiqueta"><b>{TODOS[m.quadro]?.titulo}</b></figcaption>
+              </figure>
+              <p className="quem">{m.nome ?? "Um colega"}</p>
+              <p className="texto">“{m.texto}”</p>
+              <p className="motivo">{m.motivo}{m.versao > 1 ? ` · acertou na versão ${m.versao}` : ""}</p>
+            </article>
+          ))}
+        </div>
+      ) : <p className="qq-txt qq-txt-tv">Nesta rodada ninguém chegou ao quadro certo.</p>}
+      <div style={{ display: "flex", gap: 16, maxWidth: 900 }}>
+        {rodadasComMelhores.filter((r) => r !== rodada).map((r) => (
+          <button key={r} className="qq-btn contorno" onClick={() => setRodada(r)}>Rodada {r}</button>
+        ))}
       </div>
     </div>
   );

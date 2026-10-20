@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
-import { Caveat, Instrument_Serif, Inter_Tight } from "next/font/google";
+import { Caveat, Gloock, IBM_Plex_Mono, Spectral } from "next/font/google";
+import "./quadro.css";
 import { Aluno } from "./aluno";
 
-// as letras das aulas do Arboria: Instrument Serif, Inter Tight e Caveat
-const serif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--f-serif" });
-const tight = Inter_Tight({ subsets: ["latin"], weight: ["500", "600", "700", "800"], variable: "--f-tight" });
+// gabinete de museu + caderno do Arboria: serifa de alto contraste nos títulos, serifa de leitura no texto, letra de máquina nas etiquetas e a mão do Arboria
+const display = Gloock({ subsets: ["latin"], weight: "400", variable: "--f-display" });
+const texto = Spectral({ subsets: ["latin"], weight: ["400", "500"], style: ["normal", "italic"], variable: "--f-texto" });
+const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["500", "600"], variable: "--f-mono" });
 const mao = Caveat({ subsets: ["latin"], weight: "700", variable: "--f-mao" });
 
 export const metadata: Metadata = { title: "Qual é o quadro? · Arboria", robots: { index: false, follow: false } };
@@ -15,5 +17,5 @@ export const metadata: Metadata = { title: "Qual é o quadro? · Arboria", robot
  */
 export default async function QuadroAlunoPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const q = await searchParams;
-  return <div className={`${serif.variable} ${tight.variable} ${mao.variable}`}><Aluno codigoInicial={(q.s ?? "").replace(/\D/g, "").slice(0, 4)} /></div>;
+  return <div className={`qq ${display.variable} ${texto.variable} ${mono.variable} ${mao.variable}`}><Aluno codigoInicial={(q.s ?? "").replace(/\D/g, "").slice(0, 4)} /></div>;
 }

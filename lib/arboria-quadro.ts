@@ -63,7 +63,7 @@ const RETRATOS: Quadro[] = [
 /** Turmas do F2 como estão no cadastro (tabela alunos: serie + turma). */
 export const TURMAS = ["6º A", "6º B", "7º A", "7º B", "8º A", "9º A"] as const;
 export type Turma = (typeof TURMAS)[number];
-export type Fase = "entrada" | "r1" | "r2" | "r3" | "final";
+export type Fase = "entrada" | "r1" | "r1f" | "r2" | "r2f" | "r3" | "r3f" | "final"; // rNf = rodada N encerrada (a TV mostra as estatísticas)
 export type Rodada = 1 | 2 | 3;
 /** "6º A" → { serie: "6º Ano", turma: "A" } */
 export const daTurma = (t: string) => ({ serie: `${t.split(" ")[0]} Ano`, turma: t.split(" ")[1] ?? "A" });

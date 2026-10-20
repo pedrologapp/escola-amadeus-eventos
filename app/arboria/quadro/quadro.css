@@ -1,0 +1,150 @@
+/*
+ * "Qual é o quadro?" · identidade (Pedro, 20/10: nada de cara de app padrão).
+ * Um gabinete de museu à noite, com o caderno do Arboria: quadros com passe-partout e etiqueta de catálogo,
+ * fichas pautadas para escrever, numeração "Nº" em letra de máquina, títulos em serifa de alto contraste e a voz
+ * do Arboria escrita à mão. Cantos retos e fios finos; a cor de destaque é a do Arboria (turquesa e âmbar).
+ */
+.qq {
+  --noite: #0b1112; --parede: #111b1a; --fio: #2a3d3b; --giz: #eef3ef; --musgo: #8fa3a0; --turq: #2dd4bf; --ambar: #fbbf24;
+  --papel: #f3ecdd; --tinta: #1d2a3a; --margem: #e3a0a0; --pauta: #cdd9e4; --erro: #f2907f;
+  min-height: 100vh; background: radial-gradient(120% 70% at 20% -10%, #15302c 0%, var(--noite) 55%) fixed, var(--noite);
+  color: var(--giz); font-family: var(--f-texto), Georgia, serif; font-size: 18px; line-height: 1.45;
+}
+.qq *, .qq *::before, .qq *::after { box-sizing: border-box; }
+.qq-pag { max-width: 760px; margin: 0 auto; padding: 0 22px 48px; }
+.qq-pag-tv { max-width: 1680px; padding: 0 56px 96px; }
+
+/* barra de cima: marca à esquerda, sala e rodada à direita, como o cabeçalho de uma ficha de catálogo */
+.qq-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 18px 0 12px; border-bottom: 1px solid var(--fio); margin-bottom: 26px; }
+.qq-marca { font-family: var(--f-display), serif; font-size: 26px; letter-spacing: -.01em; }
+.qq-marca b { color: var(--turq); font-weight: 400; }
+.qq-meta { font: 500 12px/1.2 var(--f-mono), monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--musgo); text-align: right; }
+.qq-meta strong { color: var(--ambar); font-weight: 600; }
+
+.qq-rot { font: 600 12px/1.2 var(--f-mono), monospace; letter-spacing: .2em; text-transform: uppercase; color: var(--turq); margin: 0 0 10px; }
+.qq-tit { font-family: var(--f-display), serif; font-weight: 400; font-size: clamp(34px, 6vw, 48px); line-height: 1.02; letter-spacing: -.01em; margin: 0; text-wrap: balance; }
+.qq-tit em { font-style: italic; color: var(--turq); }
+.qq-tit-tv { font-size: clamp(56px, 6vw, 104px); }
+.qq-txt { color: var(--musgo); font-size: 19px; margin: 12px 0 0; max-width: 60ch; }
+.qq-txt-tv { font-size: 30px; max-width: 46ch; }
+.qq-fio { border: 0; border-top: 1px solid var(--fio); margin: 26px 0; }
+
+/* o quadro: passe-partout de papel, filete escuro e etiqueta de museu */
+.qq-moldura { display: inline-flex; flex-direction: column; background: var(--papel); padding: 12px; box-shadow: 0 1px 0 #fff3 inset, 0 24px 50px -18px #000c; max-width: 100%; }
+.qq-moldura img { display: block; max-width: 100%; height: auto; outline: 1px solid #0006; object-fit: contain; }
+.qq-etiqueta { font: 500 11px/1.3 var(--f-mono), monospace; letter-spacing: .12em; text-transform: uppercase; color: #5b5346; margin-top: 9px; display: flex; justify-content: space-between; gap: 10px; }
+.qq-etiqueta b { color: var(--tinta); font-weight: 600; }
+.qq-centro { display: flex; justify-content: center; }
+
+/* a ficha pautada do caderno do Arboria */
+.qq-ficha { display: block; width: 100%; min-height: 190px; resize: vertical; border: 0; outline: 0; padding: 12px 18px 12px 64px; color: var(--tinta);
+  font: 400 22px/36px var(--f-texto), Georgia, serif; border-radius: 0;
+  background: linear-gradient(90deg, transparent 46px, var(--margem) 46px, var(--margem) 48px, transparent 48px), repeating-linear-gradient(var(--papel) 0 35px, var(--pauta) 35px 36px);
+  background-color: var(--papel); box-shadow: 0 18px 40px -20px #000d; }
+.qq-ficha::placeholder { color: #8a8170; font-style: italic; }
+.qq-campo { width: 100%; background: transparent; border: 0; border-bottom: 2px solid var(--fio); color: var(--giz); padding: 8px 2px; font: 400 30px var(--f-texto), serif; outline: 0; border-radius: 0; }
+.qq-campo:focus { border-bottom-color: var(--turq); }
+.qq-campo.codigo { font: 500 40px var(--f-mono), monospace; letter-spacing: .4em; }
+.qq-legenda { font: 500 12px var(--f-mono), monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--ambar); display: block; margin: 22px 0 4px; }
+
+/* botões: placa reta, letra de máquina, seta */
+.qq-btn { display: flex; width: 100%; justify-content: space-between; align-items: center; gap: 16px; margin-top: 22px; padding: 18px 22px; border: 0; border-radius: 0; cursor: pointer;
+  background: var(--turq); color: #04201c; font: 600 15px var(--f-mono), monospace; letter-spacing: .14em; text-transform: uppercase; }
+.qq-btn::after { content: "→"; font-size: 22px; letter-spacing: 0; }
+.qq-btn:disabled { background: transparent; color: var(--musgo); outline: 1px dashed var(--fio); cursor: default; }
+.qq-btn:not(:disabled):hover { background: var(--giz); }
+.qq-btn.contorno { background: transparent; color: var(--giz); outline: 1px solid var(--fio); }
+.qq-btn:focus-visible, .qq-opcao:focus-visible, .qq-nome:focus-visible { outline: 3px solid var(--ambar); outline-offset: 3px; }
+
+/* sugestões de nome */
+.qq-nomes { display: flex; flex-direction: column; border-top: 1px solid var(--fio); margin-top: 6px; }
+.qq-nome { text-align: left; background: transparent; border: 0; border-bottom: 1px solid var(--fio); color: var(--giz); padding: 14px 4px; font: 400 24px var(--f-texto), serif; cursor: pointer; display: flex; justify-content: space-between; }
+.qq-nome small { font: 500 11px var(--f-mono), monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--musgo); align-self: center; }
+.qq-nome.marcado { color: var(--turq); }
+.qq-nome:disabled { color: #4a5a58; cursor: default; }
+
+/* as opções para adivinhar: pequenos quadros numerados */
+.qq-opcoes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 22px; }
+.qq-opcoes.quatro { grid-template-columns: repeat(2, 1fr); }
+.qq-opcao { position: relative; background: var(--papel); padding: 7px; border: 0; border-radius: 0; cursor: pointer; display: flex; flex-direction: column; }
+.qq-opcao img { width: 100%; height: 150px; object-fit: contain; background: #e9e1cf; }
+.qq-opcao.retrato img { height: 200px; }
+.qq-opcao span { font: 600 11px var(--f-mono), monospace; letter-spacing: .12em; color: #5b5346; margin-top: 5px; text-align: left; }
+.qq-opcao.escolhida { outline: 4px solid var(--ambar); outline-offset: 4px; }
+
+/* a descrição do colega, citada como texto de parede */
+.qq-citacao { margin: 22px 0 0; padding: 4px 0 4px 22px; border-left: 3px solid var(--turq); font: italic 400 26px/1.35 var(--f-texto), serif; color: var(--giz); white-space: pre-wrap; }
+.qq-citacao-tv { font-size: 40px; }
+
+/* o Arboria fala na margem, à mão */
+.qq-arboria { margin-top: 26px; padding: 6px 0 6px 22px; border-left: 3px solid var(--ambar); }
+.qq-arboria-nome { font: 700 32px/1 var(--f-mao), cursive; color: var(--ambar); margin: 0 0 8px; }
+.qq-fala { font: italic 400 22px/1.38 var(--f-texto), serif; margin: 0 0 12px; }
+.qq-fala-aluno { font: 400 18px/1.4 var(--f-texto), serif; color: var(--turq); margin: 0 0 12px 34px; padding-left: 12px; border-left: 1px solid var(--turq); }
+.qq-resp { display: flex; gap: 0; margin-top: 6px; }
+.qq-resp input { flex: 1; background: #0e1716; border: 1px solid var(--fio); border-right: 0; color: var(--giz); padding: 12px 14px; font: 400 18px var(--f-texto), serif; outline: 0; border-radius: 0; }
+.qq-resp input:focus { border-color: var(--ambar); }
+.qq-resp button { background: var(--ambar); color: #2a1d05; border: 0; padding: 0 18px; font: 600 13px var(--f-mono), monospace; letter-spacing: .12em; text-transform: uppercase; cursor: pointer; border-radius: 0; }
+.qq-resp button:disabled { opacity: .35; cursor: default; }
+.qq-minhas { margin-top: 22px; }
+.qq-minhas q { display: inline-block; margin: 6px 8px 0 0; padding: 4px 10px; border: 1px solid var(--turq); color: var(--turq); font: italic 400 19px var(--f-texto), serif; quotes: "“" "”"; }
+
+/* versões guardadas */
+.qq-versoes { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--fio); }
+.qq-versoes li { display: grid; grid-template-columns: 74px 1fr; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--fio); }
+.qq-versoes .n { font: 600 12px var(--f-mono), monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--ambar); padding-top: 4px; }
+.qq-versoes .n.ok { color: var(--turq); } .qq-versoes .n.x { color: var(--erro); }
+.qq-versoes p { margin: 0; font-size: 19px; }
+
+.qq-aviso { margin-top: 14px; padding: 12px 16px; border: 1px solid var(--erro); color: var(--erro); font-size: 17px; }
+.qq-espera { display: flex; align-items: center; gap: 12px; margin-top: 26px; font: 500 13px var(--f-mono), monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--turq); }
+.qq-espera::before { content: ""; width: 10px; height: 10px; background: var(--turq); animation: qq-pisca 1.2s infinite; }
+@keyframes qq-pisca { 50% { opacity: .2; } }
+.qq-par { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 22px; align-items: start; }
+.qq-par .qq-moldura { width: 100%; }
+.qq-par .qq-moldura img { width: 100%; max-height: 260px; }
+
+/* TV */
+.qq-placar { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); border-top: 1px solid var(--fio); border-bottom: 1px solid var(--fio); margin-top: 40px; }
+.qq-placar div { padding: 26px 24px; border-right: 1px solid var(--fio); }
+.qq-placar div:last-child { border-right: 0; }
+.qq-placar b { display: block; font: 400 104px/1 var(--f-display), serif; }
+.qq-placar span { font: 500 13px var(--f-mono), monospace; letter-spacing: .16em; text-transform: uppercase; color: var(--ambar); }
+.qq-tv-grade { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px 32px; margin-top: 34px; }
+.qq-tv-grade.oito { grid-template-columns: repeat(4, 1fr); }
+.qq-tv-grade .qq-moldura { width: 100%; padding: 10px; }
+.qq-tv-grade .qq-moldura img { width: 100%; height: 190px; object-fit: contain; background: #e9e1cf; }
+.qq-tv-grade.oito .qq-moldura img { height: 150px; }
+.qq-conta { display: flex; height: 8px; margin-top: 10px; background: #e2d9c6; }
+.qq-conta i { display: block; }
+.qq-numeros { display: flex; gap: 14px; font: 600 13px var(--f-mono), monospace; letter-spacing: .06em; color: var(--tinta); margin-top: 7px; }
+.qq-numeros .ok { color: #0f766e; } .qq-numeros .dep { color: #a16207; } .qq-numeros .x { color: #b4432f; }
+.qq-chips { display: flex; flex-wrap: wrap; gap: 10px 22px; margin-top: 18px; }
+.qq-chips span { font: 400 30px var(--f-texto), serif; border-bottom: 1px solid var(--fio); padding-bottom: 2px; }
+.qq-barra-prof { position: fixed; right: 18px; bottom: 14px; display: flex; gap: 2px; opacity: .25; transition: opacity .2s; }
+.qq-barra-prof:hover { opacity: 1; }
+.qq-barra-prof button { background: #0e1716; border: 1px solid var(--fio); color: var(--musgo); padding: 7px 11px; font: 500 11px var(--f-mono), monospace; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; border-radius: 0; }
+.qq-barra-prof button.on { background: var(--ambar); color: #2a1d05; border-color: var(--ambar); }
+.qq-turmas { display: flex; flex-wrap: wrap; gap: 0; margin-top: 18px; border: 1px solid var(--fio); width: fit-content; }
+.qq-turmas button { background: transparent; color: var(--giz); border: 0; border-right: 1px solid var(--fio); padding: 22px 34px; font: 400 44px var(--f-display), serif; cursor: pointer; border-radius: 0; }
+.qq-turmas button:last-child { border-right: 0; }
+.qq-turmas button.on { background: var(--turq); color: #04201c; }
+.qq-qr { background: var(--papel); padding: 18px; width: 420px; }
+.qq-codigo { font: 500 120px/1 var(--f-mono), monospace; letter-spacing: .12em; color: var(--ambar); }
+
+/* celebração */
+.qq-celebra { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; margin-top: 36px; align-items: start; }
+.qq-celebra article { display: flex; flex-direction: column; gap: 16px; }
+.qq-celebra .qq-moldura img { width: 100%; height: 200px; object-fit: contain; background: #e9e1cf; }
+.qq-celebra .quem { font: 700 58px/1 var(--f-mao), cursive; color: var(--ambar); }
+.qq-celebra .texto { font: italic 400 25px/1.35 var(--f-texto), serif; }
+.qq-celebra .motivo { font: 500 14px/1.45 var(--f-mono), monospace; letter-spacing: .04em; color: var(--turq); border-top: 1px solid var(--fio); padding-top: 12px; }
+.qq-folhas { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+.qq-folhas i { position: absolute; top: -40px; width: 18px; height: 10px; border-radius: 0 100% 0 100%; background: var(--turq); opacity: .7; animation: qq-cai linear infinite; }
+.qq-folhas i:nth-child(3n) { background: var(--ambar); } .qq-folhas i:nth-child(4n) { background: #8fd18c; }
+@keyframes qq-cai { to { transform: translate3d(var(--x, 40px), 110vh, 0) rotate(540deg); } }
+@media (prefers-reduced-motion: reduce) { .qq-folhas { display: none; } .qq-espera::before { animation: none; } }
+@media (max-width: 640px) {
+  .qq-opcoes { grid-template-columns: repeat(2, 1fr); } .qq-opcao img { height: 120px; } .qq-opcao.retrato img { height: 170px; }
+  .qq-par { grid-template-columns: 1fr; } .qq-versoes li { grid-template-columns: 1fr; gap: 4px; }
+}
