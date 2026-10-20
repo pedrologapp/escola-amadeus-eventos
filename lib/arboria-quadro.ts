@@ -74,8 +74,8 @@ export const quadrosDaRodada = (rodada: Rodada, turma: string): Quadro[] =>
 export const TODOS: Record<string, Quadro> = Object.fromEntries([...RODADA1, ...MONET, ...HAMMERSHOI, ...RETRATOS].map((x) => [x.id, x]));
 export const imagem = (id: string) => `/arboria/quadros/${id}.jpg`;
 
-/** Versões por descrição nas rodadas 2 e 3 (a 1ª e mais duas reescritas). */
-export const MAX_VERSOES = 3;
+/** Versões por descrição nas rodadas 2 e 3: a 1ª e uma reescrita (Pedro, 20/10: só até a 2ª tentativa). */
+export const MAX_VERSOES = 2;
 
 /** Rodada 3: as cores são iguais nos 8 retratos, então não valem (obriga a descrever a expressão). */
 const CORES = /(^|[^a-zà-ú])(amarel|azul|azuis|verde|vermelh|roxo|roxa|rosa|laranja|marrom|marrons|pret[oa]|branc|cinza|bege|dourad|lil[aá]s|castanh|escur|clar[oa])/i;
