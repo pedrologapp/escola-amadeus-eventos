@@ -218,18 +218,32 @@ export async function entrarSemLista(codigo: string, nomeDigitado: string, mostr
 
 /** Pega para este aluno a descrição mais antiga que ainda ninguém tentou (se ele estiver livre). */
 async function pegarTarefa(s: Sala, aluno: string, rodada: Rodada, x: Awaited<ReturnType<typeof tudo>>) {
-  const minhas = new Set(x.palps.filter((p) => p.aluno === aluno).map((p) => p.descricao));
-  // a reescrita vai para um colega novo; numa sala muito pequena (teste), pode voltar para o mesmo
-  const jaTenteiDe = new Set(x.alunos.length < 4 ? [] : x.descs.filter((d) => minhas.has(d.id)).map((d) => `${d.aluno}:${d.rodada}`));
   const comPalpite = new Set(x.palps.map((p) => p.descricao));
   const ultimaDe = new Map<string, Desc>();
   for (const d of x.descs.filter((d) => d.rodada === rodada)) {
     const u = ultimaDe.get(d.aluno);
     if (!u || d.versao > u.versao) ultimaDe.set(d.aluno, d);
   }
-  const livres = [...ultimaDe.values()]
-    .filter((d) => d.aluno !== aluno && !comPalpite.has(d.id) && !jaTenteiDe.has(`${d.aluno}:${d.rodada}`))
-    .sort((a, b) => a.criado_em.localeCompare(b.criado_em));
+  // o que este aluno pode receber: nunca a própria; a reescrita vai para um colega novo
+  // (numa sala muito pequena, de teste, pode voltar para o mesmo)
+  const livresPara = (a: string) => {
+    const minhas = new Set(x.palps.filter((p) => p.aluno === a).map((p) => p.descricao));
+    const jaTenteiDe = new Set(x.alunos.length < 4 ? [] : x.descs.filter((d) => minhas.has(d.id)).map((d) => `${d.aluno}:${d.rodada}`));
+    return [...ultimaDe.values()]
+      .filter((d) => d.aluno !== a && !comPalpite.has(d.id) && !jaTenteiDe.has(`${d.aluno}:${d.rodada}`))
+      .sort((p, q) => p.criado_em.localeCompare(q.criado_em));
+  };
+  const livres = livresPara(aluno);
+  if (!livres.length) return null;
+  // justiça: cada descrição vai para uma pessoa só. Quem já adivinhou mais não pega a próxima enquanto
+  // houver colega esperando que adivinhou menos e que poderia recebê-la (senão os rápidos levam tudo).
+  const daRodada = new Set(x.descs.filter((d) => d.rodada === rodada).map((d) => d.id));
+  const nPalps = (a: string) => x.palps.filter((p) => p.aluno === a && daRodada.has(p.descricao)).length;
+  const comAberta = new Set(x.palps.filter((p) => p.escolha === null && daRodada.has(p.descricao)).map((p) => p.aluno));
+  const meus = nPalps(aluno);
+  const naFrente = [...new Set(x.descs.filter((d) => d.rodada === rodada).map((d) => d.aluno))]
+    .filter((a) => a !== aluno && !comAberta.has(a) && nPalps(a) < meus && livresPara(a).length > 0).length;
+  if (livres.length <= naFrente) return null;
   for (const d of livres.slice(0, 4)) {
     const opcoes = embaralhar(quadrosDaRodada(rodada, s.turma).map((q) => q.id));
     const { data, error } = await db().from("arboria_quadro_palpites").insert({ sala: s.codigo, descricao: d.id, aluno, opcoes }).select("id, descricao, aluno, opcoes, escolha, acertou, conversa").single();
