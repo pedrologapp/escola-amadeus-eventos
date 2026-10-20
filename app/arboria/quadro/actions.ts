@@ -138,13 +138,16 @@ export async function estadoTv(codigo: string, chave: string) {
  * A celebração do final (Pedro, 20/10): a IA lê as descrições que fizeram o colega acertar e escolhe as 3 melhores
  * de cada rodada, com uma frase curta dizendo o que cada uma fez bem. Fica guardada na sala (não escolhe de novo).
  */
-export async function celebrar(codigo: string, chave: string) {
+export async function celebrar(codigo: string, chave: string, rodada?: Rodada) {
   const s = await salaDoProfessor(codigo, chave);
-  if (s.melhores) return { ok: true as const };
+  // a cada rodada encerrada (só aquela) ou no final (as que faltarem); a rodada já escolhida não muda
+  const ja = (s.melhores ?? []) as Melhor[];
+  const faltam = (rodada ? [rodada] : ([1, 2, 3] as Rodada[])).filter((r) => !ja.some((m) => m.rodada === r));
+  if (!faltam.length) return { ok: true as const };
   const x = await tudo(s.codigo);
   const escolhidos: Melhor[] = [];
   const cliente = process.env.ANTHROPIC_API_KEY ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) : null;
-  for (const r of [1, 2, 3] as Rodada[]) {
+  for (const r of faltam) {
     const boas = correntes(r, x).map((c) => ({ c, v: c.versoes.find((v) => v.acertou) })).filter((b) => b.v);
     if (!boas.length) continue;
     let ids = boas.slice(0, 3).map((b) => ({ id: b.v!.id, motivo: "O colega achou o quadro só com essas palavras." }));
@@ -164,7 +167,10 @@ export async function celebrar(codigo: string, chave: string) {
     }
     escolhidos.push(...ids.map((i) => ({ rodada: r, descricao: i.id, motivo: i.motivo })));
   }
-  await db().from("arboria_quadro_salas").update({ melhores: escolhidos }).eq("codigo", s.codigo);
+  if (!escolhidos.length) return { ok: true as const };
+  const { data: agora } = await db().from("arboria_quadro_salas").select("melhores").eq("codigo", s.codigo).single();
+  const atuais = ((agora?.melhores ?? []) as Melhor[]).filter((m) => !escolhidos.some((e) => e.rodada === m.rodada));
+  await db().from("arboria_quadro_salas").update({ melhores: [...atuais, ...escolhidos] }).eq("codigo", s.codigo);
   return { ok: true as const };
 }
 
@@ -296,11 +302,43 @@ export async function enviarDescricao(codigo: string, aluno: string, texto: stri
     const { data: p } = await db().from("arboria_quadro_palpites").select("acertou").eq("descricao", ultima.id).maybeSingle();
     if (p?.acertou !== false || ultima.versao >= MAX_VERSOES) return { ok: false as const, erro: "Espere o colega responder." };
   }
+  const quadro = quadroSecreto(aluno, rodada, s.turma);
+  const barrado = await descricaoIncoerente(quadro, rodada, t);
+  if (barrado) return { ok: false as const, erro: barrado };
   const { error } = await db().from("arboria_quadro_descricoes").insert({
-    sala: s.codigo, aluno, rodada, versao: (ultima?.versao ?? 0) + 1, quadro: quadroSecreto(aluno, rodada, s.turma), texto: t,
+    sala: s.codigo, aluno, rodada, versao: (ultima?.versao ?? 0) + 1, quadro, texto: t,
   });
   if (error) return { ok: false as const, erro: "Não consegui mandar. Tente de novo." };
   return { ok: true as const };
+}
+
+/**
+ * Antes de mandar, o Arboria confere se a descrição é de verdade sobre o quadro secreto (Pedro, 20/10: aluno
+ * mandando qualquer coisa). Barra brincadeira, texto fora do assunto, coisa que não está no quadro e texto vago
+ * demais. Devolve uma pergunta do guia (nunca escreve pelo aluno) ou null se pode mandar. Sem IA, deixa passar.
+ */
+async function descricaoIncoerente(quadro: string, rodada: Rodada, texto: string): Promise<string | null> {
+  if (!process.env.ANTHROPIC_API_KEY) return null;
+  try {
+    const cliente = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 20000, maxRetries: 1 });
+    const resp = await cliente.messages.create({
+      model: "claude-haiku-5-5", max_tokens: 400, thinking: { type: "disabled" },
+      system: `Você é o Arboria, guia de uma aula de descrição de quadros para alunos de 11 a 15 anos. O aluno vê o quadro da imagem e escreve uma descrição para um colega achar esse quadro entre ${rodada === 1 ? "4 quadros bem diferentes" : rodada === 2 ? "8 quadros parecidos, do mesmo pintor" : "8 retratos da mesma moça, com as mesmas cores, roupa e fundo; só a expressão muda"}.
+Decida se a descrição pode ser enviada. BARRE se: é brincadeira, xingamento ou fora do assunto; descreve coisas que NÃO estão neste quadro; é só o nome do quadro ou do pintor; é vaga demais para ajudar (ex.: "um quadro bonito com umas coisas"); são palavras soltas sem sentido. DEIXE PASSAR uma descrição sincera e coerente com o quadro, mesmo simples ou com erros de português. Não exija perfeição.
+Se barrar, escreva UMA pergunta curta (até 25 palavras) que faça o aluno olhar de novo para o quadro, sem dizer o que escrever e sem citar nenhum elemento, cor ou lugar do quadro.
+Responda SÓ um JSON: {"ok": true} ou {"ok": false, "pergunta": "..."}.`,
+      messages: [{ role: "user", content: [
+        { type: "image", source: await fonteDaImagem(quadro) } as Anthropic.ImageBlockParam,
+        { type: "text", text: `Descrição do aluno:\n${texto}` },
+      ] }],
+    });
+    const bruto = resp.content.map((p) => (p.type === "text" ? p.text : "")).join("");
+    const j = JSON.parse(bruto.slice(bruto.indexOf("{"), bruto.lastIndexOf("}") + 1)) as { ok: boolean; pergunta?: string };
+    if (j.ok !== false) return null;
+    return `O Arboria ainda não deixou mandar: ${limpar(j.pergunta || "Olhe de novo para o seu quadro: o que o colega precisa saber para achá-lo?", 220)}`;
+  } catch {
+    return null;
+  }
 }
 
 export async function responder(codigo: string, aluno: string, palpite: string, escolha: string) {

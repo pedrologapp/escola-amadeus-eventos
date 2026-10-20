@@ -66,7 +66,7 @@ export function Tv() {
     <Tela sala={est.sala.codigo} meta={meta}>
       {f === "entrada" && <Entrada est={est} comecar={() => fase("r1")} />}
       {n && !f.endsWith("f") && <Andamento r={est.rodadas[n - 1]} alunos={est.alunos.length} encerrar={() => fase(`r${n}f` as Fase)} />}
-      {n && f.endsWith("f") && <Encerrada r={est.rodadas[n - 1]} turma={est.sala.turma} proxima={() => fase(n < 3 ? (`r${n + 1}` as Fase) : "final")} />}
+      {n && f.endsWith("f") && <Encerrada key={f} est={est} sala={sala} atualizar={atualizar} r={est.rodadas[n - 1]} turma={est.sala.turma} proxima={() => fase(n < 3 ? (`r${n + 1}` as Fase) : "final")} />}
       {f === "final" && <Celebracao est={est} sala={sala} atualizar={atualizar} />}
       {erro && <p className="qq-aviso" style={{ position: "fixed", left: 16, top: 16 }}>{erro}</p>}
       <nav className="qq-barra-prof" aria-label="Fases da aula">
@@ -150,8 +150,19 @@ function Andamento({ r, alunos, encerrar }: { r: Rodada; alunos: number; encerra
 }
 
 /** Rodada encerrada: agora aparecem os quadros, cada um com quantos o descreveram e como foi a 1ª versão. */
-function Encerrada({ r, turma, proxima }: { r: Rodada; turma: string; proxima: () => void }) {
+function Encerrada({ est, sala, atualizar, r, turma, proxima }: { est: Estado; sala: Sala; atualizar: () => Promise<void>; r: Rodada; turma: string; proxima: () => void }) {
   const oito = r.quadros.length > 4;
+  const [vendo, setVendo] = useState(false);
+  const seguir = <button className="qq-btn" onClick={proxima}>{r.rodada < 3 ? `Começar a rodada ${r.rodada + 1}` : "Celebrar as melhores descrições"}</button>;
+  if (vendo) return (
+    <div>
+      <Melhores est={est} sala={sala} atualizar={atualizar} rodada={r.rodada as 1 | 2 | 3} />
+      <div style={{ display: "flex", gap: 16, maxWidth: 1000 }}>
+        <button className="qq-btn contorno" onClick={() => setVendo(false)}>Voltar aos quadros</button>
+        {r.rodada < 3 && seguir}
+      </div>
+    </div>
+  );
   return (
     <div>
       <p className="qq-rot" style={{ fontSize: 16 }}>Rodada {r.rodada} · encerrada · {turma}</p>
@@ -178,32 +189,36 @@ function Encerrada({ r, turma, proxima }: { r: Rodada; turma: string; proxima: (
           );
         })}
       </div>
-      <div style={{ maxWidth: 560 }}><button className="qq-btn" onClick={proxima}>{r.rodada < 3 ? `Começar a rodada ${r.rodada + 1}` : "Celebrar as melhores descrições"}</button></div>
+      <div style={{ display: "flex", gap: 16, maxWidth: 1000 }}>
+        {r.rodada < 3 ? <button className="qq-btn" onClick={() => setVendo(true)}>Ver as 3 melhores da rodada</button> : null}
+        {seguir}
+      </div>
     </div>
   );
 }
 
-/** A celebração: a IA escolhe as 3 melhores de cada rodada; a TV mostra uma rodada por vez, com o nome de quem escreveu. */
-function Celebracao({ est, sala, atualizar }: { est: Estado; sala: Sala; atualizar: () => Promise<void> }) {
-  const [rodada, setRodada] = useState(1);
-  const [lendo, setLendo] = useState(false);
+/** As 3 melhores de uma rodada, logo depois de encerrá-la (a IA escolhe na primeira vez; depois fica guardado). */
+function Melhores({ est, sala, atualizar, rodada }: { est: Estado; sala: Sala; atualizar: () => Promise<void>; rodada: 1 | 2 | 3 }) {
+  const [pronto, setPronto] = useState(false);
   useEffect(() => {
-    if (est.sala.celebrado || lendo) return;
-    setLendo(true);
-    celebrar(sala.codigo, sala.chave).catch(() => {}).finally(() => { setLendo(false); atualizar(); });
-  }, [est.sala.celebrado, lendo, sala, atualizar]);
-
-  if (!est.sala.celebrado) return (
+    let vivo = true;
+    celebrar(sala.codigo, sala.chave, rodada).catch(() => {}).finally(() => { atualizar().finally(() => { if (vivo) setPronto(true); }); });
+    return () => { vivo = false; };
+  }, [sala, rodada, atualizar]);
+  if (!pronto) return (
     <div>
-      <p className="qq-rot" style={{ fontSize: 16 }}>Fim das rodadas</p>
-      <h1 className="qq-tit qq-tit-tv">O Arboria está lendo <em>todas as descrições</em>.</h1>
-      <p className="qq-espera" style={{ fontSize: 18 }}>Escolhendo três de cada rodada</p>
+      <p className="qq-rot" style={{ fontSize: 16 }}>Rodada {rodada} · encerrada</p>
+      <h1 className="qq-tit qq-tit-tv">O Arboria está lendo <em>as descrições</em>.</h1>
+      <p className="qq-espera" style={{ fontSize: 18 }}>Escolhendo três</p>
     </div>
   );
+  return <TresMelhores est={est} rodada={rodada} />;
+}
+
+function TresMelhores({ est, rodada }: { est: Estado; rodada: number }) {
   const destas = est.melhores.filter((m) => m.rodada === rodada);
-  const rodadasComMelhores = [1, 2, 3].filter((r) => est.melhores.some((m) => m.rodada === r));
   return (
-    <div>
+    <>
       <div className="qq-folhas" aria-hidden="true">
         {Array.from({ length: 22 }, (_, i) => <i key={i} style={{ left: `${(i * 4.7) % 100}%`, animationDuration: `${7 + (i % 5)}s`, animationDelay: `${(i % 7) * 0.9}s`, ["--x" as string]: `${(i % 2 ? 1 : -1) * (30 + (i % 4) * 25)}px` }} />)}
       </div>
@@ -225,6 +240,31 @@ function Celebracao({ est, sala, atualizar }: { est: Estado; sala: Sala; atualiz
           ))}
         </div>
       ) : <p className="qq-txt qq-txt-tv">Nesta rodada ninguém chegou ao quadro certo.</p>}
+    </>
+  );
+}
+
+/** A celebração: a IA escolhe as 3 melhores de cada rodada; a TV mostra uma rodada por vez, com o nome de quem escreveu. */
+function Celebracao({ est, sala, atualizar }: { est: Estado; sala: Sala; atualizar: () => Promise<void> }) {
+  const [rodada, setRodada] = useState(1);
+  const [pronto, setPronto] = useState(false);
+  useEffect(() => {
+    let vivo = true;
+    celebrar(sala.codigo, sala.chave).catch(() => {}).finally(() => { atualizar().finally(() => { if (vivo) setPronto(true); }); });
+    return () => { vivo = false; };
+  }, [sala, atualizar]);
+
+  if (!pronto) return (
+    <div>
+      <p className="qq-rot" style={{ fontSize: 16 }}>Fim das rodadas</p>
+      <h1 className="qq-tit qq-tit-tv">O Arboria está lendo <em>todas as descrições</em>.</h1>
+      <p className="qq-espera" style={{ fontSize: 18 }}>Escolhendo três de cada rodada</p>
+    </div>
+  );
+  const rodadasComMelhores = [1, 2, 3].filter((r) => est.melhores.some((m) => m.rodada === r));
+  return (
+    <div>
+      <TresMelhores est={est} rodada={rodada} />
       <div style={{ display: "flex", gap: 16, maxWidth: 900 }}>
         {rodadasComMelhores.filter((r) => r !== rodada).map((r) => (
           <button key={r} className="qq-btn contorno" onClick={() => setRodada(r)}>Rodada {r}</button>
