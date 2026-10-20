@@ -152,14 +152,18 @@ function Andamento({ r, alunos, encerrar }: { r: Rodada; alunos: number; encerra
 /** Rodada encerrada: agora aparecem os quadros, cada um com quantos o descreveram e como foi a 1ª versão. */
 function Encerrada({ est, sala, atualizar, r, turma, proxima }: { est: Estado; sala: Sala; atualizar: () => Promise<void>; r: Rodada; turma: string; proxima: () => void }) {
   const oito = r.quadros.length > 4;
-  const [vendo, setVendo] = useState(false);
+  const [vendo, setVendo] = useState<null | "melhores" | "ranking">(null);
   const seguir = <button className="qq-btn" onClick={proxima}>{r.rodada < 3 ? `Começar a rodada ${r.rodada + 1}` : "Celebrar as melhores descrições"}</button>;
   if (vendo) return (
     <div>
-      <Melhores est={est} sala={sala} atualizar={atualizar} rodada={r.rodada as 1 | 2 | 3} />
-      <div style={{ display: "flex", gap: 16, maxWidth: 1000 }}>
-        <button className="qq-btn contorno" onClick={() => setVendo(false)}>Voltar aos quadros</button>
-        {r.rodada < 3 && seguir}
+      {vendo === "melhores"
+        ? <Melhores est={est} sala={sala} atualizar={atualizar} rodada={r.rodada as 1 | 2 | 3} />
+        : <Ranking titulo={<>Os detetives da <em>rodada {r.rodada}</em></>} lista={est.ranking.porRodada[r.rodada - 1]} />}
+      <div style={{ display: "flex", gap: 16, maxWidth: 1200 }}>
+        <button className="qq-btn contorno" onClick={() => setVendo(null)}>Voltar aos quadros</button>
+        {vendo === "ranking" && r.rodada < 3 && <button className="qq-btn contorno" onClick={() => setVendo("melhores")}>As 3 melhores</button>}
+        {vendo === "melhores" && <button className="qq-btn contorno" onClick={() => setVendo("ranking")}>Ranking da rodada</button>}
+        {seguir}
       </div>
     </div>
   );
@@ -190,7 +194,8 @@ function Encerrada({ est, sala, atualizar, r, turma, proxima }: { est: Estado; s
         })}
       </div>
       <div style={{ display: "flex", gap: 16, maxWidth: 1000 }}>
-        {r.rodada < 3 ? <button className="qq-btn" onClick={() => setVendo(true)}>Ver as 3 melhores da rodada</button> : null}
+        <button className="qq-btn" onClick={() => setVendo("ranking")}>Ranking da rodada</button>
+        {r.rodada < 3 ? <button className="qq-btn" onClick={() => setVendo("melhores")}>As 3 melhores</button> : null}
         {seguir}
       </div>
     </div>
@@ -264,12 +269,45 @@ function Celebracao({ est, sala, atualizar }: { est: Estado; sala: Sala; atualiz
   const rodadasComMelhores = [1, 2, 3].filter((r) => est.melhores.some((m) => m.rodada === r));
   return (
     <div>
-      <TresMelhores est={est} rodada={rodada} />
-      <div style={{ display: "flex", gap: 16, maxWidth: 900 }}>
+      {rodada === 0
+        ? <Ranking titulo={<>Os grandes <em>detetives</em> da aula</>} lista={est.ranking.geral} />
+        : <TresMelhores est={est} rodada={rodada} />}
+      <div style={{ display: "flex", gap: 16, maxWidth: 1200 }}>
         {rodadasComMelhores.filter((r) => r !== rodada).map((r) => (
           <button key={r} className="qq-btn contorno" onClick={() => setRodada(r)}>Rodada {r}</button>
         ))}
+        {rodada !== 0 && <button className="qq-btn" onClick={() => setRodada(0)}>Ranking geral</button>}
       </div>
     </div>
+  );
+}
+
+/** O ranking dos detetives: pódio com os três que mais acertaram adivinhando, e o 4º e o 5º embaixo. */
+function Ranking({ titulo, lista }: { titulo: React.ReactNode; lista: Estado["ranking"]["geral"] }) {
+  const podio = [lista[1], lista[0], lista[2]]; // 2º, 1º, 3º: o primeiro no meio, mais alto
+  const lugar = [2, 1, 3];
+  return (
+    <>
+      <p className="qq-rot" style={{ fontSize: 16 }}>Quem mais acertou adivinhando</p>
+      <h1 className="qq-tit qq-tit-tv" style={{ fontSize: 80 }}>{titulo}</h1>
+      {lista.length ? (
+        <>
+          <div className="qq-podio">
+            {podio.map((t, i) => t ? (
+              <div key={i} className={`degrau l${lugar[i]}`}>
+                <p className="quem">{t.nome ?? "Um colega"}</p>
+                <p className="conta">{t.acertos} {t.acertos === 1 ? "acerto" : "acertos"} <small>em {t.tentativas}</small></p>
+                <div className="bloco"><b>{lugar[i]}º</b></div>
+              </div>
+            ) : <div key={i} />)}
+          </div>
+          {lista.length > 3 && (
+            <ol className="qq-resto" start={4}>
+              {lista.slice(3).map((t, i) => <li key={i}><span>{t.nome ?? "Um colega"}</span><span>{t.acertos} acertos em {t.tentativas}</span></li>)}
+            </ol>
+          )}
+        </>
+      ) : <p className="qq-txt qq-txt-tv">Ninguém acertou ainda.</p>}
+    </>
   );
 }

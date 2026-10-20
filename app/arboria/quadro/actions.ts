@@ -127,7 +127,17 @@ export async function estadoTv(codigo: string, chave: string) {
     const v = c?.versoes.find((v) => v.id === m.descricao);
     return c && v ? { rodada: m.rodada, motivo: m.motivo, texto: v.texto, versao: v.versao, quadro: c.quadro, nome: c.mostrarNome ? c.nome : null } : null;
   }).filter((m) => m !== null);
+  // o ranking dos "detetives" (Pedro, 20/10: mostrar competitividade): quem mais acertou adivinhando,
+  // contando as extras; empate desempata pelo aproveitamento. Quem não deixou mostrar o nome aparece sem nome.
+  const rodadaDe = new Map(x.descs.map((d) => [d.id, d.rodada]));
+  const ranking = (r?: number) => x.alunos.map((a) => {
+    const ps = x.palps.filter((p) => p.aluno === a.id && p.acertou !== null && (!r || rodadaDe.get(p.descricao) === r));
+    return { nome: a.mostrar_nome ? a.nome : null, acertos: ps.filter((p) => p.acertou).length, tentativas: ps.length };
+  }).filter((t) => t.acertos > 0)
+    .sort((p, q) => q.acertos - p.acertos || q.acertos / q.tentativas - p.acertos / p.tentativas)
+    .slice(0, 5);
   return {
+    ranking: { geral: ranking(), porRodada: [ranking(1), ranking(2), ranking(3)] },
     sala: { codigo: s.codigo, turma: s.turma, fase: s.fase, celebrado: !!s.melhores },
     alunos: x.alunos.map((a) => ({ id: a.id, nome: a.nome })),
     rodadas: porRodada, melhores,

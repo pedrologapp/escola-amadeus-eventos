@@ -154,3 +154,20 @@
 .qq-contador { font: 500 12px var(--f-mono), monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--ambar); margin: 8px 0 0; }
 .qq-contador.ok { color: var(--turq); }
 .qq-fala.antiga { opacity: .5; font-size: .9em; }
+
+/* ranking dos detetives: pódio */
+.qq-podio { display: grid; grid-template-columns: repeat(3, 1fr); align-items: end; gap: 28px; margin: 40px 0 28px; max-width: 1100px; }
+.qq-podio .degrau { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.qq-podio .quem { font: 400 54px var(--f-mao), cursive; color: var(--giz); margin: 0; line-height: 1.05; }
+.qq-podio .conta { font: 500 15px var(--f-mono), monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--ambar); margin: 8px 0 14px; }
+.qq-podio .conta small { color: #8fa3a0; font-size: 13px; }
+.qq-podio .bloco { width: 100%; display: flex; align-items: flex-start; justify-content: center; padding-top: 18px; background: var(--papel); color: var(--tinta); }
+.qq-podio .bloco b { font: 400 64px var(--f-display), serif; }
+.qq-podio .l1 .bloco { height: 230px; background: var(--ambar); }
+.qq-podio .l1 .quem { font-size: 68px; }
+.qq-podio .l2 .bloco { height: 160px; }
+.qq-podio .l3 .bloco { height: 110px; opacity: .85; }
+.qq-resto { list-style: none; padding: 0; margin: 0 0 28px; max-width: 1100px; counter-reset: lugar 3; }
+.qq-resto li { counter-increment: lugar; display: flex; justify-content: space-between; gap: 20px; padding: 12px 4px; border-top: 1px solid var(--fio); font: 400 28px var(--f-texto), serif; color: var(--giz); }
+.qq-resto li span:first-child::before { content: counter(lugar) "º  "; font-family: var(--f-mono), monospace; color: #8fa3a0; font-size: 18px; }
+.qq-resto li span:last-child { font: 500 14px var(--f-mono), monospace; letter-spacing: .1em; text-transform: uppercase; color: #8fa3a0; align-self: center; }
