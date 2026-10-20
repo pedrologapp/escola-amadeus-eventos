@@ -6,7 +6,7 @@ import path from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MAX_OBSERVACOES, MAX_TROCAS, foraDaTarefa, limparFala, mensagensDaRevisao, mensagensDoGuia, sistemaDaRevisao, sistemaDoGuia, type Fala, type Revisao } from "@/lib/arboria-guia";
-import { MAX_VERSOES, MIN_LINHAS, PALAVRAS_POR_LINHA, TODOS, contarPalavras, TURMAS, corProibida, daTurma, imagem, quadroSecreto, quadrosDaRodada, type Fase, type Rodada } from "@/lib/arboria-quadro";
+import { MAX_VERSOES, MIN_PALAVRAS, TODOS, contarPalavras, TURMAS, corProibida, daTurma, imagem, quadroSecreto, quadrosDaRodada, type Fase, type Rodada } from "@/lib/arboria-quadro";
 
 /**
  * "Qual é o quadro?" (Arboria · Linguística, semana 3). A TV abre a sala e manda nas fases;
@@ -312,7 +312,7 @@ export async function estadoAluno(codigo: string, aluno: string) {
   const notas = ((rs ?? []) as Revisao[]).filter((n) => !n.aprovado && n.observacao).map((n) => ({ texto: n.texto, observacao: n.observacao as string }));
 
   return {
-    ok: true as const, fase: s.fase, nome: eu.nome, rodada, quadro, versoes, reescrever, notas, minLinhas: MIN_LINHAS[rodada],
+    ok: true as const, fase: s.fase, nome: eu.nome, rodada, quadro, versoes, reescrever, notas,
     tarefa: tarefa && descTarefa ? { id: tarefa.id, texto: descTarefa.texto, versao: descTarefa.versao, opcoes: tarefa.opcoes, extra: !!tarefa.extra } : null,
     adivinhei: { feitas: feitas.length, acertos: feitas.filter((p) => p.acertou).length },
   };
@@ -329,9 +329,7 @@ export async function enviarDescricao(codigo: string, aluno: string, texto: stri
   const rodada = s && rodadaDa(s.fase);
   if (!s || !rodada) return { ok: false as const, erro: "Espere o professor começar a rodada." };
   const t = String(texto ?? "").trim().slice(0, 900);
-  const minimo = MIN_LINHAS[rodada] * PALAVRAS_POR_LINHA;
-  const palavras = contarPalavras(t);
-  if (palavras < minimo) return { ok: false as const, erro: `Nesta rodada a descrição precisa de pelo menos ${MIN_LINHAS[rodada]} linhas (${minimo} palavras). Você está com ${palavras}.` };
+  if (contarPalavras(t) < MIN_PALAVRAS) return { ok: false as const, erro: "Escreva um pouco mais: o colega só vai ter as suas palavras." };
   const cor = rodada === 3 ? corProibida(t) : null;
   if (cor) return { ok: false as const, erro: `"${cor}…": nesta rodada não vale falar de cor. Nos 8 retratos o cabelo, a roupa, o fundo e as cores são iguais, então isso não ajuda o colega. O que muda é o rosto: o que ele está dizendo?` };
   const c = db();
@@ -366,7 +364,7 @@ async function revisar(quadro: string, rodada: Rodada, texto: string, antes: Rev
   try {
     const resp = await new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 30000, maxRetries: 1 }).messages.create({
       model: "claude-sonnet-5-5", max_tokens: 1500, system: sistemaDaRevisao(rodada, ultimaChance),
-      messages: mensagensDaRevisao(await fonteDaImagem(quadro), texto, antes) as Anthropic.MessageParam[],
+      messages: mensagensDaRevisao(await fonteDaImagem(quadro), texto, antes, TODOS[quadro]?.titulo) as Anthropic.MessageParam[],
     });
     const bruto = resp.content.map((p) => (p.type === "text" ? p.text : "")).join("");
     const j = JSON.parse(bruto.slice(bruto.indexOf("{"), bruto.lastIndexOf("}") + 1)) as { ok: boolean; observacao?: string };

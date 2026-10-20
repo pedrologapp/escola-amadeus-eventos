@@ -99,26 +99,28 @@ export function sistemaDaRevisao(rodada: number, ultimaChance: boolean): string 
           : "- gastar o texto com o que se repete em todos e não disser o que só o dele tem;",
         "- houver uma observação anterior que o aluno NÃO resolveu (ele precisa mudar o texto naquele ponto, com as palavras dele).",
         "APROVE quando o texto for sincero, coerente com o quadro e específico o bastante para um colega atento achar este quadro.",
-        "Não exija perfeição, texto longo, nem português correto. Uma coisa por vez.",
+        "Não julgue pelo tamanho: um texto curto pode ser válido se for específico, e um texto longo pode não servir se só tiver generalidades.",
+        "Não exija perfeição nem português correto. Uma coisa por vez.",
       ].join("\n"),
     "",
     "A OBSERVAÇÃO (nunca quebre):",
     "- É UMA pergunta curta (até 25 palavras), em português do Brasil, que parte de uma palavra ou trecho do próprio aluno.",
     "- Nunca escreva palavras ou frases para ele usar, nunca sugira adjetivos ou comparações prontas, nunca ofereça opções (\"isso ou aquilo\").",
     "- Nunca diga o que tem no quadro nem o que falta no texto. Faça-o olhar de novo e pensar.",
+    "- Na dúvida se um detalhe que o aluno viu está mesmo no quadro, dê o benefício da dúvida: só barre o que estiver claramente errado.",
     "- Se a observação anterior não foi resolvida, volte ao mesmo ponto com outra pergunta.",
     "",
     'Responda SÓ um JSON: {"ok": true} ou {"ok": false, "observacao": "..."}.',
   ].join("\n");
 }
 
-export function mensagensDaRevisao(imagem: { type: "base64"; media_type: "image/jpeg"; data: string } | { type: "url"; url: string }, texto: string, antes: Revisao[]) {
+export function mensagensDaRevisao(imagem: { type: "base64"; media_type: "image/jpeg"; data: string } | { type: "url"; url: string }, texto: string, antes: Revisao[], titulo?: string) {
   const historico = antes.filter((r) => !r.aprovado && r.observacao).map((r, i) => `Tentativa ${i + 1}:\n"${r.texto}"\nSua observação: ${r.observacao}`).join("\n\n");
   return [{
     role: "user" as const,
     content: [
       { type: "image" as const, source: imagem },
-      { type: "text" as const, text: `${historico ? `O que já aconteceu:\n${historico}\n\n` : ""}A descrição do aluno agora:\n"${texto}"` },
+      { type: "text" as const, text: `${titulo ? `(Só para você, nunca diga ao aluno: o nome deste quadro é "${titulo}". Use para conferir detalhes sutis, como a expressão de um rosto.)\n\n` : ""}${historico ? `O que já aconteceu:\n${historico}\n\n` : ""}A descrição do aluno agora:\n"${texto}"` },
     ],
   }];
 }

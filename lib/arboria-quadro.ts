@@ -77,9 +77,8 @@ export const imagem = (id: string) => `/arboria/quadros/${id}.jpg`;
 /** Versões por descrição nas rodadas 2 e 3: a 1ª e uma reescrita (Pedro, 20/10: só até a 2ª tentativa). */
 export const MAX_VERSOES = 2;
 
-/** Tamanho mínimo da descrição, crescendo a cada rodada (Pedro, 20/10: "está fácil demais"). Uma linha ≈ 10 palavras. */
-export const MIN_LINHAS: Record<Rodada, number> = { 1: 3, 2: 4, 3: 4 }; // R3 era 5: "5 linhas é muito" (Pedro, 20/10)
-export const PALAVRAS_POR_LINHA = 10;
+/** Sem mínimo de linhas (Pedro, 20/10): quem decide se a descrição é válida é o Arboria. Só um piso para não ir palavra solta. */
+export const MIN_PALAVRAS = 5;
 export const contarPalavras = (t: string) => (t.match(/[\p{L}\p{N}]+/gu) ?? []).length;
 
 /** Rodada 3: as cores são iguais nos 8 retratos, então não valem (obriga a descrever a expressão). */

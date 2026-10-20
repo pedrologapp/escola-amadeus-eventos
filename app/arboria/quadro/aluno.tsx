@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { MAX_VERSOES, PALAVRAS_POR_LINHA, TODOS, contarPalavras, imagem } from "@/lib/arboria-quadro";
+import { MAX_VERSOES, MIN_PALAVRAS, TODOS, contarPalavras, imagem } from "@/lib/arboria-quadro";
 import { MAX_TROCAS, type Fala } from "@/lib/arboria-guia";
 import { conversar, enviarDescricao, entrar, entrarSemLista, estadoAluno, listaDaTurma, responder } from "./actions";
 
@@ -221,7 +221,6 @@ function Escrever({ est, sessao, atualizar, rot }: { est: EmRodada; sessao: Sess
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [notas, setNotas] = useState(est.notas);
-  const minimo = est.minLinhas * PALAVRAS_POR_LINHA;
   const palavras = contarPalavras(texto);
   const pendente = notas[notas.length - 1];
   const igualAoMostrado = !!pendente && pendente.texto.trim() === texto.trim();
@@ -265,8 +264,7 @@ function Escrever({ est, sessao, atualizar, rot }: { est: EmRodada; sessao: Sess
         </div>
       )}
       <label className="qq-legenda" htmlFor="qq-ficha">{reescrita ? `Versão ${ultima.versao + 1}` : "Sua descrição"}</label>
-      <textarea id="qq-ficha" className="qq-ficha" value={texto} onChange={(e) => setTexto(e.target.value)} rows={Math.max(5, est.minLinhas + 1)} maxLength={900} placeholder="Escreva aqui…" />
-      <p className={`qq-contador ${palavras >= minimo ? "ok" : ""}`}>{palavras} de {minimo} palavras · mínimo de {est.minLinhas} linhas nesta rodada</p>
+      <textarea id="qq-ficha" className="qq-ficha" value={texto} onChange={(e) => setTexto(e.target.value)} rows={5} maxLength={900} placeholder="Escreva aqui…" />
       {notas.length > 0 && (
         <section className="qq-arboria" aria-label="O que o Arboria perguntou">
           <p className="qq-arboria-nome">Arboria leu</p>
@@ -276,7 +274,7 @@ function Escrever({ est, sessao, atualizar, rot }: { est: EmRodada; sessao: Sess
       )}
       {reescrita && <p className="qq-txt" style={{ fontSize: 15 }}>A versão anterior fica guardada: você está escrevendo uma nova.</p>}
       {erro && <p className="qq-aviso">{erro}</p>}
-      <button className="qq-btn" onClick={mandar} disabled={enviando || palavras < minimo || igualAoMostrado || (reescrita && texto.trim() === ultima.texto.trim())}>
+      <button className="qq-btn" onClick={mandar} disabled={enviando || palavras < MIN_PALAVRAS || igualAoMostrado || (reescrita && texto.trim() === ultima.texto.trim())}>
         {enviando ? "O Arboria está lendo" : "Mostrar ao Arboria e mandar"}
       </button>
       <p className="qq-txt" style={{ fontSize: 15 }}>O Arboria lê antes de ir para o colega. Se ele fizer uma pergunta, resolva no texto para poder mandar.</p>
