@@ -201,6 +201,21 @@ export async function entrar(codigo: string, escolaAluno: string, mostrarNome: b
   return { ok: true as const, aluno: data.id as string, codigo: s.codigo };
 }
 
+/** Para quem não está na lista da turma (aluno novo, cadastro atrasado): entra com o nome digitado.
+ *  O mesmo nome na mesma sala volta para a mesma vaga (tablet trocado ou recarregado). */
+export async function entrarSemLista(codigo: string, nomeDigitado: string, mostrarNome: boolean) {
+  const s = await sala(codigo);
+  if (!s) return { ok: false as const, erro: "Não achei essa sala. Confira o código na TV." };
+  const nome = nomeCurto(nomeDigitado.replace(/[^\p{L}\s'-]/gu, " ").trim().slice(0, 60));
+  if (nome.replace(/\s/g, "").length < 2) return { ok: false as const, erro: "Escreva seu nome e sobrenome." };
+  const { data: ja } = await db().from("arboria_quadro_alunos").select("id").eq("sala", s.codigo).is("escola_aluno", null).ilike("nome", nome).maybeSingle();
+  if (ja) return { ok: true as const, aluno: ja.id as string, codigo: s.codigo };
+  const { data, error } = await db().from("arboria_quadro_alunos")
+    .insert({ sala: s.codigo, escola_aluno: null, nome, mostrar_nome: !!mostrarNome }).select("id").single();
+  if (error || !data) return { ok: false as const, erro: "Não consegui entrar. Tente de novo." };
+  return { ok: true as const, aluno: data.id as string, codigo: s.codigo };
+}
+
 /** Pega para este aluno a descrição mais antiga que ainda ninguém tentou (se ele estiver livre). */
 async function pegarTarefa(s: Sala, aluno: string, rodada: Rodada, x: Awaited<ReturnType<typeof tudo>>) {
   const minhas = new Set(x.palps.filter((p) => p.aluno === aluno).map((p) => p.descricao));

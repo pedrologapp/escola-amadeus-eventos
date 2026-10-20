@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MAX_VERSOES, TODOS, imagem } from "@/lib/arboria-quadro";
 import { MAX_TROCAS, type Fala } from "@/lib/arboria-guia";
-import { conversar, enviarDescricao, entrar, estadoAluno, listaDaTurma, responder } from "./actions";
+import { conversar, enviarDescricao, entrar, entrarSemLista, estadoAluno, listaDaTurma, responder } from "./actions";
 
 /**
  * O tablet do aluno em "Qual é o quadro?" (visual em quadro.css: gabinete de museu + caderno do Arboria).
@@ -94,6 +94,7 @@ function Entrada({ codigoInicial, entrou }: { codigoInicial: string; entrou: (s:
   const [lista, setLista] = useState<Lista | null>(null);
   const [busca, setBusca] = useState("");
   const [escolhido, setEscolhido] = useState<string | null>(null);
+  const [foraDaLista, setForaDaLista] = useState(false);
   const [mostrar, setMostrar] = useState(true);
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -116,10 +117,12 @@ function Entrada({ codigoInicial, entrou }: { codigoInicial: string; entrou: (s:
   }, [busca, lista]);
   const nomeEscolhido = lista?.alunos.find((a) => a.id === escolhido)?.nome;
 
+  const digitado = busca.trim().replace(/s+/g, " ");
+  const pronto = foraDaLista ? digitado.replace(/s/g, "").length >= 2 : !!escolhido;
   const ir = async () => {
-    if (!escolhido) return;
+    if (!pronto) return;
     setEnviando(true); setErro("");
-    const r = await entrar(codigo, escolhido, mostrar).catch(() => null);
+    const r = await (foraDaLista ? entrarSemLista(codigo, digitado, mostrar) : entrar(codigo, escolhido!, mostrar)).catch(() => null);
     setEnviando(false);
     if (r?.ok) entrou({ codigo: r.codigo, aluno: r.aluno }); else setErro(r?.erro ?? "Sem internet? Tente de novo.");
   };
@@ -133,9 +136,9 @@ function Entrada({ codigoInicial, entrou }: { codigoInicial: string; entrou: (s:
       {lista && (
         <>
           <label className="qq-legenda" htmlFor="qq-nome">Seu nome · {lista.turma}</label>
-          <input id="qq-nome" className="qq-campo" value={busca} autoComplete="off" placeholder="Comece a digitar…"
+          <input id="qq-nome" className="qq-campo" value={busca} autoComplete="off" placeholder={foraDaLista ? "Nome e sobrenome" : "Comece a digitar…"}
             onChange={(e) => { setBusca(e.target.value); setEscolhido(null); }} />
-          {sugestoes.length > 0 && !escolhido && (
+          {sugestoes.length > 0 && !escolhido && !foraDaLista && (
             <div className="qq-nomes">
               {sugestoes.map((a) => (
                 <button key={a.id} className="qq-nome" disabled={a.dentro} onClick={() => { setEscolhido(a.id); setBusca(a.nome); }}>
@@ -144,7 +147,14 @@ function Entrada({ codigoInicial, entrou }: { codigoInicial: string; entrou: (s:
               ))}
             </div>
           )}
-          {busca.trim().length >= 2 && !sugestoes.length && !escolhido && <p className="qq-txt">Nenhum nome da {lista.turma} começa assim. Confira com o professor.</p>}
+          {foraDaLista ? (
+            <p className="qq-txt">Escreva seu nome e sobrenome como você quer aparecer. <button className="qq-link" onClick={() => setForaDaLista(false)}>Voltar para a lista</button></p>
+          ) : (
+            <>
+              {busca.trim().length >= 2 && !sugestoes.length && !escolhido && <p className="qq-txt">Nenhum nome da {lista.turma} começa assim.</p>}
+              {!escolhido && <button className="qq-link" onClick={() => { setForaDaLista(true); setEscolhido(null); }}>Meu nome não está na lista</button>}
+            </>
+          )}
           <label className="qq-txt" style={{ display: "flex", gap: 12, alignItems: "center", marginTop: 20 }}>
             <input type="checkbox" checked={mostrar} onChange={(e) => setMostrar(e.target.checked)} style={{ width: 20, height: 20, accentColor: "#2dd4bf" }} />
             Pode mostrar meu nome na TV no final
@@ -152,7 +162,7 @@ function Entrada({ codigoInicial, entrou }: { codigoInicial: string; entrou: (s:
         </>
       )}
       {erro && <p className="qq-aviso">{erro}</p>}
-      <button className="qq-btn" onClick={ir} disabled={enviando || !escolhido}>{enviando ? "Entrando" : nomeEscolhido ? `Entrar como ${nomeEscolhido}` : "Entrar"}</button>
+      <button className="qq-btn" onClick={ir} disabled={enviando || !pronto}>{enviando ? "Entrando" : foraDaLista && pronto ? `Entrar como ${digitado}` : nomeEscolhido ? `Entrar como ${nomeEscolhido}` : "Entrar"}</button>
     </Tela>
   );
 }

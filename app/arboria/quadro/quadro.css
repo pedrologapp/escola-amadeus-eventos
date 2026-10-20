@@ -62,6 +62,7 @@
 .qq-nome small { font: 500 11px var(--f-mono), monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--musgo); align-self: center; }
 .qq-nome.marcado { color: var(--turq); }
 .qq-nome:disabled { color: #4a5a58; cursor: default; }
+.qq-link { background: none; border: 0; padding: 10px 0; color: var(--ambar); font: 500 12px var(--f-mono), monospace; letter-spacing: .12em; text-transform: uppercase; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
 
 /* as opções para adivinhar: pequenos quadros numerados */
 .qq-opcoes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 22px; }
