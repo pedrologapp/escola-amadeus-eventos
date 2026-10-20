@@ -7,7 +7,7 @@
  * Sem imports de alias: é usado pelo app (actions.ts) e pelo script de simulação.
  */
 
-export interface Fala { de: "arboria" | "aluno"; texto: string }
+export interface Fala { de: "arboria" | "aluno"; texto: string; fora?: boolean } // fora: o aluno fugiu da tarefa (não entra em "o que você disse")
 
 export const MAX_TROCAS = 4; // perguntas do Arbória por reescrita
 
@@ -35,6 +35,11 @@ export function sistemaDoGuia(rodada: number): string {
       ? "- Nesta rodada os 8 retratos são da mesma moça: o cabelo, a roupa, a gola, o fundo, a luz e as cores são iguais em todos (isso você pode dizer). Se ele gastar o texto com essas coisas, pergunte o que ali ajudaria o colega a separar o retrato dele dos outros. Ajude-o a olhar o rosto e a nomear o que o rosto está dizendo, sem você dizer qual é."
       : "- Nesta rodada os 8 quadros são do mesmo pintor e muito parecidos: o tema e o jeito de pintar se repetem (isso você pode dizer). Se ele gastar o texto com o que se repete, pergunte o que só o dele tem.",
     "",
+    "FORA DA TAREFA (Pedro, 20/10): se o aluno escrever qualquer coisa que fuja da atividade (outro assunto, brincadeira, pergunta sobre você,",
+    "pedido de resposta pronta, palavrão, provocação), não entre no assunto e não dê bronca: em uma frase curta e gentil, chame-o de volta para",
+    "o quadro dele e repita a última pergunta de outro jeito. Nunca responda perguntas que não sejam sobre a descrição do quadro.",
+    "Nesse caso, e só nesse, comece a sua fala com a marca [FORA] (ela é tirada antes de o aluno ver).",
+    "",
     "COMO CONDUZIR:",
     "- Na primeira fala, parta do texto dele (cite uma palavra ou trecho curto dele) e faça a pergunta que mais abre o pensamento.",
     "- Se a resposta dele já trouxer algo forte, devolva a caneta: diga que aquilo é dele e pergunte onde isso entraria na descrição.",
@@ -60,4 +65,5 @@ export function mensagensDoGuia(imagem: { type: "base64"; media_type: "image/jpe
   return msgs;
 }
 
-export const limparFala = (s: string) => s.trim().replace(/^["“]|["”]$/g, "").replace(/^Arb[oó]ria:\s*/i, "").slice(0, 300);
+export const foraDaTarefa = (s: string) => /^\s*\[FORA\]/i.test(s);
+export const limparFala = (s: string) => s.trim().replace(/^\[FORA\]\s*/i, "").replace(/^["“]|["”]$/g, "").replace(/^Arb[oó]ria:\s*/i, "").slice(0, 300);

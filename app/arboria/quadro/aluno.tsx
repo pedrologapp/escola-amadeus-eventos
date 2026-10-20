@@ -208,7 +208,7 @@ function Escrever({ est, sessao, atualizar, cabecalho }: { est: EmRodada; sessao
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
   // só as falas do próprio aluno na conversa (as do Arbória nunca viram sugestão de texto)
-  const [minhas, setMinhas] = useState<string[]>(() => (ultima?.conversa ?? []).filter((f) => f.de === "aluno").map((f) => f.texto));
+  const [minhas, setMinhas] = useState<string[]>(() => (ultima?.conversa ?? []).filter((f) => f.de === "aluno" && !f.fora).map((f) => f.texto));
   const mandar = async () => {
     setEnviando(true); setErro("");
     const r = await enviarDescricao(sessao.codigo, sessao.aluno, texto).catch(() => null);
@@ -275,7 +275,7 @@ function Guia({ sessao, inicial, mudou }: { sessao: Sessao; inicial: Fala[]; mud
 
   useEffect(() => { if (!inicial.length) falar(); }, [inicial.length, falar]);
   useEffect(() => { fim.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }); }, [conversa, pensando]);
-  useEffect(() => { mudou(conversa.filter((f) => f.de === "aluno").map((f) => f.texto)); }, [conversa, mudou]);
+  useEffect(() => { mudou(conversa.filter((f) => f.de === "aluno" && !f.fora).map((f) => f.texto)); }, [conversa, mudou]);
 
   const mandar = () => { const r = resposta.trim(); if (!r || pensando) return; setResposta(""); falar(r); };
   return (

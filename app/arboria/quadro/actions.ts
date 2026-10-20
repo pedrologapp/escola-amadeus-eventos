@@ -5,7 +5,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { MAX_TROCAS, limparFala, mensagensDoGuia, sistemaDoGuia, type Fala } from "@/lib/arboria-guia";
+import { MAX_TROCAS, foraDaTarefa, limparFala, mensagensDoGuia, sistemaDoGuia, type Fala } from "@/lib/arboria-guia";
 import { MAX_VERSOES, TURMAS, corProibida, daTurma, imagem, quadroSecreto, quadrosDaRodada, type Fase, type Rodada } from "@/lib/arboria-quadro";
 
 /**
@@ -275,7 +275,9 @@ export async function conversar(codigo: string, aluno: string, resposta?: string
         model: "claude-sonnet-5-5", max_tokens: 1500, system: sistemaDoGuia(rodada), // folga para o modelo pensar antes da pergunta
         messages: mensagensDoGuia(await fonteDaImagem(d.quadro), d.texto, d.versao, conversa) as Anthropic.MessageParam[],
       });
-      fala = limparFala(resp.content.map((x) => (x.type === "text" ? x.text : "")).join("")) || fala;
+      const bruto = resp.content.map((x) => (x.type === "text" ? x.text : "")).join("");
+      if (r && foraDaTarefa(bruto)) conversa[conversa.length - 1] = { ...conversa[conversa.length - 1], fora: true };
+      fala = limparFala(bruto) || fala;
     } catch { /* sem IA: fica a pergunta padrão */ }
   }
   conversa = [...conversa, { de: "arboria", texto: fala }];
