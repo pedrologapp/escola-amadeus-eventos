@@ -19,7 +19,7 @@ type Rodada = Estado["rodadas"][number];
 const NOME_RODADA = { 1: "4 quadros bem diferentes", 2: "8 quadros parecidos", 3: "8 retratos quase iguais" } as const;
 const ORDEM: Fase[] = ["entrada", "r1", "r1f", "r2", "r2f", "r3", "r3f", "final"];
 
-const ler = (): Sala | null => { try { return JSON.parse(localStorage.getItem(CHAVE) || "null"); } catch { return null; } };
+const ler = (): Sala | null => { try { if (new URLSearchParams(location.search).has("nova")) { localStorage.removeItem(CHAVE); history.replaceState(null, "", location.pathname); return null; } return JSON.parse(localStorage.getItem(CHAVE) || "null"); } catch { return null; } };
 const gravar = (v: Sala | null) => { try { if (v) localStorage.setItem(CHAVE, JSON.stringify(v)); else localStorage.removeItem(CHAVE); } catch { /* sem armazenamento */ } };
 
 function Tela({ children, sala, meta }: { children: React.ReactNode; sala?: string; meta?: React.ReactNode }) {
