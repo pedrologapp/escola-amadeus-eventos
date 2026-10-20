@@ -21,6 +21,12 @@ export const metadata = { title: "Campanhas · Admin Amadeus" };
 // A Rematrícula 2027 tem aba própria no menu (/admin/rematricula-2027).
 const EM_ANDAMENTO: Modulo[] = [
   {
+    href: "/admin/arboria-quadro",
+    icone: Sparkles,
+    titulo: "Qual é o quadro? · Relatório",
+    descricao: "Aula do Arboria nos tablets: como cada aluno foi por rodada, quanto acertou e a análise da IA de quem não finalizou.",
+  },
+  {
     href: "/admin/arboria-experiencia",
     icone: Sparkles,
     titulo: "História do Arboria",
