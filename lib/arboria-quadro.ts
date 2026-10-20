@@ -78,7 +78,7 @@ export const imagem = (id: string) => `/arboria/quadros/${id}.jpg`;
 export const MAX_VERSOES = 2;
 
 /** Tamanho mínimo da descrição, crescendo a cada rodada (Pedro, 20/10: "está fácil demais"). Uma linha ≈ 10 palavras. */
-export const MIN_LINHAS: Record<Rodada, number> = { 1: 3, 2: 4, 3: 5 };
+export const MIN_LINHAS: Record<Rodada, number> = { 1: 3, 2: 4, 3: 4 }; // R3 era 5: "5 linhas é muito" (Pedro, 20/10)
 export const PALAVRAS_POR_LINHA = 10;
 export const contarPalavras = (t: string) => (t.match(/[\p{L}\p{N}]+/gu) ?? []).length;
 
