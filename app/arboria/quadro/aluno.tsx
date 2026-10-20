@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { MAX_VERSOES, TODOS, imagem } from "@/lib/arboria-quadro";
+import { MAX_VERSOES, PALAVRAS_POR_LINHA, TODOS, contarPalavras, imagem } from "@/lib/arboria-quadro";
 import { MAX_TROCAS, type Fala } from "@/lib/arboria-guia";
 import { conversar, enviarDescricao, entrar, entrarSemLista, estadoAluno, listaDaTurma, responder } from "./actions";
 
@@ -168,13 +168,13 @@ function Entrada({ codigoInicial, entrou }: { codigoInicial: string; entrou: (s:
 }
 
 function Rodada({ est, sessao, atualizar }: { est: EmRodada; sessao: Sessao; atualizar: () => Promise<void> }) {
-  const [resultado, setResultado] = useState<{ acertou: boolean; certo: string } | null>(null);
+  const [resultado, setResultado] = useState<{ acertou: boolean; certo: string; extra: boolean } | null>(null);
   const rot = <p className="qq-rot">Rodada {est.rodada} · {SUBTITULO[est.rodada]}</p>;
 
   if (resultado) return (
     <Tela sala={sessao.codigo} rodada={est.rodada}>{rot}
       <h1 className="qq-tit">{resultado.acertou ? <>Você <em>acertou</em>.</> : <>Não era <em>esse</em>.</>}</h1>
-      <p className="qq-txt">{resultado.acertou ? "As palavras do seu colega funcionaram." : `O quadro descrito era este.${est.rodada >= 2 ? " Seu colega vai poder reescrever." : ""}`}</p>
+      <p className="qq-txt">{resultado.acertou ? "As palavras do seu colega funcionaram." : `O quadro descrito era este.${est.rodada >= 2 && !resultado.extra ? " Seu colega vai poder reescrever." : ""}`}</p>
       <div className="qq-centro" style={{ marginTop: 24 }}><Quadro id={resultado.certo} legenda={<><b>O quadro certo</b><span>{TODOS[resultado.certo]?.autor.split(",")[0]}</span></>} /></div>
       <button className="qq-btn" onClick={() => { setResultado(null); atualizar(); }}>Continuar</button>
     </Tela>
@@ -220,13 +220,20 @@ function Escrever({ est, sessao, atualizar, rot }: { est: EmRodada; sessao: Sess
   const [texto, setTexto] = useState(ultima?.texto ?? "");
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const [notas, setNotas] = useState(est.notas);
+  const minimo = est.minLinhas * PALAVRAS_POR_LINHA;
+  const palavras = contarPalavras(texto);
+  const pendente = notas[notas.length - 1];
+  const igualAoMostrado = !!pendente && pendente.texto.trim() === texto.trim();
   // só as falas do próprio aluno na conversa, sem as fora do assunto (as do Arboria nunca viram sugestão de texto)
   const [minhas, setMinhas] = useState<string[]>(() => (ultima?.conversa ?? []).filter((f) => f.de === "aluno" && !f.fora).map((f) => f.texto));
   const mandar = async () => {
     setEnviando(true); setErro("");
     const r = await enviarDescricao(sessao.codigo, sessao.aluno, texto).catch(() => null);
     setEnviando(false);
-    if (r?.ok) await atualizar(); else setErro(r?.erro ?? "Sem internet? Tente de novo.");
+    if (r?.ok) await atualizar();
+    else if (r && "observacao" in r && r.observacao) setNotas((v) => [...v, { texto: texto.trim(), observacao: r.observacao }]);
+    else setErro((r && "erro" in r && r.erro) || "Sem internet? Tente de novo.");
   };
   return (
     <Tela sala={sessao.codigo} rodada={est.rodada}>{rot}
@@ -258,12 +265,21 @@ function Escrever({ est, sessao, atualizar, rot }: { est: EmRodada; sessao: Sess
         </div>
       )}
       <label className="qq-legenda" htmlFor="qq-ficha">{reescrita ? `Versão ${ultima.versao + 1}` : "Sua descrição"}</label>
-      <textarea id="qq-ficha" className="qq-ficha" value={texto} onChange={(e) => setTexto(e.target.value)} rows={5} maxLength={700} placeholder="Escreva aqui…" />
+      <textarea id="qq-ficha" className="qq-ficha" value={texto} onChange={(e) => setTexto(e.target.value)} rows={Math.max(5, est.minLinhas + 1)} maxLength={900} placeholder="Escreva aqui…" />
+      <p className={`qq-contador ${palavras >= minimo ? "ok" : ""}`}>{palavras} de {minimo} palavras · mínimo de {est.minLinhas} linhas nesta rodada</p>
+      {notas.length > 0 && (
+        <section className="qq-arboria" aria-label="O que o Arboria perguntou">
+          <p className="qq-arboria-nome">Arboria leu</p>
+          {notas.map((n, i) => <p key={i} className={`qq-fala ${i < notas.length - 1 ? "antiga" : ""}`}>{n.observacao}</p>)}
+          <p className="qq-txt" style={{ fontSize: 16 }}>{igualAoMostrado ? "Mude a sua descrição nesse ponto, com as suas palavras. Depois mostre de novo." : "Resolveu? Mostre de novo ao Arboria."}</p>
+        </section>
+      )}
       {reescrita && <p className="qq-txt" style={{ fontSize: 15 }}>A versão anterior fica guardada: você está escrevendo uma nova.</p>}
       {erro && <p className="qq-aviso">{erro}</p>}
-      <button className="qq-btn" onClick={mandar} disabled={enviando || texto.trim().length < 15 || (reescrita && texto.trim() === ultima.texto.trim())}>
-        {enviando ? "Mandando" : "Mandar para um colega"}
+      <button className="qq-btn" onClick={mandar} disabled={enviando || palavras < minimo || igualAoMostrado || (reescrita && texto.trim() === ultima.texto.trim())}>
+        {enviando ? "O Arboria está lendo" : "Mostrar ao Arboria e mandar"}
       </button>
+      <p className="qq-txt" style={{ fontSize: 15 }}>O Arboria lê antes de ir para o colega. Se ele fizer uma pergunta, resolva no texto para poder mandar.</p>
     </Tela>
   );
 }
@@ -310,7 +326,7 @@ function Guia({ sessao, inicial, mudou }: { sessao: Sessao; inicial: Fala[]; mud
 
 function Adivinhar({ tarefa, sessao, rodada, rot, respondeu }: {
   tarefa: NonNullable<EmRodada["tarefa"]>; sessao: Sessao; rodada: number; rot: React.ReactNode;
-  respondeu: (r: { acertou: boolean; certo: string }) => void;
+  respondeu: (r: { acertou: boolean; certo: string; extra: boolean }) => void;
 }) {
   const [escolha, setEscolha] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -319,13 +335,13 @@ function Adivinhar({ tarefa, sessao, rodada, rot, respondeu }: {
     setEnviando(true);
     const r = await responder(sessao.codigo, sessao.aluno, tarefa.id, escolha).catch(() => null);
     setEnviando(false);
-    if (r?.ok) respondeu({ acertou: r.acertou, certo: r.certo });
+    if (r?.ok) respondeu({ acertou: r.acertou, certo: r.certo, extra: r.extra });
   };
   const retrato = tarefa.opcoes[0]?.startsWith("r");
   return (
     <Tela sala={sessao.codigo} rodada={rodada}>{rot}
       <h1 className="qq-tit">Qual é o <em>quadro</em>?</h1>
-      <p className="qq-txt">A descrição de um colega{tarefa.versao > 1 ? ` (ele já reescreveu: versão ${tarefa.versao})` : ""}. Toque no quadro que ele descreveu.</p>
+      <p className="qq-txt">{tarefa.extra ? "Descrição extra: outro colega já tentou esta. Será que você acha?" : `A descrição de um colega${tarefa.versao > 1 ? ` (ele já reescreveu: versão ${tarefa.versao})` : ""}.`} Toque no quadro que ele descreveu.</p>
       <blockquote className="qq-citacao">{tarefa.texto}</blockquote>
       <div className={`qq-opcoes ${tarefa.opcoes.length <= 4 ? "quatro" : ""}`}>
         {tarefa.opcoes.map((id, i) => (

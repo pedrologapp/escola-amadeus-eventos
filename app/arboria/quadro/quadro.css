@@ -149,3 +149,8 @@
   .qq-opcoes { grid-template-columns: repeat(2, 1fr); } .qq-opcao img { height: 120px; } .qq-opcao.retrato img { height: 170px; }
   .qq-par { grid-template-columns: 1fr; } .qq-versoes li { grid-template-columns: 1fr; gap: 4px; }
 }
+
+/* contador de palavras e notas antigas do Arboria */
+.qq-contador { font: 500 12px var(--f-mono), monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--ambar); margin: 8px 0 0; }
+.qq-contador.ok { color: var(--turq); }
+.qq-fala.antiga { opacity: .5; font-size: .9em; }

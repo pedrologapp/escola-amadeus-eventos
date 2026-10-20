@@ -77,6 +77,11 @@ export const imagem = (id: string) => `/arboria/quadros/${id}.jpg`;
 /** Versões por descrição nas rodadas 2 e 3: a 1ª e uma reescrita (Pedro, 20/10: só até a 2ª tentativa). */
 export const MAX_VERSOES = 2;
 
+/** Tamanho mínimo da descrição, crescendo a cada rodada (Pedro, 20/10: "está fácil demais"). Uma linha ≈ 10 palavras. */
+export const MIN_LINHAS: Record<Rodada, number> = { 1: 3, 2: 4, 3: 5 };
+export const PALAVRAS_POR_LINHA = 10;
+export const contarPalavras = (t: string) => (t.match(/[\p{L}\p{N}]+/gu) ?? []).length;
+
 /** Rodada 3: as cores são iguais nos 8 retratos, então não valem (obriga a descrever a expressão). */
 const CORES = /(^|[^a-zà-ú])(amarel|azul|azuis|verde|vermelh|roxo|roxa|rosa|laranja|marrom|marrons|pret[oa]|branc|cinza|bege|dourad|lil[aá]s|castanh|escur|clar[oa])/i;
 export const corProibida = (texto: string) => texto.match(CORES)?.[2] ?? null;

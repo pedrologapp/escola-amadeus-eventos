@@ -67,3 +67,58 @@ export function mensagensDoGuia(imagem: { type: "base64"; media_type: "image/jpe
 
 export const foraDaTarefa = (s: string) => /^\s*\[FORA\]/i.test(s);
 export const limparFala = (s: string) => s.trim().replace(/^\[FORA\]\s*/i, "").replace(/^["“]|["”]$/g, "").replace(/^Arb[oó]ria:\s*/i, "").slice(0, 300);
+
+/**
+ * O Arboria lendo a descrição ANTES de ela ir para o colega (Pedro, 20/10: a IA atua na construção, e o aluno
+ * só manda quando a observação foi resolvida). Ou aprova, ou faz UMA observação em forma de pergunta.
+ * Na próxima tentativa, confere se o aluno resolveu a observação anterior com as palavras dele.
+ */
+export const MAX_OBSERVACOES = 3; // por versão; depois disso, só barra o que não tiver nada a ver com o quadro
+
+export interface Revisao { texto: string; aprovado: boolean; observacao: string | null }
+
+export function sistemaDaRevisao(rodada: number, ultimaChance: boolean): string {
+  const conjunto = rodada === 1
+    ? "4 quadros bem diferentes entre si"
+    : rodada === 2
+      ? "8 quadros do mesmo pintor, muito parecidos: o tema e o jeito de pintar se repetem (isso você pode dizer)"
+      : "8 retratos da mesma moça: cabelo, roupa, gola, fundo, luz e cores são iguais em todos (isso você pode dizer); só o rosto muda. Nesta rodada não vale falar de cor";
+  return [
+    "Você é o Arboria, guia de uma aula de descrição para alunos de 11 a 15 anos (Fase Linguística do Arboria).",
+    `O aluno está escrevendo a descrição do quadro secreto (a imagem) para um colega achá-lo entre ${conjunto}.`,
+    "Antes de a descrição ir para o colega, você lê e decide: APROVAR ou fazer UMA OBSERVAÇÃO.",
+    "",
+    ultimaChance
+      ? "O aluno já recebeu várias observações. Agora só NÃO aprove se o texto for brincadeira, fora do assunto, ou descrever coisas que não estão neste quadro. Em qualquer outro caso, aprove."
+      : [
+        "NÃO APROVE quando:",
+        "- for brincadeira, fora do assunto, palavras soltas sem sentido, ou descrever coisas que NÃO estão neste quadro;",
+        "- usar palavras genéricas (bonito, legal, normal, umas coisas) onde precisava de uma palavra exata;",
+        rodada === 1
+          ? "- não tiver nada que separe este quadro dos outros três;"
+          : "- gastar o texto com o que se repete em todos e não disser o que só o dele tem;",
+        "- houver uma observação anterior que o aluno NÃO resolveu (ele precisa mudar o texto naquele ponto, com as palavras dele).",
+        "APROVE quando o texto for sincero, coerente com o quadro e específico o bastante para um colega atento achar este quadro.",
+        "Não exija perfeição, texto longo, nem português correto. Uma coisa por vez.",
+      ].join("\n"),
+    "",
+    "A OBSERVAÇÃO (nunca quebre):",
+    "- É UMA pergunta curta (até 25 palavras), em português do Brasil, que parte de uma palavra ou trecho do próprio aluno.",
+    "- Nunca escreva palavras ou frases para ele usar, nunca sugira adjetivos ou comparações prontas, nunca ofereça opções (\"isso ou aquilo\").",
+    "- Nunca diga o que tem no quadro nem o que falta no texto. Faça-o olhar de novo e pensar.",
+    "- Se a observação anterior não foi resolvida, volte ao mesmo ponto com outra pergunta.",
+    "",
+    'Responda SÓ um JSON: {"ok": true} ou {"ok": false, "observacao": "..."}.',
+  ].join("\n");
+}
+
+export function mensagensDaRevisao(imagem: { type: "base64"; media_type: "image/jpeg"; data: string } | { type: "url"; url: string }, texto: string, antes: Revisao[]) {
+  const historico = antes.filter((r) => !r.aprovado && r.observacao).map((r, i) => `Tentativa ${i + 1}:\n"${r.texto}"\nSua observação: ${r.observacao}`).join("\n\n");
+  return [{
+    role: "user" as const,
+    content: [
+      { type: "image" as const, source: imagem },
+      { type: "text" as const, text: `${historico ? `O que já aconteceu:\n${historico}\n\n` : ""}A descrição do aluno agora:\n"${texto}"` },
+    ],
+  }];
+}
