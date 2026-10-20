@@ -86,7 +86,7 @@ export function NaoFinalizaram({ sala, linhas }: { sala: string; linhas: Linha[]
                   <div className="mt-4 rounded-xl border border-dashed border-amadeus-blue/40 bg-blue-50/40 p-3">
                     {analises[k] ? (
                       <>
-                        <p className="whitespace-pre-line text-sm leading-relaxed">{analises[k]}</p>
+                        <Analise texto={analises[k]} />
                         <button onClick={() => uma(l)} disabled={lendo.has(k)} className="mt-2 text-xs font-semibold text-amadeus-blue underline disabled:opacity-50">{lendo.has(k) ? "Analisando…" : "Analisar de novo"}</button>
                       </>
                     ) : (
@@ -113,5 +113,17 @@ function Mini({ id, legenda, cor }: { id: string; legenda: string; cor: string }
       <figcaption className="mt-1 text-xs font-semibold">{legenda}</figcaption>
       <figcaption className="text-[11px] leading-tight text-muted-foreground">{TODOS[id]?.titulo}</figcaption>
     </figure>
+  );
+}
+
+/** A análise em três partes: o título de cada parte ("O que aconteceu:") em negrito. */
+function Analise({ texto }: { texto: string }) {
+  return (
+    <div className="space-y-2 text-sm leading-relaxed">
+      {texto.replace(/[*#]+/g, "").split(/\n+/).filter((p) => p.trim()).map((p, i) => {
+        const m = p.match(/^(O que aconteceu|Por que não funcionou|Para trabalhar com (?:ele|ela)):\s*(.*)$/i);
+        return <p key={i}>{m ? <><b className="text-amadeus-blue">{m[1]}:</b> {m[2]}</> : p}</p>;
+      })}
+    </div>
   );
 }

@@ -79,11 +79,11 @@ export async function analisar(codigo: string, aluno: string, rodada: Rodada) {
         "O que aconteceu: (1 ou 2 frases, citando palavras do aluno entre aspas)",
         "Por que não funcionou: (1 ou 2 frases, concretas: a palavra genérica, o detalhe que valia para os dois, a ordem, o que não está no quadro)",
         "Para trabalhar com ele: (1 frase com uma ação pedagógica simples para a próxima aula)",
-        "No máximo 110 palavras no total. Não dê nota, não julgue o aluno, não use emojis.",
+        "No máximo 110 palavras no total. Texto simples, sem markdown (sem asteriscos). Não dê nota, não julgue o aluno, não use emojis.",
       ].join("\n"),
       messages: [{ role: "user", content }],
     });
-    const texto = resp.content.map((x) => (x.type === "text" ? x.text : "")).join("").trim();
+    const texto = resp.content.map((x) => (x.type === "text" ? x.text : "")).join("").replace(/[*#]+/g, "").trim();
     if (!texto) return { ok: false as const, erro: "A IA não respondeu. Tente de novo." };
     await createAdminClient().from("arboria_quadro_analises").upsert({ aluno, rodada, sala: codigo, texto, criado_em: new Date().toISOString() });
     return { ok: true as const, texto };
