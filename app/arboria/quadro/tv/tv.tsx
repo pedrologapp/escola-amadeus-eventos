@@ -152,17 +152,20 @@ function Andamento({ r, alunos, encerrar }: { r: Rodada; alunos: number; encerra
 /** Rodada encerrada: agora aparecem os quadros, cada um com quantos o descreveram e como foi a 1ª versão. */
 function Encerrada({ est, sala, atualizar, r, turma, proxima }: { est: Estado; sala: Sala; atualizar: () => Promise<void>; r: Rodada; turma: string; proxima: () => void }) {
   const oito = r.quadros.length > 4;
-  const [vendo, setVendo] = useState<null | "melhores" | "ranking">(null);
+  const [vendo, setVendo] = useState<null | "melhores" | "ranking" | "quadros">(null);
   const seguir = <button className="qq-btn" onClick={proxima}>{r.rodada < 3 ? `Começar a rodada ${r.rodada + 1}` : "Celebrar as melhores descrições"}</button>;
   if (vendo) return (
     <div>
       {vendo === "melhores"
         ? <Melhores est={est} sala={sala} atualizar={atualizar} rodada={r.rodada as 1 | 2 | 3} />
+        : vendo === "quadros"
+        ? <QuadrosRank titulo={<>Os quadros da <em>rodada {r.rodada}</em></>} dados={est.quadrosRank.porRodada[r.rodada - 1]} />
         : <Ranking titulo={<>Os detetives da <em>rodada {r.rodada}</em></>} lista={est.ranking.porRodada[r.rodada - 1]} />}
       <div style={{ display: "flex", gap: 16, maxWidth: 1200 }}>
         <button className="qq-btn contorno" onClick={() => setVendo(null)}>Voltar aos quadros</button>
         {vendo === "ranking" && r.rodada < 3 && <button className="qq-btn contorno" onClick={() => setVendo("melhores")}>As 3 melhores</button>}
         {vendo === "melhores" && <button className="qq-btn contorno" onClick={() => setVendo("ranking")}>Ranking da rodada</button>}
+        {vendo === "ranking" && <button className="qq-btn contorno" onClick={() => setVendo("quadros")}>Acertos e erros por quadro</button>}
         {seguir}
       </div>
     </div>
@@ -195,6 +198,7 @@ function Encerrada({ est, sala, atualizar, r, turma, proxima }: { est: Estado; s
       </div>
       <div style={{ display: "flex", gap: 16, maxWidth: 1000 }}>
         <button className="qq-btn" onClick={() => setVendo("ranking")}>Ranking da rodada</button>
+        <button className="qq-btn" onClick={() => setVendo("quadros")}>Acertos e erros</button>
         {r.rodada < 3 ? <button className="qq-btn" onClick={() => setVendo("melhores")}>As 3 melhores</button> : null}
         {seguir}
       </div>
@@ -271,12 +275,15 @@ function Celebracao({ est, sala, atualizar }: { est: Estado; sala: Sala; atualiz
     <div>
       {rodada === 0
         ? <Ranking titulo={<>Os grandes <em>detetives</em> da aula</>} lista={est.ranking.geral} />
+        : rodada === -1
+        ? <QuadrosRank titulo={<>Os quadros <em>da aula</em></>} dados={est.quadrosRank.geral} />
         : <TresMelhores est={est} rodada={rodada} />}
       <div style={{ display: "flex", gap: 16, maxWidth: 1200 }}>
         {rodadasComMelhores.filter((r) => r !== rodada).map((r) => (
           <button key={r} className="qq-btn contorno" onClick={() => setRodada(r)}>Rodada {r}</button>
         ))}
         {rodada !== 0 && <button className="qq-btn" onClick={() => setRodada(0)}>Ranking geral</button>}
+        {rodada !== -1 && <button className="qq-btn contorno" onClick={() => setRodada(-1)}>Acertos e erros por quadro</button>}
       </div>
     </div>
   );
@@ -308,6 +315,36 @@ function Ranking({ titulo, lista }: { titulo: React.ReactNode; lista: Estado["ra
           )}
         </>
       ) : <p className="qq-txt qq-txt-tv">Ninguém acertou ainda.</p>}
+    </>
+  );
+}
+
+/** Os quadros (Pedro, 21/10): os 3 que os colegas mais acertaram e os 3 que mais confundiram. */
+function QuadrosRank({ titulo, dados }: { titulo: React.ReactNode; dados: Estado["quadrosRank"]["geral"] }) {
+  const coluna = (lista: typeof dados.maisAcertos, tipo: "ok" | "x") => lista.length ? (
+    <div className="qq-qrank-col">
+      {lista.map((q, i) => (
+        <figure key={q.id} className="qq-moldura" style={{ margin: 0 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={imagem(q.id)} alt="" width={TODOS[q.id]?.w} height={TODOS[q.id]?.h} />
+          <figcaption className="qq-etiqueta"><b>{i + 1}º · {TODOS[q.id]?.titulo}</b></figcaption>
+          <div className="qq-numeros">
+            {tipo === "ok"
+              ? <span className="ok">✓ {q.acertos} {q.acertos === 1 ? "acerto" : "acertos"} em {q.acertos + q.erros}</span>
+              : <span className="x">✗ {q.erros} {q.erros === 1 ? "erro" : "erros"} em {q.acertos + q.erros}</span>}
+          </div>
+        </figure>
+      ))}
+    </div>
+  ) : <p className="qq-txt">Nenhum ainda.</p>;
+  return (
+    <>
+      <p className="qq-rot" style={{ fontSize: 16 }}>Palpites dos colegas em cada quadro</p>
+      <h1 className="qq-tit qq-tit-tv" style={{ fontSize: 80 }}>{titulo}</h1>
+      <div className="qq-qrank">
+        <section><h2 className="ok">Os que mais acertaram</h2>{coluna(dados.maisAcertos, "ok")}</section>
+        <section><h2 className="x">Os que mais confundiram</h2>{coluna(dados.maisErros, "x")}</section>
+      </div>
     </>
   );
 }

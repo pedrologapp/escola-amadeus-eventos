@@ -136,8 +136,28 @@ export async function estadoTv(codigo: string, chave: string) {
   }).filter((t) => t.acertos > 0)
     .sort((p, q) => q.acertos - p.acertos || q.acertos / q.tentativas - p.acertos / p.tentativas)
     .slice(0, 5);
+  // os quadros (Pedro, 21/10): os que mais tiveram acertos e os que mais confundiram, contando todos os palpites
+  // (inclusive as extras) feitos sobre as descrições de cada quadro
+  const quadroDe = new Map(x.descs.map((d) => [d.id, d.quadro]));
+  const quadrosRank = (r?: number) => {
+    const n = new Map<string, { id: string; acertos: number; erros: number }>();
+    for (const p of x.palps) {
+      if (p.acertou === null || (r && rodadaDe.get(p.descricao) !== r)) continue;
+      const id = quadroDe.get(p.descricao); if (!id) continue;
+      const q = n.get(id) ?? { id, acertos: 0, erros: 0 };
+      if (p.acertou) q.acertos++; else q.erros++;
+      n.set(id, q);
+    }
+    const todos = [...n.values()];
+    const taxa = (q: { acertos: number; erros: number }) => q.acertos / (q.acertos + q.erros);
+    return {
+      maisAcertos: todos.filter((q) => q.acertos > 0).sort((p, q) => q.acertos - p.acertos || taxa(q) - taxa(p)).slice(0, 3),
+      maisErros: todos.filter((q) => q.erros > 0).sort((p, q) => q.erros - p.erros || taxa(p) - taxa(q)).slice(0, 3),
+    };
+  };
   return {
     ranking: { geral: ranking(), porRodada: [ranking(1), ranking(2), ranking(3)] },
+    quadrosRank: { geral: quadrosRank(), porRodada: [quadrosRank(1), quadrosRank(2), quadrosRank(3)] },
     sala: { codigo: s.codigo, turma: s.turma, fase: s.fase, celebrado: !!s.melhores },
     alunos: x.alunos.map((a) => ({ id: a.id, nome: a.nome })),
     rodadas: porRodada, melhores,

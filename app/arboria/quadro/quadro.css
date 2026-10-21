@@ -171,3 +171,10 @@
 .qq-resto li { counter-increment: lugar; display: flex; justify-content: space-between; gap: 20px; padding: 12px 4px; border-top: 1px solid var(--fio); font: 400 28px var(--f-texto), serif; color: var(--giz); }
 .qq-resto li span:first-child::before { content: counter(lugar) "º  "; font-family: var(--f-mono), monospace; color: #8fa3a0; font-size: 18px; }
 .qq-resto li span:last-child { font: 500 14px var(--f-mono), monospace; letter-spacing: .1em; text-transform: uppercase; color: #8fa3a0; align-self: center; }
+
+/* os quadros que mais acertaram e os que mais confundiram (21/10) */
+.qq-qrank { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; margin: 36px 0 28px; max-width: 1500px; }
+.qq-qrank h2 { font: 500 15px var(--f-mono), monospace; letter-spacing: .16em; text-transform: uppercase; margin: 0 0 18px; padding-bottom: 12px; border-bottom: 1px solid var(--fio); }
+.qq-qrank h2.ok { color: #2dd4bf; } .qq-qrank h2.x { color: #e0735f; }
+.qq-qrank-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: start; }
+.qq-qrank-col .qq-moldura img { width: 100%; height: 170px; object-fit: contain; background: #e9e1cf; }
