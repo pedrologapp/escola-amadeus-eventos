@@ -210,10 +210,10 @@ export async function celebrar(codigo: string, chave: string, rodada?: Rodada) {
 // ---------- tablet (aluno) ----------
 
 /** A lista da turma da sala (tabela alunos), com quem já entrou marcado: o aluno toca no próprio nome. */
-/** As salas abertas nas últimas 6 horas (Pedro, 21/10): quem saiu e esqueceu o código toca na sala da sua turma. */
+/** As salas abertas nas últimas 6 horas, sem as que já terminaram (Pedro, 21/10): quem saiu e esqueceu o código toca na sala da sua turma. */
 export async function salasAbertas() {
   const desde = new Date(Date.now() - 6 * 3600_000).toISOString();
-  const { data } = await db().from("arboria_quadro_salas").select("codigo, turma, criado_em").gte("criado_em", desde).order("criado_em", { ascending: false }).limit(12);
+  const { data } = await db().from("arboria_quadro_salas").select("codigo, turma, criado_em").gte("criado_em", desde).neq("fase", "final").order("criado_em", { ascending: false }).limit(12);
   return (data ?? []).map((x) => ({ codigo: x.codigo as string, turma: x.turma as string }));
 }
 
