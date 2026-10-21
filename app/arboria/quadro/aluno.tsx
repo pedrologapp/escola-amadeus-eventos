@@ -89,27 +89,24 @@ export function Aluno({ codigoInicial }: { codigoInicial: string }) {
   return <Rodada key={(est as EmRodada).rodada} est={est as EmRodada} sessao={sessao} atualizar={atualizar} />;
 }
 
-/** O fechamento da Fase Linguística (Pedro, 21/10): duas perguntas, para o aluno e para o ano que vem. */
+/** O fechamento da Fase Linguística (Pedro, 21/10): uma pergunta antes das melhores descrições. */
 function Fechamento({ sessao, atualizar }: { sessao: Sessao; atualizar: () => Promise<void> }) {
   const [descobri, setDescobri] = useState("");
-  const [quero, setQuero] = useState("");
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
-  const pronto = descobri.trim().length >= 3 && quero.trim().length >= 3;
+  const pronto = descobri.trim().length >= 3;
   const mandar = async () => {
     setEnviando(true); setErro("");
-    const r = await enviarReflexao(sessao.codigo, sessao.aluno, descobri, quero).catch(() => null);
+    const r = await enviarReflexao(sessao.codigo, sessao.aluno, descobri).catch(() => null);
     setEnviando(false);
     if (r?.ok) atualizar(); else setErro(r?.erro ?? "Sem internet? Tente de novo.");
   };
   return (
     <Tela sala={sessao.codigo}>
-      <h1 className="qq-tit">Antes das melhores descrições, <em>duas perguntas</em>.</h1>
-      <p className="qq-txt">Não vale nota e não tem resposta certa. Fica guardado para você e para o ano que vem.</p>
+      <h1 className="qq-tit">Antes das melhores descrições, <em>uma pergunta</em>.</h1>
+      <p className="qq-txt">Não vale nota e não tem resposta certa. Fica guardado.</p>
       <label className="qq-legenda" htmlFor="qq-descobri">O que você descobriu que sabe fazer com as palavras?</label>
       <textarea id="qq-descobri" className="qq-ficha" value={descobri} onChange={(e) => setDescobri(e.target.value)} rows={3} maxLength={600} placeholder="Escreva aqui…" />
-      <label className="qq-legenda" htmlFor="qq-quero">O que você quer descobrir no ano que vem?</label>
-      <textarea id="qq-quero" className="qq-ficha" value={quero} onChange={(e) => setQuero(e.target.value)} rows={3} maxLength={600} placeholder="Escreva aqui…" />
       {erro && <p className="qq-aviso">{erro}</p>}
       <button className="qq-btn" onClick={mandar} disabled={enviando || !pronto}>{enviando ? "Guardando" : "Guardar"}</button>
     </Tela>

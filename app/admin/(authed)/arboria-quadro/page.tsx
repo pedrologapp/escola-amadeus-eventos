@@ -111,18 +111,17 @@ export default async function RelatorioQuadroPage({ searchParams }: { searchPara
 
       {reflexoes.length > 0 && (
         <section className="mt-8">
-          <h2 className="text-lg font-extrabold text-amadeus-blue">As duas perguntas do final · {reflexoes.length} de {alunos.length} responderam</h2>
+          <h2 className="text-lg font-extrabold text-amadeus-blue">A pergunta do final · {reflexoes.length} de {alunos.length} responderam</h2>
           <div className="mt-3 overflow-x-auto rounded-2xl border bg-white shadow-sm">
             <table className="w-full min-w-[640px] text-sm">
               <thead className="border-b bg-muted/40 text-left text-xs uppercase tracking-wider text-muted-foreground">
-                <tr><th className="px-4 py-3">Aluno</th><th className="px-3 py-3">O que descobriu que sabe fazer com as palavras</th><th className="px-3 py-3">O que quer descobrir no ano que vem</th></tr>
+                <tr><th className="px-4 py-3">Aluno</th><th className="px-3 py-3">O que descobriu que sabe fazer com as palavras</th></tr>
               </thead>
               <tbody className="divide-y">
                 {reflexoes.map((x) => (
                   <tr key={x.aluno} className="align-top">
                     <td className="px-4 py-2.5 font-semibold whitespace-nowrap">{x.nome}</td>
                     <td className="px-3 py-2.5">{x.descobri}</td>
-                    <td className="px-3 py-2.5">{x.quero}</td>
                   </tr>
                 ))}
               </tbody>

@@ -264,14 +264,13 @@ function Celebracao({ est, sala, atualizar }: { est: Estado; sala: Sala; atualiz
     return () => { vivo = false; };
   }, [sala, atualizar]);
 
-  // antes das melhores descrições, os alunos respondem as duas perguntas no tablet (o Arboria já vai escolhendo)
+  // antes das melhores descrições, os alunos respondem a pergunta no tablet (o Arboria já vai escolhendo)
   if (perguntando) return (
     <div>
       <p className="qq-rot" style={{ fontSize: 16 }}>Antes das melhores descrições</p>
-      <h1 className="qq-tit qq-tit-tv">Respondam no tablet <em>duas perguntas</em>.</h1>
+      <h1 className="qq-tit qq-tit-tv">Respondam no tablet <em>uma pergunta</em>.</h1>
       <ol className="qq-perguntas">
         <li>O que você descobriu que sabe fazer com as palavras?</li>
-        <li>O que você quer descobrir no ano que vem?</li>
       </ol>
       <div className="qq-placar" style={{ maxWidth: 520 }}>
         <div><b>{est.responderam}<small style={{ fontSize: 48, color: "#8fa3a0" }}>/{est.alunos.length}</small></b><span>já responderam</span></div>

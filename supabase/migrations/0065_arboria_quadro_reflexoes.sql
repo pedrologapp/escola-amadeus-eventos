@@ -9,3 +9,6 @@ create table if not exists arboria_quadro_reflexoes (
 );
 alter table arboria_quadro_reflexoes enable row level security;
 -- sem políticas: só o servidor (service role) lê e grava.
+
+-- 21/10: ficou só a primeira pergunta (Pedro); "quero" deixa de ser obrigatória.
+alter table arboria_quadro_reflexoes alter column quero drop not null;
