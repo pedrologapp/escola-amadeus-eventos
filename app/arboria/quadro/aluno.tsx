@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MAX_VERSOES, MIN_PALAVRAS, TODOS, contarPalavras, imagem } from "@/lib/arboria-quadro";
 import { MAX_TROCAS, type Fala } from "@/lib/arboria-guia";
-import { conversar, enviarDescricao, enviarReflexao, entrar, entrarSemLista, estadoAluno, listaDaTurma, responder } from "./actions";
+import { conversar, enviarDescricao, enviarReflexao, entrar, salasAbertas, entrarSemLista, estadoAluno, listaDaTurma, responder } from "./actions";
 
 /**
  * O tablet do aluno em "Qual é o quadro?" (visual em quadro.css: gabinete de museu + caderno do Arboria).
@@ -47,6 +47,8 @@ export function Aluno({ codigoInicial }: { codigoInicial: string }) {
   const [sessao, setSessao] = useState<Sessao | null>(null);
   const [pronto, setPronto] = useState(false);
   const [est, setEst] = useState<Estado | null>(null);
+  const primeira = useRef(true);
+  const sair = () => { gravar(null); setSessao(null); setEst(null); };
 
   useEffect(() => {
     const s = ler();
@@ -60,8 +62,12 @@ export function Aluno({ codigoInicial }: { codigoInicial: string }) {
     const r = await estadoAluno(sessao.codigo, sessao.aluno).catch(() => null);
     if (!r) return;
     if (!r.ok) { gravar(null); setSessao(null); return; }
+    // tablet que ficou numa aula já terminada (a turma seguinte vai usar): abre na escolha de sala.
+    // Quem saiu no meio do final volta tocando na sala e no próprio nome.
+    if (primeira.current && r.fase === "final" && !codigoInicial) { primeira.current = false; sair(); return; }
+    primeira.current = false;
     setEst(r);
-  }, [sessao]);
+  }, [sessao, codigoInicial]);
 
   useEffect(() => {
     if (!sessao) return;
@@ -83,6 +89,7 @@ export function Aluno({ codigoInicial }: { codigoInicial: string }) {
       <h1 className="qq-tit">{est.fase === "entrada" ? <>Pronto, <em>{est.nome}</em>.</> : <>Olhe para a <em>TV</em>.</>}</h1>
       <p className="qq-txt">{est.fase === "entrada" ? "Espere o professor começar a primeira rodada." : encerrada ? "O professor vai mostrar como a turma foi em cada quadro. Depois vem a próxima rodada." : "Agora vamos celebrar algumas descrições da turma."}</p>
       <p className="qq-espera">Aguardando o professor</p>
+      {est.fase === "final" && <button className="qq-link" style={{ marginTop: 28 }} onClick={sair}>Entrar em outra sala</button>}
     </Tela>
   );
   // key: o resultado de um palpite de uma rodada não fica na tela quando começa a próxima
@@ -131,6 +138,16 @@ function Entrada({ codigoInicial, entrou }: { codigoInicial: string; entrou: (s:
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
 
+  // as salas abertas agora (Pedro, 21/10): a turma seguinte toca na sala, sem ler o QR; e quem saiu volta por aqui
+  const [abertas, setAbertas] = useState<{ codigo: string; turma: string }[]>([]);
+  useEffect(() => {
+    let vivo = true;
+    const ver = () => salasAbertas().then((r) => { if (vivo) setAbertas(r); }).catch(() => {});
+    ver();
+    const t = setInterval(ver, 15000);
+    return () => { vivo = false; clearInterval(t); };
+  }, []);
+
   // com o código completo, busca a lista da turma (e atualiza quem já entrou)
   useEffect(() => {
     if (codigo.length !== 4) { setLista(null); return; }
@@ -165,6 +182,18 @@ function Entrada({ codigoInicial, entrou }: { codigoInicial: string; entrou: (s:
       <label className="qq-legenda" htmlFor="qq-codigo">Código da sala · está na TV</label>
       <input id="qq-codigo" className="qq-campo codigo" value={codigo} inputMode="numeric" autoComplete="off"
         onChange={(e) => { setCodigo(e.target.value.replace(/\D/g, "").slice(0, 4)); setEscolhido(null); }} />
+      {!lista && abertas.length > 0 && (
+        <>
+          <p className="qq-legenda" style={{ marginTop: 18 }}>Ou toque na sala da sua turma</p>
+          <div className="qq-nomes">
+            {abertas.map((a) => (
+              <button key={a.codigo} className="qq-nome" onClick={() => { setCodigo(a.codigo); setEscolhido(null); }}>
+                {a.turma}<small>sala {a.codigo}</small>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
       {lista && (
         <>
           <label className="qq-legenda" htmlFor="qq-nome">Seu nome · {lista.turma}</label>
@@ -173,8 +202,8 @@ function Entrada({ codigoInicial, entrou }: { codigoInicial: string; entrou: (s:
           {sugestoes.length > 0 && !escolhido && !foraDaLista && (
             <div className="qq-nomes">
               {sugestoes.map((a) => (
-                <button key={a.id} className="qq-nome" disabled={a.dentro} onClick={() => { setEscolhido(a.id); setBusca(a.nome); }}>
-                  {a.nome}<small>{a.dentro ? "já entrou" : "sou eu"}</small>
+                <button key={a.id} className="qq-nome" onClick={() => { setEscolhido(a.id); setBusca(a.nome); }}>
+                  {a.nome}<small>{a.dentro ? "voltar" : "sou eu"}</small>
                 </button>
               ))}
             </div>
