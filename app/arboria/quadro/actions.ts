@@ -220,6 +220,7 @@ export async function salasAbertas() {
 export async function listaDaTurma(codigo: string) {
   const s = await sala(codigo);
   if (!s) return { ok: false as const, erro: "Não achei essa sala. Confira o código na TV." };
+  if (s.fase === "final") return { ok: false as const, erro: "Essa aula já terminou. Toque na sala da sua turma." };
   const { serie, turma } = daTurma(s.turma);
   const [{ data: lista }, { data: dentro }] = await Promise.all([
     db().from("alunos").select("id, nome_completo").eq("serie", serie).eq("turma", turma).order("nome_completo"),

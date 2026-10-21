@@ -48,7 +48,12 @@ export function Aluno({ codigoInicial }: { codigoInicial: string }) {
   const [pronto, setPronto] = useState(false);
   const [est, setEst] = useState<Estado | null>(null);
   const primeira = useRef(true);
-  const sair = () => { gravar(null); setSessao(null); setEst(null); };
+  // o código que veio no link do QR; some quando aquela aula já terminou (a turma seguinte escolhe a sala)
+  const [codigoUrl, setCodigoUrl] = useState(codigoInicial);
+  const sair = () => {
+    gravar(null); setSessao(null); setEst(null); setCodigoUrl("");
+    try { history.replaceState(null, "", location.pathname); } catch { /* sem history */ }
+  };
 
   useEffect(() => {
     const s = ler();
@@ -64,10 +69,10 @@ export function Aluno({ codigoInicial }: { codigoInicial: string }) {
     if (!r.ok) { gravar(null); setSessao(null); return; }
     // tablet que ficou numa aula já terminada (a turma seguinte vai usar): abre na escolha de sala.
     // Quem saiu no meio do final volta tocando na sala e no próprio nome.
-    if (primeira.current && r.fase === "final" && !codigoInicial) { primeira.current = false; sair(); return; }
+    if (primeira.current && r.fase === "final") { primeira.current = false; sair(); return; }
     primeira.current = false;
     setEst(r);
-  }, [sessao, codigoInicial]);
+  }, [sessao]);
 
   useEffect(() => {
     if (!sessao) return;
@@ -77,7 +82,7 @@ export function Aluno({ codigoInicial }: { codigoInicial: string }) {
   }, [sessao, atualizar]);
 
   if (!pronto) return <Tela><p className="qq-espera">Abrindo</p></Tela>;
-  if (!sessao) return <Entrada codigoInicial={codigoInicial} entrou={(s) => { gravar(s); setSessao(s); }} />;
+  if (!sessao) return <Entrada codigoInicial={codigoUrl} entrou={(s) => { gravar(s); setSessao(s); }} />;
   if (!est || !est.ok) return <Tela sala={sessao.codigo}><p className="qq-espera">Conectando à sala</p></Tela>;
 
   const encerrada = /^r\df$/.test(est.fase);
