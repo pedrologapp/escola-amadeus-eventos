@@ -249,8 +249,8 @@ function Rodada({ est, sessao, atualizar }: { est: EmRodada; sessao: Sessao; atu
   );
 
   if (!est.versoes.length) return <Escrever est={est} sessao={sessao} atualizar={atualizar} rot={rot} />;
-  if (est.tarefa) return <Adivinhar tarefa={est.tarefa} sessao={sessao} rodada={est.rodada} rot={rot} respondeu={setResultado} />;
   if (est.reescrever) return <Escrever est={est} sessao={sessao} atualizar={atualizar} rot={rot} />;
+  if (est.tarefa) return <Adivinhar tarefa={est.tarefa} sessao={sessao} rodada={est.rodada} rot={rot} respondeu={setResultado} />;
 
   const ultima = est.versoes[est.versoes.length - 1];
   const situacao = ultima.acertou === true

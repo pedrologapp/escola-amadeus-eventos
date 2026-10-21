@@ -346,7 +346,8 @@ export async function estadoAluno(codigo: string, aluno: string) {
 
   // tarefa de adivinhar: a que já está aberta para mim, ou uma nova (só depois de escrever a minha)
   let tarefa = x.palps.find((p) => p.aluno === aluno && p.escolha === null && x.descs.find((d) => d.id === p.descricao)?.rodada === rodada) ?? null;
-  if (!tarefa && versoes.length) tarefa = await pegarTarefa(s, aluno, rodada, x);
+  // quem está reescrevendo não recebe descrição nova: só volta a adivinhar depois de mandar a correção
+  if (!tarefa && versoes.length && !reescrever) tarefa = await pegarTarefa(s, aluno, rodada, x);
   const descTarefa = tarefa ? x.descs.find((d) => d.id === tarefa!.descricao) : null;
   const feitas = x.palps.filter((p) => p.aluno === aluno && p.acertou !== null && x.descs.find((d) => d.id === p.descricao)?.rodada === rodada);
   // as observações do Arboria na versão que o aluno está escrevendo agora (voltam se o tablet recarregar)
