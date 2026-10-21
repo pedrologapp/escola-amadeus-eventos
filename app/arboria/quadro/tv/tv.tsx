@@ -270,7 +270,7 @@ function Celebracao({ est, sala, atualizar }: { est: Estado; sala: Sala; atualiz
       <p className="qq-rot" style={{ fontSize: 16 }}>Antes das melhores descrições</p>
       <h1 className="qq-tit qq-tit-tv">Respondam no tablet <em>uma pergunta</em>.</h1>
       <ol className="qq-perguntas">
-        <li>O que você descobriu que sabe fazer com as palavras?</li>
+        <li>Compare a sua primeira descrição com a última. Mudou alguma coisa no seu jeito de descrever? O quê?</li>
       </ol>
       <div className="qq-placar" style={{ maxWidth: 520 }}>
         <div><b>{est.responderam}<small style={{ fontSize: 48, color: "#8fa3a0" }}>/{est.alunos.length}</small></b><span>já responderam</span></div>

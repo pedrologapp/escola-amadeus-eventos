@@ -324,7 +324,10 @@ export async function estadoAluno(codigo: string, aluno: string) {
       const { data } = await db().from("arboria_quadro_reflexoes").select("descobri").eq("aluno", aluno).maybeSingle();
       reflexao = data ?? null;
     }
-    return { ok: true as const, fase: s.fase, nome: eu.nome, reflexao };
+    // para comparar: a primeira descrição que o aluno escreveu na aula e a última
+    const minhas = x.descs.filter((d) => d.aluno === aluno).sort((a, b) => a.rodada - b.rodada || a.versao - b.versao);
+    const comparar = minhas.length ? { primeira: minhas[0].texto, ultima: minhas[minhas.length - 1].texto, mesma: minhas.length === 1 } : null;
+    return { ok: true as const, fase: s.fase, nome: eu.nome, reflexao, comparar };
   }
 
   const quadro = quadroSecreto(aluno, rodada, s.turma);

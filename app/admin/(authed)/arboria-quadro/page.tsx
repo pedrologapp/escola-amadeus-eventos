@@ -115,7 +115,7 @@ export default async function RelatorioQuadroPage({ searchParams }: { searchPara
           <div className="mt-3 overflow-x-auto rounded-2xl border bg-white shadow-sm">
             <table className="w-full min-w-[640px] text-sm">
               <thead className="border-b bg-muted/40 text-left text-xs uppercase tracking-wider text-muted-foreground">
-                <tr><th className="px-4 py-3">Aluno</th><th className="px-3 py-3">O que descobriu que sabe fazer com as palavras</th></tr>
+                <tr><th className="px-4 py-3">Aluno</th><th className="px-3 py-3">O que mudou da 1ª para a última descrição</th></tr>
               </thead>
               <tbody className="divide-y">
                 {reflexoes.map((x) => (

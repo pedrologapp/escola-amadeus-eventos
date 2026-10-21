@@ -76,7 +76,7 @@ export function Aluno({ codigoInicial }: { codigoInicial: string }) {
 
   const encerrada = /^r\df$/.test(est.fase);
   // fim das rodadas: antes de olhar para a TV, o fechamento da fase (uma vez; fica registrado)
-  if (est.fase === "final" && "reflexao" in est && !est.reflexao) return <Fechamento sessao={sessao} atualizar={atualizar} />;
+  if (est.fase === "final" && "reflexao" in est && !est.reflexao) return <Fechamento sessao={sessao} atualizar={atualizar} comparar={est.comparar ?? null} />;
   if (est.fase === "entrada" || encerrada || est.fase === "final") return (
     <Tela sala={sessao.codigo} rodada={encerrada ? Number(est.fase[1]) : undefined}>
       <p className="qq-rot">{est.fase === "entrada" ? "Você entrou" : encerrada ? "Rodada encerrada" : "Fim das rodadas"}</p>
@@ -90,7 +90,7 @@ export function Aluno({ codigoInicial }: { codigoInicial: string }) {
 }
 
 /** O fechamento da Fase Linguística (Pedro, 21/10): uma pergunta antes das melhores descrições. */
-function Fechamento({ sessao, atualizar }: { sessao: Sessao; atualizar: () => Promise<void> }) {
+function Fechamento({ sessao, atualizar, comparar }: { sessao: Sessao; atualizar: () => Promise<void>; comparar: { primeira: string; ultima: string; mesma: boolean } | null }) {
   const [descobri, setDescobri] = useState("");
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -104,8 +104,14 @@ function Fechamento({ sessao, atualizar }: { sessao: Sessao; atualizar: () => Pr
   return (
     <Tela sala={sessao.codigo}>
       <h1 className="qq-tit">Antes das melhores descrições, <em>uma pergunta</em>.</h1>
-      <p className="qq-txt">Não vale nota e não tem resposta certa. Fica guardado.</p>
-      <label className="qq-legenda" htmlFor="qq-descobri">O que você descobriu que sabe fazer com as palavras?</label>
+      <p className="qq-txt">Não vale nota e não tem resposta certa.</p>
+      {comparar && !comparar.mesma && (
+        <div className="qq-comparar">
+          <div><span className="qq-legenda">Sua primeira descrição</span><q>{comparar.primeira}</q></div>
+          <div><span className="qq-legenda">Sua última descrição</span><q>{comparar.ultima}</q></div>
+        </div>
+      )}
+      <label className="qq-legenda" htmlFor="qq-descobri">Compare a sua primeira descrição com a última. Mudou alguma coisa no seu jeito de descrever? O quê?</label>
       <textarea id="qq-descobri" className="qq-ficha" value={descobri} onChange={(e) => setDescobri(e.target.value)} rows={3} maxLength={600} placeholder="Escreva aqui…" />
       {erro && <p className="qq-aviso">{erro}</p>}
       <button className="qq-btn" onClick={mandar} disabled={enviando || !pronto}>{enviando ? "Guardando" : "Guardar"}</button>
