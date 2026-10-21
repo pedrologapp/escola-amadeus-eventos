@@ -394,9 +394,12 @@ export async function enviarDescricao(codigo: string, aluno: string, texto: stri
   const antes = (rs ?? []) as Revisao[];
   const pendente = antes.filter((x) => !x.aprovado).at(-1);
   if (pendente && pendente.texto.trim() === t) return { ok: false as const, erro: "Mude o texto no ponto que o Arboria perguntou antes de mostrar de novo." };
-  const observacao = await revisar(quadro, rodada, t, antes);
-  await c.from("arboria_quadro_revisoes").insert({ sala: s.codigo, aluno, rodada, versao, texto: t, aprovado: !observacao, observacao });
-  if (observacao) return { ok: false as const, observacao };
+  // na rodada 1 o Arboria não lê nem ajuda (Pedro, 21/10): a descrição vai direto para o colega, sem reescrever
+  if (rodada !== 1) {
+    const observacao = await revisar(quadro, rodada, t, antes);
+    await c.from("arboria_quadro_revisoes").insert({ sala: s.codigo, aluno, rodada, versao, texto: t, aprovado: !observacao, observacao });
+    if (observacao) return { ok: false as const, observacao };
+  }
 
   const { error } = await c.from("arboria_quadro_descricoes").insert({ sala: s.codigo, aluno, rodada, versao, quadro, texto: t });
   if (error) return { ok: false as const, erro: "Não consegui mandar. Tente de novo." };

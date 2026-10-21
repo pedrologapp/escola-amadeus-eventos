@@ -307,9 +307,12 @@ function Escrever({ est, sessao, atualizar, rot }: { est: EmRodada; sessao: Sess
       {reescrita && <p className="qq-txt" style={{ fontSize: 15 }}>A versão anterior fica guardada: você está escrevendo uma nova.</p>}
       {erro && <p className="qq-aviso">{erro}</p>}
       <button className="qq-btn" onClick={mandar} disabled={enviando || palavras < MIN_PALAVRAS || igualAoMostrado || (reescrita && texto.trim() === ultima.texto.trim())}>
-        {enviando ? "O Arboria está lendo" : "Mostrar ao Arboria e mandar"}
+        {est.rodada === 1 ? (enviando ? "Mandando" : "Mandar para o colega") : enviando ? "O Arboria está lendo" : "Mostrar ao Arboria e mandar"}
       </button>
-      <p className="qq-txt" style={{ fontSize: 15 }}>O Arboria lê antes de ir para o colega. Se ele fizer uma pergunta, resolva no texto para poder mandar.</p>
+      {/* na rodada 1 o Arboria não ajuda (Pedro, 21/10): fica o jeito de cada um, para comparar no final */}
+      {est.rodada === 1
+        ? <p className="qq-txt" style={{ fontSize: 15 }}>Nesta rodada é só você: a descrição vai direto para o colega.</p>
+        : <p className="qq-txt" style={{ fontSize: 15 }}>O Arboria lê antes de ir para o colega. Se ele fizer uma pergunta, resolva no texto para poder mandar.</p>}
     </Tela>
   );
 }
