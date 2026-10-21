@@ -50,6 +50,7 @@ export function Aluno({ codigoInicial }: { codigoInicial: string }) {
   const primeira = useRef(true);
   // o código que veio no link do QR; some quando aquela aula já terminou (a turma seguinte escolhe a sala)
   const [codigoUrl, setCodigoUrl] = useState(codigoInicial);
+  const [fechada, setFechada] = useState("");
   const sair = () => {
     gravar(null); setSessao(null); setEst(null); setCodigoUrl("");
     try { history.replaceState(null, "", location.pathname); } catch { /* sem history */ }
@@ -69,7 +70,7 @@ export function Aluno({ codigoInicial }: { codigoInicial: string }) {
     if (!r.ok) { gravar(null); setSessao(null); return; }
     // tablet que ficou numa aula já terminada (a turma seguinte vai usar): abre na escolha de sala.
     // Quem saiu no meio do final volta tocando na sala e no próprio nome.
-    if (primeira.current && r.fase === "final") { primeira.current = false; sair(); return; }
+    if (primeira.current && r.fase === "final") { primeira.current = false; setFechada(`A sala ${sessao.codigo} está fechada. Toque na sala da sua turma.`); sair(); return; }
     primeira.current = false;
     setEst(r);
   }, [sessao]);
@@ -82,7 +83,7 @@ export function Aluno({ codigoInicial }: { codigoInicial: string }) {
   }, [sessao, atualizar]);
 
   if (!pronto) return <Tela><p className="qq-espera">Abrindo</p></Tela>;
-  if (!sessao) return <Entrada codigoInicial={codigoUrl} entrou={(s) => { gravar(s); setSessao(s); }} />;
+  if (!sessao) return <Entrada codigoInicial={codigoUrl} fechada={fechada} entrou={(s) => { gravar(s); setSessao(s); }} />;
   if (!est || !est.ok) return <Tela sala={sessao.codigo}><p className="qq-espera">Conectando à sala</p></Tela>;
 
   const encerrada = /^r\df$/.test(est.fase);
@@ -133,7 +134,7 @@ function Fechamento({ sessao, atualizar, comparar }: { sessao: Sessao; atualizar
 
 type Lista = Extract<Awaited<ReturnType<typeof listaDaTurma>>, { ok: true }>;
 
-function Entrada({ codigoInicial, entrou }: { codigoInicial: string; entrou: (s: Sessao) => void }) {
+function Entrada({ codigoInicial, fechada, entrou }: { codigoInicial: string; fechada: string; entrou: (s: Sessao) => void }) {
   const [codigo, setCodigo] = useState(codigoInicial);
   const [lista, setLista] = useState<Lista | null>(null);
   const [busca, setBusca] = useState("");
@@ -184,6 +185,7 @@ function Entrada({ codigoInicial, entrou }: { codigoInicial: string; entrou: (s:
     <Tela>
       <p className="qq-rot">Fase Linguística · semana 3</p>
       <h1 className="qq-tit">Qual é o <em>quadro</em>?</h1>
+      {fechada && !codigo && <p className="qq-aviso">{fechada}</p>}
       <label className="qq-legenda" htmlFor="qq-codigo">Código da sala · está na TV</label>
       <input id="qq-codigo" className="qq-campo codigo" value={codigo} inputMode="numeric" autoComplete="off"
         onChange={(e) => { setCodigo(e.target.value.replace(/\D/g, "").slice(0, 4)); setEscolhido(null); }} />
