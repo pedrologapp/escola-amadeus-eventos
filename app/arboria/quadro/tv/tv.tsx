@@ -257,12 +257,28 @@ function TresMelhores({ est, rodada }: { est: Estado; rodada: number }) {
 function Celebracao({ est, sala, atualizar }: { est: Estado; sala: Sala; atualizar: () => Promise<void> }) {
   const [rodada, setRodada] = useState(1);
   const [pronto, setPronto] = useState(false);
+  const [perguntando, setPerguntando] = useState(true);
   useEffect(() => {
     let vivo = true;
     celebrar(sala.codigo, sala.chave).catch(() => {}).finally(() => { atualizar().finally(() => { if (vivo) setPronto(true); }); });
     return () => { vivo = false; };
   }, [sala, atualizar]);
 
+  // antes das melhores descrições, os alunos respondem as duas perguntas no tablet (o Arboria já vai escolhendo)
+  if (perguntando) return (
+    <div>
+      <p className="qq-rot" style={{ fontSize: 16 }}>Antes das melhores descrições</p>
+      <h1 className="qq-tit qq-tit-tv">Respondam no tablet <em>duas perguntas</em>.</h1>
+      <ol className="qq-perguntas">
+        <li>O que você descobriu que sabe fazer com as palavras?</li>
+        <li>O que você quer descobrir no ano que vem?</li>
+      </ol>
+      <div className="qq-placar" style={{ maxWidth: 520 }}>
+        <div><b>{est.responderam}<small style={{ fontSize: 48, color: "#8fa3a0" }}>/{est.alunos.length}</small></b><span>já responderam</span></div>
+      </div>
+      <div style={{ maxWidth: 560 }}><button className="qq-btn" onClick={() => setPerguntando(false)}>Ver as melhores descrições</button></div>
+    </div>
+  );
   if (!pronto) return (
     <div>
       <p className="qq-rot" style={{ fontSize: 16 }}>Fim das rodadas</p>

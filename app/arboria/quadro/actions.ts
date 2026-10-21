@@ -155,7 +155,10 @@ export async function estadoTv(codigo: string, chave: string) {
       maisErros: todos.filter((q) => q.erros > 0).sort((p, q) => q.erros - p.erros || taxa(p) - taxa(q)).slice(0, 3),
     };
   };
+  // as duas perguntas do final: quantos já responderam no tablet (a TV espera antes das melhores descrições)
+  const { count: responderam } = await db().from("arboria_quadro_reflexoes").select("aluno", { count: "exact", head: true }).eq("sala", s.codigo);
   return {
+    responderam: responderam ?? 0,
     ranking: { geral: ranking(), porRodada: [ranking(1), ranking(2), ranking(3)] },
     quadrosRank: { geral: quadrosRank(), porRodada: [quadrosRank(1), quadrosRank(2), quadrosRank(3)] },
     sala: { codigo: s.codigo, turma: s.turma, fase: s.fase, celebrado: !!s.melhores },

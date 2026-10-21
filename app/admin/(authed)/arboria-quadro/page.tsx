@@ -111,7 +111,7 @@ export default async function RelatorioQuadroPage({ searchParams }: { searchPara
 
       {reflexoes.length > 0 && (
         <section className="mt-8">
-          <h2 className="text-lg font-extrabold text-amadeus-blue">Fechamento da Fase Linguística · {reflexoes.length} de {alunos.length} responderam</h2>
+          <h2 className="text-lg font-extrabold text-amadeus-blue">As duas perguntas do final · {reflexoes.length} de {alunos.length} responderam</h2>
           <div className="mt-3 overflow-x-auto rounded-2xl border bg-white shadow-sm">
             <table className="w-full min-w-[640px] text-sm">
               <thead className="border-b bg-muted/40 text-left text-xs uppercase tracking-wider text-muted-foreground">

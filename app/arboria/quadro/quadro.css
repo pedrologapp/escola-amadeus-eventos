@@ -178,3 +178,7 @@
 .qq-qrank h2.ok { color: #2dd4bf; } .qq-qrank h2.x { color: #e0735f; }
 .qq-qrank-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: start; }
 .qq-qrank-col .qq-moldura img { width: 100%; height: 170px; object-fit: contain; background: #e9e1cf; }
+
+/* as duas perguntas do final, na TV (21/10) */
+.qq-perguntas { margin: 30px 0 10px; padding-left: 1.2em; max-width: 1300px; display: flex; flex-direction: column; gap: 18px; font: italic 400 46px/1.25 var(--f-texto), serif; color: var(--giz); }
+.qq-perguntas li::marker { font: 500 22px var(--f-mono), monospace; color: var(--ambar); }

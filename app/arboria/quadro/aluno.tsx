@@ -104,8 +104,7 @@ function Fechamento({ sessao, atualizar }: { sessao: Sessao; atualizar: () => Pr
   };
   return (
     <Tela sala={sessao.codigo}>
-      <p className="qq-rot">Fim da Fase Linguística</p>
-      <h1 className="qq-tit">Antes de olhar para a TV, <em>duas perguntas</em>.</h1>
+      <h1 className="qq-tit">Antes das melhores descrições, <em>duas perguntas</em>.</h1>
       <p className="qq-txt">Não vale nota e não tem resposta certa. Fica guardado para você e para o ano que vem.</p>
       <label className="qq-legenda" htmlFor="qq-descobri">O que você descobriu que sabe fazer com as palavras?</label>
       <textarea id="qq-descobri" className="qq-ficha" value={descobri} onChange={(e) => setDescobri(e.target.value)} rows={3} maxLength={600} placeholder="Escreva aqui…" />
