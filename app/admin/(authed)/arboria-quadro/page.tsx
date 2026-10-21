@@ -39,7 +39,7 @@ export default async function RelatorioQuadroPage({ searchParams }: { searchPara
 
   const rel = await relatorio(codigo);
   if (!rel) return <div className="container mx-auto px-4 py-6"><p>Sala não encontrada.</p><Link href="/admin/arboria-quadro" className="text-amadeus-blue underline">Voltar</Link></div>;
-  const { sala, rodadas, alunos, linhas } = rel;
+  const { sala, rodadas, alunos, linhas, reflexoes } = rel;
   const de = (aluno: string, r: number) => linhas.find((l) => l.aluno === aluno && l.rodada === r);
   const naoFinalizaram = linhas.filter((l) => !SITUACAO[l.situacao].finalizou);
 
@@ -108,6 +108,28 @@ export default async function RelatorioQuadroPage({ searchParams }: { searchPara
       </section>
 
       <NaoFinalizaram sala={sala.codigo} linhas={naoFinalizaram} />
+
+      {reflexoes.length > 0 && (
+        <section className="mt-8">
+          <h2 className="text-lg font-extrabold text-amadeus-blue">Fechamento da Fase Linguística · {reflexoes.length} de {alunos.length} responderam</h2>
+          <div className="mt-3 overflow-x-auto rounded-2xl border bg-white shadow-sm">
+            <table className="w-full min-w-[640px] text-sm">
+              <thead className="border-b bg-muted/40 text-left text-xs uppercase tracking-wider text-muted-foreground">
+                <tr><th className="px-4 py-3">Aluno</th><th className="px-3 py-3">O que descobriu que sabe fazer com as palavras</th><th className="px-3 py-3">O que quer descobrir no ano que vem</th></tr>
+              </thead>
+              <tbody className="divide-y">
+                {reflexoes.map((x) => (
+                  <tr key={x.aluno} className="align-top">
+                    <td className="px-4 py-2.5 font-semibold whitespace-nowrap">{x.nome}</td>
+                    <td className="px-3 py-2.5">{x.descobri}</td>
+                    <td className="px-3 py-2.5">{x.quero}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

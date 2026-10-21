@@ -44,12 +44,13 @@ export async function relatorio(codigo: string) {
   const db = createAdminClient();
   const { data: sala } = await db.from("arboria_quadro_salas").select("codigo, turma, fase, criado_em").eq("codigo", codigo).maybeSingle();
   if (!sala) return null;
-  const [a, d, p, r, an] = await Promise.all([
+  const [a, d, p, r, an, rf] = await Promise.all([
     db.from("arboria_quadro_alunos").select("id, nome").eq("sala", codigo).order("nome"),
     db.from("arboria_quadro_descricoes").select("id, aluno, rodada, versao, quadro, texto").eq("sala", codigo),
     db.from("arboria_quadro_palpites").select("descricao, aluno, escolha, acertou, conversa, extra").eq("sala", codigo),
     db.from("arboria_quadro_revisoes").select("aluno, rodada, versao, texto, observacao, aprovado, criado_em").eq("sala", codigo).order("criado_em"),
     db.from("arboria_quadro_analises").select("aluno, rodada, texto").eq("sala", codigo),
+    db.from("arboria_quadro_reflexoes").select("aluno, descobri, quero").eq("sala", codigo),
   ]);
   const alunos = (a.data ?? []) as { id: string; nome: string }[];
   const descs = (d.data ?? []) as { id: string; aluno: string; rodada: number; versao: number; quadro: string; texto: string }[];
@@ -83,5 +84,8 @@ export async function relatorio(codigo: string) {
       });
     }
   }
-  return { sala: { ...sala, ordemFase: ORDEM.indexOf(sala.fase as Fase) }, rodadas, alunos, linhas, quadros: rodadas.map((n) => quadrosDaRodada(n, sala.turma).map((q) => q.id)) };
+  // o fechamento da Fase Linguística (21/10): o que cada aluno descobriu e o que quer descobrir
+  const reflexoes = ((rf.data ?? []) as { aluno: string; descobri: string; quero: string }[])
+    .map((x) => ({ ...x, nome: alunos.find((al) => al.id === x.aluno)?.nome ?? "" })).sort((x, y) => x.nome.localeCompare(y.nome));
+  return { reflexoes, sala: { ...sala, ordemFase: ORDEM.indexOf(sala.fase as Fase) }, rodadas, alunos, linhas, quadros: rodadas.map((n) => quadrosDaRodada(n, sala.turma).map((q) => q.id)) };
 }

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MAX_VERSOES, MIN_PALAVRAS, TODOS, contarPalavras, imagem } from "@/lib/arboria-quadro";
 import { MAX_TROCAS, type Fala } from "@/lib/arboria-guia";
-import { conversar, enviarDescricao, entrar, entrarSemLista, estadoAluno, listaDaTurma, responder } from "./actions";
+import { conversar, enviarDescricao, enviarReflexao, entrar, entrarSemLista, estadoAluno, listaDaTurma, responder } from "./actions";
 
 /**
  * O tablet do aluno em "Qual é o quadro?" (visual em quadro.css: gabinete de museu + caderno do Arboria).
@@ -75,6 +75,8 @@ export function Aluno({ codigoInicial }: { codigoInicial: string }) {
   if (!est || !est.ok) return <Tela sala={sessao.codigo}><p className="qq-espera">Conectando à sala</p></Tela>;
 
   const encerrada = /^r\df$/.test(est.fase);
+  // fim das rodadas: antes de olhar para a TV, o fechamento da fase (uma vez; fica registrado)
+  if (est.fase === "final" && "reflexao" in est && !est.reflexao) return <Fechamento sessao={sessao} atualizar={atualizar} />;
   if (est.fase === "entrada" || encerrada || est.fase === "final") return (
     <Tela sala={sessao.codigo} rodada={encerrada ? Number(est.fase[1]) : undefined}>
       <p className="qq-rot">{est.fase === "entrada" ? "Você entrou" : encerrada ? "Rodada encerrada" : "Fim das rodadas"}</p>
@@ -85,6 +87,34 @@ export function Aluno({ codigoInicial }: { codigoInicial: string }) {
   );
   // key: o resultado de um palpite de uma rodada não fica na tela quando começa a próxima
   return <Rodada key={(est as EmRodada).rodada} est={est as EmRodada} sessao={sessao} atualizar={atualizar} />;
+}
+
+/** O fechamento da Fase Linguística (Pedro, 21/10): duas perguntas, para o aluno e para o ano que vem. */
+function Fechamento({ sessao, atualizar }: { sessao: Sessao; atualizar: () => Promise<void> }) {
+  const [descobri, setDescobri] = useState("");
+  const [quero, setQuero] = useState("");
+  const [erro, setErro] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const pronto = descobri.trim().length >= 3 && quero.trim().length >= 3;
+  const mandar = async () => {
+    setEnviando(true); setErro("");
+    const r = await enviarReflexao(sessao.codigo, sessao.aluno, descobri, quero).catch(() => null);
+    setEnviando(false);
+    if (r?.ok) atualizar(); else setErro(r?.erro ?? "Sem internet? Tente de novo.");
+  };
+  return (
+    <Tela sala={sessao.codigo}>
+      <p className="qq-rot">Fim da Fase Linguística</p>
+      <h1 className="qq-tit">Antes de olhar para a TV, <em>duas perguntas</em>.</h1>
+      <p className="qq-txt">Não vale nota e não tem resposta certa. Fica guardado para você e para o ano que vem.</p>
+      <label className="qq-legenda" htmlFor="qq-descobri">O que você descobriu que sabe fazer com as palavras?</label>
+      <textarea id="qq-descobri" className="qq-ficha" value={descobri} onChange={(e) => setDescobri(e.target.value)} rows={3} maxLength={600} placeholder="Escreva aqui…" />
+      <label className="qq-legenda" htmlFor="qq-quero">O que você quer descobrir no ano que vem?</label>
+      <textarea id="qq-quero" className="qq-ficha" value={quero} onChange={(e) => setQuero(e.target.value)} rows={3} maxLength={600} placeholder="Escreva aqui…" />
+      {erro && <p className="qq-aviso">{erro}</p>}
+      <button className="qq-btn" onClick={mandar} disabled={enviando || !pronto}>{enviando ? "Guardando" : "Guardar"}</button>
+    </Tela>
+  );
 }
 
 type Lista = Extract<Awaited<ReturnType<typeof listaDaTurma>>, { ok: true }>;

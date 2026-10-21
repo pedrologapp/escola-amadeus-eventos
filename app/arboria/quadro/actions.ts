@@ -314,7 +314,15 @@ export async function estadoAluno(codigo: string, aluno: string) {
   const eu = x.alunos.find((a) => a.id === aluno);
   if (!eu) return { ok: false as const };
   const rodada = rodadaDa(s.fase);
-  if (!rodada) return { ok: true as const, fase: s.fase, nome: eu.nome };
+  if (!rodada) {
+    // no fim das rodadas, o fechamento da fase: o aluno escreve o que descobriu e o que quer descobrir (uma vez)
+    let reflexao: { descobri: string; quero: string } | null = null;
+    if (s.fase === "final") {
+      const { data } = await db().from("arboria_quadro_reflexoes").select("descobri, quero").eq("aluno", aluno).maybeSingle();
+      reflexao = data ?? null;
+    }
+    return { ok: true as const, fase: s.fase, nome: eu.nome, reflexao };
+  }
 
   const quadro = quadroSecreto(aluno, rodada, s.turma);
   const versoes = x.descs.filter((d) => d.aluno === aluno && d.rodada === rodada).sort((a, b) => a.versao - b.versao)
@@ -336,6 +344,18 @@ export async function estadoAluno(codigo: string, aluno: string) {
     tarefa: tarefa && descTarefa ? { id: tarefa.id, texto: descTarefa.texto, versao: descTarefa.versao, opcoes: tarefa.opcoes, extra: !!tarefa.extra } : null,
     adivinhei: { feitas: feitas.length, acertos: feitas.filter((p) => p.acertou).length },
   };
+}
+
+/** O fechamento da Fase Linguística (Pedro, 21/10): fica registrado para o professor e para o ano que vem. */
+export async function enviarReflexao(codigo: string, aluno: string, descobri: string, quero: string) {
+  const s = await sala(codigo);
+  if (!s || s.fase !== "final") return { ok: false as const, erro: "Espere o professor terminar as rodadas." };
+  const { data: eu } = await db().from("arboria_quadro_alunos").select("id").eq("id", aluno).eq("sala", s.codigo).maybeSingle();
+  if (!eu) return { ok: false as const, erro: "Entre na sala de novo." };
+  const d = limpar(descobri, 600), q = limpar(quero, 600);
+  if (d.length < 3 || q.length < 3) return { ok: false as const, erro: "Responda as duas perguntas." };
+  const { error } = await db().from("arboria_quadro_reflexoes").upsert({ aluno, sala: s.codigo, descobri: d, quero: q });
+  return error ? { ok: false as const, erro: "Não salvou. Tente de novo." } : { ok: true as const };
 }
 
 /**
