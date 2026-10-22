@@ -3,6 +3,7 @@ import {
   ClipboardList,
   GraduationCap,
   Heart,
+  Palette,
   Sparkles,
   Waves,
 } from "lucide-react";
@@ -20,6 +21,13 @@ export const metadata = { title: "Campanhas · Admin Amadeus" };
 
 // A Rematrícula 2027 tem aba própria no menu (/admin/rematricula-2027).
 const EM_ANDAMENTO: Modulo[] = [
+  {
+    href: "/admin/culminancia",
+    icone: Palette,
+    titulo: "Projeto de culminância",
+    descricao: "Painéis do Arboria para as paredes: ideias e imagens das professoras por série e casa, e as nossas versões para aprovar.",
+    selo: "Novo",
+  },
   {
     href: "/admin/arboria-quadro",
     icone: Sparkles,
