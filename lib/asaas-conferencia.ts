@@ -1,5 +1,6 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logInscricao } from "@/lib/log-inscricao";
 
 /**
  * Conferência com o Asaas (direção, 28/09/2026). SÓ LEITURA do Asaas:
@@ -7,8 +8,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
  *   os livros parcelados do fluxo antigo "EduHub - Amadeus - Financeiro");
  * - nas cobranças avulsas, soma quanto já entrou de fato (parceladas);
  * - nas pendentes, anota a situação no Asaas (vencida, removida...).
- * Nunca muda status_pagamento: quem marca "pago" e manda a confirmação no
- * WhatsApp continua sendo o fluxo do n8n.
+ * Esta conferência geral nunca muda status_pagamento. Desde 22/10/2026 a
+ * conferirPagamentosEventos (no fim deste arquivo) marca "pago" as inscrições de
+ * evento que o Asaas diz recebidas e cujo aviso não chegou; a confirmação no
+ * WhatsApp continua sendo do fluxo do n8n.
  *
  * Contas: a ATUAL (ASAAS_API_KEY, desde 08/09/2026) e a ANTIGA (ASAAS_API_KEY_ANTIGA,
  * opcional) — foi bloqueada mas ainda recebe parcelas de livros e cartões
@@ -304,4 +307,101 @@ export async function limparPendentesAntigas(): Promise<{ simulado: boolean; ite
     }
   }
   return { simulado: !LIMPEZA_ATIVA, itens };
+}
+
+// ---------------------------------------------------------------------------
+// Pagamentos dos eventos sempre conferidos (Pedro, 22/10/2026). No passeio do Dia das
+// Crianças, 9 pagamentos de 20/10 não chegaram (o aviso Asaas → n8n falhou) e a lista
+// da porta ficou incompleta. Roda a cada 30 min (pg_cron → /api/conferencia/pagamentos)
+// e pelo botão "Conferir agora" do evento. Não manda mensagem a ninguém.
+// ---------------------------------------------------------------------------
+export interface Corrigida {
+  inscricaoId: string;
+  aluno: string | null;
+  evento: string | null;
+  valor: number | null;
+}
+
+export interface ResultadoPagamentos {
+  ok: boolean;
+  erro?: string;
+  conferidas: number;
+  corrigidas: Corrigida[];
+}
+
+export async function conferirPagamentosEventos(opts: { eventoId?: string; origem: "automatica" | "manual" }): Promise<ResultadoPagamentos> {
+  const db = createAdminClient();
+  try {
+    let q = db
+      .from("inscricoes")
+      .select("id, valor_total, asaas_payment_id, evento:eventos(nome), aluno:alunos(nome_completo)")
+      .eq("status_pagamento", "pendente")
+      .not("asaas_payment_id", "is", null);
+    // No automático, só as dos últimos 60 dias (as antigas já venceram ou foram resolvidas).
+    q = opts.eventoId ? q.eq("evento_id", opts.eventoId) : q.gte("created_at", new Date(Date.now() - 60 * 864e5).toISOString());
+    const { data, error } = await q;
+    if (error) throw new Error(error.message);
+    let conferidas = 0;
+    const corrigidas: Corrigida[] = [];
+    for (const i of data ?? []) {
+      const st = await situacao(i.asaas_payment_id as string);
+      if (!st) continue; // falha de rede: tenta de novo na próxima rodada
+      conferidas++;
+      const pago = RECEBIDO.includes(st);
+      const { data: mudou } = await db
+        .from("inscricoes")
+        .update({ asaas_status: st, asaas_conferido_em: new Date().toISOString(), ...(pago ? { status_pagamento: "pago" } : {}) })
+        .eq("id", i.id)
+        .eq("status_pagamento", "pendente") // se o n8n confirmou no meio do caminho, não mexe
+        .select("id");
+      if (pago && mudou?.length) {
+        const evento = (i.evento as unknown as { nome: string } | null)?.nome ?? null;
+        const aluno = (i.aluno as unknown as { nome_completo: string } | null)?.nome_completo ?? null;
+        corrigidas.push({ inscricaoId: i.id as string, aluno, evento, valor: i.valor_total === null ? null : Number(i.valor_total) });
+        await logInscricao({
+          inscricaoId: i.id as string,
+          etapa: "pagamento_pago",
+          mensagem: "Pagamento confirmado pela conferência com o Asaas (o aviso do Asaas não tinha chegado)",
+          detalhe: { asaasPaymentId: i.asaas_payment_id, asaasStatus: st, conferencia: opts.origem },
+          origem: "conferencia",
+        });
+      }
+    }
+    await db.from("conferencia_pagamentos").insert({ evento_id: opts.eventoId ?? null, origem: opts.origem, conferidas, corrigidas });
+    return { ok: true, conferidas, corrigidas };
+  } catch (e) {
+    const erro = (e as Error).message.slice(0, 300);
+    await db.from("conferencia_pagamentos").insert({ evento_id: opts.eventoId ?? null, origem: opts.origem, erro });
+    return { ok: false, erro, conferidas: 0, corrigidas: [] };
+  }
+}
+
+/** A última conferência que vale para o evento: a dele ou a geral, a mais recente sem erro. */
+export async function ultimaConferenciaPagamentos(eventoId: string) {
+  const db = createAdminClient();
+  const { data } = await db
+    .from("conferencia_pagamentos")
+    .select("em, origem")
+    .is("erro", null)
+    .or(`evento_id.eq.${eventoId},evento_id.is.null`)
+    .order("em", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!data) return null;
+  // Minutos desde a conferência, calculados aqui (fora do render) para a tela dizer se está em dia.
+  return { em: data.em as string, origem: data.origem as string, minutos: Math.round((Date.now() - Date.parse(data.em as string)) / 60000) };
+}
+
+/** Correções feitas pela conferência neste evento nos últimos dias (para o aviso no painel). */
+export async function correcoesRecentes(inscricoesDoEvento: Set<string>, dias = 7): Promise<(Corrigida & { em: string })[]> {
+  const db = createAdminClient();
+  const { data } = await db
+    .from("conferencia_pagamentos")
+    .select("em, corrigidas")
+    .is("erro", null)
+    .gte("em", new Date(Date.now() - dias * 864e5).toISOString())
+    .order("em", { ascending: false });
+  return (data ?? []).flatMap((r) =>
+    ((r.corrigidas as Corrigida[] | null) ?? []).filter((c) => inscricoesDoEvento.has(c.inscricaoId)).map((c) => ({ ...c, em: r.em as string })),
+  );
 }

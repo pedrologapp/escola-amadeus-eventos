@@ -7,7 +7,7 @@ export interface LogEntry {
   sucesso?: boolean;
   mensagem?: string | null;
   detalhe?: Record<string, unknown> | null;
-  origem?: "site" | "n8n" | "asaas";
+  origem?: "site" | "n8n" | "asaas" | "conferencia";
 }
 
 /**

@@ -33,6 +33,8 @@ import { formatDateTimeBrt } from "@/lib/utils";
 import { InscricoesTable } from "./inscricoes-table";
 import { SenhaGateButton } from "./senha-gate-button";
 import { ComoFoi } from "./como-foi";
+import { ConferenciaAsaas } from "./conferencia-asaas";
+import { correcoesRecentes, ultimaConferenciaPagamentos } from "@/lib/asaas-conferencia";
 
 const statusConfig: Record<
   string,
@@ -65,12 +67,25 @@ export default async function EventoDetailPage({ params }: PageProps) {
   const { data: inscricoes } = await supabase
     .from("inscricoes")
     .select(
-      "id, responsavel_nome, email, telefone, valor_total, itens, status_pagamento, metodo_pagamento, parcelas, created_at, aluno_id, confirmacao_enviada_em, confirmacao_erro, qrcode_enviado_em, qrcode_erro, asaas_status, aluno:alunos(nome_completo, serie, turma)",
+      "id, responsavel_nome, email, telefone, valor_total, itens, status_pagamento, metodo_pagamento, parcelas, created_at, aluno_id, confirmacao_enviada_em, confirmacao_erro, qrcode_enviado_em, qrcode_erro, asaas_status, asaas_payment_id, aluno:alunos(nome_completo, serie, turma)",
     )
     .eq("evento_id", id)
     .order("created_at", { ascending: false });
 
   const lista = inscricoes ?? [];
+
+  // Conferência com o Asaas (22/10/2026): o que não bate aparece antes de imprimir a lista da porta.
+  const nomeAluno = (i: (typeof lista)[number]) => (i.aluno as unknown as { nome_completo?: string } | null)?.nome_completo ?? i.responsavel_nome ?? "sem nome";
+  const pagas = lista.filter((i) => i.status_pagamento === "pago");
+  const porAluno = new Map<string, number>();
+  for (const i of pagas) if (i.aluno_id) porAluno.set(i.aluno_id, (porAluno.get(i.aluno_id) ?? 0) + 1);
+  const conferencia = {
+    ...(await ultimaConferenciaPagamentos(id).then((u) => ({ ultima: u?.em ?? null, minutos: u?.minutos ?? null }))),
+    pendentes: lista.filter((i) => i.status_pagamento === "pendente" && i.asaas_payment_id).length,
+    pagasSemOrigem: pagas.filter((i) => !i.asaas_payment_id && i.metodo_pagamento !== "dinheiro").map(nomeAluno),
+    duplicados: [...new Set(pagas.filter((i) => i.aluno_id && (porAluno.get(i.aluno_id) ?? 0) > 1).map(nomeAluno))],
+    corrigidas: (await correcoesRecentes(new Set(lista.map((i) => i.id)))).map((c) => ({ aluno: c.aluno, em: c.em })),
+  };
 
   // Logs de todas as inscrições deste evento, agrupados por inscricao_id
   const idsInscricoes = lista.map((i) => i.id);
@@ -410,6 +425,10 @@ export default async function EventoDetailPage({ params }: PageProps) {
             />
           </CardContent>
         </Card>
+      </section>
+
+      <section className="mt-8">
+        <ConferenciaAsaas eventoId={evento.id} dados={conferencia} />
       </section>
 
       {/* Inscrições */}

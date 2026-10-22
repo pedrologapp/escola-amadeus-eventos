@@ -10,6 +10,7 @@ import {
   corLegivel,
 } from "@/lib/casas";
 import { RelatorioControls } from "./relatorio-controls";
+import { ultimaConferenciaPagamentos } from "@/lib/asaas-conferencia";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -93,6 +94,10 @@ export default async function RelatorioPage({ params, searchParams }: PageProps)
     .maybeSingle();
 
   if (!evento) notFound();
+
+  // Lista da porta: avisa quando os pagamentos foram conferidos com o Asaas (22/10/2026).
+  const conferida = await ultimaConferenciaPagamentos(id);
+  const minutosConferida = conferida?.minutos ?? null;
 
   // Tenta com alunos_incluidos (migration 0013); se a coluna ainda não
   // existe, cai pro select antigo sem irmãos.
@@ -260,6 +265,20 @@ export default async function RelatorioPage({ params, searchParams }: PageProps)
         agruparPorCasa={agruparPorCasa}
         temCasa={temCasa}
       />
+
+      <p
+        className={`mt-6 rounded-xl border p-3 text-sm print:hidden ${
+          minutosConferida !== null && minutosConferida <= 60
+            ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+            : "border-amber-300 bg-amber-50 text-amber-900"
+        }`}
+      >
+        {conferida
+          ? `Pagamentos conferidos com o Asaas em ${new Date(conferida.em).toLocaleString("pt-BR", { timeZone: "America/Fortaleza", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}.`
+          : "Os pagamentos ainda não foram conferidos com o Asaas."}{" "}
+        {(minutosConferida === null || minutosConferida > 60) && "Antes de imprimir, use “Conferir agora” na página do evento."}
+        {" "}Esta lista traz todos os pagos: pelo Asaas e em dinheiro.
+      </p>
 
       <div className="mt-8 print:mt-0">
         {/* Cabeçalho geral: na impressão por turma ele some — cada
