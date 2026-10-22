@@ -15,7 +15,11 @@ const nextConfig: NextConfig = {
   },
   // Páginas estáticas em public/ com endereço curto (sem o /index.html).
   async rewrites() {
-    return [{ source: "/semanadacrianca", destination: "/semanadacrianca/index.html" }];
+    return [
+      { source: "/semanadacrianca", destination: "/semanadacrianca/index.html" },
+      // o Mundo do Arboria (jogo 3D, build do Arboria/Mundo/jogo com base /mundo/)
+      { source: "/mundo", destination: "/mundo/index.html" },
+    ];
   },
   images: {
     remotePatterns: [

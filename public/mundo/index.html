@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<base href="/mundo/">
+<meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Arboria</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;700;800&family=Instrument+Serif:ital@0;1&display=swap">
+  <script type="module" crossorigin src="/mundo/assets/index-BoDpPMLd.js"></script>
+  <link rel="stylesheet" crossorigin href="/mundo/assets/index-BFJMc8_i.css">
+</head>
+<body>
+<div class="hud" id="carregando">Abrindo o mundo…</div>
+<div class="hud off" id="proto">Protótipo</div>
+<div class="hud" id="topo"><div class="logo"><b>Arb</b>oria</div></div>
+<div class="hud vidro" id="criar">
+  <div><div class="rot">Antes de entrar</div><h2>Monte o seu <em>avatar</em>.</h2></div>
+  <div class="abas" id="abas"></div>
+  <div id="opcoes"></div>
+  <div class="linha-btns"><button class="btn sec" id="sortear">Sortear</button><button class="btn" id="continuar">Entrar no mundo</button></div>
+</div>
+<div class="hud off vidro" id="casas">
+  <div><div class="rot">Salão das Casas</div><h2>Qual casa você quer <em>conquistar</em>?</h2></div>
+  <div id="casaGrade"></div>
+  <div id="casaTexto"></div>
+  <div class="linha-btns"><button class="btn sec" id="voltarCasa">Voltar</button><button class="btn" id="entrar">Entrar no mundo</button></div>
+</div>
+<div class="hud off" id="joy"><i></i></div>
+<button class="hud off" id="pular">Pular</button>
+<div class="hud off" id="dica">Use o controle para andar. Arraste a tela para girar a câmera.</div>
+<div class="hud off" id="revela">As oito torres</div>
+<button class="hud off vidro" id="btnDest">Destaques da semana</button>
+<div class="hud off vidro" id="destaques">
+  <div class="rot">Destaques da semana</div>
+  <ol>
+    <li>Lia <span>4 andares</span><small>Subiu mais andares · 7º A</small></li>
+    <li>Davi <span>3 pontes</span><small>Atravessou mais pontes · 6º B</small></li>
+    <li>Marina <span>1º lugar</span><small>Primeira a vencer o chefe · 5º A</small></li>
+    <li>Caio <span>uma torre nova</span><small>Subiu a torre que ninguém da turma tinha subido · 6º A</small></li>
+  </ol>
+</div>
+<button class="hud off btn" id="porta">Entrar na torre</button>
+<div class="hud off vidro" id="torre">
+  <div class="cab"><div class="emblema" id="temb"></div><div><div class="rot">Torre</div><h3 id="tnome"></h3></div></div>
+  <ol id="andares"></ol>
+  <button class="btn" id="fechar">Voltar para a praça</button>
+</div>
+</body>
+</html>
