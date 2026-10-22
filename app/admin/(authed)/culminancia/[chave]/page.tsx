@@ -27,6 +27,7 @@ export default async function FrenteCulminancia({ params }: PageProps) {
   const url = new Map(assinadas.map((s) => [s.path, s.signedUrl]));
   const imagens: Imagem[] = lista.map((l) => ({
     id: l.id, tipo: l.tipo, legenda: l.legenda, status: l.status, comentario: l.comentario, quando: l.criado_em, url: url.get(l.arquivo) ?? null,
+    doc: /[.]pdf$/i.test(l.arquivo) ? "pdf" : /[.]docx?$/i.test(l.arquivo) ? "word" : null,
   }));
 
   return (

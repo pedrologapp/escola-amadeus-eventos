@@ -33,6 +33,17 @@ export async function prepararImagemProfessora(chave: string) {
   return { ok: true as const, path, token: data.token };
 }
 
+/** Documento (Word ou PDF) mandado pela professora, com a extensão original. */
+export async function prepararDocumentoProfessora(chave: string, nome: string) {
+  if (!frentePorChave(chave)) return { ok: false as const, erro: "Escolha a série ou a casa." };
+  const ext = /\.(pdf|docx?)$/i.exec(String(nome ?? ""))?.[1]?.toLowerCase();
+  if (!ext) return { ok: false as const, erro: "Só Word (.doc, .docx) ou PDF." };
+  const path = `${chave}/doc-${crypto.randomUUID()}.${ext}`;
+  const { data, error } = await createAdminClient().storage.from(BUCKET_CULMINANCIA).createSignedUploadUrl(path);
+  if (error || !data) return { ok: false as const, erro: "Não consegui preparar o envio. Tente de novo." };
+  return { ok: true as const, path, token: data.token };
+}
+
 export async function enviarIdeias(entrada: {
   chave: string;
   inteligencia: string | null;
@@ -52,13 +63,13 @@ export async function enviarIdeias(entrada: {
 
   const db = createAdminClient();
   // só aceita imagens desta série que já chegaram no Storage
-  const validas = (entrada.imagens ?? []).filter((p) => new RegExp(`^${f.chave}/prof-[\\w-]+\\.jpg$`).test(p)).slice(0, 20);
+  const validas = (entrada.imagens ?? []).filter((p) => new RegExp(`^${f.chave}/(prof-[\\w-]+\\.jpg|doc-[\\w-]+\\.(pdf|docx?))$`).test(p)).slice(0, 30);
   if (validas.length) {
     const { data: arquivos } = await db.storage.from(BUCKET_CULMINANCIA).list(f.chave, { limit: 1000 });
     const existe = new Set((arquivos ?? []).map((a) => `${f.chave}/${a.name}`));
     const chegaram = validas.filter((p) => existe.has(p));
     if (chegaram.length) {
-      await db.from("culminancia_imagens").insert(chegaram.map((arquivo) => ({ frente: f.chave, tipo: "referencia", arquivo, legenda: `Enviada por ${professora}` })));
+      await db.from("culminancia_imagens").insert(chegaram.map((arquivo) => ({ frente: f.chave, tipo: "referencia", arquivo, legenda: arquivo.includes("/doc-") ? `Documento enviado por ${professora}` : `Enviada por ${professora}` })));
     }
   }
 

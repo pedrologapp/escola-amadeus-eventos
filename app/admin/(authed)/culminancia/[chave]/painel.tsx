@@ -3,7 +3,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ImagePlus, Loader2, PencilLine, RotateCcw, Trash2 } from "lucide-react";
+import { Check, FileText, ImagePlus, Loader2, PencilLine, RotateCcw, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { BUCKET_CULMINANCIA, CHAVES, INTELIGENCIAS, ehChave, type Frente, type Outdoor } from "@/lib/culminancia";
 import { apagarImagem, avaliarProposta, editarLegenda, prepararImagem, registrarImagem, salvarFrente } from "../actions";
@@ -16,6 +16,8 @@ export interface Imagem {
   comentario: string | null;
   quando: string;
   url: string | null;
+  /** Documento (Word ou PDF) em vez de imagem. */
+  doc: "pdf" | "word" | null;
 }
 
 const data = (iso: string) => new Date(iso).toLocaleDateString("pt-BR", { timeZone: "America/Fortaleza", day: "2-digit", month: "2-digit" });
@@ -143,11 +145,11 @@ function Galeria({ titulo, nota, tipo, frente, imagens }: { titulo: string; nota
     setErro(null);
     try {
       for (const [n, arquivo] of Array.from(arquivos).entries()) {
-        if (!arquivo.type.startsWith("image/")) throw new Error(`"${arquivo.name}" não é uma imagem.`);
+        if (!arquivo.type.startsWith("image/") && !/[.](pdf|docx?)$/i.test(arquivo.name)) throw new Error(`"${arquivo.name}" não é imagem, Word nem PDF.`);
         setEnviando(`Enviando ${n + 1} de ${arquivos.length}...`);
         const p = await prepararImagem(frente, arquivo.name);
         if (!p.ok) throw new Error(p.erro);
-        const { error } = await createClient().storage.from(BUCKET_CULMINANCIA).uploadToSignedUrl(p.path, p.token, arquivo, { contentType: arquivo.type });
+        const { error } = await createClient().storage.from(BUCKET_CULMINANCIA).uploadToSignedUrl(p.path, p.token, arquivo, { contentType: arquivo.type || "application/octet-stream" });
         if (error) throw new Error(error.message);
         const r = await registrarImagem(frente, tipo, p.path, "");
         if (!r.ok) throw new Error(r.erro);
@@ -171,9 +173,9 @@ function Galeria({ titulo, nota, tipo, frente, imagens }: { titulo: string; nota
         <button onClick={() => entrada.current?.click()} disabled={!!enviando}
           className="inline-flex items-center gap-2 rounded-full border border-amadeus-blue/40 px-4 py-2 text-sm font-semibold text-amadeus-blue disabled:opacity-50">
           {enviando ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
-          {enviando ?? "Adicionar imagens"}
+          {enviando ?? "Adicionar imagens ou documentos"}
         </button>
-        <input ref={entrada} type="file" accept="image/*" multiple hidden onChange={(e) => enviar(e.target.files)} />
+        <input ref={entrada} type="file" accept="image/*,.pdf,.doc,.docx" multiple hidden onChange={(e) => enviar(e.target.files)} />
       </div>
       {erro && <p className="mt-2 rounded-xl bg-red-50 p-3 text-sm text-red-800">{erro}</p>}
       {imagens.length === 0 ? (
@@ -198,7 +200,12 @@ function Cartao({ i }: { i: Imagem }) {
 
   return (
     <div className={`overflow-hidden rounded-2xl border bg-white ${i.status === "aprovada" && i.tipo === "proposta" ? "border-emerald-400" : "border-border/60"}`}>
-      {i.url ? (
+      {i.doc ? (
+        <a href={i.url ?? undefined} target="_blank" rel="noreferrer" className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 bg-slate-50 text-amadeus-blue hover:bg-slate-100">
+          <FileText className="h-10 w-10" />
+          <span className="text-sm font-semibold">Abrir {i.doc === "pdf" ? "PDF" : "documento Word"}</span>
+        </a>
+      ) : i.url ? (
         <a href={i.url} target="_blank" rel="noreferrer"><img src={i.url} alt={legenda || "imagem"} className="aspect-[4/3] w-full bg-slate-50 object-contain" /></a>
       ) : <div className="aspect-[4/3] w-full bg-slate-100" />}
       <div className="space-y-2 p-3">

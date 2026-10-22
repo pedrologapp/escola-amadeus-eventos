@@ -2,10 +2,12 @@
 /* eslint-disable @next/next/no-img-element -- imagens do Storage com link assinado */
 
 import { useRef, useState } from "react";
-import { Check, ImagePlus, Loader2, Plus, X } from "lucide-react";
+import { Check, FileText, ImagePlus, Loader2, Plus, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { BUCKET_CULMINANCIA, CHAVES, FRENTES, INTELIGENCIAS, ehChave, type Frente, type Outdoor } from "@/lib/culminancia";
-import { enviarIdeias, lerFrente, prepararImagemProfessora } from "./actions";
+import { enviarIdeias, lerFrente, prepararDocumentoProfessora, prepararImagemProfessora } from "./actions";
+
+const EXT_DOC = /\.(pdf|docx?)$/i;
 
 /** Reduz a imagem no navegador (lado maior 2000 px, JPEG): foto de celular vira ~600 KB. */
 async function reduzir(file: File): Promise<Blob> {
@@ -39,11 +41,13 @@ export function FormularioCulminancia() {
   const [enviando, setEnviando] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [pronto, setPronto] = useState(false);
+  const [docs, setDocs] = useState<File[]>([]);
   const entrada = useRef<HTMLInputElement>(null);
+  const entradaDoc = useRef<HTMLInputElement>(null);
   const frente = FRENTES.find((f) => f.chave === chave) ?? null;
 
   const escolher = async (k: string) => {
-    setChave(k); setErro(null); setPronto(false); setFotos([]);
+    setChave(k); setErro(null); setPronto(false); setFotos([]); setDocs([]);
     if (!k) return;
     setCarregando(true);
     const d = await lerFrente(k);
@@ -88,10 +92,18 @@ export function FormularioCulminancia() {
         if (error) throw new Error("Uma imagem não subiu. Confira a internet e tente de novo.");
         caminhos.push(p.path);
       }
+      for (const [n, d] of docs.entries()) {
+        setEnviando(`Enviando documento ${n + 1} de ${docs.length}...`);
+        const p = await prepararDocumentoProfessora(frente.chave, d.name);
+        if (!p.ok) throw new Error(p.erro);
+        const { error } = await createClient().storage.from(BUCKET_CULMINANCIA).uploadToSignedUrl(p.path, p.token, d, { contentType: d.type || "application/octet-stream" });
+        if (error) throw new Error(`O documento "${d.name}" não subiu. Confira a internet e tente de novo.`);
+        caminhos.push(p.path);
+      }
       setEnviando("Salvando...");
       const r = await enviarIdeias({ chave: frente.chave, inteligencia: inteligencia || null, professora, ideia_sala: ideiaSala, ideia_outdoor: ideiaOutdoor, outdoors, imagens: caminhos });
       if (!r.ok) throw new Error(r.erro);
-      setPronto(true); setFotos([]);
+      setPronto(true); setFotos([]); setDocs([]);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e) {
       setErro((e as Error).message);
@@ -132,7 +144,7 @@ export function FormularioCulminancia() {
         <>
           {jaEnviado && (
             <p className="rounded-2xl bg-[#EEF3FB] p-3 text-sm text-[#1F2A44]">
-              Já recebemos ideias desta sala em {jaEnviado.quando}{jaEnviado.imagens ? `, com ${jaEnviado.imagens} ${jaEnviado.imagens === 1 ? "imagem" : "imagens"}` : ""}.
+              Já recebemos ideias desta sala em {jaEnviado.quando}{jaEnviado.imagens ? `, com ${jaEnviado.imagens} ${jaEnviado.imagens === 1 ? "arquivo" : "arquivos"}` : ""}.
               Você pode completar ou corrigir abaixo.
             </p>
           )}
@@ -210,6 +222,32 @@ export function FormularioCulminancia() {
               <ImagePlus className="h-4 w-4" /> Adicionar imagens
             </button>
             <input ref={entrada} type="file" accept="image/*" multiple hidden onChange={(e) => addFotos(e.target.files)} />
+          </div>
+
+          <div>
+            <p className="text-sm font-bold text-[#1F2A44]">Documentos (Word ou PDF)</p>
+            <p className="text-xs text-[#7A8396]">Se você escreveu o projeto num documento, pode mandar aqui. Até 10, com até 20 MB cada.</p>
+            {docs.length > 0 && (
+              <ul className="mt-2 space-y-1.5">
+                {docs.map((d, i) => (
+                  <li key={d.name + i} className="flex items-center gap-2 rounded-xl border border-[#E6E0D2] bg-white px-3 py-2 text-sm">
+                    <FileText className="h-4 w-4 shrink-0 text-amadeus-blue" /><span className="min-w-0 flex-1 truncate">{d.name}</span>
+                    <button onClick={() => setDocs(docs.filter((_, k) => k !== i))} className="text-[#9AA3B4]"><X className="h-4 w-4" /></button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <button onClick={() => entradaDoc.current?.click()} className="mt-2 inline-flex items-center gap-2 rounded-full border border-amadeus-blue/40 bg-white px-4 py-2 text-sm font-semibold text-amadeus-blue">
+              <FileText className="h-4 w-4" /> Adicionar documento
+            </button>
+            <input ref={entradaDoc} type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple hidden
+              onChange={(e) => {
+                const novos = Array.from(e.target.files ?? []).filter((d) => EXT_DOC.test(d.name));
+                const grandes = novos.filter((d) => d.size > 20 * 1024 * 1024);
+                setErro(grandes.length ? `"${grandes[0].name}" passa de 20 MB.` : novos.length < (e.target.files?.length ?? 0) ? "Só Word (.doc, .docx) ou PDF." : null);
+                setDocs([...docs, ...novos.filter((d) => d.size <= 20 * 1024 * 1024)].slice(0, 10));
+                e.target.value = "";
+              }} />
           </div>
 
           {erro && <p className="rounded-2xl bg-red-50 p-3 text-sm text-red-800">{erro}</p>}
