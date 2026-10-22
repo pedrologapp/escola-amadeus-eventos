@@ -59,7 +59,7 @@ export function ConferenciaAsaas({ eventoId, dados }: { eventoId: string; dados:
           <div>
             <p className="font-bold">Conferência com o Asaas</p>
             <p className="text-sm text-muted-foreground">
-              {dados.ultima ? `Última conferência: ${quando(dados.ultima)}` : "Ainda não conferido."} A conferência roda sozinha a cada 30 minutos.
+              {dados.ultima ? `Última conferência: ${quando(dados.ultima)}` : "Ainda não conferido."}
               {dados.pendentes > 0 && ` ${dados.pendentes} inscrição(ões) aguardando pagamento.`}
             </p>
           </div>
@@ -91,7 +91,7 @@ export function ConferenciaAsaas({ eventoId, dados }: { eventoId: string; dados:
         </div>
       )}
       <p className="mt-3 text-xs text-muted-foreground">
-        A lista oficial para a porta é o Relatório (todos os pagos, por Asaas ou dinheiro). Antes de imprimir, confira aqui.
+        A lista oficial para a porta é o Relatório (todos os pagos, por Asaas ou dinheiro). Antes de imprimir, clique em “Conferir agora”.
       </p>
     </div>
   );

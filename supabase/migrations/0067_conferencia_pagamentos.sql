@@ -16,6 +16,5 @@ create index if not exists conferencia_pagamentos_em on public.conferencia_pagam
 alter table public.conferencia_pagamentos enable row level security;
 -- sem políticas: só o servidor (service role) lê e grava.
 
--- O agendamento (pg_cron + pg_net chamando /api/conferencia/pagamentos a cada 30 min)
--- foi criado direto no banco, porque leva o segredo do webhook no cabeçalho e este
--- repositório é público. Para ver: select * from cron.job where jobname = 'conferir-pagamentos';
+-- Um agendamento a cada 30 min chegou a ser criado (pg_cron) e foi desligado no mesmo dia:
+-- a conferência roda pelo botão "Conferir agora" na página do evento.

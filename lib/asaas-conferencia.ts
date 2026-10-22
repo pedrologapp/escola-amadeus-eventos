@@ -312,8 +312,8 @@ export async function limparPendentesAntigas(): Promise<{ simulado: boolean; ite
 // ---------------------------------------------------------------------------
 // Pagamentos dos eventos sempre conferidos (Pedro, 22/10/2026). No passeio do Dia das
 // Crianças, 9 pagamentos de 20/10 não chegaram (o aviso Asaas → n8n falhou) e a lista
-// da porta ficou incompleta. Roda a cada 30 min (pg_cron → /api/conferencia/pagamentos)
-// e pelo botão "Conferir agora" do evento. Não manda mensagem a ninguém.
+// da porta ficou incompleta. Roda pelo botão "Conferir agora" do evento (o Pedro preferiu
+// sob demanda, sem agendamento) e por /api/conferencia/pagamentos. Não manda mensagem a ninguém.
 // ---------------------------------------------------------------------------
 export interface Corrigida {
   inscricaoId: string;
