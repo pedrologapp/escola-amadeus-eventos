@@ -4,7 +4,7 @@ import { AbasRematricula } from "../abas";
 import { PainelExperiencia, type Candidato, type ContatoExp } from "./painel";
 
 /**
- * Experiência Amadeus · 2ª edição (sáb 17/10, 14h): enviar o encarte pelo WhatsApp da escola, guardar todo mundo
+ * Experiência Amadeus · 3ª edição (sáb 24/10, 14h; antes 17/10): enviar o encarte pelo WhatsApp da escola, guardar todo mundo
  * que recebeu (lista de contatos para lembrar e não perder o contato) e o lembrete da véspera.
  * A 1ª edição (10/10) está guardada em experiencia_contatos_1010; o Pedro marca aqui quem veio, e quem veio não recebe de novo.
  */
@@ -66,8 +66,7 @@ export default async function ExperienciaPage() {
       <h1 className="text-2xl font-extrabold text-amadeus-blue">Rematrícula 2027</h1>
       <AbasRematricula ativa="experiencia" />
       <p className="mt-4 text-sm text-muted-foreground">
-        Experiência Amadeus · 2ª edição · <b className="text-amadeus-blue">sábado, 17/10, às 14h</b>. Quem recebe o encarte fica guardado aqui, com nome e número, para o
-        lembrete da véspera e para a escola não perder o contato. Quem você marcar que <b>veio no dia 10/10</b> não recebe o convite de novo.
+        Experiência Amadeus · <b className="text-amadeus-blue">sábado, 24/10, às 14h</b>. Em cima, quem confirmou e quantas pessoas vêm; as respostas que chegam no WhatsApp da escola você marca nos botões. A lista completa de contatos fica fechada mais abaixo.
       </p>
       <p className="mt-3"><a href="/admin/rematricula-2027/experiencia/reenvio" className="inline-flex rounded-lg bg-amadeus-blue px-4 py-2 text-sm font-bold text-white">Reenvio do convite para 24/10 (WhatsApp oficial, com Eu vou / Não vou) →</a></p>
       <PainelExperiencia

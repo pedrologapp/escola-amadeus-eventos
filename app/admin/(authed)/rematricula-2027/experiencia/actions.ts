@@ -132,3 +132,17 @@ export async function salvarObservacao(telefone: string, observacao: string) {
   revalidatePath(CAMINHO);
   return { ok: true };
 }
+
+/** Experiência 24/10: marca à mão a resposta que chegou no WhatsApp da escola (vai, com quantas pessoas, ou não vai). */
+export async function marcar2410(telefone: string, resposta: "vai" | "nao_vai" | null, pessoas?: number | null) {
+  if (!(await quem())) return { ok: false, erro: "Sessão expirada." };
+  const agora = new Date().toISOString();
+  await createAdminClient().from("experiencia_contatos").update({
+    resposta_2410: resposta,
+    resposta_2410_em: resposta ? agora : null,
+    pessoas_2410: resposta === "vai" ? (pessoas && pessoas > 0 ? Math.min(pessoas, 20) : null) : null,
+    atualizado_em: agora,
+  }).in("telefone", formasDoNumero(telefone));
+  revalidatePath(CAMINHO);
+  return { ok: true };
+}

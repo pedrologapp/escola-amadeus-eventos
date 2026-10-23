@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { BadgeCheck, BellRing, Download, Loader2, Send, Trash2, UserPlus, Users } from "lucide-react";
+import { BadgeCheck, BellRing, ChevronDown, Download, Loader2, Send, Trash2, UserPlus, Users } from "lucide-react";
 import {
   confirmarLembrete,
   enviarExperiencia,
@@ -12,6 +12,7 @@ import {
   marcarMatriculou,
   salvarObservacao,
   marcarVeio,
+  marcar2410,
   mudarAutomatico,
   removerContato,
   type ResultadoExp,
@@ -39,6 +40,12 @@ export interface ContatoExp {
   matriculou_em?: string | null;
   observacao?: string | null;
   dia10?: string | null;
+  enviar_2410?: boolean | null;
+  convite_2410_em?: string | null;
+  convite_2410_status?: string | null;
+  resposta_2410?: "vai" | "nao_vai" | null;
+  resposta_2410_em?: string | null;
+  pessoas_2410?: number | null;
   criado_em: string;
   ultimo?: string | null;
 }
@@ -101,57 +108,90 @@ function Resultados({ r }: { r: { erro?: string; resultados: ResultadoExp[] } | 
   );
 }
 
-// Quem respondeu ao pedido de confirmação da véspera (16/10): quem vai e com quantas pessoas, quem não vai e o que conferir.
-// A tela se atualiza sozinha a cada minuto (o monitor do WhatsApp lê as respostas a cada 5 minutos).
+// Experiência de sábado, 24/10, 14h: quem vai (inscrição pelo site depois do dia 17, botão "Eu vou" da YCloud ou resposta
+// marcada aqui), com quantas pessoas, quem não vai e quem recebeu o convite e ainda não respondeu. As respostas que chegam no
+// WhatsApp da escola (WAHA) são marcadas à mão nos botões. A tela se atualiza sozinha a cada minuto.
+const CORTE_2410 = "2026-10-17T20:00:00.000Z";   // depois da Experiência do dia 17: o que chegou daí em diante é para o dia 24
+const depois = (d?: string | null) => !!d && d >= CORTE_2410;
+export const vai2410 = (c: ContatoExp) => c.resposta_2410 === "vai" || (c.resposta_2410 !== "nao_vai" && depois(c.vai_em) && !(depois(c.nao_vai_em) && c.nao_vai_em! > c.vai_em!));
+export const naoVai2410 = (c: ContatoExp) => c.resposta_2410 === "nao_vai" || (!vai2410(c) && depois(c.nao_vai_em));
+export const pessoas2410 = (c: ContatoExp) => c.pessoas_2410 ?? (depois(c.vai_em) ? c.pessoas ?? null : null);
+
 function PainelConfirmacoes({ contatos }: { contatos: ContatoExp[] }) {
   const router = useRouter();
+  const [ocupado, iniciar] = useTransition();
   useEffect(() => {
     const t = setInterval(() => router.refresh(), 60000);
     return () => clearInterval(t);
   }, [router]);
   const quem = (c: ContatoExp) => (c.responsavel && !/escola|amadeus/i.test(c.responsavel) ? c.responsavel : c.crianca ? `Família de ${c.crianca}` : tel(c.telefone));
-  const recente = (a: ContatoExp, b: ContatoExp) => (b.resposta_em ?? b.vai_em ?? "").localeCompare(a.resposta_em ?? a.vai_em ?? "");
-  const vao = contatos.filter((c) => c.vai_em && !c.nao_vai_em).sort(recente);
-  const naoVao = contatos.filter((c) => c.nao_vai_em).sort(recente);
-  const conferir = contatos.filter((c) => c.conferir && !c.vai_em && !c.nao_vai_em).sort(recente);
-  const aguardando = contatos.filter((c) => c.pedido_confirmacao_em && !c.resposta_em).length;
-  const pessoas = vao.reduce((s, c) => s + (c.pessoas ?? 0), 0);
-  const semQuantos = vao.filter((c) => !c.pessoas).length;
+  const vao = contatos.filter(vai2410);
+  const naoVao = contatos.filter(naoVai2410);
+  const aguardando = contatos.filter((c) => (c.convite_2410_em || c.enviar_2410) && !vai2410(c) && !naoVai2410(c));
+  const pessoas = vao.reduce((s, c) => s + (pessoas2410(c) ?? 0), 0);
+  const semQuantos = vao.filter((c) => !pessoas2410(c)).length;
+  const marcarVai = (c: ContatoExp) => {
+    const r = window.prompt(`${quem(c)} vai. Quantas pessoas, contando com a criança? (deixe vazio se não disse)`, pessoas2410(c)?.toString() ?? "");
+    if (r === null) return;
+    iniciar(async () => { await marcar2410(c.telefone, "vai", parseInt(r, 10) || null); });
+  };
   const numero = (valor: number, rotulo: string, cor: string) => (
     <div className={`rounded-xl px-3 py-3 text-center ${cor}`}><p className="text-3xl font-extrabold leading-none">{valor}</p><p className="mt-1 text-xs font-semibold">{rotulo}</p></div>
   );
+  const linha = (c: ContatoExp, direita: React.ReactNode) => (
+    <li key={c.telefone} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+      <span className="min-w-0">
+        <b className="text-amadeus-blue">{quem(c)}</b>
+        <span className="text-muted-foreground"> · {c.crianca ? `${c.crianca}${c.serie ? ` (${c.serie})` : ""} · ` : c.serie ? `${c.serie} · ` : ""}{tel(c.telefone)} · {ORIGEM[c.origem] ?? c.origem}</span>
+        {c.resposta_texto && depois(c.resposta_em) ? <span className="block truncate text-xs italic text-muted-foreground">“{c.resposta_texto}”</span> : null}
+      </span>
+      <span className="flex shrink-0 items-center gap-1">{direita}</span>
+    </li>
+  );
+  const botao = (rotulo: string, cor: string, acao: () => void) => (
+    <button type="button" disabled={ocupado} onClick={acao} className={`rounded-lg border px-2 py-1 text-xs font-bold disabled:opacity-40 ${cor}`}>{rotulo}</button>
+  );
   return (
     <section className="rounded-2xl border-2 border-emerald-200 bg-white p-5">
-      <p className="flex items-center gap-2 text-sm font-bold text-amadeus-blue"><BadgeCheck className="size-4 text-emerald-600" /> Confirmações · sábado, 17/10, 14h</p>
+      <p className="flex items-center gap-2 text-sm font-bold text-amadeus-blue"><BadgeCheck className="size-4 text-emerald-600" /> Confirmações · sábado, 24/10, 14h</p>
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {numero(pessoas, semQuantos ? `pessoas (+${semQuantos} sem dizer quantos)` : "pessoas confirmadas", "bg-emerald-50 text-emerald-800")}
         {numero(vao.length, vao.length === 1 ? "família vai" : "famílias vão", "bg-emerald-50 text-emerald-800")}
         {numero(naoVao.length, "não vão", "bg-red-50 text-red-700")}
-        {numero(aguardando, "ainda não responderam", "bg-slate-50 text-slate-600")}
+        {numero(aguardando.length, "receberam e não responderam", "bg-slate-50 text-slate-600")}
       </div>
+      <p className="mt-2 text-xs text-muted-foreground">Chegou uma resposta no WhatsApp da escola? Marque aqui: <b>Vai</b> pergunta quantas pessoas vêm.</p>
+
       {vao.length > 0 && (
-        <ul className="mt-4 divide-y divide-border/60">
-          {vao.map((c) => (
-            <li key={c.telefone} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
-              <span className="min-w-0">
-                <b className="text-amadeus-blue">{quem(c)}</b>
-                {c.crianca && c.responsavel && !/escola|amadeus/i.test(c.responsavel) ? <span className="text-muted-foreground"> · {c.crianca}{c.serie ? ` (${c.serie})` : ""}</span> : null}
-                {c.resposta_texto ? <span className="block truncate text-xs italic text-muted-foreground">“{c.resposta_texto}”</span> : null}
-              </span>
-              <span className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-bold ${c.pessoas ? "bg-emerald-50 text-emerald-700" : "bg-amber-100 text-amber-800"}`}>
-                {c.pessoas ? `${c.pessoas} ${c.pessoas === 1 ? "pessoa" : "pessoas"}` : "quantos?"}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <>
+          <p className="mt-4 text-xs font-bold uppercase tracking-wider text-emerald-700">Vão · {vao.length}</p>
+          <ul className="divide-y divide-border/60">
+            {vao.map((c) => linha(c, <>
+              <span className={`rounded-md px-2 py-0.5 text-xs font-bold ${pessoas2410(c) ? "bg-emerald-50 text-emerald-700" : "bg-amber-100 text-amber-800"}`}>{pessoas2410(c) ? `${pessoas2410(c)} ${pessoas2410(c) === 1 ? "pessoa" : "pessoas"}` : "quantos?"}</span>
+              {botao("editar", "border-border bg-white text-muted-foreground hover:bg-slate-50", () => marcarVai(c))}
+            </>))}
+          </ul>
+        </>
       )}
-      {(naoVao.length > 0 || conferir.length > 0) && (
-        <div className="mt-3 space-y-1 text-xs">
-          {naoVao.map((c) => <p key={c.telefone}><span className="font-bold text-red-700">✗ {quem(c)}</span>{c.resposta_texto ? <span className="italic text-muted-foreground"> · “{c.resposta_texto}”</span> : null}</p>)}
-          {conferir.map((c) => <p key={c.telefone}><span className="font-bold text-amber-800">? {quem(c)}</span><span className="italic text-muted-foreground"> · “{c.resposta_texto}” (ler e conferir)</span></p>)}
-        </div>
+      {naoVao.length > 0 && (
+        <>
+          <p className="mt-4 text-xs font-bold uppercase tracking-wider text-red-700">Não vão · {naoVao.length}</p>
+          <ul className="divide-y divide-border/60">
+            {naoVao.map((c) => linha(c, botao("desfazer", "border-border bg-white text-muted-foreground hover:bg-slate-50", () => iniciar(async () => { await marcar2410(c.telefone, null); }))))}
+          </ul>
+        </>
       )}
-      {vao.length === 0 && naoVao.length === 0 && conferir.length === 0 && <p className="mt-3 text-sm text-muted-foreground">Ninguém respondeu ainda. As respostas aparecem aqui sozinhas.</p>}
+      {aguardando.length > 0 && (
+        <details className="mt-4 rounded-xl border border-border/60 bg-slate-50/50 px-3 py-2">
+          <summary className="cursor-pointer text-xs font-bold uppercase tracking-wider text-slate-600">Receberam o convite e ainda não responderam · {aguardando.length}</summary>
+          <ul className="mt-1 divide-y divide-border/60">
+            {aguardando.map((c) => linha(c, <>
+              {botao("✓ Vai", "border-emerald-600 bg-white text-emerald-700 hover:bg-emerald-50", () => marcarVai(c))}
+              {botao("✗ Não vai", "border-red-400 bg-white text-red-600 hover:bg-red-50", () => iniciar(async () => { await marcar2410(c.telefone, "nao_vai"); }))}
+            </>))}
+          </ul>
+        </details>
+      )}
     </section>
   );
 }
@@ -232,9 +272,9 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
       <div className="space-y-6">
         <PainelConfirmacoes contatos={contatos} />
 
-        {/* Novo número */}
-        <section className="rounded-2xl border border-border/60 bg-white p-5">
-          <p className="flex items-center gap-2 text-sm font-bold text-amadeus-blue"><Send className="size-4" /> Enviar o encarte da Experiência</p>
+        {/* Novo número (fechado: a mensagem ainda é a do dia 17/10) */}
+        <details className="group rounded-2xl border border-border/60 bg-white p-5">
+          <summary className="cursor-pointer list-none text-sm font-bold text-amadeus-blue [&::-webkit-details-marker]:hidden"><span className="flex items-center gap-2"><Send className="size-4" /> Enviar o encarte da Experiência <span className="text-xs font-normal text-muted-foreground">(clique para abrir)</span><ChevronDown className="ml-auto size-4 transition group-open:rotate-180" /></span></summary>
           <div className="mt-3"><EscolhaEncarte valor={escolha} mudar={setEscolha} /></div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <label className="text-sm font-semibold">Número (DDD + celular)<input value={novo.telefone} onChange={(e) => setNovo({ ...novo, telefone: e.target.value })} inputMode="tel" placeholder="84 99999-9999" className={campo} /></label>
@@ -250,13 +290,14 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
               <UserPlus className="size-4" /> Só guardar o contato
             </button>
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">A mensagem convida para sábado, 17/10, às 14h, pede para confirmar respondendo e leva o endereço com o mapa.</p>
+          <p className="mt-2 text-xs text-muted-foreground">Atenção: a mensagem deste botão ainda convida para sábado, 17/10, às 14h (edição passada).</p>
           <Resultados r={retorno} />
-        </section>
+        </details>
 
-        {/* Lista de contatos */}
-        <section className="rounded-2xl border border-border/60 bg-white p-5">
-          <div className="flex flex-wrap items-center justify-between gap-2">
+        {/* Lista de contatos: fechada (são mais de 100 números) */}
+        <details className="group rounded-2xl border border-border/60 bg-white p-5">
+          <summary className="cursor-pointer list-none text-sm font-bold text-amadeus-blue [&::-webkit-details-marker]:hidden"><span className="flex items-center gap-2"><Users className="size-4" /> Todos os contatos da Experiência · {contatos.length} <span className="text-xs font-normal text-muted-foreground">(clique para abrir)</span><ChevronDown className="ml-auto size-4 transition group-open:rotate-180" /></span></summary>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
             <p className="flex items-center gap-2 text-sm font-bold text-amadeus-blue"><Users className="size-4" /> Contatos da Experiência · {contatos.length}{contatos.some((c) => c.vai_em) ? <span className="ml-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-xs font-bold text-emerald-700">{contatos.filter((c) => c.vai_em && !c.nao_vai_em).length} vão · {contatos.reduce((s, c) => s + (c.vai_em && !c.nao_vai_em ? c.pessoas ?? 0 : 0), 0)} pessoas</span> : null}{contatos.some((c) => c.nao_vai_em) ? <span className="rounded-md bg-red-50 px-1.5 py-0.5 text-xs font-bold text-red-700">{contatos.filter((c) => c.nao_vai_em).length} não vão</span> : null}{contatos.some((c) => c.conferir) ? <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-xs font-bold text-amber-800">{contatos.filter((c) => c.conferir).length} para conferir</span> : null}{contatos.some((c) => c.vai_em && !c.nao_vai_em && !c.pessoas) ? <span className="text-xs font-normal text-muted-foreground">({contatos.filter((c) => c.vai_em && !c.nao_vai_em && !c.pessoas).length} vão sem dizer quantos)</span> : null}</p>
             <div className="flex flex-wrap gap-2">
               {selecionados.length > 0 && (
@@ -351,13 +392,13 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
               </table>
             </div>
           )}
-        </section>
+        </details>
       </div>
 
       <div className="space-y-6">
         {/* Lembrete da véspera: só sai para a lista confirmada */}
-        <section className="rounded-2xl border border-border/60 bg-white p-5">
-          <p className="flex items-center gap-2 text-sm font-bold text-amadeus-blue"><BellRing className="size-4" /> Lembrete da véspera</p>
+        <details className="group rounded-2xl border border-border/60 bg-white p-5">
+          <summary className="cursor-pointer list-none text-sm font-bold text-amadeus-blue [&::-webkit-details-marker]:hidden"><span className="flex items-center gap-2"><BellRing className="size-4" /> Lembrete da véspera (17/10, já passou)<ChevronDown className="ml-auto size-4 transition group-open:rotate-180" /></span></summary>
           <label className="mt-3 flex cursor-pointer items-center gap-3 text-sm">
             <input type="checkbox" className="size-4 accent-[#083078]" checked={automatico} disabled={ocupado} onChange={(e) => iniciar(() => mudarAutomatico(e.target.checked))} />
             <span><b>Automático</b> na sexta, 16/10, às 9h</span>
@@ -404,12 +445,12 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
             <BellRing className="size-4" /> Enviar lembrete agora
           </button>
           <Resultados r={retornoLembrete} />
-        </section>
+        </details>
 
         {/* Novatos fora da lista */}
         {candidatos.length > 0 && (
-          <section className="rounded-2xl border border-amber-200 bg-amber-50/50 p-5">
-            <p className="text-sm font-bold text-amadeus-blue">Novatos que receberam a carta e não estão na lista</p>
+          <details className="group rounded-2xl border border-amber-200 bg-amber-50/50 p-5">
+            <summary className="cursor-pointer list-none text-sm font-bold text-amadeus-blue [&::-webkit-details-marker]:hidden"><span className="flex items-center gap-2">Novatos que receberam a carta e não estão na lista · {candidatos.length}<ChevronDown className="ml-auto size-4 transition group-open:rotate-180" /></span></summary>
             <ul className="mt-3 space-y-2 text-sm">
               {candidatos.map((c) => (
                 <li key={c.telefone} className="flex items-center justify-between gap-2">
@@ -421,7 +462,7 @@ export function PainelExperiencia({ contatos, candidatos, automatico }: { contat
             <button type="button" disabled={ocupado} onClick={() => iniciar(async () => { await incluirContatos(candidatos.map((c) => ({ ...c, origem: "novato" as const }))); })} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-amadeus-blue px-3 py-2 text-sm font-bold text-white disabled:opacity-40">
               <UserPlus className="size-4" /> Incluir todos
             </button>
-          </section>
+          </details>
         )}
       </div>
     </div>
