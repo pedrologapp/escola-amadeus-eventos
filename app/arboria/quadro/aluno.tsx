@@ -20,6 +20,13 @@ const SUBTITULO = { 1: "4 quadros bem diferentes", 2: "8 quadros parecidos", 3: 
 const sem = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 
 const ler = (): Sessao | null => { try { return JSON.parse(localStorage.getItem(CHAVE) || "null"); } catch { return null; } };
+// rascunho no próprio tablet (Pedro, 23/10): se a página fechar sem querer, o texto volta como estava
+function useRascunho(chave: string, inicial: string) {
+  const [v, setV] = useState(() => { try { return localStorage.getItem(chave) ?? inicial; } catch { return inicial; } });
+  const mudar = (x: string) => { setV(x); try { localStorage.setItem(chave, x); } catch { /* sem armazenamento */ } };
+  const limpar = () => { try { localStorage.removeItem(chave); } catch { /* sem armazenamento */ } };
+  return [v, mudar, limpar] as const;
+}
 const gravar = (v: Sessao | null) => { try { if (v) localStorage.setItem(CHAVE, JSON.stringify(v)); else localStorage.removeItem(CHAVE); } catch { /* sem armazenamento */ } };
 
 function Tela({ children, sala, rodada }: { children: React.ReactNode; sala?: string; rodada?: number }) {
@@ -104,7 +111,7 @@ export function Aluno({ codigoInicial }: { codigoInicial: string }) {
 
 /** O fechamento da Fase Linguística (Pedro, 21/10): uma pergunta antes das melhores descrições. */
 function Fechamento({ sessao, atualizar, comparar }: { sessao: Sessao; atualizar: () => Promise<void>; comparar: { primeira: string; ultima: string; mesma: boolean } | null }) {
-  const [descobri, setDescobri] = useState("");
+  const [descobri, setDescobri, limparRascunho] = useRascunho(`qq-reflexao:${sessao.aluno}`, "");
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
   const pronto = descobri.trim().length >= 3;
@@ -112,7 +119,7 @@ function Fechamento({ sessao, atualizar, comparar }: { sessao: Sessao; atualizar
     setEnviando(true); setErro("");
     const r = await enviarReflexao(sessao.codigo, sessao.aluno, descobri).catch(() => null);
     setEnviando(false);
-    if (r?.ok) atualizar(); else setErro(r?.erro ?? "Sem internet? Tente de novo.");
+    if (r?.ok) { limparRascunho(); atualizar(); } else setErro(r?.erro ?? "Sem internet? Tente de novo.");
   };
   return (
     <Tela sala={sessao.codigo}>
@@ -285,7 +292,7 @@ function Versoes({ versoes }: { versoes: EmRodada["versoes"] }) {
 function Escrever({ est, sessao, atualizar, rot }: { est: EmRodada; sessao: Sessao; atualizar: () => Promise<void>; rot: React.ReactNode }) {
   const ultima = est.versoes[est.versoes.length - 1];
   const reescrita = !!ultima;
-  const [texto, setTexto] = useState(ultima?.texto ?? "");
+  const [texto, setTexto, limparRascunho] = useRascunho(`qq-rascunho:${sessao.aluno}:${est.rodada}:${(ultima?.versao ?? 0) + 1}`, ultima?.texto ?? "");
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [notas, setNotas] = useState(est.notas);
@@ -298,7 +305,7 @@ function Escrever({ est, sessao, atualizar, rot }: { est: EmRodada; sessao: Sess
     setEnviando(true); setErro("");
     const r = await enviarDescricao(sessao.codigo, sessao.aluno, texto).catch(() => null);
     setEnviando(false);
-    if (r?.ok) await atualizar();
+    if (r?.ok) { limparRascunho(); await atualizar(); }
     else if (r && "observacao" in r && r.observacao) setNotas((v) => [...v, { texto: texto.trim(), observacao: r.observacao }]);
     else setErro((r && "erro" in r && r.erro) || "Sem internet? Tente de novo.");
   };
