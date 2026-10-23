@@ -1,0 +1,39 @@
+{
+  "_sobre": "Conteúdo de exemplo da TV Arboria (o telão do anfiteatro). Um assunto por slide: título curto e enorme, no máximo uma frase curta, um ícone (trofeu, estrela, livro, bolo, mapa) ou o brasão de uma casa. Depois vamos ligar à mesma fonte da TV Amadeus.",
+  "segundos": 9,
+  "slides": [
+    {
+      "titulo": "Linguística lidera",
+      "frase": "1.240 pontos nesta semana",
+      "brasao": "linguistica",
+      "cor": "#9fc3ff"
+    },
+    {
+      "titulo": "Carimbo novo!",
+      "frase": "Viajante do 7º B chegou ao Reino Linguístico",
+      "icone": "estrela"
+    },
+    {
+      "titulo": "Missão nova",
+      "frase": "O livro perdido: ache 3 páginas",
+      "icone": "livro",
+      "cor": "#5ee6d2"
+    },
+    {
+      "titulo": "Sexta: Noite das Casas",
+      "frase": "Apresentações aqui no anfiteatro",
+      "icone": "trofeu"
+    },
+    {
+      "titulo": "Parabéns!",
+      "frase": "Viajante do 5º A faz aniversário dia 23",
+      "icone": "bolo",
+      "cor": "#ffb4c8"
+    },
+    {
+      "titulo": "Passeio na quarta",
+      "frase": "Chegar 7h15 no portão",
+      "icone": "mapa"
+    }
+  ]
+}
