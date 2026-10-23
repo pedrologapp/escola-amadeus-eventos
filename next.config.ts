@@ -13,6 +13,13 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "4mb",
     },
   },
+  // Funções que leem arquivos de public/ com process.cwd() (o quadro do Arboria) faziam a Vercel empacotar a pasta public
+  // inteira na função: com o Mundo do Arboria (public/mundo, ~58 MB) passou do limite de 250 MB e o deploy falhava.
+  // Nenhuma função do servidor precisa do jogo; o quadro só precisa de public/arboria/quadros.
+  outputFileTracingExcludes: {
+    "/*": ["public/mundo/**/*"],
+    "/admin/arboria-quadro": ["public/!(arboria)/**/*"],
+  },
   // Páginas estáticas em public/ com endereço curto (sem o /index.html).
   async rewrites() {
     return [
