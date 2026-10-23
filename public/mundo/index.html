@@ -6,50 +6,19 @@
 <meta name="robots" content="noindex">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Arboria</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;700;800&family=Instrument+Serif:ital@0;1&family=IM+Fell+English+SC&family=Caveat:wght@500;700&family=Alegreya+Sans:wght@400;500;700&display=swap">
-  <script type="module" crossorigin src="/mundo/assets/index-CkH5GdY1.js"></script>
-  <link rel="stylesheet" crossorigin href="/mundo/assets/index-B2FXWoBD.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;700;800&family=Instrument+Serif:ital@0;1&display=swap">
+  <script type="module" crossorigin src="/mundo/assets/index-BoDpPMLd.js"></script>
+  <link rel="stylesheet" crossorigin href="/mundo/assets/index-BFJMc8_i.css">
 </head>
 <body>
 <div class="hud" id="carregando">Abrindo o mundo…</div>
 <div class="hud off" id="proto">Protótipo</div>
 <div class="hud" id="topo"><div class="logo"><b>Arb</b>oria</div></div>
-<!-- a criação do avatar é a emissão do Passaporte de Arboria (o mesmo que o aluno carimba nos 8 reinos) -->
-<div class="hud" id="criar">
-  <div class="passaporte">
-    <div class="capa"></div>
-    <section class="pagina esq">
-      <svg class="marca" viewBox="0 0 100 100" aria-hidden="true"><g fill="#3a2a1a"><circle cx="50" cy="34" r="22"/><circle cx="32" cy="42" r="14"/><circle cx="68" cy="42" r="14"/><path d="M46 52h8l3 30c6 2 12 4 16 9H27c4-5 10-7 16-9z"/></g></svg>
-      <h1 class="titulo">Passaporte de Arboria</h1>
-      <p class="sub">Documento do viajante · válido nos oito reinos</p>
-      <div class="ident">
-        <div class="foto"><canvas id="foto34" width="120" height="160"></canvas><i></i><i></i><i></i><i></i></div>
-        <div id="camposPass">
-          <div class="campo"><small>Emitido em</small><b id="emitido"></b></div>
-        </div>
-      </div>
-      <p class="carimbos-t">Carimbos dos reinos</p>
-      <div class="carimbos" id="vagas"></div>
-    </section>
-    <div class="costura"></div>
-    <section class="pagina dir">
-      <svg class="marca" viewBox="0 0 100 100" aria-hidden="true"><g fill="#3a2a1a"><circle cx="50" cy="34" r="22"/><circle cx="32" cy="42" r="14"/><circle cx="68" cy="42" r="14"/><path d="M46 52h8l3 30c6 2 12 4 16 9H27c4-5 10-7 16-9z"/></g></svg>
-      <div class="cab"><h3 id="abaNome">Rosto</h3>
-        <button class="dado" id="sortear" aria-label="Sortear" title="Sortear"><svg viewBox="0 0 48 48"><rect x="6" y="6" width="36" height="36" rx="8" fill="#fffaf0" stroke="#3a2a1a" stroke-width="2.5"/><g fill="#3a2a1a"><circle cx="16" cy="16" r="3.2"/><circle cx="32" cy="16" r="3.2"/><circle cx="24" cy="24" r="3.2"/><circle cx="16" cy="32" r="3.2"/><circle cx="32" cy="32" r="3.2"/></g></svg></button>
-      </div>
-      <div id="opcoes"></div>
-      <button class="carimbo" id="continuar" aria-label="Entrar no mundo">
-        <svg viewBox="0 0 120 120"><defs><path id="arcoCarimbo" d="M60 60 m-41 0 a41 41 0 1 1 82 0 a41 41 0 1 1 -82 0"/></defs>
-          <circle cx="60" cy="60" r="54" fill="#f7ecd3" opacity=".35"/>
-          <g fill="none" stroke="#1f6b67"><circle cx="60" cy="60" r="52" stroke-width="5"/><circle cx="60" cy="60" r="45" stroke-width="1.6"/><circle cx="60" cy="60" r="31" stroke-width="1.6"/></g>
-          <text font-family="Alegreya Sans, sans-serif" font-weight="700" font-size="9.5" letter-spacing="1.5" fill="#1f6b67"><textPath href="#arcoCarimbo" startOffset="2%">ARBORIA · VIAJANTE · OITO REINOS ·</textPath></text>
-          <text x="60" y="58" text-anchor="middle" font-family="Alegreya Sans, sans-serif" font-weight="700" font-size="15" fill="#1f6b67">Entrar</text>
-          <text x="60" y="75" text-anchor="middle" font-family="Alegreya Sans, sans-serif" font-weight="700" font-size="15" fill="#1f6b67">no mundo</text>
-        </svg>
-      </button>
-    </section>
-    <div class="abas marcadores" id="abas" role="tablist" aria-label="Categorias"></div>
-  </div>
+<div class="hud vidro" id="criar">
+  <div><div class="rot">Antes de entrar</div><h2>Monte o seu <em>avatar</em>.</h2></div>
+  <div class="abas" id="abas"></div>
+  <div id="opcoes"></div>
+  <div class="linha-btns"><button class="btn sec" id="sortear">Sortear</button><button class="btn" id="continuar">Entrar no mundo</button></div>
 </div>
 <div class="hud off vidro" id="casas">
   <div><div class="rot">Salão das Casas</div><h2>Qual casa você quer <em>conquistar</em>?</h2></div>
@@ -62,7 +31,6 @@
 <div class="hud off" id="dica">Use o controle para andar. Arraste a tela para girar a câmera.</div>
 <div class="hud off" id="revela">As oito torres</div>
 <button class="hud off vidro" id="btnDest">Destaques da semana</button>
-<button class="hud off vidro" id="btnVista" title="Tecla V">Vista de cima</button>
 <div class="hud off vidro" id="destaques">
   <div class="rot">Destaques da semana</div>
   <ol>
