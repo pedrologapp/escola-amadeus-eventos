@@ -69,6 +69,7 @@ export default async function ExperienciaPage() {
         Experiência Amadeus · 2ª edição · <b className="text-amadeus-blue">sábado, 17/10, às 14h</b>. Quem recebe o encarte fica guardado aqui, com nome e número, para o
         lembrete da véspera e para a escola não perder o contato. Quem você marcar que <b>veio no dia 10/10</b> não recebe o convite de novo.
       </p>
+      <p className="mt-3"><a href="/admin/rematricula-2027/experiencia/reenvio" className="inline-flex rounded-lg bg-amadeus-blue px-4 py-2 text-sm font-bold text-white">Reenvio do convite para 24/10 (WhatsApp oficial, com Eu vou / Não vou) →</a></p>
       <PainelExperiencia
         contatos={lista.map((c) => ({ ...c, ultimo: ultimoConvite.get(c.telefone) ?? null }))}
         candidatos={candidatos}

@@ -7,6 +7,8 @@ import { legendaCarta, primeiroNome, trocaDeSegmento } from "@/lib/rematricula-2
 import { chaveTelefone } from "@/lib/whatsapp-contatos";
 import { enviarImagem, enviarTexto, type MensagemRecebida } from "@/lib/ycloud";
 import { filhosCitados, perguntaValor, querRenovar, type Filho } from "@/lib/whatsapp-auto-regras";
+import { pessoasDoTexto, respostaBotao2410, TEXTO_2410 } from "@/lib/experiencia-2410";
+import { limparTelefone } from "@/lib/experiencia";
 
 /**
  * Resposta automática da rematrícula no WhatsApp oficial (pedido do Pedro em
@@ -18,6 +20,8 @@ import { filhosCitados, perguntaValor, querRenovar, type Filho } from "@/lib/wha
  *     "a secretaria vai te enviar", e a secretaria responde pelo Inbox da YCloud.
  * Quem toca "Quero renovar" (botão do modelo da rematrícula) recebe na hora o
  * aviso de que a condição já vale e a escola o espera para renovar (Pedro, 17/10).
+ * Experiência Amadeus 24/10 (Pedro, 23/10): "Eu vou" / "Não vou" (botões do modelo experiencia_24_10) ficam
+ * gravados em experiencia_contatos; depois do "Eu vou" o número de pessoas respondido em até 1 h vai para pessoas_2410.
  * Qualquer outra mensagem fica para a equipe (nada é respondido).
  *
  * O desconto é o do ano passado, mantido (o que o Isaac tira no pagamento
@@ -126,7 +130,7 @@ export async function cartaDoAluno(id: number): Promise<{ link: string; nome: st
   return { link: linkDaCarta(origemDoSite(), dados), nome };
 }
 
-type Evento = "pediu_nome" | "nome_errado" | "enviou_carta" | "secretaria" | "quer_renovar" | "ignorado";
+type Evento = "pediu_nome" | "nome_errado" | "enviou_carta" | "secretaria" | "quer_renovar" | "ignorado" | "exp_vai" | "exp_nao_vai" | "exp_pessoas";
 
 export async function processarMensagem(m: MensagemRecebida): Promise<Evento | "repetida" | "bloqueado"> {
   const tel = m.de.replace(/\D/g, "").replace(/^55(?=\d{10,11}$)/, "");
@@ -151,6 +155,24 @@ export async function processarMensagem(m: MensagemRecebida): Promise<Evento | "
     .limit(5);
   const ultimo = recentes?.[0]?.evento as Evento | undefined;
   const aguardandoNome = ultimo === "pediu_nome" || ultimo === "nome_errado";
+
+  // Experiência 24/10: o botão do convite, e o número de pessoas logo depois do "Eu vou"
+  const exp = respostaBotao2410(m.texto);
+  const pessoas = ultimo === "exp_vai" ? pessoasDoTexto(m.texto) : null;
+  if (exp || pessoas) {
+    const telExp = limparTelefone(tel);
+    const agora = new Date().toISOString();
+    const dados = exp ? { resposta_2410: exp, resposta_2410_em: agora, ...(exp === "nao_vai" ? { pessoas_2410: null } : {}) } : { pessoas_2410: pessoas };
+    const { data: achou } = await db.from("experiencia_contatos").update(dados).eq("telefone", telExp).select("telefone");
+    if (!achou?.length) await db.from("experiencia_contatos").insert({ telefone: telExp, responsavel: m.nome, origem: "whatsapp", ...dados });
+    // Tocou o mesmo botão de novo logo depois: grava, mas não repete a mensagem.
+    if (exp && recentes?.some((r) => r.evento === (exp === "vai" ? "exp_vai" : "exp_nao_vai"))) return "ignorado";
+    const texto = exp === "vai" ? TEXTO_2410.vai : exp === "nao_vai" ? TEXTO_2410.naoVai : TEXTO_2410.pessoas(pessoas!);
+    const r = await enviarTexto(m.de, texto);
+    const ev: Evento = exp === "vai" ? "exp_vai" : exp === "nao_vai" ? "exp_nao_vai" : "exp_pessoas";
+    await marcar(ev, { detalhe: [pessoas ? `${pessoas} pessoas` : null, r.ok ? null : `envio falhou: ${r.detalhe}`].filter(Boolean).join(" · ") || null });
+    return ev;
+  }
 
   if (querRenovar(m.texto)) {
     // Tocou de novo logo depois: não repete a confirmação.
