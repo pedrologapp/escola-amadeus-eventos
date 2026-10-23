@@ -290,7 +290,7 @@ async function pegarTarefa(s: Sala, aluno: string, rodada: Rodada, x: Awaited<Re
   const meus = nPalps(aluno);
   const naFrente = [...new Set(x.descs.filter((d) => d.rodada === rodada).map((d) => d.aluno))]
     .filter((a) => a !== aluno && !comAberta.has(a) && nPalps(a) < meus && livresPara(a).length > 0).length;
-  if (livres.length <= naFrente) return null;
+  if (livres.length <= naFrente) return pegarExtra(s, aluno, rodada, x, [...ultimaDe.values()]);   // os novos ficam para quem adivinhou menos; ele segue com uma extra
   for (const d of livres.slice(0, 4)) {
     const opcoes = embaralhar(quadrosDaRodada(rodada, s.turma).map((q) => q.id));
     const { data, error } = await db().from("arboria_quadro_palpites").insert({ sala: s.codigo, descricao: d.id, aluno, opcoes }).select("id, descricao, aluno, opcoes, escolha, acertou, conversa, extra").single();
@@ -306,7 +306,9 @@ async function pegarTarefa(s: Sala, aluno: string, rodada: Rodada, x: Awaited<Re
  */
 async function pegarExtra(s: Sala, aluno: string, rodada: Rodada, x: Awaited<ReturnType<typeof tudo>>, ultimas: Desc[]) {
   const minhas = new Set(x.palps.filter((p) => p.aluno === aluno).map((p) => p.descricao));
-  const jaLiDe = new Set(x.descs.filter((d) => minhas.has(d.id)).map((d) => d.aluno)); // sabendo o quadro, não vale
+  // sabendo o quadro, não vale: só conta quem ele já leu NESTA rodada (em cada rodada o quadro de cada um é outro; antes
+  // contava a rodada 1 também e quem terminava por último ficava sem nada para avaliar até alguém mandar depois dele)
+  const jaLiDe = new Set(x.descs.filter((d) => minhas.has(d.id) && d.rodada === rodada).map((d) => d.aluno));
   const quantos = (id: string) => x.palps.filter((p) => p.descricao === id).length;
   const opcoes = ultimas.filter((d) => d.rodada === rodada && d.aluno !== aluno && !jaLiDe.has(d.aluno))
     .sort((a, b) => quantos(a.id) - quantos(b.id) || a.criado_em.localeCompare(b.criado_em));
