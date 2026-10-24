@@ -64,15 +64,18 @@ export interface Contato {
   origem?: "novato" | "simulador" | "avulso" | "manual" | "whatsapp";
 }
 
-/** Uma mensagem (1 ou 2 imagens) para um número, pelo fluxo do n8n. */
-async function mandar(telefone: string, capa: string, texto: string, imagem = "", video = ""): Promise<{ status: StatusEnvio; detalhe?: string }> {
+/** Etiqueta que o fluxo do n8n coloca no contato do WhatsApp da escola quando o pai se inscreve pelo site (Pedro, 24/10). */
+export const ETIQUETA_EDICAO = "Exp. 07/11";
+
+/** Uma mensagem (1 ou 2 imagens) para um número, pelo fluxo do n8n. Com etiqueta, o fluxo também etiqueta o contato. */
+async function mandar(telefone: string, capa: string, texto: string, imagem = "", video = "", etiqueta = ""): Promise<{ status: StatusEnvio; detalhe?: string }> {
   const chave = process.env.WEBHOOK_CONFIRM_SECRET;
   if (!chave) return { status: "erro", detalhe: "WEBHOOK_CONFIRM_SECRET não configurada" };
   try {
     const resp = await fetch(WEBHOOK_ENVIO, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-amadeus-chave": chave },
-      body: JSON.stringify({ telefone, capa, texto, imagem, legenda: "", video }),
+      body: JSON.stringify({ telefone, capa, texto, imagem, legenda: "", video, etiqueta }),
       signal: AbortSignal.timeout(60_000),
     });
     const j = (await resp.json().catch(() => ({}))) as { status?: StatusEnvio; detalhe?: string };
@@ -145,7 +148,7 @@ export async function enviarConfirmacaoSite(telefone: string, nome: string | nul
   const admin = createAdminClient();
   const { data: ja } = await admin.from("experiencia_envios").select("id").eq("telefone", telefone).eq("tipo", "confirmacao").eq("status", "enviado").gte("created_at", "2026-10-25").limit(1); // só a confirmação da edição de 07/11 conta
   if (ja?.length) return { telefone, status: "enviado" as StatusEnvio, detalhe: "já tinha recebido" };
-  const r = await mandar(telefone, origemDoSite() + ENCARTES.convite.arquivo, textoConfirmacaoSite(nome));
+  const r = await mandar(telefone, origemDoSite() + ENCARTES.convite.arquivo, textoConfirmacaoSite(nome), "", "", ETIQUETA_EDICAO);
   await admin.from("experiencia_envios").insert({ telefone, tipo: "confirmacao", encarte: "convite", status: r.status, detalhe: r.detalhe ?? null, enviado_por: "site" });
   if (r.status === "enviado") await admin.from("experiencia_contatos").update({ convite_em: new Date().toISOString() }).eq("telefone", telefone);
   return { telefone, ...r };
