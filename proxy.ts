@@ -32,6 +32,24 @@ export async function proxy(request: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
+  // Painel novo da escola (admin.escolaamadeus.com, Pedro 24/10/2026): mora em /painel/*, com login.
+  // As páginas antigas (/admin/*) também abrem neste endereço, com a mesma sessão (seguem o bloco do admin).
+  const isPainelHost = host === "admin.escolaamadeus.com";
+  const isPainelPath = pathname === "/painel" || pathname.startsWith("/painel/");
+  if ((isPainelHost && !isAdminPath) || (isDev && isPainelPath)) {
+    const interno = isPainelPath ? pathname : `/painel${pathname === "/" ? "" : pathname}`;
+    const { response, user } = await updateSession(request);
+    const naLogin = interno === "/painel/login";
+    if (!user && !naLogin) return withCookies(NextResponse.redirect(new URL("/painel/login", request.url)), response);
+    if (user && naLogin) return withCookies(NextResponse.redirect(new URL("/painel", request.url)), response);
+    if (interno === pathname) return response;
+    const url = request.nextUrl.clone();
+    url.pathname = interno;
+    return withCookies(NextResponse.rewrite(url), response);
+  }
+  // /painel só existe no endereço novo (e em desenvolvimento).
+  if (isPainelPath && !isDev) return new NextResponse("Página não encontrada", { status: 404 });
+
   // Domínio principal (escolaamadeus.com / www) → Portal da Família na raiz.
   // O resto dos caminhos (eventos, folder…) funciona igual em qualquer domínio.
   if ((host === "escolaamadeus.com" || host === "www.escolaamadeus.com") && pathname === "/") {
