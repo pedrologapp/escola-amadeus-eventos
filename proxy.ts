@@ -36,6 +36,10 @@ export async function proxy(request: NextRequest) {
   // As páginas antigas (/admin/*) também abrem neste endereço, com a mesma sessão (seguem o bloco do admin).
   const isPainelHost = host === "admin.escolaamadeus.com";
   const isPainelPath = pathname === "/painel" || pathname.startsWith("/painel/");
+  // No endereço novo, a "Visão geral" (e o logo) das telas antigas leva para o "Hoje" do painel novo.
+  if (isPainelHost && (pathname === "/admin" || pathname === "/admin/dashboard" || pathname === "/dashboard")) {
+    return NextResponse.redirect(new URL("/painel", request.url));
+  }
   if ((isPainelHost && !isAdminPath) || (isDev && isPainelPath)) {
     const interno = isPainelPath ? pathname : `/painel${pathname === "/" ? "" : pathname}`;
     const { response, user } = await updateSession(request);
