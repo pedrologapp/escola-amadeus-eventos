@@ -32,7 +32,7 @@ const FRAUNCES = embutir("docs/EventoRematricula/deck/fonts/fraunces.woff2", "fo
 const FRAUNCES_IT = embutir("docs/EventoRematricula/deck/fonts/fraunces-italic.woff2", "font/woff2");
 const CAVEAT = embutir("docs/EventoRematricula/deck/fonts/caveat.woff2", "font/woff2");
 
-const EVENTO = { dia: "17", mes: "Outubro", ano: "2026", diaSemana: "sábado", hora: "14h" };
+const EVENTO = { dia: "7", mes: "Novembro", ano: "2026", diaSemana: "sábado", hora: "14h" };
 const ENDERECO = {
   rua: "Av. Benedito Santana, 09 · Amarante",
   bairro: "São Gonçalo do Amarante · RN",
@@ -167,7 +167,7 @@ const html = `<!doctype html>
       <div class="convite">
         <p class="k">Você está convidado</p>
         <h1>Experiência <em>Amadeus</em></h1>
-        <p class="h">Sábado, 17 de outubro, às ${esc(EVENTO.hora)}, na escola</p>
+        <p class="h">Sábado, 7 de novembro, às ${esc(EVENTO.hora)}, na escola</p>
         <p class="t">Venha viver um dia dentro da nossa escola, <b>junto com seu filho ou sua filha,</b> e sentir na prática um pouco do que ele vai viver aqui.</p>
         <div class="segs">${SEGMENTOS.map((s) => `<span>${esc(s.nome)}</span>`).join("")}</div>
       </div>

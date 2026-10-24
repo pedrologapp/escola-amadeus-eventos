@@ -125,7 +125,7 @@ export const textoConfirmacaoSite = (nome?: string | null) => {
   return `Olá${p ? `, ${p}` : ""}! 💛 Aqui é o Centro Educacional Amadeus.
 
 Sua inscrição na *Experiência Amadeus* está confirmada! 🎉
-📅 *Sábado, 24 de outubro, às 14h*
+📅 *Sábado, 7 de novembro, às 14h*
 👨‍👩‍👧 Venha com seu filho ou sua filha. É gratuito.
 
 Enquanto o sábado não chega, conheça a escola por dentro no nosso folder digital:
