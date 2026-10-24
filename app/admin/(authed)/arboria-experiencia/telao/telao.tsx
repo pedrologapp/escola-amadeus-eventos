@@ -10,7 +10,7 @@ import { AtividadeTV } from "./atividade-tv";
  * (atividade-tv.tsx: convite, palavras, as 8 formas, escolha, 2ª rodada, as formas da sala) → (Liberar) estreia → (Encerrar) fim.
  * Na apresentação: → / PageDown avança um slide, ← / PageUp volta um slide, espaço dá play/pausa (os slides vêm de slides.json).
  * Fora dela: → / ← passam de tela sem apertar nada no banco (para ensaiar) · F tela cheia.
- * A apresentação (public/arboria/apresentacao/parte1.mp4) já vem com as falas do Arboria e a trilha; qr-fala.mp3 toca na tela do QR.
+ * A apresentação (public/arboria/apresentacao/aula-24-10.mp4: a introdução + a parte do Arboria; slides.json com os tempos) já vem com as falas do Arboria e a trilha; qr-fala.mp3 toca na tela do QR.
  */
 type Etapa = "pronto" | "video" | "qr" | "atividade" | "estreia" | "fim";
 const ORDEM: Etapa[] = ["pronto", "video", "qr", "atividade", "estreia", "fim"];
@@ -125,7 +125,7 @@ export function Telao({ qr, chave }: { qr: string; chave?: string }) {
       `}</style>
 
       {/* a apresentação fica sempre carregada, para começar sem esperar */}
-      <video ref={video} src="/arboria/apresentacao/parte1.mp4" preload="auto" playsInline onEnded={() => setEtapa("qr")}
+      <video ref={video} src="/arboria/apresentacao/aula-24-10.mp4" preload="auto" playsInline onEnded={() => setEtapa("qr")}
         onPlay={() => setTocando(true)} onPause={() => setTocando(false)} onTimeUpdate={(e) => setSlide(qualSlide(e.currentTarget.currentTime))}
         className={`absolute inset-0 h-full w-full bg-black object-contain ${etapa === "video" ? "" : "invisible"}`} />
 
