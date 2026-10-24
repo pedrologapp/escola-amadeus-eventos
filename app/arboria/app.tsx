@@ -29,6 +29,8 @@ export function AppArboria({ demo }: { demo?: CriancaHistoria | null }) {
   const [pronto, setPronto] = useState(false);
 
   useEffect(() => {
+    // ?nova zera o aparelho para a próxima família (os tablets da escola passam de mão em mão entre as turmas)
+    if (new URLSearchParams(location.search).has("nova")) { try { localStorage.removeItem(CHAVE_LOCAL); } catch { /* sem armazenamento */ } history.replaceState(null, "", location.pathname); }
     const s = ler();
     if (s?.familia) { setFamilia(s.familia); setEtapa(s.etapa ?? "cadastro"); setResponsavel(s.responsavel ?? ""); setFilhos(s.filhos?.length ? s.filhos : [novo()]); }
     else { setFamilia(crypto.randomUUID()); setFilhos([novo()]); }
@@ -251,7 +253,7 @@ function Atividade({ familia, responsavel, filhos, setFilhos, voltar, seguir }: 
         <Selo>Fim do roteiro</Selo>
         <div className="flex flex-1 flex-col justify-center pb-10">
           <Titulo>O roteiro <Ouro>está pronto.</Ouro></Titulo>
-          <p className="arb-in-3 mt-6 text-center text-[16px] leading-relaxed text-white/70">Agora é só enviar e guardar o celular. Fique de olho na apresentação…</p>
+          <p className="arb-in-3 mt-6 text-center text-[16px] leading-relaxed text-white/70">Agora é só enviar. Fiquem de olho no telão…</p>
           {erro && <p className="mt-6 rounded-2xl border border-red-400/40 bg-red-500/10 p-3 text-center text-sm text-red-200">{erro}</p>}
         </div>
         <div className="arb-in-3 pb-10">
@@ -372,7 +374,6 @@ function Espera({ familia, nomes }: { familia: string; nomes: string[] }) {
               <span><b className="block font-[family-name:var(--font-serie)] text-xl font-normal text-[#FFE4A0]">{primeiroNome(c.nome)}</b><span className="text-sm text-white/60">{c.serie} · toque para assistir</span></span>
             </button>
           ))}
-          <Guardar criancas={criancas} />
         </div>
       </div>
     </Preto>

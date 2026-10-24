@@ -2,18 +2,17 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pause, Play, SkipBack, SkipForward } from "lucide-react";
-import { comecarReuniao, faseAtividade, liberarHistorias, situacaoTelao } from "../actions";
-import { AtividadeTV } from "./atividade-tv";
+import { comecarReuniao, liberarHistorias, situacaoTelao } from "../actions";
 
 /**
- * Telão: pronto → (Começar reunião) apresentação → QR do cadastro com contagem → (Abrir a atividade) a atividade das 15 palavras
- * (atividade-tv.tsx: convite, palavras, as 8 formas, escolha, 2ª rodada, as formas da sala) → (Liberar) estreia → (Encerrar) fim.
+ * Telão (24/10): pronto → (Começar reunião) apresentação → QR do cadastro nos tablets, com contagem → (Seguir) "cada criança é diferente"
+ * → (Liberar as séries) estreia nos tablets → (Encerrar) fim. A atividade das palavras e as 8 formas saíram (atividade-tv.tsx ficou sem uso).
  * Na apresentação: → / PageDown avança um slide, ← / PageUp volta um slide, espaço dá play/pausa (os slides vêm de slides.json).
  * Fora dela: → / ← passam de tela sem apertar nada no banco (para ensaiar) · F tela cheia.
  * A apresentação (public/arboria/apresentacao/aula-24-10.mp4: a introdução + a parte do Arboria; slides.json com os tempos) já vem com as falas do Arboria e a trilha; qr-fala.mp3 toca na tela do QR.
  */
-type Etapa = "pronto" | "video" | "qr" | "atividade" | "estreia" | "fim";
-const ORDEM: Etapa[] = ["pronto", "video", "qr", "atividade", "estreia", "fim"];
+type Etapa = "pronto" | "video" | "qr" | "diferente" | "estreia" | "fim";
+const ORDEM: Etapa[] = ["pronto", "video", "qr", "diferente", "estreia", "fim"];
 
 /** `chave`: aberto pelo link público (sem login), as ações vão com ela. */
 export function Telao({ qr, chave }: { qr: string; chave?: string }) {
@@ -72,8 +71,6 @@ export function Telao({ qr, chave }: { qr: string; chave?: string }) {
     else { v?.pause(); setEtapa("pronto"); }
   };
   const liberar = async () => { if (await acao(() => liberarHistorias(chave))) setEtapa("estreia"); };
-  // abre uma etapa da atividade no celular dos pais
-  const fase = (f: "r1" | "forma" | "r2") => acao(() => faseAtividade(f, chave));
 
   const anda = useCallback((d: number) => setEtapa((e) => {
     const nova = ORDEM[Math.min(ORDEM.length - 1, Math.max(0, ORDEM.indexOf(e) + d))];
@@ -89,7 +86,6 @@ export function Telao({ qr, chave }: { qr: string; chave?: string }) {
         if (frente) proximo(); else if (tras) anterior(); else playPausa();
         return;
       }
-      if (etapa === "atividade" && (frente || tras)) return;
       if (frente) anda(1);
       else if (tras) anda(-1);
       else if (e.key === "f" || e.key === "F") telaCheia();
@@ -102,7 +98,7 @@ export function Telao({ qr, chave }: { qr: string; chave?: string }) {
     if (etapa === "video") video.current?.play().catch(() => {}); else video.current?.pause();
     // na tela do QR, o Arboria pede para preencherem
     const a = fala.current; if (!a) return;
-    if (etapa === "qr") { a.currentTime = 0; a.play().catch(() => {}); } else a.pause();
+    a.pause();   // a fala do QR pedia o celular; agora o cadastro é no tablet
   }, [etapa]);
 
   return (
@@ -166,9 +162,9 @@ export function Telao({ qr, chave }: { qr: string; chave?: string }) {
               <p className="mt-[.5vw] text-center text-[1.1vw] font-bold text-[#0b1112]">eventos.escolaamadeus.com/arboria</p>
             </div>
             <div className="entra2 min-w-0">
-              <p className="rot">Prática 1 · agora</p>
+              <p className="rot">Agora · com o seu filho</p>
               <p className="serif mt-[.8vw] text-[4.8vw] leading-[1.02]">Preencham <span className="it">agora</span>.<br />Eu espero.</p>
-              <p className="mt-[1.4vw] text-[1.5vw] text-[#8fa3a0]">Aponte a câmera do celular para o código e conte quem é o seu filho.</p>
+              <p className="mt-[1.4vw] text-[1.5vw] text-[#8fa3a0]">Peguem o tablet e contem quem é o seu filho. Se preferir, use o celular no código ao lado.</p>
               <div className="mt-[2.6vw] flex items-baseline gap-[1vw]">
                 <b key={sit.criancas} className="serif text-[6vw] leading-none text-[#2dd4bf]" style={{ animation: "tlPulso .6s ease" }}>{sit.criancas}</b>
                 <span className="text-[1.5vw] text-[#8fa3a0]">{sit.criancas === 1 ? "criança já cadastrada" : "crianças já cadastradas"}{sit.familias ? ` · ${sit.familias} ${sit.familias === 1 ? "família" : "famílias"}` : ""}</span>
@@ -176,11 +172,22 @@ export function Telao({ qr, chave }: { qr: string; chave?: string }) {
             </div>
           </div>
           <div className="marca">Arb</div>
-          <div className="discreto"><button onClick={() => setEtapa("atividade")} className="botao">Abrir a atividade</button></div>
+          <div className="discreto"><button onClick={() => setEtapa("diferente")} className="botao">Seguir</button></div>
         </div>
       )}
 
-      {etapa === "atividade" && <AtividadeTV sit={sit} fase={fase} liberar={liberar} sair={() => setEtapa("qr")} />}
+      {etapa === "diferente" && (
+        <div className="absolute inset-0 grid place-items-center text-center">
+          <div className="fundo" />
+          <div className="relative px-[8vw]">
+            <p className="rot entra">{sit.criancas} {sit.criancas === 1 ? "criança" : "crianças"} · {sit.criancas === 1 ? "uma história" : `${sit.criancas} histórias`}</p>
+            <h1 className="serif entra2 mt-[1.4vw] text-[5.6vw] leading-[1.04]">Cada criança é <span className="it">diferente.</span></h1>
+            <p className="entra2 mt-[1.8vw] text-[2.2vw] leading-snug text-[#c9d6d3]">E o Arboria vai explorar isso da melhor forma.</p>
+            <div className="entra2 mt-[3vw]"><button onClick={liberar} disabled={ocupado} className="botao">{ocupado ? "Liberando…" : "Liberar as séries"}</button></div>
+          </div>
+          <div className="marca">Arb</div>
+        </div>
+      )}
 
       {etapa === "estreia" && (
         <div className="absolute inset-0 grid place-items-center text-center">
@@ -188,7 +195,7 @@ export function Telao({ qr, chave }: { qr: string; chave?: string }) {
           <div className="relative">
             <p className="rot entra">Estreia</p>
             <h1 className="serif entra2 mt-[1.4vw] text-[6vw] leading-[1.02]">As séries <span className="it">chegaram.</span></h1>
-            <p className="entra2 mt-[1.8vw] text-[2vw] text-[#8fa3a0]">Olhem o celular de vocês. Com o som ligado.</p>
+            <p className="entra2 mt-[1.8vw] text-[2vw] text-[#8fa3a0]">Olhem o tablet. Com o som ligado.</p>
           </div>
           <div className="marca">Arb</div>
           <div className="discreto"><button onClick={() => setEtapa("fim")} className="botao">Encerrar</button></div>

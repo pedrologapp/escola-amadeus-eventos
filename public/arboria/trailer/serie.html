@@ -602,7 +602,8 @@ const CART = {
     c4: ['Até que as oito torres se acenderam.'],
   },
 }[U];
-CART.c5 = U === 'casas' ? ['Um novo capítulo a cada 15 dias.', 'Só no Arboria.'] : ['Uma nova missão a cada 15 dias.', 'Só no Arboria.'];
+// 24/10 (Experiência nos tablets): o fim deixa a história em aberto
+CART.c5 = ['A cada desafio, uma nova história vai se formando.', `A história de ${N} continua em 2027.`];
 // cartela de trailer: tela preta com a frase que costura a história
 function cartela(linhas) {
   const c = document.getElementById('cartela'); fala('');
