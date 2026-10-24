@@ -4,9 +4,10 @@ import { AbasRematricula } from "../abas";
 import { PainelExperiencia, type Candidato, type ContatoExp } from "./painel";
 
 /**
- * Experiência Amadeus · 3ª edição (sáb 24/10, 14h; antes 17/10): enviar o encarte pelo WhatsApp da escola, guardar todo mundo
+ * Experiência Amadeus · 4ª edição (sáb 07/11, 14h; antes 10/10, 17/10 e 24/10): enviar o encarte pelo WhatsApp da escola, guardar todo mundo
  * que recebeu (lista de contatos para lembrar e não perder o contato) e o lembrete da véspera.
  * A 1ª edição (10/10) está guardada em experiencia_contatos_1010; o Pedro marca aqui quem veio, e quem veio não recebe de novo.
+ * As três primeiras (até 24/10) ficam em experiencia_contatos_2410, mostradas em ./arquivo: a lista daqui recomeçou limpa para 07/11 (Pedro, 24/10).
  */
 export const metadata = { title: "Experiência Amadeus · Admin Amadeus" };
 export const dynamic = "force-dynamic";
@@ -36,18 +37,20 @@ function juntarRepetidos(lista: ContatoExp[]): ContatoExp[] {
 
 export default async function ExperienciaPage() {
   const admin = createAdminClient();
-  const [contatos, config, envios, novatos, ed1] = await Promise.all([
+  const [contatos, config, envios, novatos, ed1, arquivo] = await Promise.all([
     admin.from("experiencia_contatos").select("*").order("criado_em", { ascending: false }),
     admin.from("experiencia_config").select("lembrete_automatico").eq("id", 1).single(),
     admin.from("experiencia_envios").select("telefone, tipo, status, created_at").order("created_at", { ascending: false }).limit(500),
     admin.from("rematricula_envios").select("aluno_nome, serie_2027, responsavel, telefone, created_at").is("aluno_id", null).eq("status", "enviado").order("created_at", { ascending: false }),
     admin.from("experiencia_contatos_1010").select("telefone, vai_em, pessoas, nao_vai_em"),
+    admin.from("experiencia_contatos_2410").select("telefone"),
   ]);
   // o que cada família respondeu para o dia 10/10 (ajuda a marcar quem veio)
   const dia10 = new Map((ed1.data ?? []).map((c) => [c.telefone as string, c.nao_vai_em ? "disse que não ia" : c.vai_em ? `confirmou${c.pessoas ? ` · ${c.pessoas} pessoas` : ""}` : null]));
 
   const lista = juntarRepetidos(((contatos.data ?? []) as ContatoExp[]).map((c) => ({ ...c, dia10: dia10.get(c.telefone) ?? null })));
-  const naLista = new Set((contatos.data ?? []).map((c) => c.telefone as string));
+  // Quem estava nas edições passadas (arquivo) também não volta como sugestão.
+  const naLista = new Set([...(contatos.data ?? []), ...(arquivo.data ?? [])].map((c) => c.telefone as string));
   // Último erro por número (para mostrar "sem WhatsApp"/"erro" quando o encarte não chegou).
   const ultimoConvite = new Map<string, string>();
   for (const e of envios.data ?? []) if (e.tipo === "convite" && !ultimoConvite.has(e.telefone)) ultimoConvite.set(e.telefone, e.status);
@@ -66,9 +69,9 @@ export default async function ExperienciaPage() {
       <h1 className="text-2xl font-extrabold text-amadeus-blue">Rematrícula 2027</h1>
       <AbasRematricula ativa="experiencia" />
       <p className="mt-4 text-sm text-muted-foreground">
-        Experiência Amadeus · <b className="text-amadeus-blue">sábado, 24/10, às 14h</b>. Em cima, quem confirmou e quantas pessoas vêm; as respostas que chegam no WhatsApp da escola você marca nos botões. A lista completa de contatos fica fechada mais abaixo.
+        Experiência Amadeus · <b className="text-amadeus-blue">sábado, 07/11, às 14h</b>. Em cima, quem confirmou e quantas pessoas vêm; as respostas que chegam no WhatsApp da escola você marca nos botões. A lista completa de contatos fica fechada mais abaixo.
       </p>
-      <p className="mt-3"><a href="/admin/rematricula-2027/experiencia/reenvio" className="inline-flex rounded-lg bg-amadeus-blue px-4 py-2 text-sm font-bold text-white">Reenvio do convite para 24/10 (WhatsApp oficial, com Eu vou / Não vou) →</a></p>
+      <p className="mt-3"><a href="/admin/rematricula-2027/experiencia/arquivo" className="inline-flex rounded-lg border border-amadeus-blue px-4 py-2 text-sm font-bold text-amadeus-blue">Contatos das edições passadas (até 24/10) →</a></p>
       <PainelExperiencia
         contatos={lista.map((c) => ({ ...c, ultimo: ultimoConvite.get(c.telefone) ?? null }))}
         candidatos={candidatos}
