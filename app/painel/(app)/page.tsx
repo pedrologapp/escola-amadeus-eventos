@@ -106,8 +106,8 @@ async function Resultado({ id }: { id: number }) {
       )}
       {r.revisar && r.ate !== null && <p className="mt-2 text-xs text-amber-800">A leitura do boleto pede conferência: confira no simulador antes de mandar para a família.</p>}
       <div className="mt-4 flex flex-wrap gap-2">
+        {r.linkCarta && <Link href={r.linkCarta} target="_blank" className="rounded-lg bg-[#1B3B7C] px-3.5 py-2 text-sm font-bold text-white">Ver o encarte com todos os valores ↗</Link>}
         <Link href={`/admin/rematricula-2027?aluno=${r.id}`} className="rounded-lg bg-[#128C7E] px-3.5 py-2 text-sm font-bold text-white">Mandar no WhatsApp</Link>
-        {r.linkCarta && <Link href={r.linkCarta} target="_blank" className="rounded-lg bg-[#1B3B7C] px-3.5 py-2 text-sm font-bold text-white">Imprimir carta</Link>}
         <Link href={`/admin/rematricula-2027?aluno=${r.id}`} className="rounded-lg bg-[#eef2fa] px-3.5 py-2 text-sm font-bold text-[#1B3B7C]">Descontos, irmão e à vista</Link>
       </div>
     </div>
