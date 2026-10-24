@@ -143,7 +143,7 @@ Qualquer dúvida, é só responder esta mensagem. Até sábado!`;
  */
 export async function enviarConfirmacaoSite(telefone: string, nome: string | null) {
   const admin = createAdminClient();
-  const { data: ja } = await admin.from("experiencia_envios").select("id").eq("telefone", telefone).eq("tipo", "confirmacao").eq("status", "enviado").limit(1);
+  const { data: ja } = await admin.from("experiencia_envios").select("id").eq("telefone", telefone).eq("tipo", "confirmacao").eq("status", "enviado").gte("created_at", "2026-10-25").limit(1); // só a confirmação da edição de 07/11 conta
   if (ja?.length) return { telefone, status: "enviado" as StatusEnvio, detalhe: "já tinha recebido" };
   const r = await mandar(telefone, origemDoSite() + ENCARTES.convite.arquivo, textoConfirmacaoSite(nome));
   await admin.from("experiencia_envios").insert({ telefone, tipo: "confirmacao", encarte: "convite", status: r.status, detalhe: r.detalhe ?? null, enviado_por: "site" });
