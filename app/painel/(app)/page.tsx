@@ -14,7 +14,6 @@ import { EnvioRapido } from "./envio-rapido";
  * (digita o nome e vê os três valores); embaixo, Matrícula, Comunicação + Calendário e Eventos (sem valores).
  */
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
 
 const card = "rounded-2xl border border-[#e8e1d0] bg-white p-5";
 const titulo = "font-[family-name:var(--font-serifa)] text-[21px] font-bold text-[#1B3B7C]";
