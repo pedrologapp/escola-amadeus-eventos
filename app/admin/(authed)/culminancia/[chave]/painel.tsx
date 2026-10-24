@@ -40,7 +40,10 @@ export function PainelFrente({ frente, inicial, imagens }: {
   const mudou = inteligencia !== (inicial.inteligencia ?? "") || professora !== inicial.professora || ideiaSala !== inicial.ideia_sala
     || ideiaOutdoor !== inicial.ideia_outdoor || anotacoes !== inicial.anotacoes || JSON.stringify(outdoors) !== JSON.stringify(inicial.outdoors);
   const mudaOutdoor = (i: number, o: Partial<Outdoor>) => setOutdoors(outdoors.map((x, k) => (k === i ? { ...x, ...o } : x)));
-  const num = (v: string) => (v === "" ? null : Number(v));
+  // medidas com vírgula ou ponto e casas decimais; o texto digitado fica como está enquanto edita ("197," não some)
+  const num = (v: string) => { const x = Number(v.replace(",", ".")); return v.trim() === "" || !Number.isFinite(x) ? null : x; };
+  const [txt, setTxt] = useState<Record<string, string>>({});
+  const mostra = (k: string, n: number | null) => txt[k] ?? (n == null ? "" : String(n).replace(".", ","));
 
   const salvar = async () => {
     setSalvando(true); setAviso(null);
@@ -100,12 +103,12 @@ export function PainelFrente({ frente, inicial, imagens }: {
               <div key={i} className="flex flex-wrap items-center gap-2">
                 <input value={o.descricao} onChange={(e) => mudaOutdoor(i, { descricao: e.target.value })} placeholder="Onde fica"
                   className="min-w-0 flex-1 rounded-xl border border-border px-3 py-1.5 text-sm" />
-                <input type="number" value={o.largura ?? ""} onChange={(e) => mudaOutdoor(i, { largura: num(e.target.value) })} placeholder="largura"
+                <input type="text" inputMode="decimal" value={mostra(`${i}-largura`, o.largura)} onChange={(e) => { setTxt({ ...txt, [`${i}-largura`]: e.target.value }); mudaOutdoor(i, { largura: num(e.target.value) }); }} placeholder="largura"
                   className="w-24 rounded-xl border border-border px-3 py-1.5 text-sm" />
                 <span className="text-sm text-muted-foreground">×</span>
-                <input type="number" value={o.altura ?? ""} onChange={(e) => mudaOutdoor(i, { altura: num(e.target.value) })} placeholder="altura"
+                <input type="text" inputMode="decimal" value={mostra(`${i}-altura`, o.altura)} onChange={(e) => { setTxt({ ...txt, [`${i}-altura`]: e.target.value }); mudaOutdoor(i, { altura: num(e.target.value) }); }} placeholder="altura"
                   className="w-24 rounded-xl border border-border px-3 py-1.5 text-sm" />
-                <button onClick={() => setOutdoors(outdoors.filter((_, k) => k !== i))} className="text-xs text-red-600">remover</button>
+                <button onClick={() => { setOutdoors(outdoors.filter((_, k) => k !== i)); setTxt({}); }} className="text-xs text-red-600">remover</button>
               </div>
             ))}
             <button onClick={() => setOutdoors([...outdoors, { descricao: "", largura: null, altura: null }])} className="text-sm font-semibold text-amadeus-blue">+ outdoor</button>

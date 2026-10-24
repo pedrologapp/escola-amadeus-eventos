@@ -77,7 +77,10 @@ export function FormularioCulminancia() {
   };
 
   const muda = (i: number, o: Partial<Outdoor>) => setOutdoors(outdoors.map((x, k) => (k === i ? { ...x, ...o } : x)));
-  const num = (v: string) => (v === "" ? null : Number(v));
+  // medidas com vírgula ou ponto e casas decimais; o texto digitado fica como está enquanto edita ("197," não some)
+  const num = (v: string) => { const x = Number(v.replace(",", ".")); return v.trim() === "" || !Number.isFinite(x) ? null : x; };
+  const [txt, setTxt] = useState<Record<string, string>>({});
+  const mostra = (k: string, n: number | null) => txt[k] ?? (n == null ? "" : String(n).replace(".", ","));
 
   const enviar = async () => {
     if (!frente) return;
@@ -186,15 +189,15 @@ export function FormularioCulminancia() {
                 <div key={i} className="rounded-2xl border border-[#E6E0D2] bg-white p-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-wider text-[#7A8396]">Outdoor {i + 1}</span>
-                    {outdoors.length > 1 && <button onClick={() => setOutdoors(outdoors.filter((_, k) => k !== i))} className="text-[#9AA3B4]"><X className="h-4 w-4" /></button>}
+                    {outdoors.length > 1 && <button onClick={() => { setOutdoors(outdoors.filter((_, k) => k !== i)); setTxt({}); }} className="text-[#9AA3B4]"><X className="h-4 w-4" /></button>}
                   </div>
                   <input value={o.descricao} onChange={(e) => muda(i, { descricao: e.target.value })} placeholder="Onde fica (ex.: parede da porta, corredor)" className={campo} />
                   <div className="mt-2 grid grid-cols-2 gap-2">
                     <label className="text-xs text-[#5A6478]">Largura (cm)
-                      <input type="number" inputMode="numeric" value={o.largura ?? ""} onChange={(e) => muda(i, { largura: num(e.target.value) })} className={campo} />
+                      <input type="text" inputMode="decimal" value={mostra(`${i}-largura`, o.largura)} onChange={(e) => { setTxt({ ...txt, [`${i}-largura`]: e.target.value }); muda(i, { largura: num(e.target.value) }); }} className={campo} />
                     </label>
                     <label className="text-xs text-[#5A6478]">Altura (cm)
-                      <input type="number" inputMode="numeric" value={o.altura ?? ""} onChange={(e) => muda(i, { altura: num(e.target.value) })} className={campo} />
+                      <input type="text" inputMode="decimal" value={mostra(`${i}-altura`, o.altura)} onChange={(e) => { setTxt({ ...txt, [`${i}-altura`]: e.target.value }); muda(i, { altura: num(e.target.value) }); }} className={campo} />
                     </label>
                   </div>
                 </div>

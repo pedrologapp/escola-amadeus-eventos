@@ -17,7 +17,8 @@ export interface Outdoor {
 /** Limpa a lista que vem do formulário (até 8 outdoors, medidas de 1 a 2000 cm). */
 export function limparOutdoors(v: unknown): Outdoor[] {
   if (!Array.isArray(v)) return [];
-  const cm = (n: unknown) => { const x = Math.round(Number(n)); return x >= 1 && x <= 2000 ? x : null; };
+  // aceita decimais (ex.: 197,5 cm): guarda com até 2 casas, sem arredondar para inteiro
+  const cm = (n: unknown) => { const x = Number(String(n ?? "").replace(",", ".")); return Number.isFinite(x) && x > 0 && x <= 2000 ? Math.round(x * 100) / 100 : null; };
   return v.slice(0, 8).map((o) => ({ descricao: String(o?.descricao ?? "").trim().slice(0, 120), largura: cm(o?.largura), altura: cm(o?.altura) }))
     .filter((o) => o.descricao || o.largura || o.altura);
 }
