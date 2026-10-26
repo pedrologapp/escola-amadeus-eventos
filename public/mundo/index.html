@@ -1,11 +1,19 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-<base href="/mundo/">
-<meta name="robots" content="noindex">
 <meta charset="utf-8">
+<base href="/mundo/">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Arboria</title>
+<!-- o app (PWA): ícone da folha, tela cheia, cor do guia "Noite elegante"; o service worker só é registrado na versão publicada (src/main.js) -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0E1618">
+<link rel="icon" type="image/png" sizes="48x48" href="app/favicon-48.png">
+<link rel="apple-touch-icon" href="app/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Arboria">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;700;800&family=Instrument+Serif:ital@0;1&family=IM+Fell+English+SC&family=Caveat:wght@500;700&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Barlow:wght@500;600;700&family=Barlow+Condensed:wght@600;700&display=swap">
 <link rel="preload" as="image" href="carregamento-fundo.jpg">
 <style>
@@ -27,7 +35,7 @@
 .carga .frase { font: 500 clamp(18px, 3vmin, 24px)/1.35 Barlow, system-ui, sans-serif; color: #d2dcd8; text-shadow: 0 1px 0 rgba(0,0,0,.5); text-align: center; max-width: min(36ch, 88vw); min-height: 2.7em; transition: opacity .45s; }
 .carga .frase.some { opacity: 0; }
 </style>
-  <script type="module" crossorigin src="/mundo/assets/index-CJGXi7tr.js"></script>
+  <script type="module" crossorigin src="/mundo/assets/index-hAyh0f7Q.js"></script>
   <link rel="stylesheet" crossorigin href="/mundo/assets/index-DmsKYsb1.css">
 </head>
 <body>

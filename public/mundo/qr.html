@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Abrir no tablet · Arboria</title>
+<style>
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0b2426; color: #f2e9d6; font: 18px system-ui, sans-serif; }
+  main { text-align: center; padding: 24px; }
+  h1 { font-size: 26px; margin: 0 0 6px; color: #5ee6d2; }
+  p { margin: 6px 0; }
+  #qr { background: #fff; padding: 18px; border-radius: 16px; display: inline-block; margin: 18px 0; }
+  code { font-size: 20px; color: #ffd27a; word-break: break-all; }
+  .aviso { color: #ff9a8a; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Abrir o Mundo do Arboria no tablet</h1>
+  <p>O tablet precisa estar no mesmo Wi-Fi deste computador. Aponte a câmera para o código:</p>
+  <div id="qr"></div>
+  <p><code id="url"></code></p>
+  <p id="aviso" class="aviso"></p>
+</main>
+<!-- O atalho descobre o IP atual do computador a cada vez e o passa em ?ip=: se o IP mudar, o QR já sai com o novo. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+  // o atalho abre esta página por localhost (sempre abre no computador) e passa o IP da rede em ?ip=
+  const ip = new URLSearchParams(location.search).get('ip'), base = ip ? 'http://' + ip + ':' + (location.port || '5180') : location.origin;
+  // ?teste=contas (prévia das contas e do multiplayer: precisa do servidor/previa.mjs ligado) · avatar (o avatar novo do Blender com 30 alunos) · bench-avatar (medição do avatar novo com 0, 10, 20, 30 e 35 alunos) · visual (prévia do visual novo com 30 alunos) · bench-visual · bots (passear com 30 alunos simulados) · bench-bots (medição com 0, 10, 20, 30 e 35) · sem: o mundo de sempre
+  const teste = new URLSearchParams(location.search).get('teste');
+  const url = base + (teste === 'contas' ? '/?praca&qualidade=minimo&avatar=novo&contas' : teste === 'avatar' ? '/?praca&qualidade=minimo&fps&bots=30&avatar=novo' : teste === 'bench-avatar' ? '/?praca&qualidade=minimo&bench&bots&avatar=novo' : teste === 'provas' ? '/provas.html' : teste === 'visual' ? '/?praca&qualidade=minimo&fps&bots=30' : teste === 'bench-visual' ? '/?praca&qualidade=minimo&bench' : teste === 'bots' ? '/?praca&qualidade=minimo&fps&bots=30&chat=livre' : teste === 'bench-bots' ? '/?praca&qualidade=minimo&bench&bots&chat=livre' : '/?praca&qualidade=minimo&fps');
+  if (teste) document.querySelector('h1').textContent += teste === 'contas' ? ' · contas e multiplayer (prévia)' : teste === 'avatar' ? ' · avatar novo com 30 alunos' : teste === 'bench-avatar' ? ' · medir o avatar novo (0 a 35 alunos)' : teste === 'provas' ? ' · provas da Mãe-Raiz' : teste === 'visual' ? ' · prévia do visual novo' : teste === 'bench-visual' ? ' · medir o visual novo' : teste === 'bots' ? ' · 30 alunos simulados' : ' · medir os alunos simulados';
+  document.getElementById('url').textContent = url;
+  if (!ip && /^(localhost|127\.)/.test(location.hostname)) document.getElementById('aviso').textContent = 'Esta página foi aberta como "localhost": o tablet não acha esse endereço. Use o atalho abrir-para-tablet.bat, que abre pelo IP da rede.';
+  try { new QRCode(document.getElementById('qr'), { text: url, width: 320, height: 320, correctLevel: QRCode.CorrectLevel.M }); }
+  catch { document.getElementById('qr').textContent = 'Sem internet para gerar o código: digite o endereço abaixo no tablet.'; }
+</script>
+</body>
+</html>
