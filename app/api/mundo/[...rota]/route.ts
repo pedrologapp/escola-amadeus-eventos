@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as M from "@/lib/mundo/servidor";
+import * as C from "@/lib/mundo/corte";
 
 /**
  * A API do Mundo de Arboria para o jogo (26/10/2026): /api/mundo/<rota>. As mesmas rotas e respostas do servidor da prévia
@@ -37,6 +38,9 @@ async function tratar(req: NextRequest, rota: string[]) {
     if (r === "chat" && metodo === "POST") return json(req, await M.chat(aluno, String(b.sala || "mundo"), String(b.txt || ""), b.barrada ? String(b.motivo || "barrada no tablet") : undefined));
     if (r === "aulas" && metodo === "GET") return json(req, await M.aulasAbertas(aluno));
     if (r === "aula" && metodo === "POST") return json(req, await M.aulaValida(String(b.codigo || ""), aluno));
+    // a Corte: o estado da turma (postos, função aberta, temas) e os toques do aluno (Quero ser, voto, mão)
+    if (r === "corte" && metodo === "GET") return json(req, await C.corteDoAluno(aluno));
+    if (r === "corte/acao" && metodo === "POST") return json(req, await C.acaoDoAluno(aluno, String(b.tipo || ""), String(b.valor ?? "")));
     if (r === "aula/pedir" && metodo === "POST") return json(req, await M.pedirAula(aluno, String(b.codigo || "")));
     return json(req, { erro: "não encontrado" }, 404);
   } catch (e) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import * as M from "@/lib/mundo/servidor";
+import * as C from "@/lib/mundo/corte";
 
 /**
  * A API da central do Mundo de Arboria (26/10/2026): admin.escolaamadeus.com/mundo-api/<rota> (o proxy leva a /painel/mundo-api,
@@ -15,6 +16,9 @@ async function tratar(req: NextRequest, ctx: Ctx) {
   const r = (await ctx.params).rota.join("/"), b = req.method === "POST" ? await req.json().catch(() => ({})) : {};
   try {
     if (r === "central") return json(await M.central());
+    // o painel da Corte: GET corte?turma=4A; POST corte { turma, op, ... }
+    if (r === "corte" && req.method === "GET") return json(await C.painel(String(req.nextUrl.searchParams.get("turma") || "")));
+    if (r === "corte" && req.method === "POST") return json(await C.acaoDoProfessor(String(b.turma || ""), b));
     if (r === "mundo") return json(await M.ligarMundo(!!b.ligado));
     if (r === "recado") return json(await M.recado(String(b.texto || "")));
     if (r === "levar") return json(await M.levarTurma(String(b.turmaId), String(b.destino || "arvore")));
