@@ -48,7 +48,11 @@ const TEXTO = {
   alguns: (nomes: string[]) => `Os valores de ${nomes.join(" e ")} a secretaria vai te enviar por aqui em instantes.`,
 };
 
+// (27/10/2026, Pedro) TODAS as respostas automáticas desligadas (a da Experiência 24/10 respondia "vou pedir o uber" como "Eu vou", e a
+// de valores atrapalhava o comercial). Para religar um dia, só com pedido dele: tirar esta linha (e conferir WHATSAPP_AUTO na Vercel).
+const AUTO_DESLIGADO = true;
 export function liberado(telefone: string): boolean {
+  if (AUTO_DESLIGADO) return false;
   const v = (process.env.WHATSAPP_AUTO ?? "").trim();
   if (!v) return false;
   if (v.toLowerCase() === "todos") return true;
