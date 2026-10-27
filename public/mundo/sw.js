@@ -4,7 +4,7 @@
 //  - Cada publicação troca a VERSAO (o build escreve a data aqui): o service worker novo assume sozinho e apaga o que era da versão anterior,
 //    para o tablet não misturar modelos velhos com o código novo.
 //  - Nada da API (/api) nem de outros endereços (o tempo real) passa por aqui.
-const VERSAO = '202610271006', CACHE = 'arboria-' + VERSAO;
+const VERSAO = '202610271219', CACHE = 'arboria-' + VERSAO;
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil((async () => {
   for (const k of await caches.keys()) if (k.startsWith('arboria-') && k !== CACHE) await caches.delete(k);

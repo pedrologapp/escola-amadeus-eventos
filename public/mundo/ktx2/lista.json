@@ -257,5 +257,12 @@
   "h": 1024,
   "kbOriginal": 158,
   "kbKtx2": 164
+ },
+ "tex/praca/noite/chao/marmore-liso.jpg": {
+  "modo": "ETC1S",
+  "w": 1024,
+  "h": 1024,
+  "kbOriginal": 103,
+  "kbKtx2": 118
  }
 }
