@@ -1,6 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { Erro, avisar, canalAula } from "./servidor";
+import { Erro, avisar, canalAula, estadoMundo } from "./servidor";
+import { nomesCurtos } from "./nomes";
 
 /**
  * A Corte de Arboria (26/10/2026, aula do 4º ano em 27/10). O estado da sessão de cada turma fica em mundo_corte (só o professor muda) e os
@@ -13,6 +14,7 @@ const db = () => createAdminClient();
 type Estado = {
   n: number; fase: "livre" | "tema" | "funcao"; faseId: number; temas: string[]; tema: string | null; funcao: string | null;
   postos: Record<string, string>; sorteio: { funcao: string; candidatos: string[]; vencedores: string[]; em: string } | null; v: number;
+  slide: number; levados: boolean; sorteando: unknown;
 };
 
 // a mesma regra do jogo (corte-dados.js: distribuir)
@@ -45,7 +47,7 @@ async function ler(turmaId: string): Promise<Estado> {
   const { data } = await db().from("mundo_corte").select("estado").eq("turma_id", turmaId).maybeSingle();
   const e = (data?.estado || {}) as Partial<Estado>;
   const n = e.n || (await turmaDe(turmaId)).filter((a) => a.id !== "teste").length || 30;
-  return { n, fase: e.fase || "livre", faseId: e.faseId || 1, temas: e.temas || [], tema: e.tema ?? null, funcao: e.funcao ?? null, postos: e.postos || {}, sorteio: e.sorteio ?? null, v: e.v || 0 };
+  return { n, fase: e.fase || "livre", faseId: e.faseId || 1, temas: e.temas || [], tema: e.tema ?? null, funcao: e.funcao ?? null, postos: e.postos || {}, sorteio: e.sorteio ?? null, v: e.v || 0, slide: e.slide || 0, levados: !!e.levados, sorteando: e.sorteando ?? null };
 }
 async function gravar(turmaId: string, e: Estado) {
   e.v++; await db().from("mundo_corte").upsert({ turma_id: turmaId, estado: e, atualizado_em: new Date().toISOString() }, { onConflict: "turma_id" });
@@ -53,7 +55,7 @@ async function gravar(turmaId: string, e: Estado) {
   if (au && new Date(au.ate) > new Date()) await avisar(canalAula(au.codigo), "corte", { estado: publico(e) });
   return e;
 }
-const publico = (e: Estado) => ({ n: e.n, fase: e.fase, faseId: e.faseId, temas: e.temas, tema: e.tema, funcao: e.funcao, postos: e.postos, sorteio: e.sorteio, v: e.v,
+const publico = (e: Estado) => ({ n: e.n, fase: e.fase, faseId: e.faseId, temas: e.temas, tema: e.tema, funcao: e.funcao, postos: e.postos, sorteio: e.sorteio, v: e.v, slide: e.slide, levados: e.levados, sorteando: e.sorteando,
   funcaoInfo: e.funcao ? funcoes(e.n).find((f) => f.id === e.funcao) || null : null });
 async function acoes(turmaId: string, fase: number) {
   const { data } = await db().from("mundo_corte_acoes").select("aluno_id, tipo, valor, em").eq("turma_id", turmaId).eq("fase", fase).order("em");
@@ -90,16 +92,20 @@ export async function acaoDoAluno(alunoId: string, tipo: string, valor: string) 
 
 // ---------- o painel do professor ----------
 export async function painel(turmaId: string) {
-  const [e, alunos, { data: on }] = await Promise.all([ler(turmaId), turmaDe(turmaId), db().from("mundo_online").select("aluno_id, sala").gte("visto_em", new Date(Date.now() - 60e3).toISOString())]);
+  const [e, alunos, { data: on }, mundo] = await Promise.all([ler(turmaId), turmaDe(turmaId), db().from("mundo_online").select("aluno_id, sala").gte("visto_em", new Date(Date.now() - 60e3).toISOString()), estadoMundo()]);
+  const curtos = nomesCurtos(alunos);
   const online = new Map((on || []).map((o) => [o.aluno_id, o.sala]));
   const ac = await acoes(turmaId, e.faseId);
-  return { estado: publico(e), funcoes: funcoes(e.n), alunos: alunos.map((a) => ({ id: a.id, nome: a.nome, online: online.get(a.id) || null })), ...ac };
+  return { estado: publico(e), funcoes: funcoes(e.n), mundo: mundo.ligado, alunos: alunos.map((a) => ({ id: a.id, nome: a.nome, curto: curtos[a.id], online: online.get(a.id) || null })), ...ac };
 }
 export async function acaoDoProfessor(turmaId: string, b: Record<string, unknown>) {
   const e = await ler(turmaId), F = funcoes(e.n), op = String(b.op || "");
   const livres = (f: (typeof F)[number]) => f.assentos.filter((s) => !e.postos[s]);
   const tirar = (id: string) => { for (const [s, x] of Object.entries(e.postos)) if (x === id) delete e.postos[s]; };
-  if (op === "tamanho") { e.n = Math.max(20, Math.min(35, Number(b.n) || e.n)); for (const s of Object.keys(e.postos)) if (!funcoes(e.n).some((f) => f.assentos.includes(s))) delete e.postos[s]; }
+  // a apresentação (slide, levados para a Corte) e o sorteio animado (o PC conduz; a TV segue)
+  if (op === "slide") { e.slide = Math.max(0, Math.min(20, Number(b.slide) || 0)); if (b.levados !== undefined) e.levados = !!b.levados; }
+  else if (op === "sorteando") e.sorteando = b.sorteando ?? null;
+  else if (op === "tamanho") { e.n = Math.max(20, Math.min(35, Number(b.n) || e.n)); for (const s of Object.keys(e.postos)) if (!funcoes(e.n).some((f) => f.assentos.includes(s))) delete e.postos[s]; }
   else if (op === "temas") { e.temas = (Array.isArray(b.temas) ? b.temas : []).map((t) => String(t).slice(0, 120)).filter(Boolean).slice(0, 6); e.fase = "tema"; e.faseId++; e.funcao = null; }
   else if (op === "tema") { e.tema = b.tema == null ? null : String(b.tema).slice(0, 160); e.fase = "livre"; }
   else if (op === "abrir") { if (!F.some((f) => f.id === b.funcao)) throw new Erro(400, "Função desconhecida."); e.funcao = String(b.funcao); e.fase = "funcao"; e.faseId++; e.sorteio = null; }
@@ -113,7 +119,7 @@ export async function acaoDoProfessor(turmaId: string, b: Record<string, unknown
   }
   else if (op === "atribuir") { const s = String(b.assento || ""); if (!F.some((f) => f.assentos.includes(s))) throw new Erro(400, "Assento desconhecido."); if (b.aluno) { tirar(String(b.aluno)); e.postos[s] = String(b.aluno); } else delete e.postos[s]; }
   else if (op === "preencher") {   // quem ainda está sem função vai, sorteado, para as vagas que sobraram (imparciais por último)
-    const alunos = (await turmaDe(turmaId)).map((a) => a.id).filter((id) => id !== "teste");
+    const alunos = (await turmaDe(turmaId)).map((a) => a.id);   // (o Aluno Teste fica só na turma Teste)
     const somenteOn = b.somenteOnline !== false; let lista = alunos.filter((id) => !Object.values(e.postos).includes(id));
     if (somenteOn) { const { data: on } = await db().from("mundo_online").select("aluno_id").gte("visto_em", new Date(Date.now() - 60e3).toISOString()); const s = new Set((on || []).map((o) => o.aluno_id)); lista = lista.filter((id) => s.has(id)); }
     for (let i = lista.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [lista[i], lista[j]] = [lista[j], lista[i]]; }

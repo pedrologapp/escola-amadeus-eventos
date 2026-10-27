@@ -2,6 +2,7 @@ import "server-only";
 import crypto from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { filtrar } from "./chat-filtro.js";
+import { nomesCurtos } from "./nomes";
 
 /**
  * O servidor do Mundo de Arboria (26/10/2026). A mesma lógica da prévia do jogo (Arboria/Mundo/jogo/servidor/previa.mjs, testada),
@@ -50,8 +51,10 @@ async function alunoPorId(id: string) { const { data } = await db().from("mundo_
 export async function dadosDoAluno(id: string) {
   const a = await alunoPorId(id); if (!a) throw new Erro(404, "Aluno não encontrado.");
   const [{ data: p }, { data: pr }, e] = await Promise.all([db().from("mundo_perfil").select("*").eq("aluno_id", id).maybeSingle(), db().from("mundo_progresso").select("dados").eq("aluno_id", id).maybeSingle(), estado()]);
+  const { data: colegas } = await db().from("mundo_alunos").select("id, nome").eq("turma_id", a.turma_id);   // o nome curto sem repetir na turma
+  const curto = nomesCurtos(colegas || [])[id] || a.nome.split(/\s+/)[0];
   return {
-    aluno: { id, nome: a.nome, primeiroNome: a.nome.split(/\s+/)[0], turma: a.turma_nome, turmaId: a.turma_id, casa: a.casa, pontosSemana: a.pontos_semana || 0 },
+    aluno: { id, nome: a.nome, primeiroNome: a.nome.split(/\s+/)[0], curto, turma: a.turma_nome, turmaId: a.turma_id, casa: a.casa, pontosSemana: a.pontos_semana || 0 },
     perfil: { aparencia: p?.aparencia || null, apelido: p?.apelido || "", apelidoStatus: p?.apelido_status || "nenhum", trajes: p?.trajes || [], termo: p?.termo || null },
     progresso: pr?.dados || {},
     mundo: { ligado: e.ligado, aula: e.ligado ? null : await aulaDaTurma(a.turma_id) },
