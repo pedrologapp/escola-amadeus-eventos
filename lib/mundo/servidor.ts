@@ -32,13 +32,18 @@ export async function avisar(topic: string, event: string, payload: Linha) {
 
 // ---------- alunos ----------
 const semAcento = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-const rotulo = (nome: string) => { const p = nome.trim().split(/\s+/); return (p.length > 2 ? p.slice(0, 2).join(" ") : p[0]) + (p.length > 1 ? " " + p[p.length - 1][0] + "." : ""); };   // nunca o sobrenome inteiro
+// (27/10, Pedro, depois da aula do 4º ano) na busca, o nome e o sobrenome logo depois dele ("Maria Eduarda", "João Silva"), como as crianças
+// se reconhecem; a inicial do último nome confundia. "de/da/dos" não contam como sobrenome. Nomes iguais na lista ganham mais uma palavra.
+const LIGA = new Set(["de", "da", "do", "das", "dos", "e"]);
+const rotulo = (nome: string, n = 2) => { const r: string[] = []; for (const w of nome.trim().split(/\s+/)) { if (r.length && LIGA.has(w.toLowerCase())) continue; r.push(w); if (r.length >= n) break; } return r.join(" "); };
 
 export async function procurarAlunos(busca: string) {
   const q = semAcento(busca || "").trim(); if (q.length < 2) return [];
   const { data } = await db().from("mundo_alunos").select("id, nome, turma_nome");
   return (data || []).filter((a) => semAcento(a.nome).split(/\s+/).some((w: string) => w.startsWith(q)) || semAcento(a.nome).startsWith(q))
-    .map((a) => ({ id: a.id, rotulo: rotulo(a.nome), turma: a.turma_nome })).sort((x, y) => x.rotulo.localeCompare(y.rotulo, "pt")).slice(0, 8);
+    .map((a) => ({ id: a.id, nome: String(a.nome), rotulo: rotulo(a.nome), turma: a.turma_nome }))
+    .map((a, _i, l) => ({ id: a.id, rotulo: l.some((o) => o.id !== a.id && o.rotulo === a.rotulo) ? rotulo(a.nome, 3) : a.rotulo, turma: a.turma }))
+    .sort((x, y) => x.rotulo.localeCompare(y.rotulo, "pt")).slice(0, 8);
 }
 async function estado() { const { data } = await db().from("mundo_estado").select("ligado, desde").eq("id", 1).maybeSingle(); return { ligado: !!data?.ligado, desde: data?.desde || null }; }
 export const estadoMundo = estado;

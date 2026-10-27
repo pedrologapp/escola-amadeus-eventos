@@ -31,16 +31,16 @@ const seq = (p: string, k: number) => Array.from({ length: k }, (_, i) => p + "-
 // (Pedro, 26/10) os lugares são TODAS as cadeiras da sala (a sala é sempre para 30) mais as vagas a mais; a turma (n) só decide a COTA
 // de cada função no "preencher o resto" (as cadeiras que sobram ficam livres para o professor usar à mão)
 export function funcoes(n: number, extra: Record<string, number> = {}) {
-  const q = distribuir(Math.max(30, n)), cota = distribuir(n), x = (id: string) => Math.max(0, Number(extra[id]) || 0);
+  const q = distribuir(Math.max(30, n)), cota = distribuir(n), x = (id: string) => Number(extra[id]) || 0;
   return [
     { id: "presidente", nome: "Presidente", assentos: ["presidente"], faz: "Abre e encerra a sessão, dá a palavra a quem levanta a mão e cuida para todos serem ouvidos." },
     { id: "vice", nome: "Vice-presidente", assentos: ["vice"], faz: "Ajuda o presidente, conta os votos e assume a sessão se o presidente precisar." },
     { id: "secretario", nome: "Secretário", assentos: ["secretario"], faz: "Anota no livro da Corte o tema, as ideias e as decisões." },
     { id: "guardiao", nome: "Guardião do Tempo", assentos: ["guardiao"], faz: "Cuida da ampulheta e avisa quando o tempo de fala de cada um acabou." },
-    { id: "cronistas", nome: "Cronistas", assentos: seq("cronista", q.cronistas + x("cronistas")), faz: "Observam tudo e escrevem a notícia da sessão para a TV da praça." },
-    { id: "favor", nome: "A favor", assentos: seq("favor", q.favor + x("favor")), faz: "Defendem o tema com bons argumentos." },
-    { id: "contra", nome: "Contra", assentos: seq("contra", q.contra + x("contra")), faz: "Mostram o outro lado do tema, com respeito." },
-    { id: "imparciais", nome: "Imparciais", assentos: seq("imparcial", q.imparciais + x("imparciais")), faz: "Ouvem os dois lados com atenção e votam no final." },
+    { id: "cronistas", nome: "Cronistas", assentos: seq("cronista", Math.max(1, q.cronistas + x("cronistas"))), faz: "Observam tudo e escrevem a notícia da sessão para a TV da praça." },
+    { id: "favor", nome: "A favor", assentos: seq("favor", Math.max(1, q.favor + x("favor"))), faz: "Defendem o tema com bons argumentos." },
+    { id: "contra", nome: "Contra", assentos: seq("contra", Math.max(1, q.contra + x("contra"))), faz: "Mostram o outro lado do tema, com respeito." },
+    { id: "imparciais", nome: "Imparciais", assentos: seq("imparcial", Math.max(1, q.imparciais + x("imparciais"))), faz: "Ouvem os dois lados com atenção e votam no final." },
   ].map((f) => ({ ...f, cota: Math.min(f.assentos.length, ({ cronistas: cota.cronistas, favor: cota.favor, contra: cota.contra, imparciais: cota.imparciais } as Record<string, number>)[f.id] + x(f.id) || f.assentos.length) }));
 }
 
@@ -122,7 +122,9 @@ export async function acaoDoProfessor(turmaId: string, b: Record<string, unknown
     if (b.aprovar && s) delete e.postos[s];
     e.desistencias = [...e.desistencias, { aluno: id, funcao: f ? f.nome : "", pedido: p.em, aprovado: !!b.aprovar, em: new Date().toISOString() }];
   }
-  else if (op === "vaga") { const f = String(b.funcao || ""); if (!["cronistas", "favor", "contra", "imparciais"].includes(f)) throw new Erro(400, "Essa função tem um lugar só."); e.extra = { ...e.extra, [f]: Math.max(0, (e.extra[f] || 0) + (Number(b.delta) || 0)) }; }
+  else if (op === "vaga") { const f = String(b.funcao || ""); if (!["cronistas", "favor", "contra", "imparciais"].includes(f)) throw new Erro(400, "Essa função tem um lugar só."); const base = (distribuir(Math.max(30, e.n)) as Record<string, number>)[f];   // (27/10, Pedro) também diminuir abaixo do padrão da sala (mínimo 1 vaga)
+    e.extra = { ...e.extra, [f]: Math.max(1 - base, (e.extra[f] || 0) + (Number(b.delta) || 0)) };
+    const ok = new Set(funcoes(e.n, e.extra).flatMap((x) => x.assentos)); for (const s of Object.keys(e.postos)) if (!ok.has(s)) delete e.postos[s]; }   // quem estava na vaga que saiu volta à plateia
   else if (op === "tamanho") { e.n = Math.max(20, Math.min(35, Number(b.n) || e.n)); for (const s of Object.keys(e.postos)) if (!funcoes(e.n).some((f) => f.assentos.includes(s))) delete e.postos[s]; }
   else if (op === "temas") { e.temas = (Array.isArray(b.temas) ? b.temas : []).map((t) => String(t).slice(0, 120)).filter(Boolean).slice(0, 6); e.fase = "tema"; e.faseId++; e.funcao = null; }
   else if (op === "tema") { e.tema = b.tema == null ? null : String(b.tema).slice(0, 160); e.fase = "livre"; }
