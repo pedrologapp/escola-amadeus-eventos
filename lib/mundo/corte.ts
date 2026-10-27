@@ -16,6 +16,7 @@ type Estado = {
   postos: Record<string, string>; sorteio: { funcao: string; candidatos: string[]; vencedores: string[]; em: string } | null; v: number;
   slide: number; levados: boolean; sorteando: unknown; extra: Record<string, number>;
   desistencias: { aluno: string; funcao: string; pedido: string; aprovado: boolean; em: string }[];
+  log: { em: string; op: string; info: string }[];   // (27/10, Pedro) o registro do que o professor fez (temas, postos, sorteio...); fica só no banco
 };
 
 // a mesma regra do jogo (corte-dados.js: distribuir)
@@ -51,7 +52,7 @@ async function ler(turmaId: string): Promise<Estado> {
   const { data } = await db().from("mundo_corte").select("estado").eq("turma_id", turmaId).maybeSingle();
   const e = (data?.estado || {}) as Partial<Estado>;
   const n = e.n || (await turmaDe(turmaId)).filter((a) => a.id !== "teste").length || 30;
-  return { n: Math.max(20, Math.min(35, n)), fase: e.fase || "livre", faseId: e.faseId || 1, temas: e.temas || [], tema: e.tema ?? null, funcao: e.funcao ?? null, postos: e.postos || {}, sorteio: e.sorteio ?? null, v: e.v || 0, slide: e.slide || 0, levados: !!e.levados, sorteando: e.sorteando ?? null, extra: e.extra || {}, desistencias: e.desistencias || [] };
+  return { n: Math.max(20, Math.min(35, n)), fase: e.fase || "livre", faseId: e.faseId || 1, temas: e.temas || [], tema: e.tema ?? null, funcao: e.funcao ?? null, postos: e.postos || {}, sorteio: e.sorteio ?? null, v: e.v || 0, slide: e.slide || 0, levados: !!e.levados, sorteando: e.sorteando ?? null, extra: e.extra || {}, desistencias: e.desistencias || [], log: e.log || [] };
 }
 async function gravar(turmaId: string, e: Estado) {
   e.v++; await db().from("mundo_corte").upsert({ turma_id: turmaId, estado: e, atualizado_em: new Date().toISOString() }, { onConflict: "turma_id" });
@@ -147,6 +148,7 @@ export async function acaoDoProfessor(turmaId: string, b: Record<string, unknown
   else if (op === "maos") { await db().from("mundo_corte_acoes").insert({ turma_id: turmaId, fase: e.faseId, aluno_id: "*", tipo: "mao", valor: "0" }); }
   else if (op === "limpar") { e.postos = {}; e.temas = []; e.tema = null; e.fase = "livre"; e.funcao = null; e.sorteio = null; e.faseId++; }
   else throw new Erro(400, "Ação desconhecida.");
+  if (op !== "slide" && op !== "sorteando") { const resto = { ...b }; delete resto.op; e.log = [...e.log, { em: new Date().toISOString(), op, info: JSON.stringify(resto).slice(0, 300) }].slice(-500); }
   await gravar(turmaId, e);
   return painel(turmaId);
 }
