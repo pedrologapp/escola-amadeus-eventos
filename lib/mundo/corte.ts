@@ -1,6 +1,6 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { Erro, avisar, canalAula, estadoMundo } from "./servidor";
+import { Erro, avisar, canalAula, estadoMundo, CANAL_MUNDO } from "./servidor";
 import { nomesCurtos } from "./nomes";
 
 /**
@@ -14,7 +14,8 @@ const db = () => createAdminClient();
 type Estado = {
   n: number; fase: "livre" | "tema" | "funcao"; faseId: number; temas: string[]; tema: string | null; funcao: string | null;
   postos: Record<string, string>; sorteio: { funcao: string; candidatos: string[]; vencedores: string[]; em: string } | null; v: number;
-  slide: number; levados: boolean; sorteando: unknown;
+  slide: number; levados: boolean; sorteando: unknown; extra: Record<string, number>;
+  desistencias: { aluno: string; funcao: string; pedido: string; aprovado: boolean; em: string }[];
 };
 
 // a mesma regra do jogo (corte-dados.js: distribuir)
@@ -25,17 +26,18 @@ export function distribuir(n: number) {
 }
 const seq = (p: string, k: number) => Array.from({ length: k }, (_, i) => p + "-" + (i + 1));
 // as funções na ordem da aula, com os assentos de cada uma e o que a função faz (para o tablet e para a TV)
-export function funcoes(n: number) {
-  const q = distribuir(n);
+// extra: vagas a mais por função (o professor acrescenta no painel; as cadeiras a mais vêm depois)
+export function funcoes(n: number, extra: Record<string, number> = {}) {
+  const q = distribuir(n), x = (id: string) => Math.max(0, Number(extra[id]) || 0);
   return [
     { id: "presidente", nome: "Presidente", assentos: ["presidente"], faz: "Abre e encerra a sessão, dá a palavra a quem levanta a mão e cuida para todos serem ouvidos." },
     { id: "vice", nome: "Vice-presidente", assentos: ["vice"], faz: "Ajuda o presidente, conta os votos e assume a sessão se o presidente precisar." },
     { id: "secretario", nome: "Secretário", assentos: ["secretario"], faz: "Anota no livro da Corte o tema, as ideias e as decisões." },
     { id: "guardiao", nome: "Guardião do Tempo", assentos: ["guardiao"], faz: "Cuida da ampulheta e avisa quando o tempo de fala de cada um acabou." },
-    { id: "cronistas", nome: "Cronistas", assentos: seq("cronista", q.cronistas), faz: "Observam tudo e escrevem a notícia da sessão para a TV da praça." },
-    { id: "favor", nome: "A favor", assentos: seq("favor", q.favor), faz: "Defendem o tema com bons argumentos." },
-    { id: "contra", nome: "Contra", assentos: seq("contra", q.contra), faz: "Mostram o outro lado do tema, com respeito." },
-    { id: "imparciais", nome: "Imparciais", assentos: seq("imparcial", q.imparciais), faz: "Ouvem os dois lados com atenção e votam no final." },
+    { id: "cronistas", nome: "Cronistas", assentos: seq("cronista", q.cronistas + x("cronistas")), faz: "Observam tudo e escrevem a notícia da sessão para a TV da praça." },
+    { id: "favor", nome: "A favor", assentos: seq("favor", q.favor + x("favor")), faz: "Defendem o tema com bons argumentos." },
+    { id: "contra", nome: "Contra", assentos: seq("contra", q.contra + x("contra")), faz: "Mostram o outro lado do tema, com respeito." },
+    { id: "imparciais", nome: "Imparciais", assentos: seq("imparcial", q.imparciais + x("imparciais")), faz: "Ouvem os dois lados com atenção e votam no final." },
   ];
 }
 
@@ -47,16 +49,17 @@ async function ler(turmaId: string): Promise<Estado> {
   const { data } = await db().from("mundo_corte").select("estado").eq("turma_id", turmaId).maybeSingle();
   const e = (data?.estado || {}) as Partial<Estado>;
   const n = e.n || (await turmaDe(turmaId)).filter((a) => a.id !== "teste").length || 30;
-  return { n: Math.max(20, Math.min(35, n)), fase: e.fase || "livre", faseId: e.faseId || 1, temas: e.temas || [], tema: e.tema ?? null, funcao: e.funcao ?? null, postos: e.postos || {}, sorteio: e.sorteio ?? null, v: e.v || 0, slide: e.slide || 0, levados: !!e.levados, sorteando: e.sorteando ?? null };
+  return { n: Math.max(20, Math.min(35, n)), fase: e.fase || "livre", faseId: e.faseId || 1, temas: e.temas || [], tema: e.tema ?? null, funcao: e.funcao ?? null, postos: e.postos || {}, sorteio: e.sorteio ?? null, v: e.v || 0, slide: e.slide || 0, levados: !!e.levados, sorteando: e.sorteando ?? null, extra: e.extra || {}, desistencias: e.desistencias || [] };
 }
 async function gravar(turmaId: string, e: Estado) {
   e.v++; await db().from("mundo_corte").upsert({ turma_id: turmaId, estado: e, atualizado_em: new Date().toISOString() }, { onConflict: "turma_id" });
   const { data: au } = await db().from("mundo_aulas").select("codigo, ate").eq("turma_id", turmaId).maybeSingle();
-  if (au && new Date(au.ate) > new Date()) await avisar(canalAula(au.codigo), "corte", { estado: publico(e) });
+  if (au && new Date(au.ate) > new Date()) await avisar(canalAula(au.codigo), "corte", { turmaId, estado: publico(e) });
+  await avisar(CANAL_MUNDO, "corte", { turmaId, estado: publico(e) });   // quem ainda está no mundo (os slides: "Olhe para a TV")
   return e;
 }
-const publico = (e: Estado) => ({ n: e.n, fase: e.fase, faseId: e.faseId, temas: e.temas, tema: e.tema, funcao: e.funcao, postos: e.postos, sorteio: e.sorteio, v: e.v, slide: e.slide, levados: e.levados, sorteando: e.sorteando,
-  funcaoInfo: e.funcao ? funcoes(e.n).find((f) => f.id === e.funcao) || null : null });
+const publico = (e: Estado) => ({ n: e.n, fase: e.fase, faseId: e.faseId, temas: e.temas, tema: e.tema, funcao: e.funcao, postos: e.postos, sorteio: e.sorteio, v: e.v, slide: e.slide, levados: e.levados, sorteando: e.sorteando, extra: e.extra, desistencias: e.desistencias.slice(-30),
+  funcaoInfo: e.funcao ? funcoes(e.n, e.extra).find((f) => f.id === e.funcao) || null : null });
 async function acoes(turmaId: string, fase: number) {
   const { data } = await db().from("mundo_corte_acoes").select("aluno_id, tipo, valor, em").eq("turma_id", turmaId).eq("fase", fase).order("em");
   const quero: string[] = [], votos: Record<string, number> = {}, maos: Record<string, string> = {};
@@ -69,7 +72,10 @@ async function acoes(turmaId: string, fase: number) {
   const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
   const { data: m } = await db().from("mundo_corte_acoes").select("aluno_id, valor, em").eq("turma_id", turmaId).eq("tipo", "mao").gte("em", hoje.toISOString()).order("em");
   for (const a of m || []) { if (a.aluno_id === "*") { for (const k of Object.keys(maos)) delete maos[k]; } else if (a.valor === "1") maos[a.aluno_id] = a.em; else delete maos[a.aluno_id]; }   // "*": o professor baixou todas
-  return { quero, votos, maos };
+  // os pedidos de desistência (com o termo assinado): o último de cada aluno no dia
+  const { data: d } = await db().from("mundo_corte_acoes").select("aluno_id, valor, em").eq("turma_id", turmaId).eq("tipo", "desistir").gte("em", hoje.toISOString()).order("em");
+  const desistir: Record<string, { assento: string; em: string }> = {}; for (const a of d || []) desistir[a.aluno_id] = { assento: a.valor, em: a.em };
+  return { quero, votos, maos, desistir };
 }
 
 // ---------- o jogo (aluno com sessão) ----------
@@ -77,15 +83,16 @@ export async function corteDoAluno(alunoId: string) {
   const { data: a } = await db().from("mundo_alunos").select("turma_id").eq("id", alunoId).maybeSingle(); if (!a) throw new Erro(404, "Aluno não encontrado.");
   const [e, lista] = await Promise.all([ler(a.turma_id), turmaDe(a.turma_id)]), ac = await acoes(a.turma_id, e.faseId);
   // o lugar na plateia: a ordem do aluno na lista da turma (cada um tem o seu, sem combinar)
-  return { estado: publico(e), eu: { candidato: ac.quero.includes(alunoId), voto: ac.votos[alunoId] ?? null, mao: !!ac.maos[alunoId], plateia: Math.max(0, lista.findIndex((x) => x.id === alunoId)) } };
+  return { estado: publico(e), maos: Object.keys(ac.maos), eu: { candidato: ac.quero.includes(alunoId), voto: ac.votos[alunoId] ?? null, mao: !!ac.maos[alunoId], desistindo: !!ac.desistir[alunoId] && !e.desistencias.some((x) => x.aluno === alunoId && x.pedido === ac.desistir[alunoId].em), plateia: Math.max(0, lista.findIndex((x) => x.id === alunoId)) } };
 }
 export async function acaoDoAluno(alunoId: string, tipo: string, valor: string) {
-  if (!["quero", "desisto", "voto", "mao"].includes(tipo)) throw new Erro(400, "Ação desconhecida.");
+  if (!["quero", "desisto", "voto", "mao", "desistir"].includes(tipo)) throw new Erro(400, "Ação desconhecida.");
   const { data: a } = await db().from("mundo_alunos").select("turma_id").eq("id", alunoId).maybeSingle(); if (!a) throw new Erro(404, "Aluno não encontrado.");
   const e = await ler(a.turma_id);
   if ((tipo === "quero" || tipo === "desisto") && e.fase !== "funcao") throw new Erro(409, "Nenhuma função aberta agora.");
   if (tipo === "quero" && Object.values(e.postos).includes(alunoId)) throw new Erro(409, "Você já tem uma função.");
   if (tipo === "voto" && e.fase !== "tema") throw new Erro(409, "A votação do tema não está aberta.");
+  if (tipo === "desistir") { const s = Object.keys(e.postos).find((k) => e.postos[k] === alunoId); if (!s) throw new Erro(409, "Você não tem uma função."); valor = s; }
   await db().from("mundo_corte_acoes").insert({ turma_id: a.turma_id, fase: e.faseId, aluno_id: alunoId, tipo, valor: String(valor ?? "") });
   return { ok: true };
 }
@@ -96,15 +103,23 @@ export async function painel(turmaId: string) {
   const curtos = nomesCurtos(alunos);
   const online = new Map((on || []).map((o) => [o.aluno_id, o.sala]));
   const ac = await acoes(turmaId, e.faseId);
-  return { estado: publico(e), funcoes: funcoes(e.n), mundo: mundo.ligado, alunos: alunos.map((a) => ({ id: a.id, nome: a.nome, curto: curtos[a.id], online: online.get(a.id) || null })), ...ac };
+  const pendentes = Object.entries(ac.desistir).filter(([id, p]) => !e.desistencias.some((x) => x.aluno === id && x.pedido === p.em)).map(([id, p]) => ({ aluno: id, assento: p.assento, em: p.em }));
+  return { estado: publico(e), funcoes: funcoes(e.n, e.extra), mundo: mundo.ligado, desistir: pendentes, alunos: alunos.map((a) => ({ id: a.id, nome: a.nome, curto: curtos[a.id], online: online.get(a.id) || null })), quero: ac.quero, votos: ac.votos, maos: ac.maos };
 }
 export async function acaoDoProfessor(turmaId: string, b: Record<string, unknown>) {
-  const e = await ler(turmaId), F = funcoes(e.n), op = String(b.op || "");
+  const e = await ler(turmaId), F = funcoes(e.n, e.extra), op = String(b.op || "");
   const livres = (f: (typeof F)[number]) => f.assentos.filter((s) => !e.postos[s]);
   const tirar = (id: string) => { for (const [s, x] of Object.entries(e.postos)) if (x === id) delete e.postos[s]; };
   // a apresentação (slide, levados para a Corte) e o sorteio animado (o PC conduz; a TV segue)
   if (op === "slide") { e.slide = Math.max(0, Math.min(20, Number(b.slide) || 0)); if (b.levados !== undefined) e.levados = !!b.levados; }
   else if (op === "sorteando") e.sorteando = b.sorteando ?? null;
+  else if (op === "desistencia") {   // o professor autoriza (sai do posto e volta à plateia) ou não (continua)
+    const id = String(b.aluno || ""), ac = await acoes(turmaId, e.faseId), p = ac.desistir[id]; if (!p) throw new Erro(404, "Pedido não encontrado.");
+    const s = Object.keys(e.postos).find((k) => e.postos[k] === id), f = F.find((x) => x.assentos.includes(s || ""));
+    if (b.aprovar && s) delete e.postos[s];
+    e.desistencias = [...e.desistencias, { aluno: id, funcao: f ? f.nome : "", pedido: p.em, aprovado: !!b.aprovar, em: new Date().toISOString() }];
+  }
+  else if (op === "vaga") { const f = String(b.funcao || ""); if (!["cronistas", "favor", "contra", "imparciais"].includes(f)) throw new Erro(400, "Essa função tem um lugar só."); e.extra = { ...e.extra, [f]: Math.max(0, (e.extra[f] || 0) + (Number(b.delta) || 0)) }; }
   else if (op === "tamanho") { e.n = Math.max(20, Math.min(35, Number(b.n) || e.n)); for (const s of Object.keys(e.postos)) if (!funcoes(e.n).some((f) => f.assentos.includes(s))) delete e.postos[s]; }
   else if (op === "temas") { e.temas = (Array.isArray(b.temas) ? b.temas : []).map((t) => String(t).slice(0, 120)).filter(Boolean).slice(0, 6); e.fase = "tema"; e.faseId++; e.funcao = null; }
   else if (op === "tema") { e.tema = b.tema == null ? null : String(b.tema).slice(0, 160); e.fase = "livre"; }
