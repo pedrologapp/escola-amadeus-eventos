@@ -27,8 +27,10 @@ export function distribuir(n: number) {
 const seq = (p: string, k: number) => Array.from({ length: k }, (_, i) => p + "-" + (i + 1));
 // as funções na ordem da aula, com os assentos de cada uma e o que a função faz (para o tablet e para a TV)
 // extra: vagas a mais por função (o professor acrescenta no painel; as cadeiras a mais vêm depois)
+// (Pedro, 26/10) os lugares são TODAS as cadeiras da sala (a sala é sempre para 30) mais as vagas a mais; a turma (n) só decide a COTA
+// de cada função no "preencher o resto" (as cadeiras que sobram ficam livres para o professor usar à mão)
 export function funcoes(n: number, extra: Record<string, number> = {}) {
-  const q = distribuir(n), x = (id: string) => Math.max(0, Number(extra[id]) || 0);
+  const q = distribuir(Math.max(30, n)), cota = distribuir(n), x = (id: string) => Math.max(0, Number(extra[id]) || 0);
   return [
     { id: "presidente", nome: "Presidente", assentos: ["presidente"], faz: "Abre e encerra a sessão, dá a palavra a quem levanta a mão e cuida para todos serem ouvidos." },
     { id: "vice", nome: "Vice-presidente", assentos: ["vice"], faz: "Ajuda o presidente, conta os votos e assume a sessão se o presidente precisar." },
@@ -38,7 +40,7 @@ export function funcoes(n: number, extra: Record<string, number> = {}) {
     { id: "favor", nome: "A favor", assentos: seq("favor", q.favor + x("favor")), faz: "Defendem o tema com bons argumentos." },
     { id: "contra", nome: "Contra", assentos: seq("contra", q.contra + x("contra")), faz: "Mostram o outro lado do tema, com respeito." },
     { id: "imparciais", nome: "Imparciais", assentos: seq("imparcial", q.imparciais + x("imparciais")), faz: "Ouvem os dois lados com atenção e votam no final." },
-  ];
+  ].map((f) => ({ ...f, cota: Math.min(f.assentos.length, ({ cronistas: cota.cronistas, favor: cota.favor, contra: cota.contra, imparciais: cota.imparciais } as Record<string, number>)[f.id] + x(f.id) || f.assentos.length) }));
 }
 
 async function turmaDe(turmaId: string) {
@@ -138,7 +140,8 @@ export async function acaoDoProfessor(turmaId: string, b: Record<string, unknown
     const somenteOn = b.somenteOnline !== false; let lista = alunos.filter((id) => !Object.values(e.postos).includes(id));
     if (somenteOn) { const { data: on } = await db().from("mundo_online").select("aluno_id").gte("visto_em", new Date(Date.now() - 60e3).toISOString()); const s = new Set((on || []).map((o) => o.aluno_id)); lista = lista.filter((id) => s.has(id)); }
     for (let i = lista.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [lista[i], lista[j]] = [lista[j], lista[i]]; }
-    for (const f of F) for (const s of livres(f)) { const id = lista.shift(); if (!id) break; e.postos[s] = id; }
+    for (const f of F) { const falta = Math.max(0, f.cota - f.assentos.filter((s) => e.postos[s]).length); for (const s of livres(f).slice(0, falta)) { const id = lista.shift(); if (!id) break; e.postos[s] = id; } }
+    for (const f of F) for (const s of livres(f)) { const id = lista.shift(); if (!id) break; e.postos[s] = id; }   // sobrou gente (turma maior que as cotas): as cadeiras livres
     e.fase = "livre"; e.funcao = null;
   }
   else if (op === "maos") { await db().from("mundo_corte_acoes").insert({ turma_id: turmaId, fase: e.faseId, aluno_id: "*", tipo: "mao", valor: "0" }); }
