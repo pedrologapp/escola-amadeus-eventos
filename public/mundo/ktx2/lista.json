@@ -1,0 +1,261 @@
+{
+ "tex/praca/novo/muro.jpg": {
+  "modo": "ETC1S",
+  "w": 1024,
+  "h": 1024,
+  "kbOriginal": 103,
+  "kbKtx2": 125
+ },
+ "tex/fundo.jpg": {
+  "modo": "UASTC",
+  "w": 2048,
+  "h": 1024,
+  "kbOriginal": 94,
+  "kbKtx2": 927
+ },
+ "tex/praca/novo/lajota.jpg": {
+  "modo": "ETC1S",
+  "w": 1024,
+  "h": 1024,
+  "kbOriginal": 101,
+  "kbKtx2": 126
+ },
+ "tex/praca/lajota.jpg": {
+  "modo": "ETC1S",
+  "w": 1024,
+  "h": 1024,
+  "kbOriginal": 81,
+  "kbKtx2": 120
+ },
+ "tex/praca/muro.jpg": {
+  "modo": "ETC1S",
+  "w": 1024,
+  "h": 1024,
+  "kbOriginal": 90,
+  "kbKtx2": 122
+ },
+ "tex/praca/grama.jpg": {
+  "modo": "ETC1S",
+  "w": 1024,
+  "h": 1024,
+  "kbOriginal": 260,
+  "kbKtx2": 209
+ },
+ "tex/praca/rocha.jpg": {
+  "modo": "ETC1S",
+  "w": 1024,
+  "h": 1024,
+  "kbOriginal": 143,
+  "kbKtx2": 181
+ },
+ "tex/praca/cerca.jpg": {
+  "modo": "ETC1S",
+  "w": 1024,
+  "h": 1024,
+  "kbOriginal": 226,
+  "kbKtx2": 205
+ },
+ "tex/praca/avenida.jpg": {
+  "modo": "ETC1S",
+  "w": 256,
+  "h": 512,
+  "kbOriginal": 7,
+  "kbKtx2": 4
+ },
+ "tex/praca/tijolo.jpg": {
+  "modo": "ETC1S",
+  "w": 512,
+  "h": 512,
+  "kbOriginal": 10,
+  "kbKtx2": 6
+ },
+ "tex/med/Brick.jpg": {
+  "modo": "ETC1S",
+  "w": 1024,
+  "h": 1024,
+  "kbOriginal": 68,
+  "kbKtx2": 123
+ },
+ "tex/med/UnevenBrick.jpg": {
+  "modo": "ETC1S",
+  "w": 1024,
+  "h": 1024,
+  "kbOriginal": 73,
+  "kbKtx2": 131
+ },
+ "tex/med/RoundTiles.jpg": {
+  "modo": "ETC1S",
+  "w": 1024,
+  "h": 1024,
+  "kbOriginal": 74,
+  "kbKtx2": 117
+ },
+ "tex/med/Plaster.jpg": {
+  "modo": "ETC1S",
+  "w": 1024,
+  "h": 1024,
+  "kbOriginal": 34,
+  "kbKtx2": 84
+ },
+ "tex/med/Madeira.jpg": {
+  "modo": "ETC1S",
+  "w": 512,
+  "h": 512,
+  "kbOriginal": 33,
+  "kbKtx2": 48
+ },
+ "tex/grama.jpg": {
+  "modo": "ETC1S",
+  "w": 512,
+  "h": 512,
+  "kbOriginal": 77,
+  "kbKtx2": 59
+ },
+ "tex/chao.jpg": {
+  "modo": "ETC1S",
+  "w": 512,
+  "h": 512,
+  "kbOriginal": 33,
+  "kbKtx2": 53
+ },
+ "tex/muro.jpg": {
+  "modo": "ETC1S",
+  "w": 512,
+  "h": 512,
+  "kbOriginal": 24,
+  "kbKtx2": 46
+ },
+ "tex/casca-mae-1024.jpg": {
+  "modo": "ETC1S",
+  "w": 1024,
+  "h": 1024,
+  "kbOriginal": 111,
+  "kbKtx2": 134
+ },
+ "tex/casca-mae-512.jpg": {
+  "modo": "ETC1S",
+  "w": 512,
+  "h": 512,
+  "kbOriginal": 34,
+  "kbKtx2": 45
+ },
+ "tex/fundo-dia.jpg": {
+  "modo": "UASTC",
+  "w": 2048,
+  "h": 1024,
+  "kbOriginal": 361,
+  "kbKtx2": 1493
+ },
+ "tex/ceu-nuvens-dia.jpg": {
+  "modo": "UASTC",
+  "w": 1024,
+  "h": 1024,
+  "kbOriginal": 191,
+  "kbKtx2": 813
+ },
+ "tex/ceu-nuvens-tarde.jpg": {
+  "modo": "UASTC",
+  "w": 1024,
+  "h": 1024,
+  "kbOriginal": 152,
+  "kbKtx2": 725
+ },
+ "tex/praca/noite/balaustres.png": {
+  "modo": "UASTC",
+  "w": 1024,
+  "h": 256,
+  "kbOriginal": 356,
+  "kbKtx2": 156
+ },
+ "tex/praca/noite/ilhas-perto.png": {
+  "modo": "UASTC",
+  "w": 2048,
+  "h": 1024,
+  "kbOriginal": 2328,
+  "kbKtx2": 880
+ },
+ "tex/praca/noite/ilhas-longe.png": {
+  "modo": "UASTC",
+  "w": 2048,
+  "h": 1024,
+  "kbOriginal": 1258,
+  "kbKtx2": 547
+ },
+ "tex/praca/noite/banco-atlas.png": {
+  "modo": "UASTC",
+  "w": 1024,
+  "h": 1024,
+  "kbOriginal": 1070,
+  "kbKtx2": 607
+ },
+ "tex/praca/noite/folhagem-copa.jpg": {
+  "modo": "ETC1S",
+  "w": 1024,
+  "h": 1024,
+  "kbOriginal": 185,
+  "kbKtx2": 172
+ },
+ "tex/praca/noite/ferro-patina.png": {
+  "modo": "ETC1S",
+  "w": 512,
+  "h": 512,
+  "kbOriginal": 706,
+  "kbKtx2": 71
+ },
+ "tex/praca/noite/arbusto.png": {
+  "modo": "UASTC",
+  "w": 512,
+  "h": 512,
+  "kbOriginal": 360,
+  "kbKtx2": 157
+ },
+ "tex/praca/noite/tufo.png": {
+  "modo": "UASTC",
+  "w": 512,
+  "h": 512,
+  "kbOriginal": 372,
+  "kbKtx2": 143
+ },
+ "tex/praca/noite/trepadeiras.png": {
+  "modo": "UASTC",
+  "w": 1024,
+  "h": 1024,
+  "kbOriginal": 1405,
+  "kbKtx2": 492
+ },
+ "tex/praca/noite/decalques.png": {
+  "modo": "UASTC",
+  "w": 1024,
+  "h": 1024,
+  "kbOriginal": 1135,
+  "kbKtx2": 447
+ },
+ "tex/praca/noite/chao/marmore.jpg": {
+  "modo": "ETC1S",
+  "w": 1024,
+  "h": 1024,
+  "kbOriginal": 139,
+  "kbKtx2": 148
+ },
+ "tex/praca/noite/chao/grama-flores.jpg": {
+  "modo": "ETC1S",
+  "w": 1024,
+  "h": 1024,
+  "kbOriginal": 447,
+  "kbKtx2": 242
+ },
+ "tex/praca/noite/chao/raizes.jpg": {
+  "modo": "ETC1S",
+  "w": 1024,
+  "h": 1024,
+  "kbOriginal": 255,
+  "kbKtx2": 188
+ },
+ "tex/praca/noite/chao/muro-marmore.jpg": {
+  "modo": "ETC1S",
+  "w": 1024,
+  "h": 1024,
+  "kbOriginal": 158,
+  "kbKtx2": 164
+ }
+}
