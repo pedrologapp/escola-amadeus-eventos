@@ -34,7 +34,7 @@ async function tratar(req: NextRequest, rota: string[]) {
     const b = metodo === "GET" ? {} : await corpo(req);
     if (r === "perfil" && metodo === "PUT") return json(req, await M.salvarPerfil(aluno, b));
     if (r === "progresso" && metodo === "PUT") { await M.salvarProgresso(aluno, b.chaves || {}); return json(req, { ok: true }); }
-    if (r === "ping" && metodo === "POST") { await M.presenca(aluno, String(b.sala || "mundo")); return json(req, { ok: true }); }
+    if (r === "ping" && metodo === "POST") { await M.presenca(aluno, String(b.sala || "mundo")); return json(req, { ok: true, ...(await M.estadoParaTablet(aluno)) }); }
     if (r === "chat" && metodo === "POST") return json(req, await M.chat(aluno, String(b.sala || "mundo"), String(b.txt || ""), b.barrada ? String(b.motivo || "barrada no tablet") : undefined));
     if (r === "aulas" && metodo === "GET") return json(req, await M.aulasAbertas(aluno));
     if (r === "aula" && metodo === "POST") return json(req, await M.aulaValida(String(b.codigo || ""), aluno));

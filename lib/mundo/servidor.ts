@@ -109,6 +109,22 @@ export async function salvarProgresso(alunoId: string, chaves: Linha) {
 export async function presenca(alunoId: string, sala: string) {
   await db().from("mundo_online").upsert({ aluno_id: alunoId, sala: String(sala || "mundo").slice(0, 40), visto_em: new Date().toISOString() }, { onConflict: "aluno_id" });
 }
+// (27/10, depois da aula do 4º ano) a resposta do ping diz ao tablet como as coisas estão, sem depender dos avisos em tempo real (que se
+// perdem quando o tablet cai e volta): o mundo ligado?, a aula da turma (aberta?) e se o professor "chamou" a turma para ela (a Corte).
+// O tablet: na aula que não existe mais, sai; no mundo desligado e sem aula, fecha; no mundo com a turma chamada, entra na aula.
+export async function estadoParaTablet(alunoId: string) {
+  const [{ data: m }, { data: a }] = await Promise.all([db().from("mundo_estado").select("ligado").eq("id", 1).maybeSingle(), db().from("mundo_alunos").select("turma_id").eq("id", alunoId).maybeSingle()]);
+  let aula: { codigo: string; destino: string; chamada: boolean } | null = null;
+  if (a) {
+    const { data: au } = await db().from("mundo_aulas").select("codigo, destino, ate").eq("turma_id", a.turma_id).maybeSingle();
+    if (au && new Date(au.ate) > new Date()) {
+      let chamada = false;
+      if (au.destino === "corte") { const { data: c } = await db().from("mundo_corte").select("estado").eq("turma_id", a.turma_id).maybeSingle(); chamada = !!(c?.estado as { levados?: boolean } | undefined)?.levados; }
+      aula = { codigo: au.codigo, destino: au.destino, chamada };
+    }
+  }
+  return { ligado: !!m?.ligado, aula };
+}
 
 // ---------- aulas ----------
 export async function aulaValida(codigo: string, alunoId: string) {
