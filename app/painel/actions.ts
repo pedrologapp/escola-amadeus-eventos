@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { marcarEntrada } from "@/lib/supabase/sessao-painel-acao";
 
 export type EstadoLogin = { erro?: string } | null;
 
@@ -13,6 +14,7 @@ export async function entrar(_antes: EstadoLogin, form: FormData): Promise<Estad
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
   if (error) return { erro: "E-mail ou senha incorretos." };
+  await marcarEntrada();
   redirect("/painel");
 }
 

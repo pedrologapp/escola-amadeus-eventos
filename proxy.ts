@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
+import { marcaValida, ehUso, marcarUso, encerrar } from "@/lib/supabase/sessao-painel";
 
 /**
  * Proxy (Next.js 16) — sucessor do middleware.
@@ -44,12 +45,15 @@ export async function proxy(request: NextRequest) {
     const interno = isPainelPath ? pathname : `/painel${pathname === "/" ? "" : pathname}`;
     const { response, user } = await updateSession(request);
     const naLogin = interno === "/painel/login";
+    // (28/10) navegador fechado ou 2 h sem uso: sai do login e volta para a tela de entrada (lib/supabase/sessao-painel.ts)
+    if (user && !marcaValida(request)) return encerrar(request, naLogin ? response : withCookies(NextResponse.redirect(new URL("/painel/login", request.url)), response));
+    const fim = (r: NextResponse) => { if (user && ehUso(request)) marcarUso(r); return r; };
     if (!user && !naLogin) return withCookies(NextResponse.redirect(new URL("/painel/login", request.url)), response);
-    if (user && naLogin) return withCookies(NextResponse.redirect(new URL("/painel", request.url)), response);
-    if (interno === pathname) return response;
+    if (user && naLogin) return fim(withCookies(NextResponse.redirect(new URL("/painel", request.url)), response));
+    if (interno === pathname) return fim(response);
     const url = request.nextUrl.clone();
     url.pathname = interno;
-    return withCookies(NextResponse.rewrite(url), response);
+    return fim(withCookies(NextResponse.rewrite(url), response));
   }
   // /painel só existe no endereço novo (e em desenvolvimento).
   if (isPainelPath && !isDev) return new NextResponse("Página não encontrada", { status: 404 });
@@ -83,6 +87,11 @@ export async function proxy(request: NextRequest) {
   const { response, user } = await updateSession(request);
 
   const isLoginPage = internalPath === "/admin/login";
+  const loginDoAdmin = new URL(isAdminSubdomain ? "/login" : "/admin/login", request.url);
+
+  // (28/10) a mesma regra do painel: navegador fechado ou 2 h sem uso, sai e volta para o login
+  if (user && !marcaValida(request)) return encerrar(request, isLoginPage ? response : withCookies(NextResponse.redirect(loginDoAdmin), response));
+  if (user && ehUso(request)) marcarUso(response);
 
   // Não autenticado → manda pro login (a não ser que já esteja lá)
   if (!user && !isLoginPage) {

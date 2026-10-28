@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { marcarEntrada } from "@/lib/supabase/sessao-painel-acao";
 
 export type LoginState = { error?: string } | null;
 
@@ -22,6 +23,8 @@ export async function signIn(
   if (error) {
     return { error: "E-mail ou senha incorretos." };
   }
+
+  await marcarEntrada();
 
   // O proxy detecta a sessão e libera o acesso ao /admin/*
   redirect("/admin/dashboard");
