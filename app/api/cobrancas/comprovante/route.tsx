@@ -12,7 +12,7 @@ import { SEGMENTO_NOME, naSerie, primeiroNome, reais, segmentoDe } from "@/lib/r
  */
 
 const W = 1080;
-const H = 1500;
+const H = 1560;
 const AZUL = "#083078";
 const TINTA = "#17223D";
 const OURO = "#B9862F";
@@ -59,6 +59,17 @@ export async function GET(req: NextRequest) {
     </div>
   );
 
+  // uma parcela da conta: o nome, o detalhe embaixo (menor) e o valor com o sinal (+ soma, − desconto)
+  const item = (rotulo: string, detalhe: string, valor: string, cor = TINTA) => (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "2px solid rgba(23,34,61,.10)", color: cor }}>
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        <span style={{ fontSize: 28 }}>{rotulo}</span>
+        <span style={{ fontSize: 20, color: CINZA, marginTop: 2 }}>{detalhe}</span>
+      </div>
+      <span style={{ fontSize: 28, fontWeight: 700 }}>{valor}</span>
+    </div>
+  );
+
   return new ImageResponse(
     (
       <div style={{ width: W, height: H, display: "flex", flexDirection: "column", position: "relative", background: CREME, color: TINTA, fontFamily: "DM", padding: "80px 86px 64px" }}>
@@ -72,7 +83,7 @@ export async function GET(req: NextRequest) {
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", marginTop: 56 }}>
+        <div style={{ display: "flex", alignItems: "center", marginTop: 36 }}>
           <span style={{ background: VERDE, color: "#FFFFFF", fontSize: 24, fontWeight: 800, padding: "8px 22px", borderRadius: 99, letterSpacing: 1 }}>PAGO</span>
           <span style={{ marginLeft: 18, fontSize: 24, fontWeight: 700, color: CINZA }}>{`Matrícula 2027 à vista · ${dataBR(d.dataPagamento)}`}</span>
         </div>
@@ -82,20 +93,23 @@ export async function GET(req: NextRequest) {
           <span style={{ background: AZUL, color: AMARELO, fontWeight: 800, padding: "6px 20px", borderRadius: 99, marginRight: 14 }}>{d.serie2027}</span>
           {seg ? `${SEGMENTO_NOME[seg]} · 2027` : "2027"}
         </div>
-        <div style={{ marginTop: 24, fontSize: 27, lineHeight: 1.5, color: CINZA }}>
+        <div style={{ marginTop: 16, fontSize: 26, lineHeight: 1.45, color: CINZA }}>
           {`Recebemos o pagamento do ano de 2027 à vista de ${primeiroNome(nome)} ${naSerie(d.serie2027)}${c.responsavel_nome ? `, feito por ${c.responsavel_nome}` : ""}. Obrigado pela confiança!`}
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", marginTop: 34, background: "#FFFFFF", borderRadius: 28, padding: "18px 38px", boxShadow: "0 8px 24px rgba(8,48,120,.08)" }}>
-          {/* (Pedro, 29/10: "o desconto ao final, e mostrar também o valor da mensalidade mensal") primeiro o que é, depois os descontos */}
-          {linha("Mensalidade 2027 (por mês)", reais(d.mensalidade))}
-          {linha(`Matrícula + 11 mensalidades (12 × ${reais(d.mensalidade)})`, reais(d.ano), { menor: true })}
-          {d.livro > 0 && linha(`Livros 2027 (12 × ${reais(d.livro12x / 12)})`, reais(d.livro12x), { menor: true })}
-          {linha("Desconto à vista nas mensalidades (10%)", `− ${reais(d.desconto)}`, { cor: VERDE, menor: true })}
-          {d.livro > 0 && linha("Desconto à vista nos livros (10%)", `− ${reais(Math.round((d.livro12x - d.livro) * 100) / 100)}`, { cor: VERDE, menor: true })}
-          {d.extra > 0 && linha("Desconto especial", `− ${reais(d.extra)}`, { cor: VERDE, menor: true })}
+        <div style={{ display: "flex", flexDirection: "column", marginTop: 24, background: "#FFFFFF", borderRadius: 28, padding: "18px 38px", boxShadow: "0 8px 24px rgba(8,48,120,.08)" }}>
+          {/* (Pedro, 29/10: "parece que a mensalidade e tudo é uma soma: o pai tem que entender a conta") a mensalidade é só a referência
+              (dentro da linha da anuidade); a conta é: anuidade + livros = subtotal; − descontos à vista = total pago */}
+          {item("Anuidade 2027", `matrícula + 11 mensalidades · 12 × ${reais(d.mensalidade)}`, `+ ${reais(d.ano)}`)}
+          {d.livro > 0 && item("Livros 2027", `12 parcelas de ${reais(d.livro12x / 12)}`, `+ ${reais(d.livro12x)}`)}
+          <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "2px solid rgba(23,34,61,.10)", fontSize: 27, fontWeight: 800, color: TINTA }}>
+            <span>Subtotal</span><span>{reais(d.ano + (d.livro > 0 ? d.livro12x : 0))}</span>
+          </div>
+          {item("Desconto à vista na anuidade", "10%", `− ${reais(d.desconto)}`, VERDE)}
+          {d.livro > 0 && item("Desconto à vista nos livros", "10%", `− ${reais(Math.round((d.livro12x - d.livro) * 100) / 100)}`, VERDE)}
+          {d.extra > 0 && item("Desconto especial", "concedido pela direção", `− ${reais(d.extra)}`, VERDE)}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", paddingTop: 22, paddingBottom: 2 }}>
-            <span style={{ fontSize: 30, fontWeight: 800 }}>Total pago</span>
+            <span style={{ fontSize: 30, fontWeight: 800 }}>= Total pago</span>
             <span style={{ fontFamily: "Fraunces", fontSize: 64, color: AZUL, letterSpacing: -1 }}>{reais(Number(c.valor_total ?? d.total))}</span>
           </div>
           <div style={{ display: "flex", justifyContent: "flex-end", paddingBottom: 6, fontSize: 24, color: CINZA }}>

@@ -206,15 +206,15 @@ export function FormAVista({ alunos, leitura, responsaveis }: { alunos: AlunoBus
           </div>
           {v && (
             <div className="rounded-2xl border border-border bg-white p-4 text-sm">
-              {/* a mesma ordem do comprovante: o que é, depois os descontos */}
-              <Linha r="Mensalidade 2027 (por mês)" v={reais(v.mensalidade)} />
-              <Linha r={`Matrícula + 11 mensalidades (12 × ${reais(v.mensalidade)})`} v={reais(v.ano)} />
-              {livro && <Linha r={`Livros 2027 (12 × ${reais(v.livro12x / 12)})`} v={reais(v.livro12x)} />}
-              <Linha r="Desconto à vista nas mensalidades (10%)" v={`− ${reais(v.desconto)}`} verde />
+              {/* a mesma conta do comprovante: anuidade + livros = subtotal; − descontos = total */}
+              <Linha r={`Anuidade 2027 (12 × ${reais(v.mensalidade)})`} v={`+ ${reais(v.ano)}`} />
+              {livro && <Linha r={`Livros 2027 (12 × ${reais(v.livro12x / 12)})`} v={`+ ${reais(v.livro12x)}`} />}
+              <div className="flex justify-between border-t border-border py-1 font-bold"><span>Subtotal</span><span className="tabular-nums">{reais(v.ano + (livro ? v.livro12x : 0))}</span></div>
+              <Linha r="Desconto à vista na anuidade (10%)" v={`− ${reais(v.desconto)}`} verde />
               {livro && <Linha r="Desconto à vista nos livros (10%)" v={`− ${reais(Math.round((v.livro12x - v.livro) * 100) / 100)}`} verde />}
               {v.extra > 0 && <Linha r="Desconto especial" v={`− ${reais(v.extra)}`} verde />}
               <div className="mt-2 flex items-baseline justify-between border-t border-border pt-3">
-                <b>Total à vista</b><span className="text-2xl font-extrabold text-amadeus-blue">{reais(v.total)}</span>
+                <b>= Total à vista</b><span className="text-2xl font-extrabold text-amadeus-blue">{reais(v.total)}</span>
               </div>
               <div className="text-right text-xs text-muted-foreground">equivale a {reais(Math.round((v.total / 12) * 100) / 100)} por mês</div>
             </div>
