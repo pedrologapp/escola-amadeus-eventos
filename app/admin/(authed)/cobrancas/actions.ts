@@ -461,7 +461,8 @@ export async function enviarComprovante(id: string, telefone: string): Promise<{
   const { data: c } = await db.from("cobrancas_avulsas").select("aluno_nome, tipo").eq("id", id).maybeSingle();
   if (!c || c.tipo !== "matricula_avista") return { ok: false, erro: "Comprovante não encontrado." };
   const primeiro = String(c.aluno_nome ?? "").trim().split(/\s+/)[0] ?? "";
-  const texto = `Olá! Aqui é o Centro Educacional Amadeus. Segue o comprovante do pagamento à vista do ano de 2027${primeiro ? ` de *${primeiro}*` : ""}. Obrigado pela confiança!`;
+  // (Pedro: "dá um espaço para baixo no 'segue o comprovante'")
+  const texto = `Olá! Aqui é o Centro Educacional Amadeus.\n\nSegue o comprovante do pagamento à vista do ano de 2027${primeiro ? ` de *${primeiro}*` : ""}. Obrigado pela confiança!`;
   let ok = false;
   let detalhe = "";
   try {

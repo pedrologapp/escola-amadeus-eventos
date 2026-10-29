@@ -87,14 +87,19 @@ export async function GET(req: NextRequest) {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", marginTop: 34, background: "#FFFFFF", borderRadius: 28, padding: "18px 38px", boxShadow: "0 8px 24px rgba(8,48,120,.08)" }}>
-          {linha("Mensalidade 2027", reais(d.mensalidade), { menor: true })}
-          {linha("Matrícula + 11 mensalidades", reais(d.ano))}
-          {linha("Desconto à vista (10%)", `− ${reais(d.desconto)}`, { cor: VERDE })}
-          {d.livro > 0 && linha("Livros 2027 à vista", reais(d.livro))}
-          {d.extra > 0 && linha("Desconto especial", `− ${reais(d.extra)}`, { cor: VERDE })}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", paddingTop: 22, paddingBottom: 6 }}>
+          {/* (Pedro, 29/10: "o desconto ao final, e mostrar também o valor da mensalidade mensal") primeiro o que é, depois os descontos */}
+          {linha("Mensalidade 2027 (por mês)", reais(d.mensalidade))}
+          {linha(`Matrícula + 11 mensalidades (12 × ${reais(d.mensalidade)})`, reais(d.ano), { menor: true })}
+          {d.livro > 0 && linha(`Livros 2027 (12 × ${reais(d.livro12x / 12)})`, reais(d.livro12x), { menor: true })}
+          {linha("Desconto à vista nas mensalidades (10%)", `− ${reais(d.desconto)}`, { cor: VERDE, menor: true })}
+          {d.livro > 0 && linha("Desconto à vista nos livros (10%)", `− ${reais(Math.round((d.livro12x - d.livro) * 100) / 100)}`, { cor: VERDE, menor: true })}
+          {d.extra > 0 && linha("Desconto especial", `− ${reais(d.extra)}`, { cor: VERDE, menor: true })}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", paddingTop: 22, paddingBottom: 2 }}>
             <span style={{ fontSize: 30, fontWeight: 800 }}>Total pago</span>
             <span style={{ fontFamily: "Fraunces", fontSize: 64, color: AZUL, letterSpacing: -1 }}>{reais(Number(c.valor_total ?? d.total))}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "flex-end", paddingBottom: 6, fontSize: 24, color: CINZA }}>
+            {`equivale a ${reais(Math.round(Number(c.valor_total ?? d.total) / 12 * 100) / 100)} por mês${d.livro > 0 ? ", com os livros" : ""}`}
           </div>
         </div>
 
