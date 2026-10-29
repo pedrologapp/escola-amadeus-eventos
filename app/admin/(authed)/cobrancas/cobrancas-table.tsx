@@ -3,14 +3,14 @@
 import { ValorSensivel } from "@/components/admin/valores-sensiveis";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ExternalLink, Lock, Trash2, X } from "lucide-react";
+import { ExternalLink, Lock, Send, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatCurrency, formatDateTimeBrt } from "@/lib/utils";
 import type { InscricaoStatus } from "@/types/database";
 import { verificarSenhaAcao } from "../eventos/actions";
-import { excluirCobrancasCanceladas } from "./actions";
+import { enviarComprovante, excluirCobrancasCanceladas, linkComprovante } from "./actions";
 import { ExcluirCobrancaButton } from "./excluir-cobranca-button";
 
 export interface CobrancaRow {
@@ -39,6 +39,9 @@ export interface CobrancaRow {
   asaas_confirmado?: number | null;
   asaas_parcelas_pagas?: number | null;
   asaas_parcelas_total?: number | null;
+  /** 'matricula_avista': pago direto à escola (sem Asaas), com comprovante. */
+  tipo?: string | null;
+  comprovante_enviado_em?: string | null;
 }
 
 const statusBadge: Record<InscricaoStatus, { label: string; className: string }> =
@@ -246,7 +249,12 @@ export function CobrancasTable({ cobrancas, liberado = false }: { cobrancas: Cob
                       <span className="text-muted-foreground">—</span>
                     )}
                   </td>
-                  <td className="max-w-[220px] px-4 py-3">{c.descricao}</td>
+                  <td className="max-w-[220px] px-4 py-3">
+                    {c.tipo === "matricula_avista" && (
+                      <span className="mb-1 inline-block rounded-full bg-amadeus-blue px-2 py-0.5 text-[10px] font-bold text-white">Matrícula à vista</span>
+                    )}
+                    <div>{c.descricao}</div>
+                  </td>
                   <td className="px-4 py-3">
                     <div>{c.responsavel_nome}</div>
                     <div className="text-xs text-muted-foreground">
@@ -256,6 +264,7 @@ export function CobrancasTable({ cobrancas, liberado = false }: { cobrancas: Cob
                   <td className="whitespace-nowrap px-4 py-3 text-right font-semibold tabular-nums">
                     <ValorSensivel valor={liberado ? formatCurrency(Number(c.valor_total ?? c.valor)) : null} />
                     <div className="text-xs font-normal text-muted-foreground">
+                      {c.tipo === "matricula_avista" && "Direto à escola · "}
                       {c.metodo_cobranca === "pix" && "PIX"}
                       {c.metodo_cobranca === "cartao" &&
                         `Cartão ${c.parcelas}x ${c.repassar_juros ? "com" : "sem"} juros`}
@@ -299,7 +308,9 @@ export function CobrancasTable({ cobrancas, liberado = false }: { cobrancas: Cob
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-col items-start gap-1.5">
-                      {c.payment_url ? (
+                      {c.tipo === "matricula_avista" ? (
+                        <ComprovanteAcoes id={c.id} telefone={c.telefone} enviadoEm={c.comprovante_enviado_em ?? null} />
+                      ) : c.payment_url ? (
                         <a
                           href={c.payment_url}
                           target="_blank"
@@ -312,10 +323,12 @@ export function CobrancasTable({ cobrancas, liberado = false }: { cobrancas: Cob
                       ) : (
                         <span className="text-muted-foreground">—</span>
                       )}
-                      {c.status_pagamento === "cancelado" && (
+                      {/* (29/10/2026) pendente, em aberto ou cancelada pode excluir; paga não */}
+                      {(c.status_pagamento === "cancelado" || c.status_pagamento === "pendente") && (
                         <ExcluirCobrancaButton
                           cobrancaId={c.id}
                           descricao={c.descricao}
+                          temLink={c.status_pagamento === "pendente" && !!c.payment_url}
                         />
                       )}
                     </div>
@@ -327,6 +340,39 @@ export function CobrancasTable({ cobrancas, liberado = false }: { cobrancas: Cob
         </table>
       </div>
       )}
+    </div>
+  );
+}
+
+/** Matrícula à vista: ver/baixar o comprovante e enviar pelo WhatsApp da escola (só quando clica). */
+function ComprovanteAcoes({ id, telefone, enviadoEm }: { id: string; telefone: string; enviadoEm: string | null }) {
+  const [pending, startTransition] = useTransition();
+  const [msg, setMsg] = useState<string | null>(null);
+  const [confirmar, setConfirmar] = useState(false);
+  return (
+    <div className="flex flex-col items-start gap-1 text-xs">
+      <button
+        type="button"
+        className="inline-flex items-center gap-1 font-semibold text-amadeus-blue hover:underline"
+        onClick={() => startTransition(async () => { const r = await linkComprovante(id); if (r.url) window.open(r.url, "_blank"); })}
+      >
+        Comprovante <ExternalLink className="size-3.5" />
+      </button>
+      {enviadoEm && <span className="text-green-700">✓ Enviado {formatDateTimeBrt(enviadoEm)}</span>}
+      {!confirmar ? (
+        <button type="button" className="font-semibold text-amadeus-blue hover:underline" onClick={() => setConfirmar(true)}>
+          <Send className="mr-1 inline size-3" />{enviadoEm ? "Enviar de novo" : "Enviar no WhatsApp"}
+        </button>
+      ) : (
+        <span className="rounded-lg border border-border bg-white p-1.5">
+          Enviar para {telefone}?{" "}
+          <button type="button" disabled={pending} className="font-bold text-green-700" onClick={() => startTransition(async () => { const r = await enviarComprovante(id, telefone); setMsg(r.ok ? "Enviado" : r.erro ?? "Não foi"); setConfirmar(false); })}>
+            {pending ? "..." : "Sim"}
+          </button>{" "}
+          <button type="button" className="text-muted-foreground" onClick={() => setConfirmar(false)}>Não</button>
+        </span>
+      )}
+      {msg && <span className={msg === "Enviado" ? "text-green-700" : "text-red-600"}>{msg}</span>}
     </div>
   );
 }

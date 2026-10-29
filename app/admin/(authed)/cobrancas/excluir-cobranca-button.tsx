@@ -6,15 +6,17 @@ import { Lock, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { verificarSenhaAcao } from "../eventos/actions";
-import { excluirCobrancaCancelada } from "./actions";
+import { excluirCobranca } from "./actions";
 
 export function ExcluirCobrancaButton({
   cobrancaId,
   descricao,
+  temLink = false,
 }: {
   cobrancaId: string;
   descricao: string;
+  /** Pendente com link do Asaas: excluir também cancela lá (o link para de aceitar pagamento). */
+  temLink?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -31,12 +33,8 @@ export function ExcluirCobrancaButton({
   function confirmar() {
     setErroModal(null);
     startTransition(async () => {
-      const senhaOk = await verificarSenhaAcao(senha);
-      if (!senhaOk) {
-        setErroModal("Senha incorreta.");
-        return;
-      }
-      const r = await excluirCobrancaCancelada(cobrancaId);
+      // (29/10/2026) pendente, em aberto ou cancelada; paga não. A senha é conferida no servidor.
+      const r = await excluirCobranca(cobrancaId, senha);
       if (!r.ok) {
         setErroModal(r.error);
         return;
@@ -80,9 +78,10 @@ export function ExcluirCobrancaButton({
               </button>
             </div>
             <p className="mt-2 text-sm text-muted-foreground">
-              Digite a senha para excluir a cobrança cancelada
-              {descricao ? ` "${descricao}"` : ""}. Esta ação não pode ser
-              desfeita.
+              Digite a senha para excluir a cobrança
+              {descricao ? ` "${descricao}"` : ""}.{" "}
+              {temLink ? "O link de pagamento também é cancelado no Asaas. " : ""}
+              Esta ação não pode ser desfeita.
             </p>
             <div className="mt-4 space-y-1.5">
               <Label htmlFor={`senha-excluir-cob-${cobrancaId}`}>Senha</Label>

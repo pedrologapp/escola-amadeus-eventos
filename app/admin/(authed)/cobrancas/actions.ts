@@ -6,6 +6,10 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { calcularTotal } from "@/lib/pricing";
 import { validarCPF, telefoneValido } from "@/lib/validators";
+import { SERIES, type NomeSerie } from "@/lib/rematricula-2027";
+import { valoresAVista, type DetalhesAVista } from "@/lib/matricula-avista";
+import { linkDoComprovante } from "@/lib/matricula-avista-link";
+import { cancelarNoAsaas } from "@/lib/asaas-conferencia";
 
 const cobrancaSchema = z
   .object({
@@ -361,5 +365,152 @@ export async function marcarAlertaVisto(id: string): Promise<{ ok: boolean }> {
   await createAdminClient().from("asaas_alertas").update({ visto_em: new Date().toISOString(), visto_por: user.email ?? null }).eq("id", id);
   revalidatePath("/admin/cobrancas");
   revalidatePath("/admin/cobrancas/asaas");
+  return { ok: true };
+}
+
+// =============================================================
+// MATRÍCULA À VISTA (29/10/2026): pago direto à escola, sem Asaas
+// =============================================================
+
+const avistaSchema = z.object({
+  alunoNome: z.string().trim().min(2, "Escolha o aluno ou digite o nome."),
+  activesoftId: z.number().int().nullable(),
+  novato: z.boolean(),
+  serie2027: z.enum(SERIES.map((s) => s.nome) as [NomeSerie, ...NomeSerie[]]),
+  base: z.number().positive().nullable(),
+  prazo: z.enum(["promo", "depois"]),
+  livro: z.boolean(),
+  extra: z.number().min(0),
+  forma: z.enum(["pix", "cartao", "misto"]),
+  parcelas: z.number().int().min(1).max(12),
+  valorPix: z.number().min(0),
+  dataPagamento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida."),
+  responsavel: z.string().trim().min(2, "Nome do responsável muito curto."),
+  telefone: z.string().refine((v) => telefoneValido(v), "Telefone inválido"),
+  observacao: z.string().trim().max(300).optional(),
+});
+
+export async function registrarMatriculaAVista(data: unknown): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  const parsed = avistaSchema.safeParse(data);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
+  const d = parsed.data;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Sua sessão expirou. Faça login novamente." };
+
+  // Os valores são calculados de novo AQUI (o que a tela mostrou não vale).
+  const v = valoresAVista({ serie2027: d.serie2027, base: d.novato ? null : d.base, prazo: d.prazo, livro: d.livro, extra: d.extra });
+  if (v.total <= 0) return { ok: false, error: "O total ficou zerado. Confira o desconto." };
+  const parcelas = d.forma === "pix" ? 1 : d.parcelas;
+  const valorPix = d.forma === "misto" ? Math.min(d.valorPix, v.total) : d.forma === "pix" ? v.total : 0;
+  if (d.forma === "misto" && (valorPix <= 0 || valorPix >= v.total)) return { ok: false, error: "No Pix + cartão, o valor no Pix tem que ser menor que o total." };
+  const detalhes: DetalhesAVista = {
+    ...v, serie2027: d.serie2027, novato: d.novato, activesoftId: d.activesoftId, prazo: d.prazo, forma: d.forma, parcelas, valorPix,
+    dataPagamento: d.dataPagamento, ...(d.observacao ? { observacao: d.observacao } : {}),
+  };
+  const { data: linha, error } = await createAdminClient()
+    .from("cobrancas_avulsas")
+    .insert({
+      tipo: "matricula_avista",
+      aluno_id: null,
+      aluno_nome: d.alunoNome,
+      descricao: `Matrícula 2027 à vista · ${d.serie2027}${d.livro ? " · com livros" : ""}`,
+      valor: v.total,
+      valor_total: v.total,
+      metodo_cobranca: d.forma === "pix" ? "pix" : "cartao",
+      parcelas,
+      repassar_juros: false,
+      responsavel_nome: d.responsavel,
+      cpf: "",
+      telefone: d.telefone.replace(/\D/g, ""),
+      status_pagamento: "pago",
+      registrado_por: user.email ?? "admin",
+      detalhes,
+    })
+    .select("id")
+    .single();
+  if (error || !linha) return { ok: false, error: `Erro ao registrar: ${error?.message ?? "desconhecido"}` };
+  revalidatePath("/admin/cobrancas");
+  return { ok: true, id: linha.id };
+}
+
+const origemDoSite = () => process.env.NEXT_PUBLIC_SITE_URL ?? "https://eventos.escolaamadeus.com";
+
+/** Link da imagem do comprovante (prévia e "baixar"). */
+export async function linkComprovante(id: string): Promise<{ ok: boolean; url?: string; erro?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, erro: "Sua sessão expirou." };
+  return { ok: true, url: linkDoComprovante(origemDoSite(), id) };
+}
+
+/**
+ * Envia o comprovante pelo WhatsApp da escola (WAHA) — SÓ quando alguém da equipe clica em enviar. Usa o mesmo caminho do n8n que a tela
+ * de WhatsApp já usa para mandar imagem (webhook whatsapp-responder); não precisa de fluxo novo.
+ */
+export async function enviarComprovante(id: string, telefone: string): Promise<{ ok: boolean; erro?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, erro: "Sua sessão expirou." };
+  const tel = telefone.replace(/\D/g, "");
+  const numero = tel.length === 10 || tel.length === 11 ? `55${tel}` : tel;
+  if (numero.length < 12) return { ok: false, erro: "Número inválido." };
+  const chave = process.env.WEBHOOK_CONFIRM_SECRET;
+  if (!chave) return { ok: false, erro: "WEBHOOK_CONFIRM_SECRET não configurada no servidor." };
+  const db = createAdminClient();
+  const { data: c } = await db.from("cobrancas_avulsas").select("aluno_nome, tipo").eq("id", id).maybeSingle();
+  if (!c || c.tipo !== "matricula_avista") return { ok: false, erro: "Comprovante não encontrado." };
+  const primeiro = String(c.aluno_nome ?? "").trim().split(/\s+/)[0] ?? "";
+  const texto = `Olá! Aqui é o Centro Educacional Amadeus. Segue o comprovante do pagamento à vista do ano de 2027${primeiro ? ` de *${primeiro}*` : ""}. Obrigado pela confiança!`;
+  let ok = false;
+  let detalhe = "";
+  try {
+    const r = await fetch("https://n8n.escolaamadeus.com/webhook/whatsapp-responder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-amadeus-chave": chave },
+      body: JSON.stringify({
+        chatId: "", telefone: numero, texto, tipo: "imagem",
+        arquivo: { url: linkDoComprovante(origemDoSite(), id), nome: `comprovante-${primeiro || "matricula"}.png`, tipo: "image/png" },
+      }),
+      signal: AbortSignal.timeout(60_000),
+    });
+    const j = (await r.json().catch(() => ({}))) as { ok?: boolean; detalhe?: string; status?: string };
+    ok = r.ok && !!j.ok;
+    detalhe = j.status === "sem_whatsapp" ? "esse número não tem WhatsApp" : j.detalhe || (r.ok ? "" : `HTTP ${r.status}`);
+  } catch (e) {
+    detalhe = (e as Error).message;
+  }
+  await db.from("whatsapp_respostas").insert({
+    chat_id: `${numero}@c.us`, texto, arquivo_nome: "comprovante.png", status: ok ? "enviado" : "erro", detalhe: detalhe || null, enviado_por: user.email ?? null,
+  });
+  if (!ok) return { ok: false, erro: `Não foi enviado${detalhe ? ` (${detalhe.slice(0, 120)})` : ""}.` };
+  await db.from("cobrancas_avulsas").update({ comprovante_enviado_em: new Date().toISOString() }).eq("id", id);
+  revalidatePath("/admin/cobrancas");
+  return { ok: true };
+}
+
+/**
+ * Excluir cobrança (29/10/2026, Pedro): só as pendentes, em aberto ou canceladas — paga NÃO. A pendente com link do Asaas é cancelada no
+ * Asaas antes (o link para de aceitar pagamento). Senha conferida aqui no servidor.
+ */
+export async function excluirCobranca(cobrancaId: string, senha: string): Promise<ExcluirCobrancaState> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Sua sessão expirou. Faça login novamente." };
+  if (senha !== (process.env.ADMIN_ACTION_PASSWORD || "Admim123")) return { ok: false, error: "Senha incorreta." };
+  const db = createAdminClient();
+  const { data: c } = await db.from("cobrancas_avulsas").select("id, status_pagamento, asaas_payment_id, asaas_status, tipo").eq("id", cobrancaId).maybeSingle();
+  if (!c) return { ok: false, error: "Cobrança não encontrada." };
+  if (c.status_pagamento === "pago" || c.status_pagamento === "estornado" || c.tipo === "matricula_avista")
+    return { ok: false, error: "Cobrança paga não pode ser excluída." };
+  if (c.status_pagamento === "pendente" && ["RECEIVED", "CONFIRMED"].includes(c.asaas_status ?? ""))
+    return { ok: false, error: "O Asaas diz que essa já foi paga: não dá para excluir." };
+  if (c.asaas_payment_id && c.status_pagamento === "pendente") {
+    const r = await cancelarNoAsaas(c.asaas_payment_id);
+    if (!r.ok) return { ok: false, error: r.erro ?? "Não consegui cancelar no Asaas." };
+  }
+  const { error } = await db.from("cobrancas_avulsas").delete().eq("id", cobrancaId);
+  if (error) return { ok: false, error: `Erro ao excluir: ${error.message}` };
+  revalidatePath("/admin/cobrancas");
   return { ok: true };
 }

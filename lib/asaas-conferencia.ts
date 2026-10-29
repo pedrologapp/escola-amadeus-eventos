@@ -405,3 +405,24 @@ export async function correcoesRecentes(inscricoesDoEvento: Set<string>, dias = 
     ((r.corrigidas as Corrigida[] | null) ?? []).filter((c) => inscricoesDoEvento.has(c.inscricaoId)).map((c) => ({ ...c, em: r.em as string })),
   );
 }
+
+/**
+ * Excluir uma cobrança avulsa pendente (29/10/2026, Pedro: "deve ser cancelada no Asaas também"): apaga a cobrança no Asaas para o link
+ * parar de aceitar pagamento. Tenta a conta atual e a antiga; "não existe mais" (404) conta como já cancelada. Só a cobrança paga não pode
+ * (quem chama confere antes). Pagamento parcelado no cartão apaga o parcelamento inteiro.
+ */
+export async function cancelarNoAsaas(paymentId: string): Promise<{ ok: boolean; erro?: string }> {
+  let ultimo = "";
+  for (const { chave } of contas()) {
+    const cab = { access_token: chave, "User-Agent": "amadeus-admin" };
+    const p = await asaas<Pagamento>(`/payments/${paymentId}`, chave);
+    if (p.status === 404) { ultimo = "404"; continue; }
+    if (!p.ok || !p.json) { ultimo = `Asaas respondeu ${p.status}`; continue; }
+    if (["RECEIVED", "CONFIRMED", "RECEIVED_IN_CASH"].includes(p.json.status)) return { ok: false, erro: "Essa cobrança já foi paga no Asaas: não dá para excluir." };
+    const caminho = p.json.installment ? `/installments/${p.json.installment}` : `/payments/${paymentId}`;
+    const r = await fetch(API + caminho, { method: "DELETE", headers: cab }).catch(() => null);
+    if (r && (r.ok || r.status === 404)) return { ok: true };
+    return { ok: false, erro: `O Asaas não cancelou (${r?.status ?? "sem resposta"}). Tente de novo.` };
+  }
+  return ultimo === "404" ? { ok: true } : { ok: false, erro: ultimo || "Não consegui falar com o Asaas." };
+}

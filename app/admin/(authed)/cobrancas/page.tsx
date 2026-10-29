@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Receipt } from "lucide-react";
+import { BadgeCheck, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,7 +24,7 @@ export default async function CobrancasPage() {
   const { data: cobrancas, error } = await supabase
     .from("cobrancas_avulsas")
     .select(
-      "id, descricao, valor, valor_total, metodo_cobranca, parcelas, repassar_juros, responsavel_nome, telefone, status_pagamento, payment_url, created_at, link_enviado_em, link_erro, confirmacao_enviada_em, confirmacao_erro, aluno_nome, asaas_status, asaas_recebido, asaas_confirmado, asaas_parcelas_pagas, asaas_parcelas_total, alunos(nome_completo, serie, turma)",
+      "id, descricao, valor, valor_total, metodo_cobranca, parcelas, repassar_juros, responsavel_nome, telefone, status_pagamento, payment_url, created_at, link_enviado_em, link_erro, confirmacao_enviada_em, confirmacao_erro, aluno_nome, asaas_status, asaas_recebido, asaas_confirmado, asaas_parcelas_pagas, asaas_parcelas_total, tipo, comprovante_enviado_em, alunos(nome_completo, serie, turma)",
     )
     .order("created_at", { ascending: false })
     .limit(200);
@@ -69,6 +69,8 @@ export default async function CobrancasPage() {
     asaas_confirmado: c.asaas_confirmado === null ? null : Number(c.asaas_confirmado),
     asaas_parcelas_pagas: c.asaas_parcelas_pagas ?? null,
     asaas_parcelas_total: c.asaas_parcelas_total ?? null,
+    tipo: c.tipo ?? "avulsa",
+    comprovante_enviado_em: c.comprovante_enviado_em ?? null,
   }));
 
   // Sem a senha, os valores nem vão para o navegador (zerados aqui, "R$ ••••" na tela).
@@ -77,6 +79,9 @@ export default async function CobrancasPage() {
   const pagas = lista.filter((c) => c.status_pagamento === "pago");
   const totalPago = pagas.reduce((sum, c) => sum + Number(c.valor_total ?? c.valor), 0);
   const naConta = pagas.reduce((sum, c) => sum + Number(c.asaas_recebido ?? c.valor_total ?? c.valor), 0);
+  // (29/10/2026) matrículas à vista: pagas direto à escola (Pix/cartão), fora do Asaas
+  const avista = pagas.filter((c) => c.tipo === "matricula_avista");
+  const totalAVista = avista.reduce((sum, c) => sum + Number(c.valor_total ?? c.valor), 0);
   after(conferirSeAntigo);
 
   return (
@@ -102,6 +107,12 @@ export default async function CobrancasPage() {
         </div>
         <div className="flex flex-wrap gap-2">
         <BotaoMostrarValores />
+        <Button asChild variant="outline">
+          <Link href="/admin/cobrancas/matricula-avista">
+            <BadgeCheck />
+            Matrícula à vista
+          </Link>
+        </Button>
         <Button asChild>
           <Link href="/admin/cobrancas/nova">
             <Receipt />
@@ -111,6 +122,13 @@ export default async function CobrancasPage() {
         </div>
       </header>
       <AvisoLimpeza />
+      {avista.length > 0 && (
+        <div className="mt-6 inline-flex flex-wrap items-center gap-2 rounded-2xl border border-amadeus-blue/20 bg-amadeus-blue-50 px-4 py-3 text-sm text-amadeus-blue">
+          <BadgeCheck className="size-4" />
+          <b>{avista.length} matrícula{avista.length === 1 ? "" : "s"} à vista</b> ·{" "}
+          <ValorSensivel valor={liberado ? formatCurrency(totalAVista) : null} /> recebido direto na escola
+        </div>
+      )}
 
       {lista.length === 0 ? (
         <Card className="mt-8">
