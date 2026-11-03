@@ -1,5 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { segredoDosCookies, senhaAcaoValida } from "@/lib/senhas";
 import { createHmac, timingSafeEqual } from "crypto";
 
 /**
@@ -15,14 +16,8 @@ const COOKIE = "portaria_session";
 const PAYLOAD = "portaria-v1";
 const MAX_AGE = 60 * 60 * 12; // 12h
 
-function secret(): string {
-  // WEBHOOK_CONFIRM_SECRET é um segredo já existente e estável no servidor.
-  return (
-    process.env.WEBHOOK_CONFIRM_SECRET ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    "amadeus-portaria-fallback"
-  );
-}
+// WEBHOOK_CONFIRM_SECRET é um segredo já existente e estável no servidor (lib/senhas.ts).
+const secret = segredoDosCookies;
 
 function sign(payload: string): string {
   return createHmac("sha256", secret()).update(payload).digest("hex");
@@ -58,9 +53,5 @@ export async function portariaAutenticada(): Promise<boolean> {
   }
 }
 
-export function senhaPortariaValida(senha: string): boolean {
-  // Mesmo fallback usado nas ações sensíveis do admin (verificarSenhaAcao):
-  // a env var pode não estar configurada em produção.
-  const esperada = process.env.ADMIN_ACTION_PASSWORD || "Admim123";
-  return senha === esperada;
-}
+/** A mesma senha das ações sensíveis do admin; sem a variável no servidor, ninguém entra (lib/senhas.ts). */
+export const senhaPortariaValida = senhaAcaoValida;

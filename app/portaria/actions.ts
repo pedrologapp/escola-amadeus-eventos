@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { SENHA_NAO_CONFIGURADA, senhaAcaoConfigurada } from "@/lib/senhas";
 import {
   criarSessaoPortaria,
   encerrarSessaoPortaria,
@@ -20,6 +21,7 @@ export async function entrarPortaria(
   formData: FormData,
 ): Promise<EntrarState> {
   const senha = formData.get("senha")?.toString() ?? "";
+  if (!senhaAcaoConfigurada()) return { error: SENHA_NAO_CONFIGURADA };
   if (!senhaPortariaValida(senha)) {
     return { error: "Senha incorreta." };
   }

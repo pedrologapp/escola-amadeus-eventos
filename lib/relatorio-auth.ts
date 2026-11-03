@@ -1,5 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { iguais, segredoDosCookies } from "@/lib/senhas";
 import { createHmac, timingSafeEqual } from "crypto";
 
 /**
@@ -11,13 +12,7 @@ const COOKIE = "relatorio_session";
 const PAYLOAD = "relatorio-v1";
 const MAX_AGE = 60 * 60 * 12; // 12h
 
-function secret(): string {
-  return (
-    process.env.WEBHOOK_CONFIRM_SECRET ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    "amadeus-relatorio-fallback"
-  );
-}
+const secret = segredoDosCookies;
 
 function sign(payload: string): string {
   return createHmac("sha256", secret()).update(payload).digest("hex");
@@ -54,7 +49,9 @@ export async function relatorioAutenticado(): Promise<boolean> {
 }
 
 export function credenciaisValidas(user: string, senha: string): boolean {
+  // sem RELATORIO_PASSWORD no servidor, ninguém entra (antes valia "admin123", escrito aqui)
   const u = process.env.RELATORIO_USER || "coordenacao";
-  const s = process.env.RELATORIO_PASSWORD || "admin123";
-  return user.trim().toLowerCase() === u.toLowerCase() && senha === s;
+  const s = process.env.RELATORIO_PASSWORD;
+  if (!s) return false;
+  return user.trim().toLowerCase() === u.toLowerCase() && iguais(senha, s);
 }

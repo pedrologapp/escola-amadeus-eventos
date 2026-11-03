@@ -1,5 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { segredoDosCookies, senhaAcaoValida } from "@/lib/senhas";
 import { createHmac, timingSafeEqual } from "crypto";
 
 /**
@@ -15,9 +16,7 @@ const COOKIE = "valores_liberados";
 const PAYLOAD = "valores-v1";
 const MAX_AGE = 60 * 60 * 8;
 
-function segredo(): string {
-  return process.env.WEBHOOK_CONFIRM_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || "amadeus-valores-fallback";
-}
+const segredo = segredoDosCookies;
 const assinar = () => createHmac("sha256", segredo()).update(PAYLOAD).digest("hex");
 
 export async function valoresLiberados(): Promise<boolean> {
@@ -34,7 +33,7 @@ export async function gravarLiberacao(liberar: boolean): Promise<void> {
   store.set(COOKIE, assinar(), { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: MAX_AGE });
 }
 
-export const senhaValoresValida = (senha: string) => senha === (process.env.ADMIN_ACTION_PASSWORD || "Admim123");
+export const senhaValoresValida = senhaAcaoValida;
 
 /** Máscara usada no servidor quando os valores estão trancados. */
 export const MASCARA = "R$ ••••";

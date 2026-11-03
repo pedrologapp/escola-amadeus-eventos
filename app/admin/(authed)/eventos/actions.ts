@@ -14,6 +14,7 @@ import {
 import { logInscricao } from "@/lib/log-inscricao";
 import { slugify } from "@/lib/utils";
 import { calcEstoquePorTipo, validarCotaItens } from "@/lib/estoque";
+import { senhaAcaoValida } from "@/lib/senhas";
 
 const loteSchema = z.object({
   nome: z.string().min(1, "Nome do lote obrigatório"),
@@ -957,6 +958,5 @@ export async function verificarSenhaAcao(senha: string): Promise<boolean> {
   } = await supabase.auth.getUser();
   if (!user) return false;
 
-  const senhaCorreta = process.env.ADMIN_ACTION_PASSWORD || "Admim123";
-  return senha === senhaCorreta;
+  return senhaAcaoValida(senha);
 }

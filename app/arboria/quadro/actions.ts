@@ -19,7 +19,7 @@ import { MAX_VERSOES, MIN_PALAVRAS, TODOS, contarPalavras, TURMAS, corProibida, 
 interface Desc { id: string; aluno: string; rodada: number; versao: number; quadro: string; texto: string; criado_em: string }
 interface Palp { id: string; descricao: string; aluno: string; opcoes: string[]; escolha: string | null; acertou: boolean | null; conversa: Fala[]; extra: boolean }
 interface Melhor { rodada: number; descricao: string; motivo: string }
-interface Sala { codigo: string; chave_prof: string; turma: string; fase: Fase; melhores: Melhor[] | null }
+interface Sala { codigo: string; chave_prof: string; turma: string; fase: Fase; melhores: Melhor[] | null; criado_em: string }
 
 const db = () => createAdminClient();
 const limpar = (s: unknown, max: number) => String(s ?? "").replace(/\s+/g, " ").trim().slice(0, max);
@@ -34,6 +34,26 @@ async function sala(codigo: string): Promise<Sala | null> {
   const { data } = await db().from("arboria_quadro_salas").select("*").eq("codigo", limpar(codigo, 4)).maybeSingle();
   return (data as Sala) ?? null;
 }
+/**
+ * Teto de uso da IA (03/11/2026): esta página é aberta, sem login, então qualquer um poderia abrir salas e gastar
+ * créditos à vontade. Cada sala usa a IA só nas primeiras horas e até um número de leituras/perguntas; abrir sala
+ * tem limite por dia. Uma aula de verdade (uma turma, 3 rodadas) fica bem abaixo disso.
+ */
+const HORAS_DA_SALA = 6;
+const IA_POR_SALA = 400;
+const SALAS_POR_DIA = 40;
+
+async function iaLiberada(s: Sala) {
+  if (Date.now() - new Date(s.criado_em).getTime() > HORAS_DA_SALA * 3600_000) return false;
+  const c = db();
+  const [{ count: revisoes }, { data: palps }] = await Promise.all([
+    c.from("arboria_quadro_revisoes").select("id", { count: "exact", head: true }).eq("sala", s.codigo),
+    c.from("arboria_quadro_palpites").select("conversa").eq("sala", s.codigo),
+  ]);
+  const falas = (palps ?? []).reduce((n, p) => n + ((p.conversa ?? []) as Fala[]).filter((x) => x.de === "arboria").length, 0);
+  return (revisoes ?? 0) + falas < IA_POR_SALA;
+}
+
 async function salaDoProfessor(codigo: string, chave: string) {
   const s = await sala(codigo);
   if (!s || s.chave_prof !== chave) throw new Error("Sala não encontrada.");
@@ -57,6 +77,9 @@ async function tudo(codigo: string) {
 
 export async function criarSala(turma: string) {
   if (!TURMAS.includes(turma as (typeof TURMAS)[number])) return { ok: false as const, erro: "Escolha a turma." };
+  const ontem = new Date(Date.now() - 24 * 3600_000).toISOString();
+  const { count } = await db().from("arboria_quadro_salas").select("codigo", { count: "exact", head: true }).gte("criado_em", ontem);
+  if ((count ?? 0) >= SALAS_POR_DIA) return { ok: false as const, erro: "Muitas salas abertas hoje. Fale com o Pedro." };
   const chave = randomBytes(12).toString("base64url");
   for (let i = 0; i < 8; i++) {
     const codigo = String(randomInt(1000, 10000));
@@ -179,7 +202,7 @@ export async function celebrar(codigo: string, chave: string, rodada?: Rodada) {
   if (!faltam.length) return { ok: true as const };
   const x = await tudo(s.codigo);
   const escolhidos: Melhor[] = [];
-  const cliente = process.env.ANTHROPIC_API_KEY ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) : null;
+  const cliente = process.env.ANTHROPIC_API_KEY && (await iaLiberada(s)) ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) : null;
   for (const r of faltam) {
     const boas = correntes(r, x).map((c) => ({ c, v: c.versoes.find((v) => v.acertou) })).filter((b) => b.v);
     if (!boas.length) continue;
@@ -407,7 +430,7 @@ export async function enviarDescricao(codigo: string, aluno: string, texto: stri
   if (pendente && pendente.texto.trim() === t) return { ok: false as const, erro: "Mude o texto no ponto que o Arboria perguntou antes de mostrar de novo." };
   // na rodada 1 o Arboria não lê nem ajuda (Pedro, 21/10): a descrição vai direto para o colega, sem reescrever
   if (rodada !== 1) {
-    const observacao = await revisar(quadro, rodada, t, antes);
+    const observacao = (await iaLiberada(s)) ? await revisar(quadro, rodada, t, antes) : null;
     await c.from("arboria_quadro_revisoes").insert({ sala: s.codigo, aluno, rodada, versao, texto: t, aprovado: !observacao, observacao });
     if (observacao) return { ok: false as const, observacao };
   }
@@ -478,7 +501,7 @@ export async function conversar(codigo: string, aluno: string, resposta?: string
   if (r && conversa[conversa.length - 1]?.de !== "arboria") return { ok: true as const, conversa }; // fora de ordem
   if (conversa.filter((f) => f.de === "arboria").length >= MAX_TROCAS) return { ok: true as const, conversa };
   if (r) conversa = [...conversa, { de: "aluno", texto: r }];
-  const chave = process.env.ANTHROPIC_API_KEY;
+  const chave = (await iaLiberada(s)) ? process.env.ANTHROPIC_API_KEY : undefined;
   let fala = "Releia a sua descrição como se você fosse o colega. O que você precisaria ler para ter certeza?";
   if (chave) {
     try {

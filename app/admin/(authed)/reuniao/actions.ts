@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { usuarioLogado } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   CATEGORIAS,
@@ -19,6 +20,7 @@ export async function mudarStatus(
   id: string,
   status: Status,
 ): Promise<Resultado> {
+  if (!(await usuarioLogado())) return { ok: false, error: "Sua sessão expirou. Faça login novamente." };
   if (!STATUS.includes(status)) return { ok: false, error: "Status inválido." };
 
   const admin = createAdminClient();
@@ -67,6 +69,7 @@ function normalizar(entrada: ItemEntrada) {
 }
 
 export async function criarItem(entrada: ItemEntrada): Promise<Resultado> {
+  if (!(await usuarioLogado())) return { ok: false, error: "Sua sessão expirou. Faça login novamente." };
   const { erro, dados } = normalizar(entrada);
   if (erro || !dados) return { ok: false, error: erro ?? "Dados inválidos." };
 
@@ -97,6 +100,7 @@ export async function atualizarItem(
   id: string,
   entrada: ItemEntrada,
 ): Promise<Resultado> {
+  if (!(await usuarioLogado())) return { ok: false, error: "Sua sessão expirou. Faça login novamente." };
   const { erro, dados } = normalizar(entrada);
   if (erro || !dados) return { ok: false, error: erro ?? "Dados inválidos." };
 
@@ -112,6 +116,7 @@ export async function atualizarItem(
 }
 
 export async function excluirItem(id: string): Promise<Resultado> {
+  if (!(await usuarioLogado())) return { ok: false, error: "Sua sessão expirou. Faça login novamente." };
   const admin = createAdminClient();
   const { error } = await admin.from("reuniao_itens").delete().eq("id", id);
 

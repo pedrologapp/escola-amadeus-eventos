@@ -10,6 +10,7 @@ import { SERIES, type NomeSerie } from "@/lib/rematricula-2027";
 import { valoresAVista, type DetalhesAVista } from "@/lib/matricula-avista";
 import { linkDoComprovante } from "@/lib/matricula-avista-link";
 import { cancelarNoAsaas } from "@/lib/asaas-conferencia";
+import { SENHA_NAO_CONFIGURADA, senhaAcaoConfigurada, senhaAcaoValida } from "@/lib/senhas";
 
 const cobrancaSchema = z
   .object({
@@ -498,7 +499,8 @@ export async function excluirCobranca(cobrancaId: string, senha: string): Promis
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Sua sessão expirou. Faça login novamente." };
-  if (senha !== (process.env.ADMIN_ACTION_PASSWORD || "Admim123")) return { ok: false, error: "Senha incorreta." };
+  if (!senhaAcaoConfigurada()) return { ok: false, error: SENHA_NAO_CONFIGURADA };
+  if (!senhaAcaoValida(senha)) return { ok: false, error: "Senha incorreta." };
   const db = createAdminClient();
   const { data: c } = await db.from("cobrancas_avulsas").select("id, status_pagamento, asaas_payment_id, asaas_status, tipo").eq("id", cobrancaId).maybeSingle();
   if (!c) return { ok: false, error: "Cobrança não encontrada." };

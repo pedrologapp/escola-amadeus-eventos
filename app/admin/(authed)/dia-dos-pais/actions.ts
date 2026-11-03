@@ -9,6 +9,7 @@ import {
   type Irmao,
   type VideoPais,
 } from "@/lib/dia-dos-pais";
+import { SENHA_NAO_CONFIGURADA, senhaAcaoConfigurada, senhaAcaoValida } from "@/lib/senhas";
 
 /**
  * Server actions do módulo Dia dos Pais.
@@ -503,8 +504,8 @@ export async function confirmarUpload(
 export async function removerCard(id: string, senha: string) {
   await exigirLogin();
 
-  const senhaCorreta = process.env.ADMIN_ACTION_PASSWORD || "Admim123";
-  if (senha !== senhaCorreta) return { error: "Senha incorreta." };
+  if (!senhaAcaoConfigurada()) return { error: SENHA_NAO_CONFIGURADA };
+  if (!senhaAcaoValida(senha)) return { error: "Senha incorreta." };
 
   const admin = createAdminClient();
   const { data: linha } = await admin

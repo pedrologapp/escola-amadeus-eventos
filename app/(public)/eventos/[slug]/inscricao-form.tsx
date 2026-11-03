@@ -27,8 +27,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { createClient } from "@/lib/supabase/client";
-import { buscarAlunos } from "@/lib/buscar-alunos";
 import { calcularTotal, type MetodoPagamento } from "@/lib/pricing";
 import {
   getLoteAtivo,
@@ -46,6 +44,7 @@ import {
   validarCPF,
 } from "@/lib/validators";
 import { submitInscricao } from "./actions";
+import { buscarAlunosDoEvento, irmaosDoAluno } from "./alunos-actions";
 
 interface Tipo {
   id: string;
@@ -109,34 +108,13 @@ export function InscricaoForm({ evento, tipos }: Props) {
       setIrmaos([]);
       return;
     }
-    const ctrl = new AbortController();
-    (async () => {
-      try {
-        const supabase = createClient();
-        const { data: eu } = await supabase
-          .from("alunos")
-          .select("familia_id")
-          .eq("id", selectedStudent.id)
-          .abortSignal(ctrl.signal)
-          .maybeSingle();
-        if (!eu?.familia_id) {
-          setIrmaos([]);
-          return;
-        }
-        const { data } = await supabase
-          .from("alunos")
-          .select("id, nome_completo, serie, turma")
-          .eq("familia_id", eu.familia_id)
-          .neq("id", selectedStudent.id)
-          .order("nome_completo")
-          .abortSignal(ctrl.signal);
-        setIrmaos(data ?? []);
-      } catch {
-        /* abort */
-      }
-    })();
-    return () => ctrl.abort();
-  }, [selectedStudent, evento.pagamento_familiar]);
+    // a lista de alunos só é lida no servidor (alunos-actions.ts); `vale` descarta a resposta de um aluno já trocado
+    let vale = true;
+    irmaosDoAluno(evento.id, selectedStudent.id)
+      .then((data) => { if (vale) setIrmaos(data); })
+      .catch(() => { if (vale) setIrmaos([]); });
+    return () => { vale = false; };
+  }, [selectedStudent, evento.pagamento_familiar, evento.id]);
 
   // ---------- Responsável ----------
   const [parentName, setParentName] = useState("");
@@ -174,31 +152,28 @@ export function InscricaoForm({ evento, tipos }: Props) {
       return;
     }
 
-    const ctrl = new AbortController();
+    let vale = true;
     setIsSearching(true);
 
     const timer = setTimeout(async () => {
       try {
-        const supabase = createClient();
-        const data = await buscarAlunos(supabase, studentSearch, {
-          series: evento.series_permitidas,
-          turmas: evento.turmas_permitidas,
-          signal: ctrl.signal,
-        });
+        // busca no servidor, já com as séries/turmas do evento (alunos-actions.ts)
+        const data = await buscarAlunosDoEvento(evento.id, studentSearch);
+        if (!vale) return;
         setStudentsList(data);
         setShowDropdown(data.length > 0);
       } catch {
-        // silent — usually abort
+        // silent
       } finally {
-        setIsSearching(false);
+        if (vale) setIsSearching(false);
       }
     }, 250);
 
     return () => {
+      vale = false;
       clearTimeout(timer);
-      ctrl.abort();
     };
-  }, [studentSearch, selectedStudent, showForm, evento.series_permitidas, evento.turmas_permitidas]);
+  }, [studentSearch, selectedStudent, showForm, evento.id]);
 
   // ---------- Validações ----------
   const cpfDigits = apenasDigitos(cpf);
