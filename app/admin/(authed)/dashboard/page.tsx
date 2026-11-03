@@ -1,4 +1,4 @@
-import { Fraunces } from "next/font/google";
+import { serifa } from "@/lib/fonte-serifa";
 import { Hoje } from "@/app/painel/(app)/hoje";
 
 /**
@@ -6,8 +6,6 @@ import { Hoje } from "@/app/painel/(app)/hoje";
  * com a rematrícula no centro e Matrícula, Comunicação + Calendário e Eventos embaixo.
  */
 export const dynamic = "force-dynamic";
-
-const serifa = Fraunces({ subsets: ["latin"], weight: ["600", "700"], variable: "--font-serifa" });
 
 export default async function AdminDashboardPage({ searchParams }: { searchParams: Promise<{ aluno?: string }> }) {
   const { aluno } = await searchParams;
