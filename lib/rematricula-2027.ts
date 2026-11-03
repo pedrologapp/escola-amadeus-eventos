@@ -60,6 +60,26 @@ export const LIVRO: Record<Segmento, { promo2025: number; l2026: number; l2027: 
 /** Mensalidade cheia (sem livro) da tabela de 2026 — base para separar o livro do boleto. */
 export const TABELA_2026: Record<Segmento, number> = { maternal: 520, grupo: 520, ef1: 490, ef2: 510 };
 
+/**
+ * (02/11/2026, Pedro) Passado o prazo, a carta mostra só os valores atuais (sem a condição até 28/10) e,
+ * do outro lado, o material escolar e o fardamento. O material escolar é a lista de papelaria do ano:
+ * pago à escola ou comprado pela família.
+ */
+export const MATERIAL_ESCOLAR: Record<Segmento, number> = { maternal: 370, grupo: 370, ef1: 65, ef2: 55 };
+
+/** Tabela do fardamento (loja da escola): [peça, cartão, Pix ou espécie]. Os shorts vão só até o 5º ano. */
+const FARDAMENTO: { peca: string; cartao: number; pix: number; ate5?: boolean }[] = [
+  { peca: "Camisa do dia a dia, gola V", cartao: 86.2, pix: 82.5 },
+  { peca: "Camisa suéter, gola V", cartao: 72.9, pix: 69.3 },
+  { peca: "Short masculino", cartao: 86.2, pix: 82.5, ate5: true },
+  { peca: "Short/saia feminino", cartao: 94.8, pix: 89.5, ate5: true },
+  { peca: "Calça unissex", cartao: 123.4, pix: 118 },
+  { peca: "Agasalho", cartao: 159, pix: 150 },
+];
+export const fardamentoDe = (s: Segmento) => FARDAMENTO.filter((f) => !(f.ate5 && s === "ef2"));
+export const NOTA_FARDAMENTO = "Parcelamos a partir de R$ 100,00 em 2x e, acima de R$ 150,00, em 3x. A troca é feita em até 1 dia útil.";
+export const NOTA_MATERIAL = "Pode ser pago à escola ou, se preferir, a família compra os itens da lista.";
+
 /** Séries na ordem pedagógica, com o nome que vai no papel. */
 export const SERIES = [
   { nome: "Maternal II", segmento: "maternal" },

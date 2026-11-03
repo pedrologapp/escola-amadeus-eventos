@@ -8,7 +8,7 @@ const semAcento = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLo
 const CHAVE = "painel:recentes"; // os últimos alunos abertos, só neste navegador
 
 /** Busca por nome: escolheu, a página recarrega com ?aluno= e o servidor calcula os valores. */
-export function BuscaRematricula({ alunos }: { alunos: Aluno[] }) {
+export function BuscaRematricula({ alunos, base = "/painel" }: { alunos: Aluno[]; base?: string }) {
   const router = useRouter();
   const params = useSearchParams();
   const [busca, setBusca] = useState("");
@@ -31,7 +31,7 @@ export function BuscaRematricula({ alunos }: { alunos: Aluno[] }) {
     const novos = [a, ...recentes.filter((r) => r.id !== a.id)].slice(0, 4);
     setRecentes(novos);
     try { localStorage.setItem(CHAVE, JSON.stringify(novos)); } catch { /* sem localStorage */ }
-    iniciar(() => router.push(`/painel?aluno=${a.id}`));
+    iniciar(() => router.push(`${base}?aluno=${a.id}`));
   };
   const atual = Number(params.get("aluno"));
 

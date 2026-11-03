@@ -3,13 +3,14 @@ import type { NextRequest } from "next/server";
 import QRCode from "qrcode";
 import { lerLinkDaCarta } from "@/lib/rematricula-2027-link";
 import {
-  DEPOIS_DO_PRAZO,
+  MATERIAL_ESCOLAR,
+  NOTA_FARDAMENTO,
+  NOTA_MATERIAL,
   PARCELAS_MATRICULA,
-  PRAZO_PROMOCAO,
   SEGMENTO_NOME,
   URL_FOLDER,
   condicaoAVista,
-  economiaNoAno,
+  fardamentoDe,
   livroAVista,
   naSerie,
   primeiroNome,
@@ -17,6 +18,7 @@ import {
   simular,
   type Condicao,
   type ModoLivro,
+  type Segmento,
 } from "@/lib/rematricula-2027";
 
 /**
@@ -103,6 +105,36 @@ function Cartao({ titulo, c, modo, destaque, troca }: { titulo: string; c: Condi
   );
 }
 
+/** (02/11) O outro lado da carta: o material escolar do segmento e o fardamento. */
+function CartaoExtras({ segmento }: { segmento: Segmento }) {
+  const fio = "rgba(23,34,61,.16)";
+  const legenda = { fontSize: pt(8.4), color: CINZA, marginTop: 2, lineHeight: 1.35 } as const;
+  const preco = { width: mm(17), textAlign: "right", fontVariantNumeric: "tabular-nums" } as const;
+  return (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", borderRadius: mm(6), padding: `${mm(5)}px ${mm(6.5)}px ${mm(4.5)}px`, background: "rgba(255,255,255,.55)", border: `3px solid ${fio}`, color: TINTA }}>
+      <div style={{ fontSize: pt(8.4), fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: CINZA, marginBottom: mm(2.5) }}>Material escolar</div>
+      <div style={{ fontSize: pt(9.6), fontWeight: 800 }}>Uma vez no ano</div>
+      <div style={{ fontFamily: "Fraunces", fontSize: pt(28), color: AZUL, marginTop: 2, letterSpacing: -1 }}>{reais(MATERIAL_ESCOLAR[segmento])}</div>
+      <div style={legenda}>{NOTA_MATERIAL}</div>
+      <div style={{ display: "flex", flexDirection: "column", marginTop: mm(3), paddingTop: mm(2.5), borderTop: `2px solid ${fio}` }}>
+        <div style={{ display: "flex", alignItems: "flex-end", fontSize: pt(8.4), fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", color: CINZA, marginBottom: mm(1.5) }}>
+          <span style={{ flex: 1 }}>Fardamento</span>
+          <span style={preco}>Cartão</span>
+          <span style={preco}>Pix</span>
+        </div>
+        {fardamentoDe(segmento).map((f) => (
+          <div key={f.peca} style={{ display: "flex", fontSize: pt(9.6), padding: `${mm(0.5)}px 0` }}>
+            <span style={{ flex: 1 }}>{f.peca}</span>
+            <span style={preco}>{reais(f.cartao)}</span>
+            <span style={{ ...preco, fontWeight: 800, color: AZUL }}>{reais(f.pix)}</span>
+          </div>
+        ))}
+        <div style={legenda}>{NOTA_FARDAMENTO}</div>
+      </div>
+    </div>
+  );
+}
+
 /** Carta à vista: o ano inteiro com 10%, sem e com os livros. Nenhum outro desconto entra. */
 function CartaoAVista({ titulo, c, destaque }: { titulo: string; c: Condicao; destaque?: boolean }) {
   const v = condicaoAVista(c);
@@ -155,9 +187,6 @@ export async function GET(req: NextRequest) {
   const veterano = d.veterano;
   const primeiro = primeiroNome(d.nome);
   const avista = d.tipo === "avista";
-  const economia = avista
-    ? condicaoAVista(sim.depois).comLivro - condicaoAVista(sim.promo).comLivro
-    : economiaNoAno(sim, d.modo);
   const [r400, r500, r700, r800, f600, qr] = await Promise.all([
     fonte(origin, "DMSans-400.woff"),
     fonte(origin, "DMSans-500.woff"),
@@ -203,34 +232,24 @@ export async function GET(req: NextRequest) {
         </div>
 
         <div style={{ display: "flex", gap: mm(5), marginTop: mm(4.5), alignItems: "flex-start", flexShrink: 0 }}>
+          {/* (02/11) passado o prazo: à esquerda os valores atuais, à direita o material escolar e o fardamento */}
           {avista
-            ? [
-                <CartaoAVista key="p" titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} destaque />,
-                <CartaoAVista key="d" titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} />,
-              ]
-            : [
-                <Cartao key="p" titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} modo={d.modo} destaque />,
-                <Cartao key="d" titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} modo={d.modo} />,
-              ]}
+            ? <CartaoAVista titulo="Valores 2027 · à vista" c={sim.depois} destaque />
+            : <Cartao titulo="Valores 2027" c={sim.depois} modo={d.modo} destaque />}
+          <CartaoExtras segmento={sim.segmento} />
         </div>
 
-        <div style={{ display: "flex", flexWrap: "wrap", marginTop: mm(5), fontSize: pt(12), lineHeight: 1.45 }}>
-          {`Fechando até ${PRAZO_PROMOCAO}${avista ? ", com os livros," : ","} a sua família economiza `}
-          <span style={{ color: OURO, fontWeight: 800 }}>{reais(economia)}</span>
-          {avista ? "." : "\u00A0ao longo de 2027."}
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", marginTop: mm(4), fontSize: pt(9.6), lineHeight: 1.6, color: CINZA }}>
+        <div style={{ display: "flex", flexDirection: "column", marginTop: mm(5), fontSize: pt(9.6), lineHeight: 1.6, color: CINZA }}>
           {avista && (
             <div style={{ display: "flex" }}>
               {"•  "}<span style={{ color: TINTA, fontWeight: 700 }}>À vista:</span>
               {` pagamento único do ano com 10% de desconto. Não acumula com outros descontos.`}
             </div>
           )}
-          {(avista || d.modo === "com") && (
+          {!avista && (
             <div style={{ display: "flex" }}>
-              {"•  "}<span style={{ color: TINTA, fontWeight: 700 }}>Livros:</span>
-              {` até ${PRAZO_PROMOCAO}, o livro sai pelo valor atual, sem o reajuste de 2027. À vista, 10% de desconto.`}
+              {"•  "}<span style={{ color: TINTA, fontWeight: 700 }}>Descontos:</span>
+              {" a Fidelidade e os outros descontos valem pagando até o dia 05 de cada mês."}
             </div>
           )}
         </div>

@@ -2,12 +2,13 @@ import QRCode from "qrcode";
 import { Fraunces } from "next/font/google";
 import { listarAlunos } from "@/lib/rematricula-2027-dados";
 import {
-  DEPOIS_DO_PRAZO,
+  MATERIAL_ESCOLAR,
+  NOTA_FARDAMENTO,
+  NOTA_MATERIAL,
   PARCELAS_MATRICULA,
-  PRAZO_PROMOCAO,
   SERIES,
   URL_FOLDER,
-  economiaNoAno,
+  fardamentoDe,
   livroAVista,
   modoLivroValido,
   naSerie,
@@ -150,19 +151,26 @@ export default async function CartaPage({
           <span>{serie}</span> {SEGMENTO_NOME[sim.segmento]} · 2027
         </p>
 
+        {/* (02/11) passado o prazo: à esquerda os valores atuais, à direita o material escolar e o fardamento */}
         <div className="cartoes">
-          <Cartao titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} modo={modo} destaque />
-          <Cartao titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} modo={modo} />
+          <Cartao titulo="Valores 2027" c={sim.depois} modo={modo} destaque />
+          <div className="cartao extras">
+            <p className="rotulo">Material escolar</p>
+            <p className="bloco-titulo">Uma vez no ano</p>
+            <span className={`valor ${fraunces.className}`}>{reais(MATERIAL_ESCOLAR[sim.segmento])}</span>
+            <p className="legenda">{NOTA_MATERIAL}</p>
+            <div className="bloco">
+              <div className="farda cab"><span>Fardamento</span><span>Cartão</span><span>Pix</span></div>
+              {fardamentoDe(sim.segmento).map((f) => (
+                <div key={f.peca} className="farda"><span>{f.peca}</span><span>{reais(f.cartao)}</span><b>{reais(f.pix)}</b></div>
+              ))}
+              <p className="legenda">{NOTA_FARDAMENTO}</p>
+            </div>
+          </div>
         </div>
 
-        <p className="economia">
-          Fechando até {PRAZO_PROMOCAO}, a sua família economiza <b>{reais(economiaNoAno(sim, modo))}</b> ao longo de 2027.
-        </p>
-
         <ul className="notas">
-          {modo !== "sem" && (
-            <li><b>Livros:</b> até {PRAZO_PROMOCAO}, o livro sai pelo valor atual, sem o reajuste de 2027. À vista, 10% de desconto.</li>
-          )}
+          <li><b>Descontos:</b> a Fidelidade e os outros descontos valem pagando até o dia 05 de cada mês.</li>
         </ul>
 
         <div className="qr-bloco">
@@ -232,6 +240,12 @@ const CSS = `
 .cartao.destaque .bloco { border-color: rgba(255,255,255,.24); }
 .cartao.destaque .destaque-linha { color: #FFB000; }
 .cartao:not(.destaque) .destaque-linha { color: #083078; }
+.cartao.extras .valor { color: #083078; }
+.cartao .farda { display: flex; gap: 2mm; font-size: 9.6pt; padding: .45mm 0; }
+.cartao .farda > :first-child { flex: 1; }
+.cartao .farda > :not(:first-child) { width: 17mm; text-align: right; font-variant-numeric: tabular-nums; }
+.cartao .farda b { color: #083078; }
+.cartao .farda.cab { font-size: 8pt; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #5A6478; }
 .economia { margin-top: 5mm; font-size: 12pt; line-height: 1.45; color: #17223D; }
 .economia b { color: #B9862F; font-weight: 800; }
 .notas { margin-top: 4mm; padding-left: 4.5mm; font-size: 9.6pt; line-height: 1.6; color: #5A6478; }

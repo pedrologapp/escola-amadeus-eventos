@@ -8,7 +8,10 @@ import { enviarCarta, previaCarta, type Destino, type ResultadoEnvio } from "./a
 import { enviarExperiencia, type ResultadoExp } from "./experiencia/actions";
 import { EscolhaEncarte } from "./experiencia/painel";
 import {
-  DEPOIS_DO_PRAZO,
+  MATERIAL_ESCOLAR,
+  NOTA_FARDAMENTO,
+  NOTA_MATERIAL,
+  fardamentoDe,
   DESCONTO_IRMAO,
   MODOS_LIVRO,
   DESCONTO_PLANO_ACTIVESOFT,
@@ -17,10 +20,8 @@ import {
   REAJUSTE,
   origemDaCheia,
   trocaDeSegmento,
-  PRAZO_PROMOCAO,
   SERIES,
   URL_FOLDER,
-  economiaNoAno,
   livroAVista,
   reais,
   simular,
@@ -28,6 +29,7 @@ import {
   type Condicao,
   type ModoLivro,
   type NomeSerie,
+  type Segmento,
   type TipoCarta,
 } from "@/lib/rematricula-2027";
 
@@ -122,6 +124,31 @@ function ColunaAVista({ titulo, c, destaque }: { titulo: string; c: Condicao; de
       <div className={`mt-3 border-t pt-3 ${fio}`}>
         <p className="text-sm font-bold">À vista, com os livros</p>
         <p className={`text-3xl font-extrabold ${cor}`}>{reais(v.comLivro)}</p>
+      </div>
+    </div>
+  );
+}
+
+/** (02/11) O outro lado: material escolar do segmento e fardamento (mesmo conteúdo da carta). */
+function ColunaExtras({ segmento }: { segmento: Segmento }) {
+  return (
+    <div className="rounded-2xl border border-border/60 bg-white p-5">
+      <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Material escolar</p>
+      <p className="mt-4 text-sm font-bold">Uma vez no ano</p>
+      <p className="text-4xl font-extrabold text-amadeus-blue">{reais(MATERIAL_ESCOLAR[segmento])}</p>
+      <p className="mt-1 text-xs opacity-75">{NOTA_MATERIAL}</p>
+      <div className="mt-3 border-t border-border/60 pt-3 text-sm">
+        <div className="flex gap-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+          <span className="flex-1">Fardamento</span><span className="w-20 text-right">Cartão</span><span className="w-20 text-right">Pix</span>
+        </div>
+        {fardamentoDe(segmento).map((x) => (
+          <div key={x.peca} className="flex gap-2 py-0.5">
+            <span className="flex-1">{x.peca}</span>
+            <span className="w-20 text-right tabular-nums">{reais(x.cartao)}</span>
+            <span className="w-20 text-right font-bold tabular-nums text-amadeus-blue">{reais(x.pix)}</span>
+          </div>
+        ))}
+        <p className="mt-1 text-xs opacity-75">{NOTA_FARDAMENTO}</p>
       </div>
     </div>
   );
@@ -468,10 +495,6 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
     ? [
         `Olá! Seguem os valores de 2027 de *${nome}* (${sim.serie2027}) para pagamento *à vista*, com 10% de desconto:`,
         "",
-        `*Fechando até ${PRAZO_PROMOCAO}*`,
-        ...linhasAVista(sim.promo),
-        "",
-        `*A partir de ${DEPOIS_DO_PRAZO}*`,
         ...linhasAVista(sim.depois),
         "",
         "À vista é o pagamento único do ano (matrícula + 11 mensalidades). Não acumula com outros descontos.",
@@ -484,11 +507,9 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
     ? [
         `Olá! Seguem os valores de 2027 de *${nome}* (${sim.serie2027}):`,
         "",
-        `*Fechando até ${PRAZO_PROMOCAO}*`,
-        ...linhasTexto(sim.promo, modo),
-        "",
-        `*A partir de ${DEPOIS_DO_PRAZO}*`,
         ...linhasTexto(sim.depois, modo),
+        "",
+        `Material escolar (uma vez no ano): ${reais(MATERIAL_ESCOLAR[sim.segmento])}. ${NOTA_MATERIAL}`,
         "",
         "Os descontos valem pagando até o dia 05 de cada mês.",
         "",
@@ -594,6 +615,17 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                 ) : (
                   <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800">Rematriculável: sem mensalidade vencida em aberto no Isaac.</p>
                 )}
+                {/* (02/11, Pedro) a série de 2027 logo abaixo do status do Isaac */}
+                <label className="block text-sm font-semibold">
+                  Série em 2027
+                  <select value={serie} onChange={(e) => setSerie(e.target.value as NomeSerie)} className="mt-1 w-full rounded-xl border border-border bg-white px-3 py-2 font-normal outline-none focus:border-amadeus-blue">
+                    <option value="">Escolha…</option>
+                    {SERIES.map((s) => <option key={s.nome} value={s.nome}>{s.nome}</option>)}
+                  </select>
+                </label>
+                {leitura.aluno.serie === "9º Ano" && (
+                  <p className="text-sm text-amber-800">Está no 9º ano: em 2027 sai da escola.</p>
+                )}
                 <div className="rounded-xl bg-muted/40 p-3 text-sm">
                   <div className="flex items-center justify-between gap-2">
                     <span>Mensalidade no boleto</span>
@@ -617,7 +649,7 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                 {serie && (
                   <div className="rounded-xl bg-amber-50 p-3 text-xs text-amber-900">
                     <p className="font-bold">Informação sobre a mensalidade</p>
-                    <p className="mt-1">{origemDaCheia(serieAtual, serie as NomeSerie, REAJUSTE.promo, Number.isFinite(baseNum) ? baseNum : null)} Depois de 28/10: + {reais(REAJUSTE.depois)}.</p>
+                    <p className="mt-1">{origemDaCheia(serieAtual, serie as NomeSerie, REAJUSTE.depois, Number.isFinite(baseNum) ? baseNum : null)}</p>
                   </div>
                 )}
                 {/* O desconto que a família tem hoje e mantém em 2027 */}
@@ -678,15 +710,14 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
               <p className="text-xs text-muted-foreground">Desconto que a direção concede a esta família, somado aos outros. Sai na carta como “Desconto especial” e, como os demais, vale pagando até o dia 05. Não entra na carta à vista.</p>
             </div>
 
-            <label className="block text-sm font-semibold">
-              Série em 2027
-              <select value={serie} onChange={(e) => setSerie(e.target.value as NomeSerie)} className="mt-1 w-full rounded-xl border border-border bg-white px-3 py-2 font-normal outline-none focus:border-amadeus-blue">
-                <option value="">Escolha…</option>
-                {SERIES.map((s) => <option key={s.nome} value={s.nome}>{s.nome}</option>)}
-              </select>
-            </label>
-            {!novato && leitura && leitura.aluno.serie === "9º Ano" && (
-              <p className="text-sm text-amber-800">Está no 9º ano: em 2027 sai da escola.</p>
+            {novato && (
+              <label className="block text-sm font-semibold">
+                Série em 2027
+                <select value={serie} onChange={(e) => setSerie(e.target.value as NomeSerie)} className="mt-1 w-full rounded-xl border border-border bg-white px-3 py-2 font-normal outline-none focus:border-amadeus-blue">
+                  <option value="">Escolha…</option>
+                  {SERIES.map((s) => <option key={s.nome} value={s.nome}>{s.nome}</option>)}
+                </select>
+              </label>
             )}
           </div>
 
@@ -713,13 +744,11 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                 {tipo === "avista" ? (
                   <>
                     <div className="grid gap-4 sm:grid-cols-2">
-                      <ColunaAVista titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} destaque />
-                      <ColunaAVista titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} />
+                      <ColunaAVista titulo="Valores 2027 · à vista" c={sim.depois} destaque />
+                      <ColunaExtras segmento={sim.segmento} />
                     </div>
                     <p className="mt-3 text-sm text-muted-foreground">
                       Matrícula + 11 mensalidades pela mensalidade cheia, com 10% de desconto. Não soma Fidelidade, desconto da família nem de irmão.
-                      {" "}Fechando no prazo, com os livros, a família economiza{" "}
-                      <b className="text-amadeus-blue">{reais(condicaoAVista(sim.depois).comLivro - condicaoAVista(sim.promo).comLivro)}</b>.
                     </p>
                   </>
                 ) : (
@@ -738,12 +767,11 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                   ))}
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Coluna titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} modo={modo} destaque />
-                  <Coluna titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} modo={modo} />
+                  <Coluna titulo="Valores 2027" c={sim.depois} modo={modo} destaque />
+                  <ColunaExtras segmento={sim.segmento} />
                 </div>
                 <p className="mt-3 text-sm text-muted-foreground">
-                  Fechando no prazo, a família economiza <b className="text-amadeus-blue">{reais(economiaNoAno(sim, modo))}</b> no ano.
-                  {" "}Todos os descontos valem só pagando até o dia 05.
+                  Todos os descontos valem só pagando até o dia 05.
                 </p>
                 </>
                 )}
@@ -751,8 +779,7 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                   <p className="font-bold text-amadeus-blue">Plano de pagamento no Activesoft</p>
                   <p className="mt-1 text-muted-foreground">Valor para selecionar ao concluir a matrícula (mensalidade cheia − {reais(DESCONTO_PLANO_ACTIVESOFT)}):</p>
                   <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1">
-                    <span>Fechando até {PRAZO_PROMOCAO}: <b className="tabular-nums">{reais(planoActivesoft(sim.promo))}</b></span>
-                    <span>A partir de {DEPOIS_DO_PRAZO}: <b className="tabular-nums">{reais(planoActivesoft(sim.depois))}</b></span>
+                    <span>2027: <b className="tabular-nums">{reais(planoActivesoft(sim.depois))}</b></span>
                   </div>
                 </div>
                 <div className="mt-5 flex flex-wrap gap-3">
