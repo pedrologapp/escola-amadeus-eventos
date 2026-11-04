@@ -2,6 +2,10 @@ import QRCode from "qrcode";
 import { Fraunces } from "next/font/google";
 import { listarAlunos } from "@/lib/rematricula-2027-dados";
 import {
+  DEPOIS_DO_PRAZO,
+  PRAZO_PROMOCAO,
+  PRAZO_PROMOCAO_CURTO,
+  economiaNoAno,
   MATERIAL_ESCOLAR,
   NOTA_FARDAMENTO,
   NOTA_MATERIAL,
@@ -88,9 +92,11 @@ function Cartao({ titulo, c, modo, destaque, troca }: { titulo: string; c: Condi
 export default async function CartaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ base?: string; atual?: string; aluno?: string; desconto?: string; irmao?: string; extra?: string; serie?: string; nome?: string; livro?: string }>;
+  searchParams: Promise<{ base?: string; atual?: string; aluno?: string; desconto?: string; irmao?: string; extra?: string; serie?: string; nome?: string; livro?: string; antes?: string }>;
 }) {
   const sp = await searchParams;
+  // (04/11) ?antes=1: a carta como era até 28/10 (duas colunas e a economia), só para consulta
+  const antes = sp.antes === "1";
   const modo = modoLivroValido(sp.livro);
   const serie = SERIES.find((s) => s.nome === sp.serie)?.nome as NomeSerie | undefined;
   const desconto = Math.max(0, Number(sp.desconto) || 0);
@@ -123,7 +129,7 @@ export default async function CartaPage({
       <style>{CSS}</style>
 
       <div className="barra-controle">
-        <span>Carta de <b>{nome}</b> · {serie} 2027</span>
+        <span>{antes && <><b>Como era até {PRAZO_PROMOCAO_CURTO}</b> (só para ver) · </>}Carta de <b>{nome}</b> · {serie} 2027</span>
         <span className="dica">Papel A4 · margens <b>Nenhuma</b> · marque <b>Gráficos de plano de fundo</b></span>
         <BotaoImprimir />
       </div>
@@ -151,6 +157,23 @@ export default async function CartaPage({
           <span>{serie}</span> {SEGMENTO_NOME[sim.segmento]} · 2027
         </p>
 
+        {antes ? (
+          <>
+            <div className="cartoes">
+              <Cartao titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} modo={modo} destaque />
+              <Cartao titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} modo={modo} />
+            </div>
+            <p className="economia">
+              Fechando até {PRAZO_PROMOCAO}, a sua família economiza <b>{reais(economiaNoAno(sim, modo))}</b> ao longo de 2027.
+            </p>
+            <ul className="notas">
+              {modo !== "sem" && (
+                <li><b>Livros:</b> até {PRAZO_PROMOCAO}, o livro sai pelo valor atual, sem o reajuste de 2027. À vista, 10% de desconto.</li>
+              )}
+            </ul>
+          </>
+        ) : (
+        <>
         {/* (02/11) passado o prazo: à esquerda os valores atuais, à direita o material escolar e o fardamento */}
         <div className="cartoes">
           <Cartao titulo="Valores 2027" c={sim.depois} modo={modo} destaque />
@@ -172,6 +195,8 @@ export default async function CartaPage({
         <ul className="notas">
           <li><b>Descontos:</b> a Fidelidade e os outros descontos valem pagando até o dia 05 de cada mês.</li>
         </ul>
+        </>
+        )}
 
         <div className="qr-bloco">
           <span className="qr" dangerouslySetInnerHTML={{ __html: qr }} />

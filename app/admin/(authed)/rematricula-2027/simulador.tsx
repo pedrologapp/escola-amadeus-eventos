@@ -15,6 +15,10 @@ import {
   DESCONTO_IRMAO,
   MODOS_LIVRO,
   DESCONTO_PLANO_ACTIVESOFT,
+  DEPOIS_DO_PRAZO,
+  PRAZO_PROMOCAO,
+  PRAZO_PROMOCAO_CURTO,
+  economiaNoAno,
   PARCELAS_MATRICULA,
   planoActivesoft,
   REAJUSTE,
@@ -395,11 +399,16 @@ function FolderAvulso() {
   );
 }
 
-export function Simulador({ alunos, leitura, responsaveis, envios }: {
+/**
+ * `antes` (04/11, Pedro): a aba "Como era até 28/10" mostra a condição antiga (fechando até 28/10 × depois),
+ * só para consulta. Nesse modo nada é enviado: sem WhatsApp, sem texto, sem imagem.
+ */
+export function Simulador({ alunos, leitura, responsaveis, envios, antes = false }: {
   alunos: AlunoBusca[];
   leitura: Leitura | null;
   responsaveis: Responsavel[];
   envios: EnvioFeito[];
+  antes?: boolean;
 }) {
   const router = useRouter();
   const [carregando, iniciar] = useTransition();
@@ -459,6 +468,7 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
         ...(irmao ? { irmao: "1" } : {}),
         ...(extra > 0 ? { extra: String(extra) } : {}),
         livro: modo,
+        ...(antes ? { antes: "1" } : {}),
       })}`
     : "";
 
@@ -561,13 +571,13 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
         >
           <UserPlus className="size-4" /> Simular como novato
         </button>
-        <button
+        {!antes && <button
           type="button"
           onClick={() => setSoFolderAberto((v) => !v)}
           className={`inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-semibold ${soFolderAberto ? "bg-emerald-600 text-white" : "bg-emerald-50 text-emerald-800 hover:bg-emerald-100"}`}
         >
           <Send className="size-4" /> Enviar só o folder
-        </button>
+        </button>}
         {carregando && <span className="inline-flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Lendo o Activesoft…</span>}
       </div>
 
@@ -741,7 +751,43 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                     </button>
                   ))}
                 </div>
-                {tipo === "avista" ? (
+                {antes ? (
+                  <>
+                    {tipo === "mensal" && (
+                      <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
+                        <span className="font-semibold text-muted-foreground">Mostrar:</span>
+                        {MODOS_LIVRO.map((m) => (
+                          <button
+                            key={m.valor}
+                            type="button"
+                            onClick={() => setModo(m.valor)}
+                            className={`rounded-xl px-3 py-1.5 font-semibold ${modo === m.valor ? "bg-amadeus-blue text-white" : "bg-amadeus-blue-50/70 text-amadeus-blue hover:bg-amadeus-blue-50"}`}
+                          >
+                            {m.rotulo}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {tipo === "avista"
+                        ? [
+                            <ColunaAVista key="p" titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} destaque />,
+                            <ColunaAVista key="d" titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} />,
+                          ]
+                        : [
+                            <Coluna key="p" titulo={`Fechando até ${PRAZO_PROMOCAO}`} c={sim.promo} modo={modo} destaque />,
+                            <Coluna key="d" titulo={`A partir de ${DEPOIS_DO_PRAZO}`} c={sim.depois} modo={modo} />,
+                          ]}
+                    </div>
+                    <p className="mt-3 text-sm">
+                      Fechando até {PRAZO_PROMOCAO}, a família economizava{" "}
+                      <b className="text-amadeus-blue">
+                        {reais(tipo === "avista" ? condicaoAVista(sim.depois).comLivro - condicaoAVista(sim.promo).comLivro : economiaNoAno(sim, modo))}
+                      </b>{" "}
+                      ao longo de 2027.
+                    </p>
+                  </>
+                ) : tipo === "avista" ? (
                   <>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <ColunaAVista titulo="Valores 2027 · à vista" c={sim.depois} destaque />
@@ -775,6 +821,16 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                 </p>
                 </>
                 )}
+                {antes ? (
+                  tipo === "mensal" && (
+                    <div className="mt-5">
+                      <a href={linkCarta} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-amadeus-blue px-4 py-2.5 text-sm font-bold text-white hover:opacity-90">
+                        <Eye className="size-4" /> Ver a carta como era até {PRAZO_PROMOCAO_CURTO}
+                      </a>
+                    </div>
+                  )
+                ) : (
+                <>
                 <div className="mt-4 rounded-xl border border-border/60 bg-white p-3 text-sm">
                   <p className="font-bold text-amadeus-blue">Plano de pagamento no Activesoft</p>
                   <p className="mt-1 text-muted-foreground">Valor para selecionar ao concluir a matrícula (mensalidade cheia − {reais(DESCONTO_PLANO_ACTIVESOFT)}):</p>
@@ -803,6 +859,8 @@ export function Simulador({ alunos, leitura, responsaveis, envios }: {
                   enviar={(destinos, soFolder) => enviarCarta({ ...dadosCarta!, somenteFolder: soFolder, destinos })}
                   experiencia={{ crianca: nome, serie: serie || null, origem: novato ? "novato" : "simulador", marcado: novato }}
                 />
+                </>
+                )}
               </>
             ) : (
               <p className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">

@@ -1,12 +1,13 @@
 import Link from "next/link";
 
 /** Abas da rematrícula: o simulador (vai para o pai) e a tabela de consulta (só da equipe). */
-export function AbasRematricula({ ativa }: { ativa: "simulador" | "valores" | "whatsapp" | "experiencia" }) {
+export function AbasRematricula({ ativa }: { ativa: "simulador" | "valores" | "whatsapp" | "experiencia" | "antes" }) {
   const abas = [
     { id: "simulador", href: "/admin/rematricula-2027", rotulo: "Simulador" },
     { id: "valores", href: "/admin/rematricula-2027/valores", rotulo: "Tabela de valores" },
     { id: "whatsapp", href: "/admin/rematricula-2027/whatsapp", rotulo: "WhatsApp" },
     { id: "experiencia", href: "/admin/rematricula-2027/experiencia", rotulo: "Experiência Amadeus" },
+    { id: "antes", href: "/admin/rematricula-2027/antes", rotulo: "Como era até 28/10" },
   ] as const;
   return (
     <div className="mt-4 flex gap-1 border-b border-border/60">
