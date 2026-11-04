@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CheckCircle, Download, Loader2, Search, Send, UserPlus } from "lucide-react";
@@ -19,6 +19,25 @@ const num = (t: string) => Math.max(0, Number(t.replace(/\./g, "").replace(",", 
 const hoje = () => new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 10);
 // A promoção (fechando até 28/10) já passou? Então o padrão é o preço de depois.
 const prazoPadrao = (): CondicaoPrazo => (hoje() > "2026-10-28" ? "depois" : "promo");
+
+// (04/11, Pedro) O rascunho fica no navegador, um por aluno (ou "novato"), para não perder o que foi digitado se a página fechar.
+// Sai sozinho quando a matrícula é registrada como paga.
+type Rascunho = {
+  novato: boolean; nomeNovato: string; serie: NomeSerie | ""; baseTxt: string; prazo: CondicaoPrazo; livro: boolean; extraTxt: string;
+  forma: FormaAVista; parcelas: number; pixTxt: string; data: string; responsavel: string; telefone: string; obs: string;
+};
+const chaveRascunho = (alunoId: number | undefined) => `amadeus:avista-rascunho:${alunoId ?? "novato"}`;
+function lerRascunho(chave: string): Rascunho | null {
+  try {
+    const t = localStorage.getItem(chave);
+    return t ? (JSON.parse(t) as Rascunho) : null;
+  } catch {
+    return null;
+  }
+}
+function apagarRascunho(chave: string) {
+  try { localStorage.removeItem(chave); } catch {}
+}
 
 function Opcao({ ativo, onClick, children }: { ativo: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
@@ -55,6 +74,33 @@ export function FormAVista({ alunos, leitura, responsaveis }: { alunos: AlunoBus
   const [feito, setFeito] = useState<{ id: string; url: string } | null>(null);
   const [envio, setEnvio] = useState<string | null>(null);
   const [enviando, enviar] = useTransition();
+  const chave = chaveRascunho(leitura?.aluno.id);
+  const [pronto, setPronto] = useState(false); // só grava depois de ler o rascunho, para não apagá-lo com os valores iniciais
+  const [recuperado, setRecuperado] = useState(false);
+
+  // Ao abrir: se houver rascunho deste aluno, volta tudo como estava.
+  useEffect(() => {
+    const r = lerRascunho(chave);
+    if (r) {
+      setNovato(r.novato); setNomeNovato(r.nomeNovato); setSerie(r.serie); setBaseTxt(r.baseTxt); setPrazo(r.prazo); setLivro(r.livro);
+      setExtraTxt(r.extraTxt); setForma(r.forma); setParcelas(r.parcelas); setPixTxt(r.pixTxt); setData(r.data);
+      setResponsavel(r.responsavel); setTelefone(r.telefone); setObs(r.obs);
+      setRecuperado(true);
+    }
+    setPronto(true);
+  }, [chave]);
+
+  // A cada mudança, guarda o rascunho.
+  useEffect(() => {
+    if (!pronto || feito) return;
+    const r: Rascunho = { novato, nomeNovato, serie, baseTxt, prazo, livro, extraTxt, forma, parcelas, pixTxt, data, responsavel, telefone, obs };
+    try { localStorage.setItem(chave, JSON.stringify(r)); } catch {}
+  }, [pronto, feito, chave, novato, nomeNovato, serie, baseTxt, prazo, livro, extraTxt, forma, parcelas, pixTxt, data, responsavel, telefone, obs]);
+
+  function comecarDeNovo() {
+    apagarRascunho(chave);
+    window.location.reload();
+  }
 
   const achados = useMemo(() => {
     const q = semAcento(busca.trim());
@@ -84,6 +130,7 @@ export function FormAVista({ alunos, leitura, responsaveis }: { alunos: AlunoBus
         dataPagamento: data, responsavel: responsavel.trim(), telefone, observacao: obs.trim() || undefined,
       });
       if (!r.ok) return setErro(r.error);
+      apagarRascunho(chave);
       const l = await linkComprovante(r.id);
       setFeito({ id: r.id, url: l.url ?? "" });
     });
@@ -127,6 +174,12 @@ export function FormAVista({ alunos, leitura, responsaveis }: { alunos: AlunoBus
 
   return (
     <div className="space-y-6">
+      {recuperado && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <span><b>Rascunho recuperado.</b> Voltou tudo o que você tinha preenchido aqui.</span>
+          <button type="button" onClick={comecarDeNovo} className="font-semibold underline">Começar do zero</button>
+        </div>
+      )}
       <Card>
         <CardHeader><CardTitle className="text-amadeus-blue">1. Aluno</CardTitle></CardHeader>
         <CardContent className="space-y-4">
