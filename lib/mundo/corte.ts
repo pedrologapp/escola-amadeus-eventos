@@ -11,12 +11,25 @@ import { nomesCurtos } from "./nomes";
  * Depois de cada ação do professor, o estado vai para os tablets pelo canal da aula da turma ("corte").
  */
 const db = () => createAdminClient();
+// ---------- o DEBATE (04/11/2026, Pedro: "enviar para a Corte, iniciar o debate, os controles do debate: tudo definido") ----------
+// O professor conduz pelo painel: a rodada, quem está com a palavra (o aluno caminha até o púlpito-mirante no jogo), a ampulheta (cada tela
+// conta pelo próprio relógio a partir do id), as palmas, o voto do júri (os imparciais votam no tablet; ações 'juri' com fase = 100000 + id
+// da votação) e o veredito (a balança da sala pende para o lado vencedor). O mesmo de Arboria/Mundo no ar/servidor/corte-previa.mjs.
+type Debate = { rodada: number; orador: { aluno: string; lado: string; assento: string } | null; tempo: { id: number; s: number } | null; palmas: number;
+  juri: "fechado" | "aberto" | "revelado"; juriId: number; placar: { favor: number; contra: number } | null; veredito: "favor" | "contra" | "empate" | null };
+const DEBATE_VAZIO = (): Debate => ({ rodada: 0, orador: null, tempo: null, palmas: 0, juri: "fechado", juriId: 0, placar: null, veredito: null });
+const FASE_JURI = 100000;
+async function votosJuri(turmaId: string, juriId: number) {
+  const { data } = await db().from("mundo_corte_acoes").select("aluno_id, valor, em").eq("turma_id", turmaId).eq("tipo", "juri").eq("fase", FASE_JURI + juriId).order("em");
+  const v: Record<string, string> = {}; for (const a of data || []) v[a.aluno_id] = a.valor; return v;
+}
 type Estado = {
   n: number; fase: "livre" | "tema" | "funcao"; faseId: number; temas: string[]; tema: string | null; funcao: string | null;
   postos: Record<string, string>; sorteio: { funcao: string; candidatos: string[]; vencedores: string[]; em: string } | null; v: number;
   slide: number; levados: boolean; sorteando: unknown; extra: Record<string, number>;
   desistencias: { aluno: string; funcao: string; pedido: string; aprovado: boolean; em: string }[];
-  log: { em: string; op: string; info: string }[];   // (27/10, Pedro) o registro do que o professor fez (temas, postos, sorteio...); fica só no banco
+  log: { em: string; op: string; info: string }[];
+  debate: Debate;   // (27/10, Pedro) o registro do que o professor fez (temas, postos, sorteio...); fica só no banco
 };
 
 // a mesma regra do jogo (corte-dados.js: distribuir)
@@ -52,7 +65,7 @@ async function ler(turmaId: string): Promise<Estado> {
   const { data } = await db().from("mundo_corte").select("estado").eq("turma_id", turmaId).maybeSingle();
   const e = (data?.estado || {}) as Partial<Estado>;
   const n = e.n || (await turmaDe(turmaId)).filter((a) => a.id !== "teste").length || 30;
-  return { n: Math.max(20, Math.min(35, n)), fase: e.fase || "livre", faseId: e.faseId || 1, temas: e.temas || [], tema: e.tema ?? null, funcao: e.funcao ?? null, postos: e.postos || {}, sorteio: e.sorteio ?? null, v: e.v || 0, slide: e.slide || 0, levados: !!e.levados, sorteando: e.sorteando ?? null, extra: e.extra || {}, desistencias: e.desistencias || [], log: e.log || [] };
+  return { n: Math.max(20, Math.min(35, n)), fase: e.fase || "livre", faseId: e.faseId || 1, temas: e.temas || [], tema: e.tema ?? null, funcao: e.funcao ?? null, postos: e.postos || {}, sorteio: e.sorteio ?? null, v: e.v || 0, slide: e.slide || 0, levados: !!e.levados, sorteando: e.sorteando ?? null, extra: e.extra || {}, desistencias: e.desistencias || [], log: e.log || [], debate: (e.debate as Debate) || DEBATE_VAZIO() };
 }
 async function gravar(turmaId: string, e: Estado) {
   e.v++; await db().from("mundo_corte").upsert({ turma_id: turmaId, estado: e, atualizado_em: new Date().toISOString() }, { onConflict: "turma_id" });
@@ -61,7 +74,7 @@ async function gravar(turmaId: string, e: Estado) {
   await avisar(CANAL_MUNDO, "corte", { turmaId, estado: publico(e) });   // quem ainda está no mundo (os slides: "Olhe para a TV")
   return e;
 }
-const publico = (e: Estado) => ({ n: e.n, fase: e.fase, faseId: e.faseId, temas: e.temas, tema: e.tema, funcao: e.funcao, postos: e.postos, sorteio: e.sorteio, v: e.v, slide: e.slide, levados: e.levados, sorteando: e.sorteando, extra: e.extra, desistencias: e.desistencias.slice(-30),
+const publico = (e: Estado) => ({ n: e.n, fase: e.fase, faseId: e.faseId, temas: e.temas, tema: e.tema, funcao: e.funcao, postos: e.postos, sorteio: e.sorteio, v: e.v, slide: e.slide, levados: e.levados, sorteando: e.sorteando, extra: e.extra, desistencias: e.desistencias.slice(-30), debate: e.debate,
   funcaoInfo: e.funcao ? funcoes(e.n, e.extra).find((f) => f.id === e.funcao) || null : null });
 async function acoes(turmaId: string, fase: number) {
   const { data } = await db().from("mundo_corte_acoes").select("aluno_id, tipo, valor, em").eq("turma_id", turmaId).eq("fase", fase).order("em");
@@ -86,15 +99,22 @@ export async function corteDoAluno(alunoId: string) {
   const { data: a } = await db().from("mundo_alunos").select("turma_id").eq("id", alunoId).maybeSingle(); if (!a) throw new Erro(404, "Aluno não encontrado.");
   const [e, lista] = await Promise.all([ler(a.turma_id), turmaDe(a.turma_id)]), ac = await acoes(a.turma_id, e.faseId);
   // o lugar na plateia: a ordem do aluno na lista da turma (cada um tem o seu, sem combinar)
-  return { estado: publico(e), maos: Object.keys(ac.maos), eu: { candidato: ac.quero.includes(alunoId), voto: ac.votos[alunoId] ?? null, mao: !!ac.maos[alunoId], desistindo: !!ac.desistir[alunoId] && !e.desistencias.some((x) => x.aluno === alunoId && x.pedido === ac.desistir[alunoId].em), plateia: Math.max(0, lista.findIndex((x) => x.id === alunoId)) } };
+  const meuJuri = (await votosJuri(a.turma_id, e.debate.juriId))[alunoId] || null;
+  return { estado: publico(e), maos: Object.keys(ac.maos), eu: { juri: meuJuri, candidato: ac.quero.includes(alunoId), voto: ac.votos[alunoId] ?? null, mao: !!ac.maos[alunoId], desistindo: !!ac.desistir[alunoId] && !e.desistencias.some((x) => x.aluno === alunoId && x.pedido === ac.desistir[alunoId].em), plateia: Math.max(0, lista.findIndex((x) => x.id === alunoId)) } };
 }
 export async function acaoDoAluno(alunoId: string, tipo: string, valor: string) {
-  if (!["quero", "desisto", "voto", "mao", "desistir"].includes(tipo)) throw new Erro(400, "Ação desconhecida.");
+  if (!["quero", "desisto", "voto", "mao", "desistir", "juri"].includes(tipo)) throw new Erro(400, "Ação desconhecida.");
   const { data: a } = await db().from("mundo_alunos").select("turma_id").eq("id", alunoId).maybeSingle(); if (!a) throw new Erro(404, "Aluno não encontrado.");
   const e = await ler(a.turma_id);
   if ((tipo === "quero" || tipo === "desisto") && e.fase !== "funcao") throw new Erro(409, "Nenhuma função aberta agora.");
   if (tipo === "quero" && Object.values(e.postos).includes(alunoId)) throw new Erro(409, "Você já tem uma função.");
   if (tipo === "voto" && e.fase !== "tema") throw new Erro(409, "A votação do tema não está aberta.");
+  if (tipo === "juri") {   // só os imparciais, com a votação do júri aberta; o placar é avisado ao painel e à TV
+    const s = Object.keys(e.postos).find((k) => e.postos[k] === alunoId) || ""; if (!s.startsWith("imparcial")) throw new Erro(409, "Só o júri vota agora.");
+    if (e.debate.juri !== "aberto") throw new Erro(409, "A votação do júri não está aberta."); if (!["favor", "contra"].includes(String(valor))) throw new Erro(400, "Voto inválido.");
+    await db().from("mundo_corte_acoes").insert({ turma_id: a.turma_id, fase: FASE_JURI + e.debate.juriId, aluno_id: alunoId, tipo: "juri", valor: String(valor) });
+    await gravar(a.turma_id, e); return { ok: true };
+  }
   if (tipo === "desistir") { const s = Object.keys(e.postos).find((k) => e.postos[k] === alunoId); if (!s) throw new Erro(409, "Você não tem uma função."); valor = s; }
   await db().from("mundo_corte_acoes").insert({ turma_id: a.turma_id, fase: e.faseId, aluno_id: alunoId, tipo, valor: String(valor ?? "") });
   return { ok: true };
@@ -107,7 +127,7 @@ export async function painel(turmaId: string) {
   const online = new Map((on || []).map((o) => [o.aluno_id, o.sala]));
   const ac = await acoes(turmaId, e.faseId);
   const pendentes = Object.entries(ac.desistir).filter(([id, p]) => !e.desistencias.some((x) => x.aluno === id && x.pedido === p.em)).map(([id, p]) => ({ aluno: id, assento: p.assento, em: p.em }));
-  return { estado: publico(e), funcoes: funcoes(e.n, e.extra), mundo: mundo.ligado, desistir: pendentes, alunos: alunos.map((a) => ({ id: a.id, nome: a.nome, curto: curtos[a.id], online: online.get(a.id) || null })), quero: ac.quero, votos: ac.votos, maos: ac.maos };
+  return { estado: publico(e), funcoes: funcoes(e.n, e.extra), mundo: mundo.ligado, desistir: pendentes, alunos: alunos.map((a) => ({ id: a.id, nome: a.nome, curto: curtos[a.id], online: online.get(a.id) || null })), juri: await votosJuri(turmaId, e.debate.juriId), quero: ac.quero, votos: ac.votos, maos: ac.maos };
 }
 export async function acaoDoProfessor(turmaId: string, b: Record<string, unknown>) {
   const e = await ler(turmaId), F = funcoes(e.n, e.extra), op = String(b.op || "");
@@ -148,9 +168,23 @@ export async function acaoDoProfessor(turmaId: string, b: Record<string, unknown
     e.fase = "livre"; e.funcao = null;
   }
   else if (op === "maos") { await db().from("mundo_corte_acoes").insert({ turma_id: turmaId, fase: e.faseId, aluno_id: "*", tipo: "mao", valor: "0" }); }
-  else if (op === "limpar") { e.postos = {}; e.temas = []; e.tema = null; e.fase = "livre"; e.funcao = null; e.sorteio = null; e.faseId++; }
+  else if (op === "debate") {
+    const d = e.debate, a = String(b.acao || ""), postoDe = (id: string) => Object.keys(e.postos).find((k) => e.postos[k] === id) || "";
+    if (a === "rodada") { d.rodada = Math.max(0, Math.min(3, Number(b.n) || 0)); d.orador = null; d.tempo = null; }
+    else if (a === "tribuna") { const id = String(b.aluno || ""), s = postoDe(id); d.orador = id ? { aluno: id, lado: s.startsWith("favor") ? "favor" : s.startsWith("contra") ? "contra" : "outro", assento: s } : null; d.tempo = null; if (!d.rodada) d.rodada = 1; }
+    else if (a === "sair") { d.orador = null; d.tempo = null; }
+    else if (a === "tempo") d.tempo = { id: Date.now(), s: Math.max(5, Math.min(180, Number(b.s) || 30)) };
+    else if (a === "parar") d.tempo = null;
+    else if (a === "palmas") d.palmas = (d.palmas || 0) + 1;
+    else if (a === "juri-abrir") { d.juri = "aberto"; d.juriId = (d.juriId || 0) + 1; d.placar = null; d.veredito = null; d.orador = null; d.tempo = null; }
+    else if (a === "juri-revelar") { const v = Object.values(await votosJuri(turmaId, d.juriId)); d.placar = { favor: v.filter((x) => x === "favor").length, contra: v.filter((x) => x === "contra").length }; d.juri = "revelado"; }
+    else if (a === "veredito") d.veredito = ["favor", "contra", "empate"].includes(String(b.lado)) ? (String(b.lado) as Debate["veredito"]) : null;
+    else if (a === "zerar") e.debate = DEBATE_VAZIO();
+    else throw new Erro(400, "Ação do debate desconhecida.");
+  }
+  else if (op === "limpar") { e.postos = {}; e.temas = []; e.tema = null; e.fase = "livre"; e.funcao = null; e.sorteio = null; e.faseId++; e.debate = DEBATE_VAZIO(); }
   else throw new Erro(400, "Ação desconhecida.");
-  if (op !== "slide" && op !== "sorteando") { const resto = { ...b }; delete resto.op; e.log = [...e.log, { em: new Date().toISOString(), op, info: JSON.stringify(resto).slice(0, 300) }].slice(-500); }
+  if (op !== "slide" && op !== "sorteando" && !(op === "debate" && ["tempo", "parar", "palmas"].includes(String(b.acao)))) { const resto = { ...b }; delete resto.op; e.log = [...e.log, { em: new Date().toISOString(), op, info: JSON.stringify(resto).slice(0, 300) }].slice(-500); }
   await gravar(turmaId, e);
   return painel(turmaId);
 }
