@@ -1,0 +1,1093 @@
+{
+ "versao": 1,
+ "chaves": [
+  "tipo",
+  "sexo",
+  "pele",
+  "rosto",
+  "cabelo",
+  "chapeu",
+  "oculos",
+  "camisa",
+  "casaco",
+  "calca",
+  "sapato",
+  "luvas",
+  "mochila",
+  "protecao",
+  "cabeloCor",
+  "chapeuCor",
+  "camisaCor",
+  "casacoCor",
+  "calcaCor",
+  "sapatoCor"
+ ],
+ "padrao": {
+  "tipo": "crianca",
+  "sexo": "f",
+  "pele": 2,
+  "rosto": "Usual",
+  "cabelo": "F_Hairstyle_01",
+  "chapeu": "",
+  "oculos": "",
+  "camisa": "F_Shirt_01",
+  "casaco": "",
+  "calca": "F_Pants_01",
+  "sapato": "F_Shoes_01",
+  "luvas": "",
+  "mochila": "",
+  "protecao": "",
+  "cabeloCor": "",
+  "chapeuCor": "",
+  "camisaCor": "",
+  "casacoCor": "",
+  "calcaCor": "",
+  "sapatoCor": ""
+ },
+ "abas": [
+  {
+   "id": "sexo",
+   "nome": "Corpo",
+   "chave": "sexo",
+   "chaveCor": null,
+   "cores": null,
+   "podeNada": false,
+   "atlas": "atlas/sexo.png",
+   "colunas": 8,
+   "celula": 128,
+   "linhas": 1,
+   "itens": [
+    {
+     "id": "f",
+     "nome": "Menina",
+     "i": 0
+    },
+    {
+     "id": "m",
+     "nome": "Menino",
+     "i": 1
+    }
+   ]
+  },
+  {
+   "id": "pele",
+   "nome": "Tom de pele",
+   "chave": "pele",
+   "chaveCor": null,
+   "cores": null,
+   "podeNada": false,
+   "atlas": "atlas/pele.png",
+   "colunas": 8,
+   "celula": 128,
+   "linhas": 1,
+   "itens": [
+    {
+     "id": 1,
+     "nome": "Clara",
+     "i": 0
+    },
+    {
+     "id": 2,
+     "nome": "Morena clara",
+     "i": 1
+    },
+    {
+     "id": 3,
+     "nome": "Morena",
+     "i": 2
+    },
+    {
+     "id": 4,
+     "nome": "Negra",
+     "i": 3
+    }
+   ]
+  },
+  {
+   "id": "rosto",
+   "nome": "Rosto",
+   "chave": "rosto",
+   "chaveCor": null,
+   "cores": null,
+   "podeNada": false,
+   "atlas": "atlas/rosto.png",
+   "colunas": 8,
+   "celula": 128,
+   "linhas": 2,
+   "itens": [
+    {
+     "id": "Usual",
+     "nome": "Normal",
+     "i": 0
+    },
+    {
+     "id": "Happy",
+     "nome": "Feliz",
+     "i": 1
+    },
+    {
+     "id": "Neutral",
+     "nome": "Neutro",
+     "i": 2
+    },
+    {
+     "id": "Surprised",
+     "nome": "Surpreso",
+     "i": 3
+    },
+    {
+     "id": "Sad",
+     "nome": "Triste",
+     "i": 4
+    },
+    {
+     "id": "Confuse",
+     "nome": "Confuso",
+     "i": 5
+    },
+    {
+     "id": "Impatience",
+     "nome": "Impaciente",
+     "i": 6
+    },
+    {
+     "id": "Angry",
+     "nome": "Bravo",
+     "i": 7
+    },
+    {
+     "id": "Anger",
+     "nome": "Zangado",
+     "i": 8
+    },
+    {
+     "id": "Evil",
+     "nome": "Travesso",
+     "i": 9
+    }
+   ]
+  },
+  {
+   "id": "cabelo",
+   "nome": "Cabelo",
+   "chave": "cabelo",
+   "chaveCor": "cabeloCor",
+   "cores": [
+    "",
+    "#1e140e",
+    "#3b2416",
+    "#6b3f22",
+    "#a8703c",
+    "#d9b45a",
+    "#c9572f",
+    "#e7e2d6",
+    "#7a5cff",
+    "#2dd4bf"
+   ],
+   "podeNada": true,
+   "atlas": "atlas/cabelo.png",
+   "colunas": 8,
+   "celula": 128,
+   "linhas": 4,
+   "itens": [
+    {
+     "id": "",
+     "nome": "Nenhum",
+     "i": 0
+    },
+    {
+     "id": "F_Hairstyle_01",
+     "nome": "Cabelo 1",
+     "i": 1
+    },
+    {
+     "id": "F_Hairstyle_02",
+     "nome": "Cabelo 2",
+     "i": 2
+    },
+    {
+     "id": "F_Hairstyle_03",
+     "nome": "Cabelo 3",
+     "i": 3
+    },
+    {
+     "id": "F_Hairstyle_04",
+     "nome": "Cabelo 4",
+     "i": 4
+    },
+    {
+     "id": "F_Hairstyle_05",
+     "nome": "Cabelo 5",
+     "i": 5
+    },
+    {
+     "id": "F_Hairstyle_06",
+     "nome": "Cabelo 6",
+     "i": 6
+    },
+    {
+     "id": "F_Hairstyle_07",
+     "nome": "Cabelo 7",
+     "i": 7
+    },
+    {
+     "id": "F_Hairstyle_08",
+     "nome": "Cabelo 8",
+     "i": 8
+    },
+    {
+     "id": "F_Hat_Hairstyle_01",
+     "nome": "Cabelo curto 1",
+     "i": 9
+    },
+    {
+     "id": "F_Hat_Hairstyle_02",
+     "nome": "Cabelo curto 2",
+     "i": 10
+    },
+    {
+     "id": "F_Hat_Hairstyle_03",
+     "nome": "Cabelo curto 3",
+     "i": 11
+    },
+    {
+     "id": "F_Hat_Hairstyle_04",
+     "nome": "Cabelo curto 4",
+     "i": 12
+    },
+    {
+     "id": "F_Hat_Hairstyle_05",
+     "nome": "Cabelo curto 5",
+     "i": 13
+    },
+    {
+     "id": "F_Hat_Hairstyle_06",
+     "nome": "Cabelo curto 6",
+     "i": 14
+    },
+    {
+     "id": "F_Hat_Hairstyle_07",
+     "nome": "Cabelo curto 7",
+     "i": 15
+    },
+    {
+     "id": "F_Hat_Hairstyle_08",
+     "nome": "Cabelo curto 8",
+     "i": 16
+    },
+    {
+     "id": "F_Hat_Hairstyle_09",
+     "nome": "Cabelo curto 9",
+     "i": 17
+    },
+    {
+     "id": "M_Hairstyle_01",
+     "nome": "Cabelo 9",
+     "i": 18
+    },
+    {
+     "id": "M_Hairstyle_02",
+     "nome": "Cabelo 10",
+     "i": 19
+    },
+    {
+     "id": "M_Hairstyle_03",
+     "nome": "Cabelo 11",
+     "i": 20
+    },
+    {
+     "id": "M_Hairstyle_04",
+     "nome": "Cabelo 12",
+     "i": 21
+    },
+    {
+     "id": "M_Hairstyle_05",
+     "nome": "Cabelo 13",
+     "i": 22
+    },
+    {
+     "id": "M_Hairstyle_06",
+     "nome": "Cabelo 14",
+     "i": 23
+    },
+    {
+     "id": "M_Hairstyle_07",
+     "nome": "Cabelo 15",
+     "i": 24
+    },
+    {
+     "id": "M_Hairstyle_08",
+     "nome": "Cabelo 16",
+     "i": 25
+    },
+    {
+     "id": "M_Hairstyle_09",
+     "nome": "Cabelo 17",
+     "i": 26
+    },
+    {
+     "id": "M_Hat_Hairstyle_01",
+     "nome": "Cabelo curto 10",
+     "i": 27
+    },
+    {
+     "id": "M_Hat_Hairstyle_02",
+     "nome": "Cabelo curto 11",
+     "i": 28
+    },
+    {
+     "id": "M_Hat_Hairstyle_03",
+     "nome": "Cabelo curto 12",
+     "i": 29
+    },
+    {
+     "id": "M_Hat_Hairstyle_04",
+     "nome": "Cabelo curto 13",
+     "i": 30
+    },
+    {
+     "id": "M_Hat_Hairstyle_05",
+     "nome": "Cabelo curto 14",
+     "i": 31
+    }
+   ]
+  },
+  {
+   "id": "chapeu",
+   "nome": "Chapéu",
+   "chave": "chapeu",
+   "chaveCor": "chapeuCor",
+   "cores": [
+    "",
+    "#f2f0ea",
+    "#2a2b2e",
+    "#b5583f",
+    "#e0574f",
+    "#f2c14e",
+    "#3fae7a",
+    "#2f9fb0",
+    "#3f7fd0",
+    "#2d3a57",
+    "#9a6ad6",
+    "#e86fa6",
+    "#8a5a3c",
+    "#cdbb98"
+   ],
+   "podeNada": true,
+   "atlas": "atlas/chapeu.png",
+   "colunas": 8,
+   "celula": 128,
+   "linhas": 2,
+   "itens": [
+    {
+     "id": "",
+     "nome": "Nenhum",
+     "i": 0
+    },
+    {
+     "id": "F_Bicyclist_Hat",
+     "nome": "Capacete de ciclista 1",
+     "i": 1
+    },
+    {
+     "id": "F_Hat_01",
+     "nome": "Chapéu 1",
+     "i": 2
+    },
+    {
+     "id": "F_Hat_02",
+     "nome": "Chapéu 2",
+     "i": 3
+    },
+    {
+     "id": "F_Hat_03",
+     "nome": "Chapéu 3",
+     "i": 4
+    },
+    {
+     "id": "F_Hat_04",
+     "nome": "Chapéu 4",
+     "i": 5
+    },
+    {
+     "id": "F_Hat_05",
+     "nome": "Chapéu 5",
+     "i": 6
+    },
+    {
+     "id": "M_Bicyclist_Hat",
+     "nome": "Capacete de ciclista 2",
+     "i": 7
+    },
+    {
+     "id": "M_Hat_01",
+     "nome": "Chapéu 6",
+     "i": 8
+    },
+    {
+     "id": "M_Hat_02",
+     "nome": "Chapéu 7",
+     "i": 9
+    },
+    {
+     "id": "M_Hat_03",
+     "nome": "Chapéu 8",
+     "i": 10
+    },
+    {
+     "id": "M_Hat_04",
+     "nome": "Chapéu 9",
+     "i": 11
+    },
+    {
+     "id": "M_Hat_05",
+     "nome": "Chapéu 10",
+     "i": 12
+    }
+   ]
+  },
+  {
+   "id": "oculos",
+   "nome": "Óculos",
+   "chave": "oculos",
+   "chaveCor": null,
+   "cores": null,
+   "podeNada": true,
+   "atlas": "atlas/oculos.png",
+   "colunas": 8,
+   "celula": 128,
+   "linhas": 1,
+   "itens": [
+    {
+     "id": "",
+     "nome": "Nenhum",
+     "i": 0
+    },
+    {
+     "id": "F_Glasses_01",
+     "nome": "Óculos 1",
+     "i": 1
+    },
+    {
+     "id": "F_Glasses_02",
+     "nome": "Óculos 2",
+     "i": 2
+    },
+    {
+     "id": "M_Glasses_01",
+     "nome": "Óculos 3",
+     "i": 3
+    },
+    {
+     "id": "M_Glasses_02",
+     "nome": "Óculos 4",
+     "i": 4
+    }
+   ]
+  },
+  {
+   "id": "camisa",
+   "nome": "Camisa",
+   "chave": "camisa",
+   "chaveCor": "camisaCor",
+   "cores": [
+    "",
+    "#f2f0ea",
+    "#2a2b2e",
+    "#b5583f",
+    "#e0574f",
+    "#f2c14e",
+    "#3fae7a",
+    "#2f9fb0",
+    "#3f7fd0",
+    "#2d3a57",
+    "#9a6ad6",
+    "#e86fa6",
+    "#8a5a3c",
+    "#cdbb98"
+   ],
+   "podeNada": false,
+   "atlas": "atlas/camisa.png",
+   "colunas": 8,
+   "celula": 128,
+   "linhas": 2,
+   "itens": [
+    {
+     "id": "F_Bicyclist_Shirt",
+     "nome": "Camisa de ciclista 1",
+     "i": 0
+    },
+    {
+     "id": "F_Shirt_01",
+     "nome": "Camisa 1",
+     "i": 1
+    },
+    {
+     "id": "F_Shirt_02",
+     "nome": "Camisa 2",
+     "i": 2
+    },
+    {
+     "id": "F_Shirt_03",
+     "nome": "Camisa 3",
+     "i": 3
+    },
+    {
+     "id": "F_Shirt_04",
+     "nome": "Camisa 4",
+     "i": 4
+    },
+    {
+     "id": "F_Shirt_05",
+     "nome": "Camisa 5",
+     "i": 5
+    },
+    {
+     "id": "F_Swimsuit_01",
+     "nome": "Maiô 1",
+     "i": 6
+    },
+    {
+     "id": "F_Swimsuit_Overall",
+     "nome": "Maiô inteiro 1",
+     "i": 7
+    },
+    {
+     "id": "M_Bicyclist_Shirt",
+     "nome": "Camisa de ciclista 2",
+     "i": 8
+    },
+    {
+     "id": "M_Shirt_01",
+     "nome": "Camisa 6",
+     "i": 9
+    },
+    {
+     "id": "M_Shirt_02",
+     "nome": "Camisa 7",
+     "i": 10
+    },
+    {
+     "id": "M_Shirt_03",
+     "nome": "Camisa 8",
+     "i": 11
+    },
+    {
+     "id": "M_Shirt_04",
+     "nome": "Camisa 9",
+     "i": 12
+    },
+    {
+     "id": "M_Shirt_05",
+     "nome": "Camisa 10",
+     "i": 13
+    },
+    {
+     "id": "M_Swimsuit_Vest",
+     "nome": "Camiseta de praia 1",
+     "i": 14
+    }
+   ]
+  },
+  {
+   "id": "casaco",
+   "nome": "Casaco",
+   "chave": "casaco",
+   "chaveCor": "casacoCor",
+   "cores": [
+    "",
+    "#f2f0ea",
+    "#2a2b2e",
+    "#b5583f",
+    "#e0574f",
+    "#f2c14e",
+    "#3fae7a",
+    "#2f9fb0",
+    "#3f7fd0",
+    "#2d3a57",
+    "#9a6ad6",
+    "#e86fa6",
+    "#8a5a3c",
+    "#cdbb98"
+   ],
+   "podeNada": true,
+   "atlas": "atlas/casaco.png",
+   "colunas": 8,
+   "celula": 128,
+   "linhas": 2,
+   "itens": [
+    {
+     "id": "",
+     "nome": "Nenhum",
+     "i": 0
+    },
+    {
+     "id": "F_Outwear_01",
+     "nome": "Casaco 1",
+     "i": 1
+    },
+    {
+     "id": "F_Outwear_02",
+     "nome": "Casaco 2",
+     "i": 2
+    },
+    {
+     "id": "F_Outwear_03",
+     "nome": "Casaco 3",
+     "i": 3
+    },
+    {
+     "id": "F_Outwear_04",
+     "nome": "Casaco 4",
+     "i": 4
+    },
+    {
+     "id": "F_Outwear_05",
+     "nome": "Casaco 5",
+     "i": 5
+    },
+    {
+     "id": "M_Outwear_01",
+     "nome": "Casaco 6",
+     "i": 6
+    },
+    {
+     "id": "M_Outwear_02",
+     "nome": "Casaco 7",
+     "i": 7
+    },
+    {
+     "id": "M_Outwear_03",
+     "nome": "Casaco 8",
+     "i": 8
+    },
+    {
+     "id": "M_Outwear_04",
+     "nome": "Casaco 9",
+     "i": 9
+    },
+    {
+     "id": "M_Outwear_05",
+     "nome": "Casaco 10",
+     "i": 10
+    }
+   ]
+  },
+  {
+   "id": "calca",
+   "nome": "Calça e short",
+   "chave": "calca",
+   "chaveCor": "calcaCor",
+   "cores": [
+    "",
+    "#f2f0ea",
+    "#2a2b2e",
+    "#b5583f",
+    "#e0574f",
+    "#f2c14e",
+    "#3fae7a",
+    "#2f9fb0",
+    "#3f7fd0",
+    "#2d3a57",
+    "#9a6ad6",
+    "#e86fa6",
+    "#8a5a3c",
+    "#cdbb98"
+   ],
+   "podeNada": true,
+   "atlas": "atlas/calca.png",
+   "colunas": 8,
+   "celula": 128,
+   "linhas": 3,
+   "itens": [
+    {
+     "id": "",
+     "nome": "Nenhum",
+     "i": 0
+    },
+    {
+     "id": "F_Bicyclist_Shorts",
+     "nome": "Bermuda de ciclista 1",
+     "i": 1
+    },
+    {
+     "id": "F_Pants_01",
+     "nome": "Calça 1",
+     "i": 2
+    },
+    {
+     "id": "F_Pants_02",
+     "nome": "Calça 2",
+     "i": 3
+    },
+    {
+     "id": "F_Pants_03",
+     "nome": "Calça 3",
+     "i": 4
+    },
+    {
+     "id": "F_Pants_04",
+     "nome": "Calça 4",
+     "i": 5
+    },
+    {
+     "id": "F_Pants_05",
+     "nome": "Calça 5",
+     "i": 6
+    },
+    {
+     "id": "F_Shorts_01",
+     "nome": "Short 1",
+     "i": 7
+    },
+    {
+     "id": "F_Shorts_02",
+     "nome": "Short 2",
+     "i": 8
+    },
+    {
+     "id": "M_Bicyclist_Shorts",
+     "nome": "Bermuda de ciclista 2",
+     "i": 9
+    },
+    {
+     "id": "M_Pants_01",
+     "nome": "Calça 6",
+     "i": 10
+    },
+    {
+     "id": "M_Pants_02",
+     "nome": "Calça 7",
+     "i": 11
+    },
+    {
+     "id": "M_Pants_03",
+     "nome": "Calça 8",
+     "i": 12
+    },
+    {
+     "id": "M_Pants_04",
+     "nome": "Calça 9",
+     "i": 13
+    },
+    {
+     "id": "M_Pants_05",
+     "nome": "Calça 10",
+     "i": 14
+    },
+    {
+     "id": "M_Shorts_01",
+     "nome": "Short 3",
+     "i": 15
+    },
+    {
+     "id": "M_Shorts_02",
+     "nome": "Short 4",
+     "i": 16
+    },
+    {
+     "id": "M_Swimsuit_Shorts",
+     "nome": "Sunga 1",
+     "i": 17
+    }
+   ]
+  },
+  {
+   "id": "sapato",
+   "nome": "Calçado",
+   "chave": "sapato",
+   "chaveCor": "sapatoCor",
+   "cores": [
+    "",
+    "#f2f0ea",
+    "#2a2b2e",
+    "#b5583f",
+    "#e0574f",
+    "#f2c14e",
+    "#3fae7a",
+    "#2f9fb0",
+    "#3f7fd0",
+    "#2d3a57",
+    "#9a6ad6",
+    "#e86fa6",
+    "#8a5a3c",
+    "#cdbb98"
+   ],
+   "podeNada": false,
+   "atlas": "atlas/sapato.png",
+   "colunas": 8,
+   "celula": 128,
+   "linhas": 3,
+   "itens": [
+    {
+     "id": "F_Bicyclist_Shoes",
+     "nome": "Tênis de ciclista 1",
+     "i": 0
+    },
+    {
+     "id": "F_Shoes_01",
+     "nome": "Calçado 1",
+     "i": 1
+    },
+    {
+     "id": "F_Shoes_02",
+     "nome": "Calçado 2",
+     "i": 2
+    },
+    {
+     "id": "F_Shoes_03",
+     "nome": "Calçado 3",
+     "i": 3
+    },
+    {
+     "id": "F_Shoes_04",
+     "nome": "Calçado 4",
+     "i": 4
+    },
+    {
+     "id": "F_Shoes_05",
+     "nome": "Calçado 5",
+     "i": 5
+    },
+    {
+     "id": "F_Shoes_06",
+     "nome": "Calçado 6",
+     "i": 6
+    },
+    {
+     "id": "F_Shoes_07",
+     "nome": "Calçado 7",
+     "i": 7
+    },
+    {
+     "id": "F_Shoes_08",
+     "nome": "Calçado 8",
+     "i": 8
+    },
+    {
+     "id": "M_Bicyclist_Shoes",
+     "nome": "Tênis de ciclista 2",
+     "i": 9
+    },
+    {
+     "id": "M_Shoes_01",
+     "nome": "Calçado 9",
+     "i": 10
+    },
+    {
+     "id": "M_Shoes_02",
+     "nome": "Calçado 10",
+     "i": 11
+    },
+    {
+     "id": "M_Shoes_03",
+     "nome": "Calçado 11",
+     "i": 12
+    },
+    {
+     "id": "M_Shoes_04",
+     "nome": "Calçado 12",
+     "i": 13
+    },
+    {
+     "id": "M_Shoes_05",
+     "nome": "Calçado 13",
+     "i": 14
+    },
+    {
+     "id": "M_Shoes_06",
+     "nome": "Calçado 14",
+     "i": 15
+    },
+    {
+     "id": "M_Shoes_07",
+     "nome": "Calçado 15",
+     "i": 16
+    },
+    {
+     "id": "M_Shoes_08",
+     "nome": "Calçado 16",
+     "i": 17
+    }
+   ]
+  },
+  {
+   "id": "luvas",
+   "nome": "Luvas",
+   "chave": "luvas",
+   "chaveCor": null,
+   "cores": null,
+   "podeNada": true,
+   "atlas": "atlas/luvas.png",
+   "colunas": 8,
+   "celula": 128,
+   "linhas": 1,
+   "itens": [
+    {
+     "id": "",
+     "nome": "Nenhum",
+     "i": 0
+    },
+    {
+     "id": "F_Bicyclist_Gloves",
+     "nome": "Luvas de ciclista 1",
+     "i": 1
+    },
+    {
+     "id": "F_Gloves_01",
+     "nome": "Luvas 1",
+     "i": 2
+    },
+    {
+     "id": "F_Gloves_02",
+     "nome": "Luvas 2",
+     "i": 3
+    },
+    {
+     "id": "M_Bicyclist_Gloves",
+     "nome": "Luvas de ciclista 2",
+     "i": 4
+    },
+    {
+     "id": "M_Gloves_01",
+     "nome": "Luvas 3",
+     "i": 5
+    },
+    {
+     "id": "M_Gloves_02",
+     "nome": "Luvas 4",
+     "i": 6
+    }
+   ]
+  },
+  {
+   "id": "mochila",
+   "nome": "Mochila",
+   "chave": "mochila",
+   "chaveCor": null,
+   "cores": null,
+   "podeNada": true,
+   "atlas": "atlas/mochila.png",
+   "colunas": 8,
+   "celula": 128,
+   "linhas": 1,
+   "itens": [
+    {
+     "id": "",
+     "nome": "Nenhum",
+     "i": 0
+    },
+    {
+     "id": "F_Backpack_01",
+     "nome": "Mochila 1",
+     "i": 1
+    },
+    {
+     "id": "M_Backpack_01",
+     "nome": "Mochila 2",
+     "i": 2
+    }
+   ]
+  },
+  {
+   "id": "protecao",
+   "nome": "Proteção",
+   "chave": "protecao",
+   "chaveCor": null,
+   "cores": null,
+   "podeNada": true,
+   "atlas": "atlas/protecao.png",
+   "colunas": 8,
+   "celula": 128,
+   "linhas": 1,
+   "itens": [
+    {
+     "id": "",
+     "nome": "Nenhum",
+     "i": 0
+    },
+    {
+     "id": "F_Bicyclist_Protection",
+     "nome": "Joelheiras de ciclista 1",
+     "i": 1
+    },
+    {
+     "id": "F_Swimsuit_Protection",
+     "nome": "Boia de braço 1",
+     "i": 2
+    },
+    {
+     "id": "M_Bicyclist_Protection",
+     "nome": "Joelheiras de ciclista 2",
+     "i": 3
+    }
+   ]
+  },
+  {
+   "id": "fantasia",
+   "nome": "Fantasias",
+   "chave": null,
+   "chaveCor": null,
+   "cores": null,
+   "podeNada": false,
+   "atlas": "atlas/fantasia.png",
+   "colunas": 8,
+   "celula": 128,
+   "linhas": 1,
+   "itens": [
+    {
+     "id": "ciclista",
+     "nome": "Ciclista",
+     "i": 0,
+     "look": {
+      "chapeu": "M_Bicyclist_Hat",
+      "camisa": "M_Bicyclist_Shirt",
+      "calca": "M_Bicyclist_Shorts",
+      "sapato": "M_Bicyclist_Shoes",
+      "luvas": "M_Bicyclist_Gloves",
+      "protecao": "M_Bicyclist_Protection",
+      "casaco": ""
+     }
+    },
+    {
+     "id": "ciclista2",
+     "nome": "Ciclista (vermelho)",
+     "i": 1,
+     "look": {
+      "chapeu": "F_Bicyclist_Hat",
+      "camisa": "F_Bicyclist_Shirt",
+      "calca": "F_Bicyclist_Shorts",
+      "sapato": "F_Bicyclist_Shoes",
+      "luvas": "F_Bicyclist_Gloves",
+      "protecao": "F_Bicyclist_Protection",
+      "casaco": ""
+     }
+    },
+    {
+     "id": "praia",
+     "nome": "Praia (maiô)",
+     "i": 2,
+     "look": {
+      "camisa": "F_Swimsuit_01",
+      "calca": "",
+      "protecao": "F_Swimsuit_Protection",
+      "casaco": "",
+      "chapeu": ""
+     }
+    },
+    {
+     "id": "praia2",
+     "nome": "Praia (sunga)",
+     "i": 3,
+     "look": {
+      "camisa": "M_Swimsuit_Vest",
+      "calca": "M_Swimsuit_Shorts",
+      "protecao": "",
+      "casaco": "",
+      "chapeu": ""
+     }
+    }
+   ]
+  }
+ ]
+}
