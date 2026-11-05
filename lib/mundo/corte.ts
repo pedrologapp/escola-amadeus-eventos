@@ -68,7 +68,7 @@ async function ler(turmaId: string): Promise<Estado> {
   const { data } = await db().from("mundo_corte").select("estado").eq("turma_id", turmaId).maybeSingle();
   const e = (data?.estado || {}) as Partial<Estado>;
   const n = e.n || (await turmaDe(turmaId)).filter((a) => a.id !== "teste").length || 30;
-  return { n: Math.max(20, Math.min(35, n)), fase: e.fase || "livre", faseId: e.faseId || 1, temas: e.temas || [], tema: e.tema ?? null, funcao: e.funcao ?? null, postos: e.postos || {}, sorteio: e.sorteio ?? null, v: e.v || 0, slide: e.slide || 0, levados: !!e.levados, sorteando: e.sorteando ?? null, extra: e.extra || {}, desistencias: e.desistencias || [], log: e.log || [], debate: (e.debate as Debate) || DEBATE_VAZIO() };
+  return { n: Math.max(20, Math.min(35, n)), fase: e.fase || "livre", faseId: e.faseId || 1, temas: e.temas || [], tema: e.tema ?? null, funcao: e.funcao ?? null, postos: e.postos || {}, sorteio: e.sorteio ?? null, v: e.v || 0, slide: e.slide || 0, levados: !!e.levados, sorteando: e.sorteando ?? null, extra: e.extra || {}, desistencias: e.desistencias || [], log: e.log || [], debate: (e.debate as Debate) || DEBATE_VAZIO(), parte2: !!e.parte2, cerimonia: !!e.cerimonia, ajeitar: e.ajeitar || 0 };   // (05/11) sem isto, cada clique seguinte apagava o "debate iniciado"
 }
 async function gravar(turmaId: string, e: Estado) {
   e.v++; await db().from("mundo_corte").upsert({ turma_id: turmaId, estado: e, atualizado_em: new Date().toISOString() }, { onConflict: "turma_id" });
