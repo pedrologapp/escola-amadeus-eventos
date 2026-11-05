@@ -15,10 +15,13 @@ const db = () => createAdminClient();
 // O professor conduz pelo painel: a rodada, quem está com a palavra (o aluno caminha até o púlpito-mirante no jogo), a ampulheta (cada tela
 // conta pelo próprio relógio a partir do id), as palmas, o voto do júri (os imparciais votam no tablet; ações 'juri' com fase = 100000 + id
 // da votação) e o veredito (a balança da sala pende para o lado vencedor). O mesmo de Arboria/Mundo no ar/servidor/corte-previa.mjs.
-type Debate = { rodada: number; orador: { aluno: string; lado: string; assento: string } | null; tempo: { id: number; s: number } | null; palmas: number;
+type Fala = { vez: number; aluno: string; lado: string; texto: string; em: number };
+type Debate = { vez?: number; falas?: Fala[]; rodada: number; orador: { aluno: string; lado: string; assento: string } | null; tempo: { id: number; s: number } | null; palmas: number;
   juri: "fechado" | "aberto" | "revelado"; juriId: number; placar: { favor: number; contra: number } | null; veredito: "favor" | "contra" | "empate" | null };
 const DEBATE_VAZIO = (): Debate => ({ rodada: 0, orador: null, tempo: null, palmas: 0, juri: "fechado", juriId: 0, placar: null, veredito: null });
 const FASE_JURI = 100000;
+// (05/11, Pedro: o debate com as cartas) quem tem a palavra escolhe uma carta de fala; vale uma por vez (o professor escolhe por quem travou)
+function falar(d: Debate, texto: string) { texto = texto.trim().slice(0, 200); if (!d.orador || !texto) return false; d.falas ||= []; if (d.falas.some((f) => f.vez === d.vez)) return false; d.falas.push({ vez: d.vez || 0, aluno: d.orador.aluno, lado: d.orador.lado, texto, em: Date.now() }); if (d.falas.length > 80) d.falas.shift(); return true; }
 async function votosJuri(turmaId: string, juriId: number) {
   const { data } = await db().from("mundo_corte_acoes").select("aluno_id, valor, em").eq("turma_id", turmaId).eq("tipo", "juri").eq("fase", FASE_JURI + juriId).order("em");
   const v: Record<string, string> = {}; for (const a of data || []) v[a.aluno_id] = a.valor; return v;
@@ -103,12 +106,13 @@ export async function corteDoAluno(alunoId: string) {
   return { estado: publico(e), maos: Object.keys(ac.maos), eu: { juri: meuJuri, candidato: ac.quero.includes(alunoId), voto: ac.votos[alunoId] ?? null, mao: !!ac.maos[alunoId], desistindo: !!ac.desistir[alunoId] && !e.desistencias.some((x) => x.aluno === alunoId && x.pedido === ac.desistir[alunoId].em), plateia: Math.max(0, lista.findIndex((x) => x.id === alunoId)) } };
 }
 export async function acaoDoAluno(alunoId: string, tipo: string, valor: string) {
-  if (!["quero", "desisto", "voto", "mao", "desistir", "juri"].includes(tipo)) throw new Erro(400, "Ação desconhecida.");
+  if (!["quero", "desisto", "voto", "mao", "desistir", "juri", "fala"].includes(tipo)) throw new Erro(400, "Ação desconhecida.");
   const { data: a } = await db().from("mundo_alunos").select("turma_id").eq("id", alunoId).maybeSingle(); if (!a) throw new Erro(404, "Aluno não encontrado.");
   const e = await ler(a.turma_id);
   if ((tipo === "quero" || tipo === "desisto") && e.fase !== "funcao") throw new Erro(409, "Nenhuma função aberta agora.");
   if (tipo === "quero" && Object.values(e.postos).includes(alunoId)) throw new Erro(409, "Você já tem uma função.");
   if (tipo === "voto" && e.fase !== "tema") throw new Erro(409, "A votação do tema não está aberta.");
+  if (tipo === "fala") { const d = e.debate; if (!d.orador || d.orador.aluno !== alunoId) throw new Erro(409, "Agora não é a sua vez."); if (!falar(d, String(valor || ""))) throw new Erro(409, "Você já falou nesta vez."); await gravar(a.turma_id, e); return { ok: true }; }
   if (tipo === "juri") {   // só os imparciais, com a votação do júri aberta; o placar é avisado ao painel e à TV
     const s = Object.keys(e.postos).find((k) => e.postos[k] === alunoId) || ""; if (!s.startsWith("imparcial")) throw new Erro(409, "Só o júri vota agora.");
     if (e.debate.juri !== "aberto") throw new Erro(409, "A votação do júri não está aberta."); if (!["favor", "contra"].includes(String(valor))) throw new Erro(400, "Voto inválido.");
@@ -173,7 +177,7 @@ export async function acaoDoProfessor(turmaId: string, b: Record<string, unknown
   else if (op === "debate") {
     const d = e.debate, a = String(b.acao || ""), postoDe = (id: string) => Object.keys(e.postos).find((k) => e.postos[k] === id) || "";
     if (a === "rodada") { d.rodada = Math.max(0, Math.min(3, Number(b.n) || 0)); d.orador = null; d.tempo = null; }
-    else if (a === "tribuna") { const id = String(b.aluno || ""), s = postoDe(id); d.orador = id ? { aluno: id, lado: s.startsWith("favor") ? "favor" : s.startsWith("contra") ? "contra" : "outro", assento: s } : null; d.tempo = null; if (!d.rodada) d.rodada = 1; }
+    else if (a === "tribuna") { d.vez = (d.vez || 0) + 1; const id = String(b.aluno || ""), s = postoDe(id); d.orador = id ? { aluno: id, lado: s.startsWith("favor") ? "favor" : s.startsWith("contra") ? "contra" : "outro", assento: s } : null; d.tempo = null; if (!d.rodada) d.rodada = 1; }
     else if (a === "sair") { d.orador = null; d.tempo = null; }
     else if (a === "tempo") d.tempo = { id: Date.now(), s: Math.max(5, Math.min(180, Number(b.s) || 30)) };
     else if (a === "parar") d.tempo = null;
@@ -181,6 +185,7 @@ export async function acaoDoProfessor(turmaId: string, b: Record<string, unknown
     else if (a === "juri-abrir") { d.juri = "aberto"; d.juriId = (d.juriId || 0) + 1; d.placar = null; d.veredito = null; d.orador = null; d.tempo = null; }
     else if (a === "juri-revelar") { const v = Object.values(await votosJuri(turmaId, d.juriId)); d.placar = { favor: v.filter((x) => x === "favor").length, contra: v.filter((x) => x === "contra").length }; d.juri = "revelado"; }
     else if (a === "veredito") d.veredito = ["favor", "contra", "empate"].includes(String(b.lado)) ? (String(b.lado) as Debate["veredito"]) : null;
+    else if (a === "fala") falar(d, String(b.texto || ""));   // (05/11) o professor escolhe a fala por quem travou
     else if (a === "zerar") e.debate = DEBATE_VAZIO();
     else throw new Erro(400, "Ação do debate desconhecida.");
   }
