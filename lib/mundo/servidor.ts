@@ -128,7 +128,12 @@ export async function estadoParaTablet(alunoId: string) {
       aula = { codigo: au.codigo, destino: au.destino, chamada };
     }
   }
-  return { ligado: !!m?.ligado, aula };
+  return { ligado: !!m?.ligado, aula, chatBloqueado: await chatBloqueado(alunoId) };
+}
+// (05/11, Pedro) o chat bloqueado de um aluno (castigo por palavrão): fica no progresso dele, em 'chat-bloqueado' (o tablet não consegue apagar: não está na lista PROGRESSO)
+export async function chatBloqueado(alunoId: string): Promise<string | null> {
+  const { data } = await db().from("mundo_progresso").select("dados").eq("aluno_id", alunoId).maybeSingle();
+  const b = (data?.dados as Linha | undefined)?.["chat-bloqueado"] as { aviso?: string } | undefined; return b ? b.aviso || "Seu chat foi bloqueado." : null;
 }
 
 // ---------- aulas ----------
@@ -154,6 +159,8 @@ export async function pedirAula(alunoId: string, codigo: string) {
 // ---------- chat: filtra de novo, registra tudo e entrega na sala ----------
 export async function chat(alunoId: string, sala: string, txt: string, barradaNoTablet?: string) {
   const a = await alunoPorId(alunoId); if (!a) return { ok: false };
+  const bloq = await chatBloqueado(alunoId);
+  if (bloq) { await db().from("mundo_chat").insert({ aluno_id: alunoId, nome: a.nome, turma: a.turma_nome, sala, texto: String(txt || "").slice(0, 200), ok: false, motivo: "chat bloqueado" }); return { ok: false, bloqueado: bloq }; }
   const desde = new Date(Date.now() - 60e3).toISOString();
   const { count } = await db().from("mundo_chat").select("*", { count: "exact", head: true }).eq("aluno_id", alunoId).eq("ok", true).gte("em", desde);
   const f: { ok: boolean; motivo?: string; texto?: string } = barradaNoTablet ? { ok: false, motivo: barradaNoTablet } : filtrar(String(txt || ""));
