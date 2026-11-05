@@ -128,7 +128,8 @@ export async function estadoParaTablet(alunoId: string) {
       aula = { codigo: au.codigo, destino: au.destino, chamada };
     }
   }
-  return { ligado: !!m?.ligado, aula, chatBloqueado: await chatBloqueado(alunoId) };
+  const { data: pg } = await db().from("mundo_progresso").select("dados").eq("aluno_id", alunoId).maybeSingle();
+  return { ligado: !!m?.ligado, aula, chatBloqueado: await chatBloqueado(alunoId), presente: ((pg?.dados as Linha | undefined)?.["arboria-presente"] as Linha | undefined) || null };   // (05/11) o presente de moedas do Pedro
 }
 // (05/11, Pedro) o chat bloqueado de um aluno (castigo por palavrão): fica no progresso dele, em 'chat-bloqueado' (o tablet não consegue apagar: não está na lista PROGRESSO)
 export async function chatBloqueado(alunoId: string): Promise<string | null> {
