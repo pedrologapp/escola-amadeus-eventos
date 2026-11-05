@@ -179,7 +179,7 @@ export async function acaoDoAluno(alunoId: string, tipo: string, valor: string) 
     e.debate.camera = String(valor) === "cabine" ? "cabine" : "sala"; await gravar(a.turma_id, e); return { ok: true };
   }
   if (tipo === "mancheteTexto") {   // (05/11, Pedro: 'os Cronistas querem a opção de digitar') a manchete escrita: filtro do chat, registro e o professor aprova
-    const s = Object.keys(e.postos).find((k) => e.postos[k] === alunoId) || ""; if (!s.startsWith("cronista")) throw new Erro(409, "Só os Cronistas mandam manchetes.");
+    const s = Object.keys(e.postos).find((k) => e.postos[k] === alunoId) || ""; if (!(s.startsWith("cronista") || s.startsWith("imparcial") || ["vice", "secretario", "guardiao"].includes(s))) throw new Erro(409, "O seu cargo não escreve agora.");
     if (await chatBloqueado(alunoId)) throw new Erro(409, "Você está sem escrever por enquanto.");
     const txt = String(valor || "").trim().slice(0, 80); if (!txt) throw new Erro(400, "Manchete vazia.");
     const f = filtrar(txt) as { ok: boolean; motivo?: string; texto?: string };
@@ -229,7 +229,9 @@ export async function acaoDoProfessor(turmaId: string, b: Record<string, unknown
   else if (op === "manchete") {   // (05/11) a manchete escrita por um Cronista: o professor mostra na TV ou descarta
     const x = (e.debate.x ||= {}), p = ((x.pendentes || []) as { id: string; aluno: string; texto: string }[]), m = p.find((y) => y.id === String(b.id || ""));
     x.pendentes = p.filter((y) => y !== m);
-    if (m && b.mostrar) { const d = e.debate; d.manchetes ||= []; d.manchetes.push({ aluno: m.aluno, texto: m.texto, em: Date.now() }); if (d.manchetes.length > 30) d.manchetes.shift(); }
+    const k = m ? Object.keys(e.postos).find((y) => e.postos[y] === m.aluno) || "" : "";
+    if (m && b.mostrar && k.startsWith("cronista")) { const d = e.debate; d.manchetes ||= []; d.manchetes.push({ aluno: m.aluno, texto: m.texto, em: Date.now() }); if (d.manchetes.length > 30) d.manchetes.shift(); }
+    else if (m && b.mostrar) { const bl = ((x.baloes ||= []) as { aluno: string; texto: string; em: number; posto: string }[]); bl.push({ aluno: m.aluno, texto: m.texto, em: Date.now(), posto: k }); if (bl.length > 12) bl.shift(); }   // os outros cargos: o balão sobre a cabeça (jogo e TV)
   }
   else if (op === "desistencia") {   // o professor autoriza (sai do posto e volta à plateia) ou não (continua)
     const id = String(b.aluno || ""), ac = await acoes(turmaId, e.faseId), p = ac.desistir[id]; if (!p) throw new Erro(404, "Pedido não encontrado.");
