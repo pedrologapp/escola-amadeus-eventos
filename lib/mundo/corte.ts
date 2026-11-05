@@ -1,6 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { Erro, avisar, canalAula, estadoMundo, CANAL_MUNDO } from "./servidor";
+import { Erro, avisar, canalAula, estadoMundo, CANAL_MUNDO, chatBloqueado } from "./servidor";
+import { filtrar } from "./chat-filtro.js";
 import { nomesCurtos } from "./nomes";
 
 /**
@@ -141,7 +142,7 @@ export async function corteDoAluno(alunoId: string) {
   return { estado: publico(e), maos: Object.keys(ac.maos), eu: { juri: meuJuri, candidato: ac.quero.includes(alunoId), voto: ac.votos[alunoId] ?? null, mao: !!ac.maos[alunoId], desistindo: !!ac.desistir[alunoId] && !e.desistencias.some((x) => x.aluno === alunoId && x.pedido === ac.desistir[alunoId].em), plateia: Math.max(0, lista.findIndex((x) => x.id === alunoId)) } };
 }
 export async function acaoDoAluno(alunoId: string, tipo: string, valor: string) {
-  if (!["quero", "desisto", "voto", "mao", "desistir", "juri", "fala", "manchete", "camera", "palmas", "nota", "martelo", "tempoExtra", "responder", "aprovar", "explicar", "destaque", "anotacao", "falaDoDia"].includes(tipo)) throw new Erro(400, "Ação desconhecida.");
+  if (!["quero", "desisto", "voto", "mao", "desistir", "juri", "fala", "manchete", "camera", "palmas", "nota", "martelo", "tempoExtra", "responder", "aprovar", "explicar", "destaque", "anotacao", "falaDoDia", "mancheteTexto"].includes(tipo)) throw new Erro(400, "Ação desconhecida.");
   const { data: a } = await db().from("mundo_alunos").select("turma_id").eq("id", alunoId).maybeSingle(); if (!a) throw new Erro(404, "Aluno não encontrado.");
   const e = await ler(a.turma_id);
   if ((tipo === "quero" || tipo === "desisto") && e.fase !== "funcao") throw new Erro(409, "Nenhuma função aberta agora.");
@@ -176,6 +177,18 @@ export async function acaoDoAluno(alunoId: string, tipo: string, valor: string) 
   if (tipo === "camera") {   // (05/11) o Cronista troca a câmera da TV: a sala ou a cabine dos Cronistas
     const s = Object.keys(e.postos).find((k) => e.postos[k] === alunoId) || ""; if (!s.startsWith("cronista")) throw new Erro(409, "Só os Cronistas trocam a câmera.");
     e.debate.camera = String(valor) === "cabine" ? "cabine" : "sala"; await gravar(a.turma_id, e); return { ok: true };
+  }
+  if (tipo === "mancheteTexto") {   // (05/11, Pedro: 'os Cronistas querem a opção de digitar') a manchete escrita: filtro do chat, registro e o professor aprova
+    const s = Object.keys(e.postos).find((k) => e.postos[k] === alunoId) || ""; if (!s.startsWith("cronista")) throw new Erro(409, "Só os Cronistas mandam manchetes.");
+    if (await chatBloqueado(alunoId)) throw new Erro(409, "Você está sem escrever por enquanto.");
+    const txt = String(valor || "").trim().slice(0, 80); if (!txt) throw new Erro(400, "Manchete vazia.");
+    const f = filtrar(txt) as { ok: boolean; motivo?: string; texto?: string };
+    const { data: al } = await db().from("mundo_alunos").select("nome, turma_nome").eq("id", alunoId).maybeSingle();
+    await db().from("mundo_chat").insert({ aluno_id: alunoId, nome: al?.nome, turma: al?.turma_nome, sala: "corte:manchete", texto: txt, ok: !!f.ok, motivo: f.ok ? "manchete para aprovar" : f.motivo || "barrada" });
+    if (!f.ok) throw new Erro(409, "Essa frase não pode. Escreva outra ou escolha uma carta.");
+    const x = (e.debate.x ||= {}), p = ((x.pendentes ||= []) as { id: string; aluno: string; texto: string; em: number }[]);
+    p.push({ id: String(Date.now()) + String(Math.floor(Math.random() * 1000)), aluno: alunoId, texto: f.texto || txt, em: Date.now() }); if (p.length > 10) p.shift();
+    await gravar(a.turma_id, e); return { ok: true };
   }
   if (tipo === "manchete") {   // (05/11) o Cronista, repórter da Corte: a manchete vai para a tarja da TV
     const s = Object.keys(e.postos).find((k) => e.postos[k] === alunoId) || ""; if (!s.startsWith("cronista")) throw new Erro(409, "Só os Cronistas mandam manchetes.");
@@ -213,6 +226,11 @@ export async function acaoDoProfessor(turmaId: string, b: Record<string, unknown
   else if (op === "cerimonia") e.cerimonia = b.ligar !== false;   // (05/11) começar a cerimônia: todos saem do passeio e sentam na plateia
   else if (op === "parte2") { e.parte2 = b.ligar !== false; if (e.parte2) e.cerimonia = true; if (!e.debate.id) e.debate.id = Date.now(); }   // (05/11) o debate ganha a marca já no Iniciar (sem ela, os tablets não creditavam as moedas)   // (05/11) a parte 2: quem tem posto sai da plateia e vai até ele
   else if (op === "sorteando") e.sorteando = b.sorteando ?? null;
+  else if (op === "manchete") {   // (05/11) a manchete escrita por um Cronista: o professor mostra na TV ou descarta
+    const x = (e.debate.x ||= {}), p = ((x.pendentes || []) as { id: string; aluno: string; texto: string }[]), m = p.find((y) => y.id === String(b.id || ""));
+    x.pendentes = p.filter((y) => y !== m);
+    if (m && b.mostrar) { const d = e.debate; d.manchetes ||= []; d.manchetes.push({ aluno: m.aluno, texto: m.texto, em: Date.now() }); if (d.manchetes.length > 30) d.manchetes.shift(); }
+  }
   else if (op === "desistencia") {   // o professor autoriza (sai do posto e volta à plateia) ou não (continua)
     const id = String(b.aluno || ""), ac = await acoes(turmaId, e.faseId), p = ac.desistir[id]; if (!p) throw new Erro(404, "Pedido não encontrado.");
     const s = Object.keys(e.postos).find((k) => e.postos[k] === id), f = F.find((x) => x.assentos.includes(s || ""));
