@@ -19,7 +19,7 @@ type Linha = Record<string, unknown>;
 
 export const CANAL_MUNDO = "mundo-geral";
 export const canalAula = (codigo: string) => "mundo-aula-" + codigo;
-const PROGRESSO = ["arboria-passaporte", "arboria-visitados", "arboria-lugares", "arboria-passos", "arboria-intel", "arboria-posicao", "arboria-figurinhas"];
+const PROGRESSO = ["arboria-passaporte", "arboria-visitados", "arboria-lugares", "arboria-passos", "arboria-intel", "arboria-posicao", "arboria-figurinhas", "arboria-corte"];
 
 export class Erro extends Error { constructor(public status: number, msg: string, public extra: Linha = {}) { super(msg); } }
 
