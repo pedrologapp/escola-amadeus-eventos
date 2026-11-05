@@ -211,7 +211,7 @@ export async function acaoDoProfessor(turmaId: string, b: Record<string, unknown
   else if (op === "destravar") e.destravar = { aluno: String(b.aluno || ""), id: Date.now() };   // (05/11) o aluno travado vai para a chegada da praça (ou para o seu lugar na Corte)
   else if (op === "ajeitar") e.ajeitar = (e.ajeitar || 0) + 1;   // (05/11) todos direto para os lugares (quem travou no caminho)
   else if (op === "cerimonia") e.cerimonia = b.ligar !== false;   // (05/11) começar a cerimônia: todos saem do passeio e sentam na plateia
-  else if (op === "parte2") { e.parte2 = b.ligar !== false; if (e.parte2) e.cerimonia = true; }   // (05/11) a parte 2: quem tem posto sai da plateia e vai até ele
+  else if (op === "parte2") { e.parte2 = b.ligar !== false; if (e.parte2) e.cerimonia = true; if (!e.debate.id) e.debate.id = Date.now(); }   // (05/11) o debate ganha a marca já no Iniciar (sem ela, os tablets não creditavam as moedas)   // (05/11) a parte 2: quem tem posto sai da plateia e vai até ele
   else if (op === "sorteando") e.sorteando = b.sorteando ?? null;
   else if (op === "desistencia") {   // o professor autoriza (sai do posto e volta à plateia) ou não (continua)
     const id = String(b.aluno || ""), ac = await acoes(turmaId, e.faseId), p = ac.desistir[id]; if (!p) throw new Erro(404, "Pedido não encontrado.");
@@ -249,6 +249,7 @@ export async function acaoDoProfessor(turmaId: string, b: Record<string, unknown
   else if (op === "maos") { await db().from("mundo_corte_acoes").insert({ turma_id: turmaId, fase: e.faseId, aluno_id: "*", tipo: "mao", valor: "0" }); }
   else if (op === "debate") {
     const d = e.debate, a = String(b.acao || ""), postoDe = (id: string) => Object.keys(e.postos).find((k) => e.postos[k] === id) || "";
+    if (!d.id) d.id = Date.now();   // (05/11) todo debate tem a marca (as moedas e o recomeço dependem dela)
     if (a === "rodada") { d.rodada = Math.max(0, Math.min(3, Number(b.n) || 0)); d.orador = null; d.tempo = null; }
     else if (a === "tribuna") { d.vez = (d.vez || 0) + 1; const id = String(b.aluno || ""), s = postoDe(id); d.orador = id ? { aluno: id, lado: s.startsWith("favor") ? "favor" : s.startsWith("contra") ? "contra" : "outro", assento: s, etapa: String(b.etapa || "").slice(0, 30), alvo: String(b.alvo || "").slice(0, 220), alvoAluno: String(b.alvoAluno || "").slice(0, 40) } : null; d.tempo = null; if (!d.rodada) d.rodada = 1; }
     else if (a === "sair") { d.orador = null; d.tempo = null; }
