@@ -29,7 +29,7 @@ async function votosJuri(turmaId: string, juriId: number) {
 type Estado = {
   n: number; fase: "livre" | "tema" | "funcao"; faseId: number; temas: string[]; tema: string | null; funcao: string | null;
   postos: Record<string, string>; sorteio: { funcao: string; candidatos: string[]; vencedores: string[]; em: string } | null; v: number;
-  slide: number; levados: boolean; sorteando: unknown; extra: Record<string, number>; parte2?: boolean; cerimonia?: boolean;
+  slide: number; levados: boolean; sorteando: unknown; extra: Record<string, number>; parte2?: boolean; cerimonia?: boolean; ajeitar?: number;
   desistencias: { aluno: string; funcao: string; pedido: string; aprovado: boolean; em: string }[];
   log: { em: string; op: string; info: string }[];
   debate: Debate;   // (27/10, Pedro) o registro do que o professor fez (temas, postos, sorteio...); fica só no banco
@@ -77,7 +77,7 @@ async function gravar(turmaId: string, e: Estado) {
   await avisar(CANAL_MUNDO, "corte", { turmaId, estado: publico(e) });   // quem ainda está no mundo (os slides: "Olhe para a TV")
   return e;
 }
-const publico = (e: Estado) => ({ cerimonia: !!e.cerimonia, parte2: !!e.parte2, n: e.n, fase: e.fase, faseId: e.faseId, temas: e.temas, tema: e.tema, funcao: e.funcao, postos: e.postos, sorteio: e.sorteio, v: e.v, slide: e.slide, levados: e.levados, sorteando: e.sorteando, extra: e.extra, desistencias: e.desistencias.slice(-30), debate: e.debate,
+const publico = (e: Estado) => ({ ajeitar: e.ajeitar || 0, cerimonia: !!e.cerimonia, parte2: !!e.parte2, n: e.n, fase: e.fase, faseId: e.faseId, temas: e.temas, tema: e.tema, funcao: e.funcao, postos: e.postos, sorteio: e.sorteio, v: e.v, slide: e.slide, levados: e.levados, sorteando: e.sorteando, extra: e.extra, desistencias: e.desistencias.slice(-30), debate: e.debate,
   funcaoInfo: e.funcao ? funcoes(e.n, e.extra).find((f) => f.id === e.funcao) || null : null });
 async function acoes(turmaId: string, fase: number) {
   const { data } = await db().from("mundo_corte_acoes").select("aluno_id, tipo, valor, em").eq("turma_id", turmaId).eq("fase", fase).order("em");
@@ -139,6 +139,7 @@ export async function acaoDoProfessor(turmaId: string, b: Record<string, unknown
   const tirar = (id: string) => { for (const [s, x] of Object.entries(e.postos)) if (x === id) delete e.postos[s]; };
   // a apresentação (slide, levados para a Corte) e o sorteio animado (o PC conduz; a TV segue)
   if (op === "slide") { e.slide = Math.max(0, Math.min(20, Number(b.slide) || 0)); if (b.levados !== undefined) e.levados = !!b.levados; }
+  else if (op === "ajeitar") e.ajeitar = (e.ajeitar || 0) + 1;   // (05/11) todos direto para os lugares (quem travou no caminho)
   else if (op === "cerimonia") e.cerimonia = b.ligar !== false;   // (05/11) começar a cerimônia: todos saem do passeio e sentam na plateia
   else if (op === "parte2") { e.parte2 = b.ligar !== false; if (e.parte2) e.cerimonia = true; }   // (05/11) a parte 2: quem tem posto sai da plateia e vai até ele
   else if (op === "sorteando") e.sorteando = b.sorteando ?? null;
