@@ -16,7 +16,7 @@ const db = () => createAdminClient();
 // conta pelo próprio relógio a partir do id), as palmas, o voto do júri (os imparciais votam no tablet; ações 'juri' com fase = 100000 + id
 // da votação) e o veredito (a balança da sala pende para o lado vencedor). O mesmo de Arboria/Mundo no ar/servidor/corte-previa.mjs.
 type Fala = { vez: number; aluno: string; lado: string; etapa?: string; texto: string; em: number };
-type Debate = { vez?: number; falas?: Fala[]; manchetes?: { aluno: string; texto: string; em: number }[]; rodada: number; orador: { aluno: string; lado: string; assento: string; etapa?: string; alvo?: string; alvoAluno?: string } | null; tempo: { id: number; s: number } | null; palmas: number;
+type Debate = { vez?: number; falas?: Fala[]; manchetes?: { aluno: string; texto: string; em: number }[]; camera?: string; rodada: number; orador: { aluno: string; lado: string; assento: string; etapa?: string; alvo?: string; alvoAluno?: string } | null; tempo: { id: number; s: number } | null; palmas: number;
   juri: "fechado" | "aberto" | "revelado"; juriId: number; placar: { favor: number; contra: number } | null; veredito: "favor" | "contra" | "empate" | null };
 const DEBATE_VAZIO = (): Debate => ({ rodada: 0, orador: null, tempo: null, palmas: 0, juri: "fechado", juriId: 0, placar: null, veredito: null });
 const FASE_JURI = 100000;
@@ -106,13 +106,17 @@ export async function corteDoAluno(alunoId: string) {
   return { estado: publico(e), maos: Object.keys(ac.maos), eu: { juri: meuJuri, candidato: ac.quero.includes(alunoId), voto: ac.votos[alunoId] ?? null, mao: !!ac.maos[alunoId], desistindo: !!ac.desistir[alunoId] && !e.desistencias.some((x) => x.aluno === alunoId && x.pedido === ac.desistir[alunoId].em), plateia: Math.max(0, lista.findIndex((x) => x.id === alunoId)) } };
 }
 export async function acaoDoAluno(alunoId: string, tipo: string, valor: string) {
-  if (!["quero", "desisto", "voto", "mao", "desistir", "juri", "fala", "manchete"].includes(tipo)) throw new Erro(400, "Ação desconhecida.");
+  if (!["quero", "desisto", "voto", "mao", "desistir", "juri", "fala", "manchete", "camera"].includes(tipo)) throw new Erro(400, "Ação desconhecida.");
   const { data: a } = await db().from("mundo_alunos").select("turma_id").eq("id", alunoId).maybeSingle(); if (!a) throw new Erro(404, "Aluno não encontrado.");
   const e = await ler(a.turma_id);
   if ((tipo === "quero" || tipo === "desisto") && e.fase !== "funcao") throw new Erro(409, "Nenhuma função aberta agora.");
   if (tipo === "quero" && Object.values(e.postos).includes(alunoId)) throw new Erro(409, "Você já tem uma função.");
   if (tipo === "voto" && e.fase !== "tema") throw new Erro(409, "A votação do tema não está aberta.");
   if (tipo === "fala") { const d = e.debate; if (!d.orador || d.orador.aluno !== alunoId) throw new Erro(409, "Agora não é a sua vez."); if (!falar(d, String(valor || ""))) throw new Erro(409, "Você já falou nesta vez."); await gravar(a.turma_id, e); return { ok: true }; }
+  if (tipo === "camera") {   // (05/11) o Cronista troca a câmera da TV: a sala ou a cabine dos Cronistas
+    const s = Object.keys(e.postos).find((k) => e.postos[k] === alunoId) || ""; if (!s.startsWith("cronista")) throw new Erro(409, "Só os Cronistas trocam a câmera.");
+    e.debate.camera = String(valor) === "cabine" ? "cabine" : "sala"; await gravar(a.turma_id, e); return { ok: true };
+  }
   if (tipo === "manchete") {   // (05/11) o Cronista, repórter da Corte: a manchete vai para a tarja da TV
     const s = Object.keys(e.postos).find((k) => e.postos[k] === alunoId) || ""; if (!s.startsWith("cronista")) throw new Erro(409, "Só os Cronistas mandam manchetes.");
     const t = String(valor || "").trim().slice(0, 160); if (!t) throw new Erro(400, "Manchete vazia."); const d = e.debate; d.manchetes ||= []; d.manchetes.push({ aluno: alunoId, texto: t, em: Date.now() }); if (d.manchetes.length > 30) d.manchetes.shift();
