@@ -16,6 +16,7 @@ async function tratar(req: NextRequest, ctx: Ctx) {
   const r = (await ctx.params).rota.join("/"), b = req.method === "POST" ? await req.json().catch(() => ({})) : {};
   try {
     if (r === "central") return json(await M.central());
+    if (r === "tv") return json(await M.tvDaTurma(String(req.nextUrl.searchParams.get("turma") || "")));   // (06/11) o modo TV: a aula aberta da turma e o tempo real
     // o painel da Corte: GET corte?turma=4A; POST corte { turma, op, ... }
     if (r === "corte" && req.method === "GET") return json(await C.painel(String(req.nextUrl.searchParams.get("turma") || "")));
     if (r === "corte" && req.method === "POST") return json(await C.acaoDoProfessor(String(b.turma || ""), b));

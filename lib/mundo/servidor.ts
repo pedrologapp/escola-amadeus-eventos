@@ -19,7 +19,7 @@ type Linha = Record<string, unknown>;
 
 export const CANAL_MUNDO = "mundo-geral";
 export const canalAula = (codigo: string) => "mundo-aula-" + codigo;
-const PROGRESSO = ["arboria-passaporte", "arboria-visitados", "arboria-lugares", "arboria-passos", "arboria-intel", "arboria-posicao", "arboria-figurinhas", "arboria-corte"];
+const PROGRESSO = ["arboria-passaporte", "arboria-visitados", "arboria-lugares", "arboria-passos", "arboria-intel", "arboria-posicao", "arboria-figurinhas", "arboria-corte", "arboria-diag"];
 
 export class Erro extends Error { constructor(public status: number, msg: string, public extra: Linha = {}) { super(msg); } }
 
@@ -172,6 +172,13 @@ export async function chat(alunoId: string, sala: string, txt: string, barradaNo
 }
 
 // ---------- a central (só com o login do painel) ----------
+// (06/11, Pedro: 'os Cronistas se verem na TV... ver a sala ao vivo') o modo TV: a janela da TV (com o login do painel) abre o Mundo como
+// espectador; ele precisa do código da aula aberta da turma e do endereço do tempo real (a mesma chave pública do jogo)
+export async function tvDaTurma(turmaId: string) {
+  const { data: au } = await db().from("mundo_aulas").select("codigo, ate").eq("turma_id", turmaId).maybeSingle();
+  const codigo = au && new Date(au.ate) > new Date() ? au.codigo : null;
+  return { codigo, rt: { url: process.env.NEXT_PUBLIC_SUPABASE_URL, chave: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY } };
+}
 export async function central() {
   const desde = new Date(Date.now() - 60e3).toISOString();
   const [e, { data: on }, { data: alunos }, { data: aulas }, { data: pedidos }, { data: chatLog }, { data: perfis }] = await Promise.all([
