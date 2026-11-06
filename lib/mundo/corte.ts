@@ -334,6 +334,7 @@ export async function acaoDoProfessor(turmaId: string, b: Record<string, unknown
       if (a === "recomecar") { e.debate.rodada = 1; e.parte2 = true; e.cerimonia = true; e.ajeitar = (e.ajeitar || 0) + 1; } }   // mantém tema e cargos; todos aos postos
     else throw new Erro(400, "Ação do debate desconhecida.");
   }
+  else if (op === "limparCargos") { e.postos = {}; e.fase = "livre"; e.funcao = null; e.sorteio = null; }   // (06/11, Pedro) só os cargos (tema e debate ficam)
   else if (op === "limpar") { e.parte2 = false; e.cerimonia = false; e.postos = {}; e.temas = []; e.tema = null; e.fase = "livre"; e.funcao = null; e.sorteio = null; e.faseId++; e.debate = DEBATE_VAZIO(); }
   else throw new Erro(400, "Ação desconhecida.");
   if (op !== "slide" && op !== "sorteando" && !(op === "debate" && ["tempo", "parar", "palmas"].includes(String(b.acao)))) { const resto = { ...b }; delete resto.op; e.log = [...e.log, { em: new Date().toISOString(), op, info: JSON.stringify(resto).slice(0, 300) }].slice(-500); }
