@@ -194,7 +194,12 @@ export async function central() {
 }
 export async function ligarMundo(ligado: boolean) {
   await db().from("mundo_estado").upsert({ id: 1, ligado, desde: new Date().toISOString() });
-  if (!ligado) await avisar(CANAL_MUNDO, "fechado", {});   // quem está no mundo aberto recebe o aviso e sai (as aulas continuam)
+  if (!ligado) {   // (06/11, Pedro: "quando eu desligo o mundo, eles não são deslogados") desligar = todos saem: as aulas abertas (a Corte) também terminam
+    const { data: aulas } = await db().from("mundo_aulas").select("codigo");
+    await db().from("mundo_aulas").delete().neq("codigo", ""); await db().from("mundo_pedidos").delete().neq("id", "");
+    for (const au of aulas || []) await avisar(canalAula(au.codigo), "fimAula", {});   // o tablet sai da aula e, com o mundo desligado, volta à entrada
+    await avisar(CANAL_MUNDO, "fechado", {});
+  }
   return { ligado };
 }
 export async function recado(texto: string) {
