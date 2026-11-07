@@ -9,6 +9,7 @@ import { comecarReuniao, liberarHistorias, situacaoTelao } from "../actions";
  * → (Liberar as séries) estreia nos tablets → (Encerrar) fim. A atividade das palavras e as 8 formas saíram (atividade-tv.tsx ficou sem uso).
  * Na apresentação: → / PageDown avança um slide, ← / PageUp volta um slide, espaço dá play/pausa (os slides vêm de slides.json).
  * Fora dela: → / ← passam de tela sem apertar nada no banco (para ensaiar) · F tela cheia.
+ * (07/11) Versão nova: aula-07-11.mp4 + slides-07-11.json (séries certas, personagem 3D, "Obrigado! Isso é o Arboria!"); a de 24/10 fica como reserva.
  * A apresentação (public/arboria/apresentacao/aula-24-10.mp4: a introdução + a parte do Arboria; slides.json com os tempos) já vem com as falas do Arboria e a trilha; qr-fala.mp3 toca na tela do QR.
  */
 type Etapa = "pronto" | "video" | "qr" | "diferente" | "estreia" | "fim";
@@ -29,7 +30,7 @@ export function Telao({ qr, chave }: { qr: string; chave?: string }) {
   const esconde = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // onde começa cada slide dentro do vídeo
-  useEffect(() => { fetch("/arboria/apresentacao/slides.json").then((r) => r.json()).then((j) => setSlides(j.slides)).catch(() => {}); }, []);
+  useEffect(() => { fetch("/arboria/apresentacao/slides-07-11.json").then((r) => r.json()).then((j) => setSlides(j.slides)).catch(() => {}); }, []);
   const qualSlide = useCallback((t: number) => { let k = 0; slides.forEach((ini, i) => { if (t >= ini - 0.05) k = i; }); return k; }, [slides]);
   const proximo = useCallback(() => {
     const v = video.current; if (!v) return;
@@ -121,7 +122,7 @@ export function Telao({ qr, chave }: { qr: string; chave?: string }) {
       `}</style>
 
       {/* a apresentação fica sempre carregada, para começar sem esperar */}
-      <video ref={video} src="/arboria/apresentacao/aula-24-10.mp4" preload="auto" playsInline onEnded={() => setEtapa("qr")}
+      <video ref={video} src="/arboria/apresentacao/aula-07-11.mp4" preload="auto" playsInline onEnded={() => setEtapa("qr")}
         onPlay={() => setTocando(true)} onPause={() => setTocando(false)} onTimeUpdate={(e) => setSlide(qualSlide(e.currentTarget.currentTime))}
         className={`absolute inset-0 h-full w-full bg-black object-contain ${etapa === "video" ? "" : "invisible"}`} />
 
