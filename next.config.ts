@@ -17,8 +17,8 @@ const nextConfig: NextConfig = {
   // inteira na função: com o Mundo do Arboria (public/mundo, ~58 MB) passou do limite de 250 MB e o deploy falhava.
   // Nenhuma função do servidor precisa do jogo; o quadro só precisa de public/arboria/quadros.
   outputFileTracingExcludes: {
-    "/*": ["public/mundo/**/*"],
-    "/admin/arboria-quadro": ["public/!(arboria)/**/*"],
+    "/*": ["public/mundo/**/*", "public/arboria/apresentacao/**/*"],   // (07/11) os vídeos da Experiência (aula-24-10 + aula-07-11, ~115 MB) também não servem a nenhuma função
+    "/admin/arboria-quadro": ["public/!(arboria)/**/*", "public/arboria/apresentacao/**/*", "public/arboria/trailer/**/*"],
   },
   // Páginas estáticas em public/ com endereço curto (sem o /index.html).
   async rewrites() {
