@@ -28,7 +28,7 @@ export default async function PlacasFormatura({ params, searchParams }: { params
   const lista = linhas ?? [];
   const caminhos = [
     ...lista.flatMap((l) => [...((l.fotos_beca as string[]) ?? []), ...((l.fotos_familia as string[]) ?? [])]),
-    ...[dados.foto_turma_a, dados.foto_turma_b].filter((p): p is string => !!p),
+    ...[dados.foto_turma_a, dados.foto_turma_b, ...(dados.sugestoes_turma_a ?? []), ...(dados.sugestoes_turma_b ?? [])].filter((p): p is string => !!p),
   ];
   const assinadas = caminhos.length ? (await db.storage.from(BUCKET_PLACA).createSignedUrls(caminhos, 60 * 60 * 8)).data ?? [] : [];
   const url = new Map(assinadas.map((s) => [s.path, s.signedUrl]));
@@ -56,6 +56,10 @@ export default async function PlacasFormatura({ params, searchParams }: { params
         professora_a: dados.professora_a ?? "", professora_b: dados.professora_b ?? "", demais: dados.demais ?? "",
       }}
       fotoTurma={{ a: dados.foto_turma_a ? u(dados.foto_turma_a) : "", b: dados.foto_turma_b ? u(dados.foto_turma_b) : "" }}
+      sugestoes={{
+        a: (dados.sugestoes_turma_a ?? []).map((p) => ({ url: u(p), atual: p === dados.foto_turma_a })),
+        b: (dados.sugestoes_turma_b ?? []).map((p) => ({ url: u(p), atual: p === dados.foto_turma_b })),
+      }}
     />
     </div>
   );

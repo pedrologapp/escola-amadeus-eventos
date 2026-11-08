@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { prepararFotoTurma, salvarCampo, salvarEscolha, salvarFotoTurma } from "./actions";
+import { escolherFotoTurma, prepararFotoTurma, salvarCampo, salvarEscolha, salvarFotoTurma } from "./actions";
 
 export interface Crianca {
   nome: string;
@@ -69,9 +69,51 @@ function Campo({ chave, campo, rotulo, valor, dica, longo }: { chave: string; ca
   );
 }
 
-function FotoTurma({ chave, turma, url, aoMudar }: { chave: string; turma: "a" | "b"; url: string; aoMudar: (u: string) => void }) {
+type Sugestao = { url: string; atual: boolean };
+
+function FotoTurma({ chave, turma, url, aoMudar, sugestoes: s0 = [] }: { chave: string; turma: "a" | "b"; url: string; aoMudar: (u: string) => void; sugestoes?: Sugestao[] }) {
   const [estado, setEstado] = useState("");
+  const [sugestoes, setSugestoes] = useState(s0);
+  const [ver, setVer] = useState<number | null>(null);
   const input = useRef<HTMLInputElement>(null);
+  async function usar(i: number) {
+    setEstado("salvando…");
+    const r = await escolherFotoTurma(chave, turma, i);
+    if (!r.ok) return setEstado(r.erro);
+    setSugestoes((l) => l.map((x, j) => ({ ...x, atual: j === i })));
+    aoMudar(sugestoes[i].url); setEstado("foto da turma escolhida ✓"); setVer(null);
+  }
+  const listaSug = sugestoes.length > 0 && (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <span style={{ fontSize: 13, letterSpacing: ".12em", textTransform: "uppercase", color: C.ouro }}>Sugestões do fotógrafo: toque para ver grande</span>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 8 }}>
+        {sugestoes.map((sg, i) => (
+          <button key={i} type="button" onClick={() => setVer(i)} aria-label={`Ver a sugestão ${i + 1} grande`}
+            style={{ position: "relative", padding: 0, aspectRatio: "3 / 1", borderRadius: 6, overflow: "hidden", cursor: "zoom-in", background: "#0A2350",
+              border: sg.atual ? `3px solid ${C.ouro}` : "3px solid transparent" }}>
+            <img src={sg.url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+            <span style={{ position: "absolute", left: 4, top: 4, background: "rgba(0,0,0,.65)", color: "#fff", borderRadius: 6, fontSize: 12, padding: "1px 6px" }}>{i + 1}</span>
+            {sg.atual && <span style={{ position: "absolute", left: 0, right: 0, bottom: 0, background: "rgba(227,194,122,.92)", color: "#14213D", fontSize: 12, fontWeight: 700 }}>na placa</span>}
+          </button>
+        ))}
+      </div>
+      {ver !== null && (
+        <div role="dialog" aria-modal="true" aria-label={`Sugestão ${ver + 1}`} onClick={() => setVer(null)}
+          style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(3,8,20,.92)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, padding: 16 }}>
+          <img onClick={(e) => e.stopPropagation()} src={sugestoes[ver].url} alt={`Sugestão ${ver + 1}`} style={{ maxWidth: "96vw", maxHeight: "70vh", borderRadius: 10, boxShadow: "0 20px 60px rgba(0,0,0,.6)" }} />
+          <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center", alignItems: "center" }}>
+            {sugestoes.length > 1 && <button type="button" onClick={() => setVer((ver - 1 + sugestoes.length) % sugestoes.length)} style={{ minHeight: 46, padding: "0 16px", borderRadius: 10, border: `1px solid ${C.borda}`, background: "transparent", color: C.texto, cursor: "pointer" }}>‹ Anterior</button>}
+            <span style={{ color: C.suave }}>Sugestão {ver + 1} de {sugestoes.length}</span>
+            {sugestoes[ver].atual
+              ? <span style={{ color: C.verde, fontWeight: 700 }}>Esta é a que está na placa ✓</span>
+              : <button type="button" onClick={() => usar(ver)} style={{ minHeight: 46, padding: "0 22px", borderRadius: 10, border: 0, background: C.ouro, color: "#14213D", fontWeight: 700, fontSize: 16, cursor: "pointer" }}>Usar esta foto na placa</button>}
+            {sugestoes.length > 1 && <button type="button" onClick={() => setVer((ver + 1) % sugestoes.length)} style={{ minHeight: 46, padding: "0 16px", borderRadius: 10, border: `1px solid ${C.borda}`, background: "transparent", color: C.texto, cursor: "pointer" }}>Próxima ›</button>}
+            <button type="button" onClick={() => setVer(null)} style={{ minHeight: 46, padding: "0 16px", borderRadius: 10, border: `1px solid ${C.borda}`, background: "transparent", color: C.texto, cursor: "pointer" }}>Fechar</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
   async function enviar(f: File) {
     setEstado("enviando…");
     const p = await prepararFotoTurma(chave, turma);
@@ -88,10 +130,11 @@ function FotoTurma({ chave, turma, url, aoMudar }: { chave: string; turma: "a" |
       <div style={{ aspectRatio: "1052 / 372", borderRadius: 8, overflow: "hidden", background: "#0A2350", display: "flex", alignItems: "center", justifyContent: "center", color: C.suave, fontSize: 14 }}>
         {url ? <img src={url} alt={`Foto da turma ${turma.toUpperCase()}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : "sem foto ainda"}
       </div>
+      {listaSug}
       <input ref={input} type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) enviar(f); e.target.value = ""; }} />
       <button type="button" onClick={() => input.current?.click()}
         style={{ minHeight: 44, borderRadius: 10, border: 0, background: C.ouro, color: "#14213D", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
-        {url ? "Trocar a foto da turma" : "Enviar a foto da turma"}
+        {sugestoes.length ? "Enviar outra foto da turma" : url ? "Trocar a foto da turma" : "Enviar a foto da turma"}
       </button>
       {estado && <span style={{ fontSize: 13, color: estado.includes("✓") ? C.verde : C.suave }}>{estado}</span>}
     </div>
@@ -149,7 +192,7 @@ function Opcoes({ titulo, fotos, escolha, aoEscolher }: { titulo: string; fotos:
   );
 }
 
-export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoTurma: ft0 }: { chave: string; foco: string | null; criancas: Crianca[]; textos: Textos; fotoTurma: { a: string; b: string } }) {
+export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoTurma: ft0, sugestoes }: { chave: string; foco: string | null; criancas: Crianca[]; textos: Textos; fotoTurma: { a: string; b: string }; sugestoes?: { a: Sugestao[]; b: Sugestao[] } }) {
   const [criancas, setCriancas] = useState(inicial);
   const [textos, setTextos] = useState(t0);
   const [fotoTurma, setFotoTurma] = useState(ft0);
@@ -266,8 +309,8 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
           <h2 style={{ margin: 0, fontFamily: serif, fontSize: 28, fontWeight: 600 }}>2. Foto de cada turma</h2>
           <p style={{ margin: 0, color: C.suave }}>A foto da turma com as professoras. Pode ser tirada do celular, na maior qualidade.</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
-            <FotoTurma chave={chave} turma="a" url={fotoTurma.a} aoMudar={(u) => setFotoTurma((x) => ({ ...x, a: u }))} />
-            <FotoTurma chave={chave} turma="b" url={fotoTurma.b} aoMudar={(u) => setFotoTurma((x) => ({ ...x, b: u }))} />
+            <FotoTurma chave={chave} turma="a" sugestoes={sugestoes?.a} url={fotoTurma.a} aoMudar={(u) => setFotoTurma((x) => ({ ...x, a: u }))} />
+            <FotoTurma chave={chave} turma="b" sugestoes={sugestoes?.b} url={fotoTurma.b} aoMudar={(u) => setFotoTurma((x) => ({ ...x, b: u }))} />
           </div>
         </section>
 

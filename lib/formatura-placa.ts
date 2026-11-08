@@ -33,6 +33,8 @@ export interface DadosPlaca {
   demais?: string;
   foto_turma_a?: string; // caminho no storage
   foto_turma_b?: string;
+  sugestoes_turma_a?: string[]; // fotos de turma sugeridas pelo fotógrafo (caminhos no storage)
+  sugestoes_turma_b?: string[];
 }
 
 const CAMPOS_TEXTO = ["oradora", "juramentista", "professora_a", "professora_b", "demais"] as const;

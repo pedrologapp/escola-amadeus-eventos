@@ -43,10 +43,27 @@ export async function salvarFotoTurma(chave: string, turma: "a" | "b", path: str
   const campo = turma === "a" ? "foto_turma_a" : "foto_turma_b";
   const antiga = dados[campo];
   const r = await gravarDados({ ...dados, [campo]: path });
-  if (r.ok && antiga && antiga !== path) await db.storage.from(BUCKET_PLACA).remove([antiga]);
+  const sugestoes = (turma === "a" ? dados.sugestoes_turma_a : dados.sugestoes_turma_b) ?? [];
+  if (r.ok && antiga && antiga !== path && !sugestoes.includes(antiga)) await db.storage.from(BUCKET_PLACA).remove([antiga]);
   if (!r.ok) return r;
   const { data: assinada } = await db.storage.from(BUCKET_PLACA).createSignedUrl(path, 60 * 60 * 8);
   return { ok: true as const, url: assinada?.signedUrl ?? null };
+}
+
+/** Usa uma das fotos de turma sugeridas pelo fotógrafo (sem apagar as outras sugestões). */
+export async function escolherFotoTurma(chave: string, turma: "a" | "b", indice: number) {
+  if (!chavePlacaValida(chave) || (turma !== "a" && turma !== "b")) return negado;
+  const dados = await lerDados();
+  const sugestoes = (turma === "a" ? dados.sugestoes_turma_a : dados.sugestoes_turma_b) ?? [];
+  const path = sugestoes[indice];
+  if (!path) return { ok: false as const, erro: "Opção inválida." };
+  const db = createAdminClient();
+  const campo = turma === "a" ? "foto_turma_a" : "foto_turma_b";
+  const antiga = dados[campo];
+  const r = await gravarDados({ ...dados, [campo]: path });
+  if (!r.ok) return r;
+  if (antiga && antiga !== path && !sugestoes.includes(antiga)) await db.storage.from(BUCKET_PLACA).remove([antiga]);
+  return { ok: true as const };
 }
 
 /** Escolha entre as opções de foto que o fotógrafo deixou, e a aprovação da placa. */
