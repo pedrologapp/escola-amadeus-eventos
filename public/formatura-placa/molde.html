@@ -63,8 +63,8 @@
   .col:first-child { border-left: 0; padding-left: 0; }
   .col .eu { color: #EFD18A; }
 
-  .prof { left: 1238px; top: 1262px; width: 780px; display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
-  .prof b { font: 700 27px 'Cormorant SC', serif; letter-spacing: .22em; color: var(--ouro-solido); margin-top: 12px; }
+  .prof { left: 1240px; top: 1262px; width: 760px; display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
+  .prof b { font: 700 32px 'Cormorant SC', serif; letter-spacing: .22em; color: var(--ouro-solido); margin-top: 12px; }
   .prof b:first-child { margin-top: 0; }
   .prof span { font: 600 36px/44px 'Cormorant Garamond', serif; }
   .prof span.vazio { color: rgba(243,238,226,.45); font-style: italic; }
@@ -93,7 +93,7 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
     Foto com<br>a família</div></div></div></div></div></div>
 
-  <div class="sombra" style="left:1622px;top:1246px;width:330px;height:490px"><div class="ch m1"><div class="ch m2"><div class="ch m3"><div class="ch m4"><div class="ch foto" id="foto-beca">
+  <div class="sombra" style="left:1610px;top:1222px;width:370px;height:526px"><div class="ch m1"><div class="ch m2"><div class="ch m3"><div class="ch m4"><div class="ch foto" id="foto-beca">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
     Foto<br>de beca</div></div></div></div></div></div>
 
@@ -250,7 +250,7 @@
   // ---------- REGRA: nenhum texto sai da placa azul-clara nem encosta nas fotos ----------
   // Cada linha de texto é medida e conferida ponto a ponto contra a máscara dos painéis (mascara-paineis.png);
   // se algum ponto cair fora (ou sobre uma foto), a letra daquele bloco diminui até caber.
-  const FOTOS = [[684, 396, 1774, 930], [200, 920, 660, 1506], [1612, 1236, 1962, 1746]];
+  const FOTOS = [[684, 396, 1774, 930], [200, 920, 660, 1506], [1600, 1212, 1990, 1758]];
   let mascara = null;
   function carregarMascara() {
     return new Promise((ok) => {
@@ -293,16 +293,25 @@
     // lista dos colegas (as duas colunas no mesmo tamanho)
     // a turma inteira vai na lista: testa 2 e 3 colunas e fica com a que deixa a letra maior (sem sair do painel nem encostar na foto de beca)
     function ajustar(nCols) { montarLista(nCols); const cols = [...Lst.children]; let fl = 37;
-      const cabe = () => cols.every((c) => dentro(c, 4)) && Lst.getBoundingClientRect().bottom - base.top <= 1250;
+      const cabe = () => cols.every((c) => dentro(c, 4)) && Lst.getBoundingClientRect().bottom - base.top <= 1204;
       cols.forEach((c) => tam(c, fl, 1.1)); while (fl > 18 && !cabe()) { fl--; cols.forEach((c) => tam(c, fl, 1.1)); } return fl; }
     const f2 = ajustar(2), f3 = alunos.length > 8 ? ajustar(3) : 0; if (f2 >= f3) ajustar(2);
-    const fimLista = Lst.getBoundingClientRect().bottom - base.top; const pr = document.querySelector('.prof'); pr.style.top = Math.max(1262, fimLista + 22) + 'px';
-    pr.querySelectorAll('span').forEach((s) => encaixar(s, 36, 22, 1.22));
-    // nome da criança: o maior possível entre os professores e o selo de baixo, sem sair do painel
-    const LIM = 1676, topo = pr.getBoundingClientRect().bottom - base.top - 4;
-    const posiciona = () => { C.style.top = Math.round(topo + (LIM - topo - C.offsetHeight) / 2) + 'px'; return C.offsetHeight <= LIM - topo; };
-    tam(C, f); while (f > 56 && !(posiciona() && dentro(C, 8))) tam(C, --f);
-    posiciona(); document.body.dataset.pronto = '1';
+    // professora e demais professores: maiores, no meio do espaço entre a lista da turma e o nome da criança
+    const fimLista = Lst.getBoundingClientRect().bottom - base.top, LIM = 1676; const pr = document.querySelector('.prof');
+    pr.style.top = Math.round(fimLista + 20) + 'px';
+    // cada nome numa linha só, o maior que couber; se não couber nem pequeno, quebra em duas
+    const spans = [...pr.querySelectorAll('span')];
+    spans.forEach((s) => { s.style.whiteSpace = 'nowrap'; encaixar(s, 46, 30, 1.2, null, 6); if (!dentro(s, 6)) { s.style.whiteSpace = 'normal'; encaixar(s, 40, 24, 1.2, null, 6); } });
+    const espalhar = () => { // três folgas iguais: lista | professores | nome | selo
+      const hp = pr.offsetHeight, hc = C.offsetHeight, folga = (LIM - fimLista - hp - hc) / 3;
+      pr.style.top = Math.round(fimLista + folga) + 'px'; C.style.top = Math.round(fimLista + 2 * folga + hp) + 'px'; return folga >= 8; };
+    const tudoDentro = () => dentro(C, 8) && [...pr.querySelectorAll('span, b')].every((s) => dentro(s, 6));
+    // o nome da criança tem prioridade: se ficaria pequeno, os professores diminuem um pouco
+    const f0 = f, MIN_NOME = linhas.length > 1 ? 84 : 100;
+    const nomeMaior = () => { let g = f0; tam(C, g); while (g > 56 && !(C.offsetWidth <= 770 && espalhar() && tudoDentro())) tam(C, --g); return g; };
+    let g = nomeMaior();
+    while (g < MIN_NOME && spans.some((s) => parseFloat(s.style.fontSize) > 28)) { spans.forEach((s) => { const v = parseFloat(s.style.fontSize); if (v > 28) tam(s, v - 2, 1.2); }); g = nomeMaior(); }
+    espalhar(); document.body.dataset.pronto = '1';
   });
 </script>
 </body></html>
