@@ -56,6 +56,7 @@ export default async function PlacasFormatura({ params, searchParams }: { params
         professora_a: dados.professora_a ?? "", professora_b: dados.professora_b ?? "", demais: dados.demais ?? "",
       }}
       fotoTurma={{ a: dados.foto_turma_a ? u(dados.foto_turma_a) : "", b: dados.foto_turma_b ? u(dados.foto_turma_b) : "" }}
+      listas={{ a: dados.lista_turma_a ?? [], b: dados.lista_turma_b ?? [] }}
       turmaAprovada={{ a: !!dados.turma_a_aprovada, b: !!dados.turma_b_aprovada }}
       sugestoes={{
         a: (dados.sugestoes_turma_a ?? []).map((p) => ({ url: u(p), atual: p === dados.foto_turma_a })),

@@ -230,7 +230,7 @@ function Opcoes({ titulo, fotos, escolha, aoEscolher }: { titulo: string; fotos:
   );
 }
 
-export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoTurma: ft0, sugestoes, turmaAprovada }: { chave: string; foco: string | null; criancas: Crianca[]; textos: Textos; fotoTurma: { a: string; b: string }; sugestoes?: { a: Sugestao[]; b: Sugestao[] }; turmaAprovada?: { a: boolean; b: boolean } }) {
+export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoTurma: ft0, sugestoes, turmaAprovada, listas }: { chave: string; foco: string | null; criancas: Crianca[]; textos: Textos; fotoTurma: { a: string; b: string }; sugestoes?: { a: Sugestao[]; b: Sugestao[] }; turmaAprovada?: { a: boolean; b: boolean }; listas?: { a: string[]; b: string[] } }) {
   const [criancas, setCriancas] = useState(inicial);
   const [textos, setTextos] = useState(t0);
   const [fotoTurma, setFotoTurma] = useState(ft0);
@@ -245,6 +245,8 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
   const porTurma = useMemo(() => {
     const m: Record<string, string[]> = {};
     for (const c of criancas) (m[c.turma] ??= []).push(c.nome);
+    // a lista da placa leva TODOS os alunos da turma (também quem não vai à formatura)
+    for (const c of criancas) { const toda = c.turma.endsWith("B") ? listas?.b : listas?.a; if (toda?.length) m[c.turma] = [...toda]; }
     for (const k of Object.keys(m)) m[k].sort((a, b) => a.localeCompare(b, "pt-BR"));
     return m;
   }, [criancas]);

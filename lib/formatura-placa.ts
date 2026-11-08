@@ -37,6 +37,8 @@ export interface DadosPlaca {
   sugestoes_turma_b?: string[];
   turma_a_aprovada?: boolean;
   turma_b_aprovada?: boolean;
+  lista_turma_a?: string[]; // todos os alunos da turma (vão na lista da placa, mesmo quem não tem placa)
+  lista_turma_b?: string[];
 }
 
 const CAMPOS_TEXTO = ["oradora", "juramentista", "professora_a", "professora_b", "demais"] as const;

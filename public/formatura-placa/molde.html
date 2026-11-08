@@ -59,7 +59,7 @@
   .cargo span.vazio { color: rgba(243,238,226,.45); font-style: italic; }
 
   .lista { left: 1040px; top: 952px; display: flex; gap: 46px; }
-  .col { font: 600 35px/47px 'Cormorant Garamond', serif; letter-spacing: .01em; white-space: nowrap; padding-left: 30px; border-left: 1px solid rgba(227,194,122,.3); }
+  .col { font: 600 35px/47px 'Cormorant Garamond', serif; letter-spacing: -.005em; white-space: nowrap; padding-left: 14px; border-left: 1px solid rgba(227,194,122,.3); }
   .col:first-child { border-left: 0; padding-left: 0; }
   .col .eu { color: #EFD18A; }
 
@@ -221,11 +221,14 @@
   }
   window.__imagens = [...document.images].map(i => i.decode().catch(() => {}));
 
-  const Lst = document.getElementById('lista'); const por = Math.ceil(alunos.length / 2);
-  for (let c = 0; c < 2; c++) {
-    const col = document.createElement('div'); col.className = 'col';
-    col.innerHTML = alunos.slice(c * por, c * por + por).map(n => `<div class="${n === homenageado ? 'eu' : ''}">${n}</div>`).join('');
-    Lst.appendChild(col);
+  const Lst = document.getElementById('lista');
+  function montarLista(nCols) {
+    Lst.innerHTML = ''; const por = Math.ceil(alunos.length / nCols); Lst.style.gap = (nCols === 3 ? 12 : 24) + 'px'; Lst.style.left = (nCols === 3 ? 1018 : 1040) + 'px';
+    for (let c = 0; c < nCols; c++) {
+      const col = document.createElement('div'); col.className = 'col';
+      col.innerHTML = alunos.slice(c * por, c * por + por).map(n => `<div class="${n === homenageado ? 'eu' : ''}">${n}</div>`).join('');
+      Lst.appendChild(col);
+    }
   }
 
   const C = document.getElementById('crianca');
@@ -288,10 +291,11 @@
     encaixar(tn, 110, 50, 1, () => { assenta(tn, 376); return true; }, 8); assenta(tn, 376);
     tam(tr, Math.round(parseFloat(tn.style.fontSize) * 1.05), 1); assenta(tr, 392);
     // lista dos colegas (as duas colunas no mesmo tamanho)
-    const cols = [...Lst.children]; let fl = 37;
-    const listaCabe = () => cols.every((c) => dentro(c, 10));
-    cols.forEach((c) => tam(c, fl, 1.32));
-    while (fl > 22 && !listaCabe()) { fl--; cols.forEach((c) => tam(c, fl, 1.32)); }
+    // a turma inteira vai na lista: testa 2 e 3 colunas e fica com a que deixa a letra maior (sem sair do painel nem encostar na foto de beca)
+    function ajustar(nCols) { montarLista(nCols); const cols = [...Lst.children]; let fl = 37;
+      const cabe = () => cols.every((c) => dentro(c, 10)) && Lst.getBoundingClientRect().bottom - base.top <= 1250;
+      cols.forEach((c) => tam(c, fl, 1.1)); while (fl > 18 && !cabe()) { fl--; cols.forEach((c) => tam(c, fl, 1.1)); } return fl; }
+    const f2 = ajustar(2), f3 = alunos.length > 8 ? ajustar(3) : 0; if (f2 >= f3) ajustar(2);
     const fimLista = Lst.getBoundingClientRect().bottom - base.top; const pr = document.querySelector('.prof'); pr.style.top = Math.max(1262, fimLista + 22) + 'px';
     pr.querySelectorAll('span').forEach((s) => encaixar(s, 36, 22, 1.22));
     // nome da criança: o maior possível entre os professores e o selo de baixo, sem sair do painel
