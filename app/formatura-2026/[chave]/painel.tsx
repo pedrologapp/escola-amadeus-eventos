@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { aprovarFotoTurma, escolherFotoTurma, prepararFotoTurma, salvarCampo, salvarEscolha, salvarFotoTurma } from "./actions";
+import { aprovarFotoTurma, escolherFotoTurma, prepararFotoCrianca, prepararFotoTurma, salvarCampo, salvarEscolha, salvarFotoCrianca, salvarFotoTurma } from "./actions";
 
 export interface Crianca {
   nome: string;
@@ -179,6 +179,41 @@ function FotoTurma({ chave, turma, url, aoMudar, sugestoes: s0 = [], aprovada: a
   );
 }
 
+/** Foto escolhida pela direção: reduz no próprio celular (até 2400 px) e envia; entra como opção nova e vai para a placa. */
+async function reduzir(f: File): Promise<Blob> {
+  try {
+    const bmp = await createImageBitmap(f);
+    const k = Math.min(1, 2400 / Math.max(bmp.width, bmp.height));
+    const cv = document.createElement("canvas"); cv.width = Math.round(bmp.width * k); cv.height = Math.round(bmp.height * k);
+    cv.getContext("2d")!.drawImage(bmp, 0, 0, cv.width, cv.height);
+    return await new Promise<Blob>((ok, erro) => cv.toBlob((b) => (b ? ok(b) : erro(new Error("blob"))), "image/jpeg", 0.9));
+  } catch { return f; }
+}
+
+function TrocarFoto({ chave, nome, tipo, titulo, aoEnviar }: { chave: string; nome: string; tipo: "beca" | "familia"; titulo: string; aoEnviar: (url: string, indice: number) => void }) {
+  const input = useRef<HTMLInputElement>(null);
+  const [estado, setEstado] = useState("");
+  async function enviar(f: File) {
+    setEstado("enviando…");
+    const p = await prepararFotoCrianca(chave, nome, tipo);
+    if (!p.ok) return setEstado(p.erro);
+    const { error } = await createClient().storage.from("formatura-placas").uploadToSignedUrl(p.path, p.token, await reduzir(f), { contentType: "image/jpeg" });
+    if (error) return setEstado("Não consegui enviar. Tente de novo.");
+    const r = await salvarFotoCrianca(chave, nome, tipo, p.path);
+    if (!r.ok) return setEstado(r.erro);
+    setEstado("foto nova na placa ✓ confira e aprove"); aoEnviar(r.url, r.indice);
+  }
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-start" }}>
+      <input ref={input} type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) enviar(f); e.target.value = ""; }} />
+      <button type="button" onClick={() => input.current?.click()} disabled={estado === "enviando…"} style={{ ...botaoSec, minHeight: 44, padding: "0 16px", fontSize: 15 }}>
+        Trocar {titulo} (enviar do celular)
+      </button>
+      {estado && <span style={{ fontSize: 13, color: estado.includes("✓") ? C.verde : C.suave }}>{estado}</span>}
+    </div>
+  );
+}
+
 /** Opções de foto: tocar abre a foto grande (com setas para comparar) e o botão para usar aquela. */
 function Opcoes({ titulo, fotos, escolha, aoEscolher }: { titulo: string; fotos: string[]; escolha: number; aoEscolher: (i: number) => void }) {
   const [ver, setVer] = useState<number | null>(null);
@@ -299,6 +334,10 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
         <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
           <Opcoes titulo="Foto de beca" fotos={so.beca} escolha={so.escolhaBeca} aoEscolher={(i) => mudar(so.nome, { beca: i })} />
           <Opcoes titulo="Foto com a família" fotos={so.familia} escolha={so.escolhaFamilia} aoEscolher={(i) => mudar(so.nome, { familia: i })} />
+        </div>
+        <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+          <TrocarFoto chave={chave} nome={so.nome} tipo="beca" titulo="a foto de beca" aoEnviar={(u, i) => setCriancas((l) => l.map((c) => c.nome !== so.nome ? c : { ...c, beca: [...c.beca, u], escolhaBeca: i, aprovada: false }))} />
+          <TrocarFoto chave={chave} nome={so.nome} tipo="familia" titulo="a foto da família" aoEnviar={(u, i) => setCriancas((l) => l.map((c) => c.nome !== so.nome ? c : { ...c, familia: [...c.familia, u], escolhaFamilia: i, aprovada: false, observacao: null }))} />
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           {!semFotos(so) && !so.aprovada && (

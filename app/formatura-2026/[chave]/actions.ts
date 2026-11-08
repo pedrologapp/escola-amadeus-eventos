@@ -86,3 +86,38 @@ export async function salvarEscolha(chave: string, nome: string, mudanca: { beca
   const { error } = await db.from("formatura_placa_aluno").update(upd).eq("nome", nome);
   return error ? { ok: false as const, erro: "Não consegui salvar. Tente de novo." } : { ok: true as const };
 }
+
+type TipoFoto = "beca" | "familia";
+const tipoValido = (t: string): t is TipoFoto => t === "beca" || t === "familia";
+
+/** Endereço para a direção subir uma foto própria da criança (beca ou família), mesmo onde o fotógrafo já escolheu. */
+export async function prepararFotoCrianca(chave: string, nome: string, tipo: string) {
+  if (!chavePlacaValida(chave) || !tipoValido(tipo)) return negado;
+  const { data: aluno } = await createAdminClient().from("formatura_placa_aluno").select("nome").eq("nome", nome).maybeSingle();
+  if (!aluno) return { ok: false as const, erro: "Criança não encontrada." };
+  const path = `${ID_PLACA}/enviadas/${tipo}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+  const { data, error } = await createAdminClient().storage.from(BUCKET_PLACA).createSignedUploadUrl(path);
+  if (error || !data) return { ok: false as const, erro: "Não consegui preparar o envio. Tente de novo." };
+  return { ok: true as const, path, token: data.token };
+}
+
+/** A foto enviada entra como mais uma opção e já vai para a placa (a placa volta a esperar aprovação). */
+export async function salvarFotoCrianca(chave: string, nome: string, tipo: string, path: string) {
+  if (!chavePlacaValida(chave) || !tipoValido(tipo)) return negado;
+  if (!new RegExp(`^${ID_PLACA}/enviadas/${tipo}-\\d+-[a-z0-9]+\\.jpg$`).test(path)) return { ok: false as const, erro: "Arquivo inválido." };
+  const db = createAdminClient();
+  const [pasta, arquivo] = [path.slice(0, path.lastIndexOf("/")), path.slice(path.lastIndexOf("/") + 1)];
+  const { data: achou } = await db.storage.from(BUCKET_PLACA).list(pasta, { search: arquivo });
+  if (!achou?.length) return { ok: false as const, erro: "A foto não chegou. Tente de novo." };
+  const campo = tipo === "beca" ? "fotos_beca" : "fotos_familia";
+  const { data: aluno } = await db.from("formatura_placa_aluno").select("fotos_beca, fotos_familia").eq("nome", nome).maybeSingle();
+  if (!aluno) return { ok: false as const, erro: "Criança não encontrada." };
+  const lista = [...(((aluno as Record<string, unknown>)[campo] as string[]) ?? []), path];
+  const { error } = await db.from("formatura_placa_aluno").update({
+    [campo]: lista, [tipo === "beca" ? "escolha_beca" : "escolha_familia"]: lista.length - 1, aprovada: false, atualizado_em: new Date().toISOString(),
+    ...(tipo === "familia" && { observacao: null }),
+  }).eq("nome", nome);
+  if (error) return { ok: false as const, erro: "Não consegui salvar. Tente de novo." };
+  const { data: assinada } = await db.storage.from(BUCKET_PLACA).createSignedUrl(path, 60 * 60 * 8);
+  return { ok: true as const, url: assinada?.signedUrl ?? "", indice: lista.length - 1 };
+}
