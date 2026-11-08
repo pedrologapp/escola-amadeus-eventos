@@ -117,7 +117,7 @@ function Opcoes({ titulo, fotos, escolha, aoEscolher }: { titulo: string; fotos:
   );
 }
 
-export function PainelPlacas({ chave, criancas: inicial, textos: t0, fotoTurma: ft0 }: { chave: string; criancas: Crianca[]; textos: Textos; fotoTurma: { a: string; b: string } }) {
+export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoTurma: ft0 }: { chave: string; foco: string | null; criancas: Crianca[]; textos: Textos; fotoTurma: { a: string; b: string } }) {
   const [criancas, setCriancas] = useState(inicial);
   const [textos, setTextos] = useState(t0);
   const [fotoTurma, setFotoTurma] = useState(ft0);
@@ -155,6 +155,36 @@ export function PainelPlacas({ chave, criancas: inicial, textos: t0, fotoTurma: 
     const r = await salvarEscolha(chave, nome, m);
     if (!r.ok) alert(r.erro);
   }
+
+  const so = foco ? criancas.find((c) => c.nome === foco) : null;
+  if (so) return (
+    <div style={{ minHeight: "100vh", background: `radial-gradient(ellipse at 50% -10%, #12306A 0%, ${C.fundo} 55%)`, color: C.texto, fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif" }}>
+      <div style={{ maxWidth: 1400, margin: "0 auto", padding: "28px 16px 60px", display: "flex", flexDirection: "column", gap: 20 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
+          <div>
+            <div style={{ fontFamily: script, fontSize: 40, color: C.ouroClaro, lineHeight: 1 }}>Formatura 2026</div>
+            <h1 style={{ margin: "4px 0 0", fontFamily: serif, fontWeight: 600, fontSize: 34 }}>{so.nome}</h1>
+            <div style={{ color: C.suave }}>{so.turma}</div>
+          </div>
+          <a href={`/formatura-2026/${chave}`} style={{ color: C.ouro, fontSize: 15 }}>‹ Todas as placas</a>
+        </div>
+        <div style={{ borderRadius: 12, overflow: "hidden" }}><Placa dados={dadosDe(so)} titulo={`Placa de ${so.nome}`} /></div>
+        {semFotos(so) && <div style={{ fontSize: 16, color: "#FFC98A" }}>As fotos desta criança ainda não chegaram no Drive.</div>}
+        {so.observacao && !semFotos(so) && <div style={{ fontSize: 16, color: C.suave }}>{so.observacao}</div>}
+        <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
+          <Opcoes titulo="Foto de beca" fotos={so.beca} escolha={so.escolhaBeca} aoEscolher={(i) => mudar(so.nome, { beca: i })} />
+          <Opcoes titulo="Foto com a família" fotos={so.familia} escolha={so.escolhaFamilia} aoEscolher={(i) => mudar(so.nome, { familia: i })} />
+        </div>
+        {!semFotos(so) && (
+          <button type="button" onClick={() => mudar(so.nome, { aprovada: !so.aprovada })}
+            style={{ alignSelf: "flex-start", minHeight: 48, padding: "0 28px", borderRadius: 10, cursor: "pointer", fontWeight: 700, fontSize: 16,
+              border: so.aprovada ? `1px solid ${C.verde}` : 0, background: so.aprovada ? "transparent" : C.ouro, color: so.aprovada ? C.verde : "#14213D" }}>
+            {so.aprovada ? "Aprovada ✓ (tocar para desfazer)" : "Aprovar esta placa"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
 
   const aberta = criancas.find((c) => c.nome === grande);
 
@@ -205,11 +235,11 @@ export function PainelPlacas({ chave, criancas: inicial, textos: t0, fotoTurma: 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 20 }}>
             {visiveis.map((c) => (
               <article key={c.nome} style={{ display: "flex", flexDirection: "column", gap: 12, padding: 14, borderRadius: 16, background: C.painel, border: `1px solid ${c.aprovada ? "rgba(127,209,168,.6)" : C.borda}` }}>
-                <button type="button" onClick={() => setGrande(c.nome)} style={{ padding: 0, border: 0, background: "none", cursor: "zoom-in", borderRadius: 10, overflow: "hidden" }} aria-label={`Ver a placa de ${c.nome} grande`}>
+                <a href={`/formatura-2026/${chave}?aluno=${encodeURIComponent(c.nome)}`} target="_blank" rel="noopener" style={{ display: "block", cursor: "zoom-in", borderRadius: 10, overflow: "hidden" }} aria-label={`Abrir a placa de ${c.nome} numa aba`}>
                   <Placa dados={dadosDe(c)} titulo={`Placa de ${c.nome}`} />
-                </button>
+                </a>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>
-                  <div style={{ fontFamily: serif, fontSize: 21, fontWeight: 600, lineHeight: 1.2 }}>{c.nome}</div>
+                  <a href={`/formatura-2026/${chave}?aluno=${encodeURIComponent(c.nome)}`} target="_blank" rel="noopener" style={{ fontFamily: serif, fontSize: 21, fontWeight: 600, lineHeight: 1.2, color: C.texto, textDecoration: "none" }}>{c.nome}</a>
                   <div style={{ fontSize: 13, color: C.suave, whiteSpace: "nowrap" }}>{c.turma}</div>
                 </div>
                 {semFotos(c) && <div style={{ fontSize: 14, color: "#FFC98A" }}>As fotos desta criança ainda não chegaram no Drive.</div>}

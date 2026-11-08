@@ -15,8 +15,9 @@ export const dynamic = "force-dynamic";
  * Mostra a placa de cada criança já com as fotos escolhidas pelo fotógrafo; a direção completa
  * os nomes, sobe a foto da turma e escolhe nas crianças em que ficou mais de uma opção.
  */
-export default async function PlacasFormatura({ params }: { params: Promise<{ chave: string }> }) {
+export default async function PlacasFormatura({ params, searchParams }: { params: Promise<{ chave: string }>; searchParams: Promise<{ aluno?: string }> }) {
   const { chave } = await params;
+  const { aluno } = await searchParams;
   if (!chavePlacaValida(chave)) notFound();
   const db = createAdminClient();
   const [{ data: conf }, { data: linhas }] = await Promise.all([
@@ -48,6 +49,7 @@ export default async function PlacasFormatura({ params }: { params: Promise<{ ch
     <div className={`${serif.variable} ${script.variable}`}>
     <PainelPlacas
       chave={chave}
+      foco={typeof aluno === "string" ? aluno : null}
       criancas={criancas}
       textos={{
         oradora: dados.oradora ?? "", juramentista: dados.juramentista ?? "",
