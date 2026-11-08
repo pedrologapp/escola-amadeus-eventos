@@ -189,6 +189,10 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
   }
 
   const so = foco ? criancas.find((c) => c.nome === foco) : null;
+  const pos = so ? criancas.indexOf(so) : -1;
+  const linkDe = (c?: Crianca) => (c ? `/formatura-2026/${chave}?aluno=${encodeURIComponent(c.nome)}` : `/formatura-2026/${chave}`);
+  const anterior = pos > 0 ? criancas[pos - 1] : undefined, proxima = pos >= 0 && pos < criancas.length - 1 ? criancas[pos + 1] : undefined;
+  const botaoNav = { display: "inline-flex", alignItems: "center", minHeight: 44, padding: "0 16px", borderRadius: 10, border: `1px solid ${C.borda}`, color: C.texto, textDecoration: "none", fontSize: 15 } as const;
   if (so) return (
     <div style={{ minHeight: "100vh", background: `radial-gradient(ellipse at 50% -10%, #12306A 0%, ${C.fundo} 55%)`, color: C.texto, fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif" }}>
       <div style={{ maxWidth: 1400, margin: "0 auto", padding: "28px 16px 60px", display: "flex", flexDirection: "column", gap: 20 }}>
@@ -198,7 +202,12 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
             <h1 style={{ margin: "4px 0 0", fontFamily: serif, fontWeight: 600, fontSize: 34 }}>{so.nome}</h1>
             <div style={{ color: C.suave }}>{so.turma}</div>
           </div>
-          <a href={`/formatura-2026/${chave}`} style={{ color: C.ouro, fontSize: 15 }}>‹ Todas as placas</a>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            <a href={`/formatura-2026/${chave}`} style={{ ...botaoNav, color: C.ouro }}>☰ Lista</a>
+            {anterior && <a href={linkDe(anterior)} style={botaoNav}>‹ Anterior</a>}
+            <span style={{ color: C.suave, fontSize: 14 }}>{pos + 1} de {criancas.length}</span>
+            {proxima && <a href={linkDe(proxima)} style={botaoNav}>Próxima ›</a>}
+          </div>
         </div>
         <div style={{ borderRadius: 12, overflow: "hidden" }}><Placa dados={dadosDe(so)} titulo={`Placa de ${so.nome}`} /></div>
         {semFotos(so) && <div style={{ fontSize: 16, color: "#FFC98A" }}>As fotos desta criança ainda não chegaram no Drive.</div>}
@@ -207,13 +216,21 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
           <Opcoes titulo="Foto de beca" fotos={so.beca} escolha={so.escolhaBeca} aoEscolher={(i) => mudar(so.nome, { beca: i })} />
           <Opcoes titulo="Foto com a família" fotos={so.familia} escolha={so.escolhaFamilia} aoEscolher={(i) => mudar(so.nome, { familia: i })} />
         </div>
-        {!semFotos(so) && (
-          <button type="button" onClick={() => mudar(so.nome, { aprovada: !so.aprovada })}
-            style={{ alignSelf: "flex-start", minHeight: 48, padding: "0 28px", borderRadius: 10, cursor: "pointer", fontWeight: 700, fontSize: 16,
-              border: so.aprovada ? `1px solid ${C.verde}` : 0, background: so.aprovada ? "transparent" : C.ouro, color: so.aprovada ? C.verde : "#14213D" }}>
-            {so.aprovada ? "Aprovada ✓ (tocar para desfazer)" : "Aprovar esta placa"}
-          </button>
-        )}
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          {!semFotos(so) && !so.aprovada && (
+            <button type="button" onClick={async () => { await mudar(so.nome, { aprovada: true }); window.location.href = linkDe(proxima); }}
+              style={{ minHeight: 50, padding: "0 28px", borderRadius: 10, cursor: "pointer", fontWeight: 700, fontSize: 16, border: 0, background: C.ouro, color: "#14213D" }}>
+              {proxima ? "Aprovar e ir para a próxima ›" : "Aprovar e voltar para a lista"}
+            </button>
+          )}
+          {!semFotos(so) && so.aprovada && (
+            <button type="button" onClick={() => mudar(so.nome, { aprovada: false })}
+              style={{ minHeight: 50, padding: "0 24px", borderRadius: 10, cursor: "pointer", fontWeight: 700, fontSize: 16, border: `1px solid ${C.verde}`, background: "transparent", color: C.verde }}>
+              Aprovada ✓ (tocar para desfazer)
+            </button>
+          )}
+          {(semFotos(so) || so.aprovada) && proxima && <a href={linkDe(proxima)} style={{ ...botaoNav, minHeight: 50 }}>Próxima ›</a>}
+        </div>
       </div>
     </div>
   );
@@ -264,29 +281,25 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
               </button>
             ))}
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 20 }}>
-            {visiveis.map((c) => (
-              <article key={c.nome} style={{ display: "flex", flexDirection: "column", gap: 12, padding: 14, borderRadius: 16, background: C.painel, border: `1px solid ${c.aprovada ? "rgba(127,209,168,.6)" : C.borda}` }}>
-                <a href={`/formatura-2026/${chave}?aluno=${encodeURIComponent(c.nome)}`} target="_blank" rel="noopener" style={{ display: "block", cursor: "zoom-in", borderRadius: 10, overflow: "hidden" }} aria-label={`Abrir a placa de ${c.nome} numa aba`}>
-                  <Placa dados={dadosDe(c)} titulo={`Placa de ${c.nome}`} />
+          <div style={{ display: "flex", flexDirection: "column", borderRadius: 16, overflow: "hidden", border: `1px solid ${C.borda}`, background: C.painel }}>
+            {visiveis.map((c, i) => {
+              const st = c.aprovada ? ["Aprovada ✓", C.verde] : semFotos(c) ? ["Sem fotos ainda", "#FFC98A"] : precisaEscolher(c) ? ["Escolher fotos", C.ouro] : ["Para aprovar", C.texto];
+              return (
+                <a key={c.nome} href={`/formatura-2026/${chave}?aluno=${encodeURIComponent(c.nome)}`}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "14px 18px", minHeight: 56, textDecoration: "none", color: C.texto,
+                    borderTop: i ? `1px solid rgba(227,194,122,.14)` : "none" }}>
+                  <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    <span style={{ fontFamily: serif, fontSize: 20, fontWeight: 600, lineHeight: 1.2 }}>{c.nome}</span>
+                    <span style={{ fontSize: 13, color: C.suave }}>{c.turma}</span>
+                  </span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 12, whiteSpace: "nowrap" }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: st[1], border: `1px solid ${st[1]}`, borderRadius: 999, padding: "4px 10px", opacity: .95 }}>{st[0]}</span>
+                    <span aria-hidden="true" style={{ color: C.ouro, fontSize: 22 }}>›</span>
+                  </span>
                 </a>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>
-                  <a href={`/formatura-2026/${chave}?aluno=${encodeURIComponent(c.nome)}`} target="_blank" rel="noopener" style={{ fontFamily: serif, fontSize: 21, fontWeight: 600, lineHeight: 1.2, color: C.texto, textDecoration: "none" }}>{c.nome}</a>
-                  <div style={{ fontSize: 13, color: C.suave, whiteSpace: "nowrap" }}>{c.turma}</div>
-                </div>
-                {semFotos(c) && <div style={{ fontSize: 14, color: "#FFC98A" }}>As fotos desta criança ainda não chegaram no Drive.</div>}
-                {c.observacao && !semFotos(c) && <div style={{ fontSize: 14, color: C.suave }}>{c.observacao}</div>}
-                <Opcoes titulo="Foto de beca" fotos={c.beca} escolha={c.escolhaBeca} aoEscolher={(i) => mudar(c.nome, { beca: i })} />
-                <Opcoes titulo="Foto com a família" fotos={c.familia} escolha={c.escolhaFamilia} aoEscolher={(i) => mudar(c.nome, { familia: i })} />
-                {!semFotos(c) && (
-                  <button type="button" onClick={() => mudar(c.nome, { aprovada: !c.aprovada })}
-                    style={{ minHeight: 44, borderRadius: 10, cursor: "pointer", fontWeight: 700, fontSize: 15,
-                      border: c.aprovada ? `1px solid ${C.verde}` : 0, background: c.aprovada ? "transparent" : C.ouro, color: c.aprovada ? C.verde : "#14213D" }}>
-                    {c.aprovada ? "Aprovada ✓ (tocar para desfazer)" : "Aprovar esta placa"}
-                  </button>
-                )}
-              </article>
-            ))}
+              );
+            })}
+            {!visiveis.length && <div style={{ padding: 20, color: C.suave }}>Nenhuma criança neste filtro.</div>}
           </div>
         </section>
       </div>
