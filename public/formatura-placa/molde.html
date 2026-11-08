@@ -223,7 +223,7 @@
 
   const Lst = document.getElementById('lista');
   function montarLista(nCols) {
-    Lst.innerHTML = ''; const por = Math.ceil(alunos.length / nCols); Lst.style.gap = (nCols === 3 ? 12 : 24) + 'px'; Lst.style.left = (nCols === 3 ? 1018 : 1040) + 'px';
+    Lst.innerHTML = ''; const por = Math.ceil(alunos.length / nCols); Lst.style.gap = (nCols === 3 ? 8 : 20) + 'px'; Lst.style.left = (nCols === 3 ? 1018 : 1040) + 'px';
     for (let c = 0; c < nCols; c++) {
       const col = document.createElement('div'); col.className = 'col';
       col.innerHTML = alunos.slice(c * por, c * por + por).map(n => `<div class="${n === homenageado ? 'eu' : ''}">${n}</div>`).join('');
@@ -293,7 +293,7 @@
     // lista dos colegas (as duas colunas no mesmo tamanho)
     // a turma inteira vai na lista: testa 2 e 3 colunas e fica com a que deixa a letra maior (sem sair do painel nem encostar na foto de beca)
     function ajustar(nCols) { montarLista(nCols); const cols = [...Lst.children]; let fl = 37;
-      const cabe = () => cols.every((c) => dentro(c, 10)) && Lst.getBoundingClientRect().bottom - base.top <= 1250;
+      const cabe = () => cols.every((c) => dentro(c, 4)) && Lst.getBoundingClientRect().bottom - base.top <= 1250;
       cols.forEach((c) => tam(c, fl, 1.1)); while (fl > 18 && !cabe()) { fl--; cols.forEach((c) => tam(c, fl, 1.1)); } return fl; }
     const f2 = ajustar(2), f3 = alunos.length > 8 ? ajustar(3) : 0; if (f2 >= f3) ajustar(2);
     const fimLista = Lst.getBoundingClientRect().bottom - base.top; const pr = document.querySelector('.prof'); pr.style.top = Math.max(1262, fimLista + 22) + 'px';
