@@ -177,7 +177,8 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
     };
   };
 
-  const semFotos = (c: Crianca) => !c.beca.length || !c.familia.length;
+  // sem a foto de beca não há placa; sem a da família a placa sai com o espaço vazio e um aviso (observacao)
+  const semFotos = (c: Crianca) => !c.beca.length;
   const precisaEscolher = (c: Crianca) => !semFotos(c) && (c.beca.length > 1 || c.familia.length > 1) && !c.aprovada;
   const visiveis = criancas.filter((c) => filtro === "todas" ? true : filtro === "escolher" ? precisaEscolher(c) : filtro === "sem" ? semFotos(c) : c.aprovada);
   const contar = { todas: criancas.length, escolher: criancas.filter(precisaEscolher).length, sem: criancas.filter(semFotos).length, aprovadas: criancas.filter((c) => c.aprovada).length };

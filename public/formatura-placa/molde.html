@@ -245,7 +245,7 @@
   C.style.top = (linhas.length > 1 ? 1418 : 1478) + 'px';
 
   Promise.all([document.fonts.ready, ...(window.__imagens || [])]).then(() => {
-    while (C.offsetWidth > 820 && f > 64) { f--; C.style.fontSize = f + 'px'; }
+    while (C.offsetWidth > 730 && f > 64) { f--; C.style.fontSize = f + 'px'; }
     let fl = 23; const cols = [...Lst.children];
     while (Lst.scrollWidth > 1014 && fl > 20) { fl--; cols.forEach(c => c.style.fontSize = fl + 'px'); }
     const fimLista = Lst.getBoundingClientRect().bottom; const pr = document.querySelector('.prof'); if (fimLista > 1240) pr.style.top = (fimLista + 26) + 'px'; document.body.dataset.pronto = '1';
