@@ -25,8 +25,8 @@
   .ouro { background: var(--ouro); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
   .ano { left: 196px; top: 222px; font: 700 128px/1 'Cinzel', serif; letter-spacing: .04em; filter: drop-shadow(0 3px 5px rgba(0,0,0,.55)); }
-  .aos { left: 405px; top: 410px; font: 400 70px/1.1 'Great Vibes', cursive; filter: drop-shadow(0 2px 3px rgba(0,0,0,.4)); white-space: nowrap; }
-  .ded { left: 425px; top: 520px; width: 430px; font: italic 500 38px/52px 'Cormorant Garamond', serif; color: var(--marfim); }
+  .aos { left: 425px; top: 400px; font: 400 84px/1.1 'Great Vibes', cursive; filter: drop-shadow(0 2px 3px rgba(0,0,0,.4)); white-space: nowrap; }
+  .ded { left: 432px; top: 512px; width: 440px; font: italic 500 46px/62px 'Cormorant Garamond', serif; color: var(--marfim); }
 
   /* cantos chanfrados (art déco) */
   .ch { clip-path: polygon(var(--c) 0, calc(100% - var(--c)) 0, 100% var(--c), 100% calc(100% - var(--c)), calc(100% - var(--c)) 100%, var(--c) 100%, 0 calc(100% - var(--c)), 0 var(--c)); }
@@ -43,8 +43,8 @@
 
   .aba-out { --c: 20px; width: 100%; height: 100%; padding: 1.5px; background: rgba(227,194,122,.55); }
   .aba-in { --c: 19.4px; width: 100%; height: 100%; background: linear-gradient(180deg, #0B2A5C 0%, #071A3A 100%); }
-  .turma { z-index: 6; text-shadow: 0 3px 10px rgba(0,8,30,.75); left: 1230px; top: 430px; font: 600 84px/1.2 'Cormorant Garamond', serif; letter-spacing: .02em; white-space: nowrap; }
-  .turma .script { font: 400 70px/1 'Great Vibes', cursive; letter-spacing: 0; margin-right: 22px; padding: 6px 4px; filter: drop-shadow(0 2px 3px rgba(0,0,0,.45)); }
+  .turma-rot { right: 1196px; top: 262px; font: 400 104px/1.3 'Great Vibes', cursive; color: #fff; white-space: nowrap; text-shadow: 0 3px 8px rgba(0,0,0,.55); padding: 0 10px; }
+  .turma-nome { left: 1318px; top: 236px; font: 600 104px/1.3 'Cormorant Garamond', serif; letter-spacing: .02em; white-space: nowrap; filter: drop-shadow(0 3px 4px rgba(0,8,30,.6)); }
   .so-escuro { -webkit-mask: url(fundo-gala.png) 0 0 / 2400px 1782px no-repeat, url(mascara-paineis.png) 0 0 / 2400px 1782px no-repeat;
                -webkit-mask-composite: xor; mask: url(fundo-gala.png) 0 0 / 2400px 1782px no-repeat exclude, url(mascara-paineis.png) 0 0 / 2400px 1782px no-repeat; }
 
@@ -53,20 +53,20 @@
   .selo .disco { width: 100%; height: 100%; border-radius: 50%; overflow: hidden; }
   .selo img { width: 100%; height: 100%; display: block; }
 
-  .equipe { left: 1965px; top: 446px; width: 410px; display: flex; flex-direction: column; align-items: center; gap: 28px; text-align: center; }
-  .cargo b { display: block; font: 600 22px 'Cormorant SC', serif; letter-spacing: .22em; color: var(--ouro-solido); opacity: .92; margin-bottom: 4px; }
-  .cargo span { display: block; font: 600 28px/33px 'Cormorant Garamond', serif; color: #fff; }
+  .equipe { left: 2000px; top: 436px; width: 450px; display: flex; flex-direction: column; align-items: center; gap: 22px; text-align: center; }
+  .cargo b { display: block; font: 700 27px 'Cormorant SC', serif; letter-spacing: .22em; color: var(--ouro-solido); opacity: .92; margin-bottom: 4px; }
+  .cargo span { display: block; font: 600 36px/42px 'Cormorant Garamond', serif; color: #fff; }
   .cargo span.vazio { color: rgba(243,238,226,.45); font-style: italic; }
 
-  .lista { left: 1050px; top: 962px; width: 1014px; display: flex; justify-content: space-between; gap: 30px; }
-  .col { font: 600 23px/34px 'Cormorant Garamond', serif; letter-spacing: .01em; white-space: nowrap; padding-left: 14px; border-left: 1px solid rgba(227,194,122,.3); }
+  .lista { left: 1040px; top: 952px; display: flex; gap: 46px; }
+  .col { font: 600 35px/47px 'Cormorant Garamond', serif; letter-spacing: .01em; white-space: nowrap; padding-left: 30px; border-left: 1px solid rgba(227,194,122,.3); }
   .col:first-child { border-left: 0; padding-left: 0; }
   .col .eu { color: #EFD18A; }
 
-  .prof { left: 1238px; top: 1262px; width: 760px; display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
-  .prof b { font: 600 22px 'Cormorant SC', serif; letter-spacing: .22em; color: var(--ouro-solido); margin-top: 12px; }
+  .prof { left: 1238px; top: 1262px; width: 780px; display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
+  .prof b { font: 700 27px 'Cormorant SC', serif; letter-spacing: .22em; color: var(--ouro-solido); margin-top: 12px; }
   .prof b:first-child { margin-top: 0; }
-  .prof span { font: 600 26px/34px 'Cormorant Garamond', serif; }
+  .prof span { font: 600 36px/44px 'Cormorant Garamond', serif; }
   .prof span.vazio { color: rgba(243,238,226,.45); font-style: italic; }
 
   .crianca { left: 1238px; top: 1446px; font: 400 96px/1.18 'Great Vibes', cursive; white-space: nowrap; filter: drop-shadow(0 2px 4px rgba(0,0,10,.45)); padding: 14px 24px 14px; }
@@ -87,8 +87,7 @@
   <div class="sombra" style="left:700px;top:412px;width:1060px;height:502px"><div class="ch m1"><div class="ch m2"><div class="ch m3"><div class="ch m4"><div class="ch foto" id="foto-turma">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
     Foto da turma<small>com as professoras</small></div></div></div></div></div></div>
-  <div style="position:absolute;left:718px;top:430px;width:1024px;height:150px;z-index:5;border-radius:6px 6px 0 0;background:linear-gradient(180deg,rgba(6,22,48,.92) 0%,rgba(6,22,48,.6) 55%,rgba(6,22,48,0) 100%)"></div>
-  <div class="t c turma"><span class="script ouro">Turma</span><span id="turma-nome">Grupo V · A</span></div>
+  <div class="t turma-rot">Turma</div><div class="t turma-nome ouro" id="turma-nome">Grupo V · A</div>
 
   <div class="sombra" style="left:210px;top:930px;width:440px;height:566px"><div class="ch m1"><div class="ch m2"><div class="ch m3"><div class="ch m4"><div class="ch foto" id="foto-familia">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
@@ -98,7 +97,7 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
     Foto<br>de beca</div></div></div></div></div></div>
 
-  <div class="selo" style="left:1862px;top:196px;width:212px;height:212px"><div class="anel"><div class="disco"><img src="logo-900.png"></div></div></div>
+  <div class="selo" style="left:1894px;top:196px;width:212px;height:212px"><div class="anel"><div class="disco"><img src="logo-900.png"></div></div></div>
 
   <div class="t c equipe">
     <div class="cargo"><b>Diretora</b><span>Maria das Graças de O. Gomes</span></div>
@@ -115,7 +114,7 @@
   </div>
 
   <div class="t c crianca ouro" id="crianca"></div>
-  <div class="selo" style="left:1192px;top:1656px;width:94px;height:94px;padding:4px"><div class="anel" style="padding:2px"><div class="disco"><img src="logo-900.png"></div></div></div>
+  <div class="selo" id="selo-baixo" style="left:1196px;top:1674px;width:86px;height:86px;padding:4px"><div class="anel" style="padding:2px"><div class="disco"><img src="logo-900.png"></div></div></div>
 </div>
 <script>
   // ---------- ornamentos tom sobre tom: guilloché + faixa de ondas + um ramo de louro em relevo ----------
@@ -222,8 +221,8 @@
   }
   window.__imagens = [...document.images].map(i => i.decode().catch(() => {}));
 
-  const Lst = document.getElementById('lista'); const por = Math.ceil(alunos.length / 3);
-  for (let c = 0; c < 3; c++) {
+  const Lst = document.getElementById('lista'); const por = Math.ceil(alunos.length / 2);
+  for (let c = 0; c < 2; c++) {
     const col = document.createElement('div'); col.className = 'col';
     col.innerHTML = alunos.slice(c * por, c * por + por).map(n => `<div class="${n === homenageado ? 'eu' : ''}">${n}</div>`).join('');
     Lst.appendChild(col);
@@ -243,14 +242,63 @@
   }
   const linhas = quebrar(homenageado);
   C.innerHTML = linhas.join('<br>');
-  let f = linhas.length > 1 ? 84 : 96; C.style.fontSize = f + 'px';
-  C.style.top = (linhas.length > 1 ? 1418 : 1478) + 'px';
+  let f = linhas.length > 1 ? 96 : 116; C.style.fontSize = f + 'px';
 
-  Promise.all([document.fonts.ready, ...(window.__imagens || [])]).then(() => {
-    while (C.offsetWidth > 730 && f > 64) { f--; C.style.fontSize = f + 'px'; }
-    let fl = 23; const cols = [...Lst.children];
-    while (Lst.scrollWidth > 1014 && fl > 20) { fl--; cols.forEach(c => c.style.fontSize = fl + 'px'); }
-    const fimLista = Lst.getBoundingClientRect().bottom; const pr = document.querySelector('.prof'); if (fimLista > 1240) pr.style.top = (fimLista + 26) + 'px'; document.body.dataset.pronto = '1';
+  // ---------- REGRA: nenhum texto sai da placa azul-clara nem encosta nas fotos ----------
+  // Cada linha de texto é medida e conferida ponto a ponto contra a máscara dos painéis (mascara-paineis.png);
+  // se algum ponto cair fora (ou sobre uma foto), a letra daquele bloco diminui até caber.
+  const FOTOS = [[684, 396, 1774, 930], [200, 920, 660, 1506], [1612, 1236, 1962, 1746]];
+  let mascara = null;
+  function carregarMascara() {
+    return new Promise((ok) => {
+      const im = new Image(); im.onload = () => {
+        try { const cv = document.createElement('canvas'); cv.width = 2400; cv.height = 1782; const cx = cv.getContext('2d');
+          cx.drawImage(im, 0, 0, 2400, 1782); mascara = cx.getImageData(0, 0, 2400, 1782).data; } catch (e) { mascara = null; }
+        ok();
+      }; im.onerror = () => ok(); im.src = 'mascara-paineis.png';
+    });
+  }
+  const noPainel = (x, y) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= 2400 || y >= 1782) return false;
+    if (FOTOS.some(([a, b, c, d]) => x >= a && x <= c && y >= b && y <= d)) return false;
+    return !mascara || mascara[(y * 2400 + x) * 4 + 3] > 128; };
+  const base = document.querySelector('.p').getBoundingClientRect();
+  function dentro(el, folga = 16) {
+    const r = document.createRange(); r.selectNodeContents(el);
+    for (const q of r.getClientRects()) {
+      if (q.width < 2) continue;
+      const x0 = q.left - base.left - folga, x1 = q.right - base.left + folga, y0 = q.top - base.top - folga / 2, y1 = q.bottom - base.top + folga / 2;
+      for (let x = x0; x <= x1 + 1; x += Math.max(8, (x1 - x0) / 40)) if (!noPainel(Math.min(x, x1), y0) || !noPainel(Math.min(x, x1), y1)) return false;
+      if (!noPainel(x0, (y0 + y1) / 2) || !noPainel(x1, (y0 + y1) / 2)) return false;
+    }
+    return true;
+  }
+  const tam = (el, f, lh) => { el.style.fontSize = f + 'px'; if (lh) el.style.lineHeight = Math.round(f * lh) + 'px'; };
+  function encaixar(el, f, min, lh, extra, folga = 16) { tam(el, f, lh); while (f > min && ((extra && !extra()) || !dentro(el, folga))) tam(el, --f, lh); return f; }
+
+  Promise.all([document.fonts.ready, carregarMascara(), ...(window.__imagens || [])]).then(() => {
+    // dedicatória: a maior que cabe até perto da foto da família
+    const ded = document.getElementById('dedicatoria');
+    encaixar(ded, 64, 34, 1.34, () => ded.getBoundingClientRect().bottom - base.top <= 902);
+    // direção: cada nome no maior tamanho que fica dentro do painel
+    document.querySelectorAll('.cargo span').forEach((s) => encaixar(s, 36, 24, 1.17, null, 6));
+    // turma: "Grupo V · A" em dourado dentro do painel claro acima da foto
+    // as duas palavras assentam na mesma linha de base, logo acima da moldura da foto
+    const tn = document.getElementById('turma-nome'), tr = document.querySelector('.turma-rot');
+    const assenta = (el, chao) => { el.style.top = '0px'; const q = el.getBoundingClientRect(); el.style.top = Math.round(chao - (q.bottom - base.top)) + 'px'; };
+    encaixar(tn, 110, 50, 1, () => { assenta(tn, 376); return true; }, 8); assenta(tn, 376);
+    tam(tr, Math.round(parseFloat(tn.style.fontSize) * 1.05), 1); assenta(tr, 392);
+    // lista dos colegas (as duas colunas no mesmo tamanho)
+    const cols = [...Lst.children]; let fl = 37;
+    const listaCabe = () => cols.every((c) => dentro(c, 10));
+    cols.forEach((c) => tam(c, fl, 1.32));
+    while (fl > 22 && !listaCabe()) { fl--; cols.forEach((c) => tam(c, fl, 1.32)); }
+    const fimLista = Lst.getBoundingClientRect().bottom - base.top; const pr = document.querySelector('.prof'); pr.style.top = Math.max(1262, fimLista + 22) + 'px';
+    pr.querySelectorAll('span').forEach((s) => encaixar(s, 36, 22, 1.22));
+    // nome da criança: o maior possível entre os professores e o selo de baixo, sem sair do painel
+    const LIM = 1676, topo = pr.getBoundingClientRect().bottom - base.top - 4;
+    const posiciona = () => { C.style.top = Math.round(topo + (LIM - topo - C.offsetHeight) / 2) + 'px'; return C.offsetHeight <= LIM - topo; };
+    tam(C, f); while (f > 56 && !(posiciona() && dentro(C, 8))) tam(C, --f);
+    posiciona(); document.body.dataset.pronto = '1';
   });
 </script>
 </body></html>
