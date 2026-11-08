@@ -35,6 +35,8 @@ export interface DadosPlaca {
   foto_turma_b?: string;
   sugestoes_turma_a?: string[]; // fotos de turma sugeridas pelo fotógrafo (caminhos no storage)
   sugestoes_turma_b?: string[];
+  turma_a_aprovada?: boolean;
+  turma_b_aprovada?: boolean;
 }
 
 const CAMPOS_TEXTO = ["oradora", "juramentista", "professora_a", "professora_b", "demais"] as const;

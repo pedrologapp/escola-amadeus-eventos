@@ -43,7 +43,7 @@
 
   .aba-out { --c: 20px; width: 100%; height: 100%; padding: 1.5px; background: rgba(227,194,122,.55); }
   .aba-in { --c: 19.4px; width: 100%; height: 100%; background: linear-gradient(180deg, #0B2A5C 0%, #071A3A 100%); }
-  .turma { left: 1230px; top: 430px; font: 600 84px/1.2 'Cormorant Garamond', serif; letter-spacing: .02em; white-space: nowrap; }
+  .turma { z-index: 6; text-shadow: 0 3px 10px rgba(0,8,30,.75); left: 1230px; top: 430px; font: 600 84px/1.2 'Cormorant Garamond', serif; letter-spacing: .02em; white-space: nowrap; }
   .turma .script { font: 400 70px/1 'Great Vibes', cursive; letter-spacing: 0; margin-right: 22px; padding: 6px 4px; filter: drop-shadow(0 2px 3px rgba(0,0,0,.45)); }
   .so-escuro { -webkit-mask: url(fundo-gala.png) 0 0 / 2400px 1782px no-repeat, url(mascara-paineis.png) 0 0 / 2400px 1782px no-repeat;
                -webkit-mask-composite: xor; mask: url(fundo-gala.png) 0 0 / 2400px 1782px no-repeat exclude, url(mascara-paineis.png) 0 0 / 2400px 1782px no-repeat; }
@@ -82,11 +82,13 @@
   <div class="t c ded" id="dedicatoria">Pelo amor, pela paciência e por cada passo dado ao nosso lado, dedicamos a vocês esta conquista. Com gratidão.</div>
 
   <div class="sombra" style="left:690px;top:402px;width:1080px;height:522px"><div class="ch aba-out"><div class="ch aba-in"></div></div></div>
-  <div class="t c turma"><span class="script ouro">Turma</span><span id="turma-nome">Grupo V · A</span></div>
+  
 
-  <div class="sombra" style="left:704px;top:540px;width:1052px;height:368px"><div class="ch m1"><div class="ch m2"><div class="ch m3"><div class="ch m4"><div class="ch foto" id="foto-turma">
+  <div class="sombra" style="left:700px;top:412px;width:1060px;height:502px"><div class="ch m1"><div class="ch m2"><div class="ch m3"><div class="ch m4"><div class="ch foto" id="foto-turma">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
     Foto da turma<small>com as professoras</small></div></div></div></div></div></div>
+  <div style="position:absolute;left:718px;top:430px;width:1024px;height:150px;z-index:5;border-radius:6px 6px 0 0;background:linear-gradient(180deg,rgba(6,22,48,.92) 0%,rgba(6,22,48,.6) 55%,rgba(6,22,48,0) 100%)"></div>
+  <div class="t c turma"><span class="script ouro">Turma</span><span id="turma-nome">Grupo V · A</span></div>
 
   <div class="sombra" style="left:210px;top:930px;width:440px;height:566px"><div class="ch m1"><div class="ch m2"><div class="ch m3"><div class="ch m4"><div class="ch foto" id="foto-familia">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>

@@ -50,6 +50,12 @@ export async function salvarFotoTurma(chave: string, turma: "a" | "b", path: str
   return { ok: true as const, url: assinada?.signedUrl ?? null };
 }
 
+/** A direção aprova (ou desfaz a aprovação) da foto da turma que está na placa. */
+export async function aprovarFotoTurma(chave: string, turma: "a" | "b", aprovada: boolean) {
+  if (!chavePlacaValida(chave) || (turma !== "a" && turma !== "b")) return negado;
+  return gravarDados({ ...(await lerDados()), [turma === "a" ? "turma_a_aprovada" : "turma_b_aprovada"]: !!aprovada });
+}
+
 /** Usa uma das fotos de turma sugeridas pelo fotógrafo (sem apagar as outras sugestões). */
 export async function escolherFotoTurma(chave: string, turma: "a" | "b", indice: number) {
   if (!chavePlacaValida(chave) || (turma !== "a" && turma !== "b")) return negado;

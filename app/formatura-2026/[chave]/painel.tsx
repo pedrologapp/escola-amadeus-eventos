@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { escolherFotoTurma, prepararFotoTurma, salvarCampo, salvarEscolha, salvarFotoTurma } from "./actions";
+import { aprovarFotoTurma, escolherFotoTurma, prepararFotoTurma, salvarCampo, salvarEscolha, salvarFotoTurma } from "./actions";
 
 export interface Crianca {
   nome: string;
@@ -71,11 +71,37 @@ function Campo({ chave, campo, rotulo, valor, dica, longo }: { chave: string; ca
 
 type Sugestao = { url: string; atual: boolean };
 
-function FotoTurma({ chave, turma, url, aoMudar, sugestoes: s0 = [] }: { chave: string; turma: "a" | "b"; url: string; aoMudar: (u: string) => void; sugestoes?: Sugestao[] }) {
+const botaoSec = { minHeight: 44, borderRadius: 10, border: `1px solid ${C.borda}`, background: "transparent", color: C.texto, fontWeight: 700, fontSize: 14, cursor: "pointer", padding: "0 8px" } as const;
+
+/** Foto inteira, grande, por cima da página. */
+function interia(aberta: boolean, url: string, fechar: () => void) {
+  if (!aberta || !url) return null;
+  return (
+    <div role="dialog" aria-modal="true" aria-label="Foto da turma inteira" onClick={fechar}
+      style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(3,8,20,.94)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, padding: 12 }}>
+      <img src={url} alt="Foto da turma inteira" style={{ maxWidth: "98vw", maxHeight: "82vh", borderRadius: 8, boxShadow: "0 20px 60px rgba(0,0,0,.6)" }} />
+      <button type="button" onClick={fechar} style={{ ...botaoSec, padding: "0 24px" }}>Fechar</button>
+    </div>
+  );
+}
+
+function FotoTurma({ chave, turma, url, aoMudar, sugestoes: s0 = [], aprovada: ap0 = false }: { chave: string; turma: "a" | "b"; url: string; aoMudar: (u: string) => void; sugestoes?: Sugestao[]; aprovada?: boolean }) {
   const [estado, setEstado] = useState("");
   const [sugestoes, setSugestoes] = useState(s0);
   const [ver, setVer] = useState<number | null>(null);
+  const [inteira, setInteira] = useState(false);
+  const [aprovada, setAprovada] = useState(ap0);
   const input = useRef<HTMLInputElement>(null);
+  async function aprovar(v: boolean) {
+    setAprovada(v);
+    const r = await aprovarFotoTurma(chave, turma, v);
+    if (!r.ok) { setAprovada(!v); setEstado(r.erro); }
+  }
+  // trocar: abre a próxima sugestão do fotógrafo; sem sugestões, escolhe uma foto do celular
+  function trocar() {
+    if (sugestoes.length > 1) { const atual = sugestoes.findIndex((s) => s.atual); setVer((atual + 1) % sugestoes.length); }
+    else input.current?.click();
+  }
   async function usar(i: number) {
     setEstado("salvando…");
     const r = await escolherFotoTurma(chave, turma, i);
@@ -127,14 +153,26 @@ function FotoTurma({ chave, turma, url, aoMudar, sugestoes: s0 = [] }: { chave: 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 16, borderRadius: 14, border: `1px solid ${C.borda}`, background: "rgba(255,255,255,.04)" }}>
       <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 600 }}>Grupo V · {turma.toUpperCase()}</div>
-      <div style={{ aspectRatio: "1052 / 372", borderRadius: 8, overflow: "hidden", background: "#0A2350", display: "flex", alignItems: "center", justifyContent: "center", color: C.suave, fontSize: 14 }}>
+      <button type="button" onClick={() => url && setInteira(true)} disabled={!url} aria-label="Ver a foto da turma inteira"
+        style={{ padding: 0, border: aprovada ? `2px solid ${C.verde}` : 0, aspectRatio: "1052 / 372", borderRadius: 8, overflow: "hidden", background: "#0A2350", display: "flex", alignItems: "center", justifyContent: "center", color: C.suave, fontSize: 14, cursor: url ? "zoom-in" : "default" }}>
         {url ? <img src={url} alt={`Foto da turma ${turma.toUpperCase()}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : "sem foto ainda"}
-      </div>
+      </button>
+      {url && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8 }}>
+          <button type="button" onClick={() => setInteira(true)} style={botaoSec}>Ver foto inteira</button>
+          <button type="button" onClick={trocar} style={botaoSec}>Trocar foto</button>
+          <button type="button" onClick={() => aprovar(!aprovada)}
+            style={aprovada ? { ...botaoSec, borderColor: C.verde, color: C.verde } : { ...botaoSec, border: 0, background: C.ouro, color: "#14213D" }}>
+            {aprovada ? "Aprovada ✓" : "Aprovar"}
+          </button>
+        </div>
+      )}
+      {interia(inteira, url, () => setInteira(false))}
       {listaSug}
       <input ref={input} type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) enviar(f); e.target.value = ""; }} />
       <button type="button" onClick={() => input.current?.click()}
-        style={{ minHeight: 44, borderRadius: 10, border: 0, background: C.ouro, color: "#14213D", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
-        {sugestoes.length ? "Enviar outra foto da turma" : url ? "Trocar a foto da turma" : "Enviar a foto da turma"}
+        style={url ? { ...botaoSec, minHeight: 40, fontSize: 14 } : { minHeight: 44, borderRadius: 10, border: 0, background: C.ouro, color: "#14213D", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
+        {url ? "Enviar outra foto do celular" : "Enviar a foto da turma"}
       </button>
       {estado && <span style={{ fontSize: 13, color: estado.includes("✓") ? C.verde : C.suave }}>{estado}</span>}
     </div>
@@ -192,7 +230,7 @@ function Opcoes({ titulo, fotos, escolha, aoEscolher }: { titulo: string; fotos:
   );
 }
 
-export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoTurma: ft0, sugestoes }: { chave: string; foco: string | null; criancas: Crianca[]; textos: Textos; fotoTurma: { a: string; b: string }; sugestoes?: { a: Sugestao[]; b: Sugestao[] } }) {
+export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoTurma: ft0, sugestoes, turmaAprovada }: { chave: string; foco: string | null; criancas: Crianca[]; textos: Textos; fotoTurma: { a: string; b: string }; sugestoes?: { a: Sugestao[]; b: Sugestao[] }; turmaAprovada?: { a: boolean; b: boolean } }) {
   const [criancas, setCriancas] = useState(inicial);
   const [textos, setTextos] = useState(t0);
   const [fotoTurma, setFotoTurma] = useState(ft0);
@@ -309,8 +347,8 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
           <h2 style={{ margin: 0, fontFamily: serif, fontSize: 28, fontWeight: 600 }}>2. Foto de cada turma</h2>
           <p style={{ margin: 0, color: C.suave }}>A foto da turma com as professoras. Pode ser tirada do celular, na maior qualidade.</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
-            <FotoTurma chave={chave} turma="a" sugestoes={sugestoes?.a} url={fotoTurma.a} aoMudar={(u) => setFotoTurma((x) => ({ ...x, a: u }))} />
-            <FotoTurma chave={chave} turma="b" sugestoes={sugestoes?.b} url={fotoTurma.b} aoMudar={(u) => setFotoTurma((x) => ({ ...x, b: u }))} />
+            <FotoTurma chave={chave} turma="a" aprovada={turmaAprovada?.a} sugestoes={sugestoes?.a} url={fotoTurma.a} aoMudar={(u) => setFotoTurma((x) => ({ ...x, a: u }))} />
+            <FotoTurma chave={chave} turma="b" aprovada={turmaAprovada?.b} sugestoes={sugestoes?.b} url={fotoTurma.b} aoMudar={(u) => setFotoTurma((x) => ({ ...x, b: u }))} />
           </div>
         </section>
 
