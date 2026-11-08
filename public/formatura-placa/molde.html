@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="robots" content="noindex"><title>Placa de formatura</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Cormorant+SC:wght@600;700&family=Great+Vibes&family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ouro: linear-gradient(180deg, #F7E7B0 0%, #E3C27A 35%, #D9AE4E 60%, #B07F26 100%);
+    --ouro-filete: linear-gradient(135deg, #8A6A1F 0%, #F3D77A 45%, #B8892B 70%, #6E5216 100%);
+    --foil: conic-gradient(from 210deg, #6E5216, #F3D77A 18%, #B8892B 35%, #FFF3C4 50%, #B8892B 65%, #F3D77A 82%, #6E5216);
+    --marfim: #F3EEE2;
+    --ouro-solido: #E3C27A;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: transparent; }
+  .p { position: relative; width: 2400px; height: 1782px; background: url(fundo-gala.png) no-repeat 0 0 / 2400px 1782px; color: #fff; overflow: hidden; }
+  .acab { position: absolute; inset: 0; pointer-events: none; }
+  .so-recorte { -webkit-mask: url(fundo-gala.png) 0 0 / 2400px 1782px no-repeat; mask: url(fundo-gala.png) 0 0 / 2400px 1782px no-repeat; }
+  .so-paineis { -webkit-mask: url(mascara-paineis.png) 0 0 / 2400px 1782px no-repeat; mask: url(mascara-paineis.png) 0 0 / 2400px 1782px no-repeat; }
+  .textura { opacity: .06; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='300' height='300' filter='url(%23n)'/></svg>"); }
+  .ornato svg { position: absolute; inset: 0; width: 2400px; height: 1782px; }
+
+  .t { position: absolute; }
+  .c { transform: translateX(-50%); text-align: center; }
+  .ouro { background: var(--ouro); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  .ano { left: 196px; top: 222px; font: 700 128px/1 'Cinzel', serif; letter-spacing: .04em; filter: drop-shadow(0 3px 5px rgba(0,0,0,.55)); }
+  .aos { left: 405px; top: 410px; font: 400 70px/1.1 'Great Vibes', cursive; filter: drop-shadow(0 2px 3px rgba(0,0,0,.4)); white-space: nowrap; }
+  .ded { left: 425px; top: 520px; width: 430px; font: italic 500 38px/52px 'Cormorant Garamond', serif; color: var(--marfim); }
+
+  /* cantos chanfrados (art déco) */
+  .ch { clip-path: polygon(var(--c) 0, calc(100% - var(--c)) 0, 100% var(--c), 100% calc(100% - var(--c)), calc(100% - var(--c)) 100%, var(--c) 100%, 0 calc(100% - var(--c)), 0 var(--c)); }
+  .sombra { position: absolute; filter: drop-shadow(0 14px 22px rgba(0,0,0,.5)) drop-shadow(0 2px 3px rgba(0,0,0,.35)); }
+  .m1 { --c: 16px; width: 100%; height: 100%; padding: 1px; background: rgba(201,165,90,.6); }
+  .m2 { --c: 15.6px; width: 100%; height: 100%; padding: 5px; background: #0A2350; }
+  .m3 { --c: 13.5px; width: 100%; height: 100%; padding: 3px; background: var(--foil); }
+  .m4 { --c: 12px; width: 100%; height: 100%; padding: 9px; background: #061630; }
+  .foto { --c: 8.5px; width: 100%; height: 100%; background: radial-gradient(ellipse at 50% 40%, #12346E, #0A2350 70%);
+          display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: rgba(227,194,122,.85);
+          font: 600 30px 'Cormorant SC', serif; letter-spacing: .12em; text-align: center; }
+  .foto small { font: italic 500 26px 'Cormorant Garamond', serif; letter-spacing: 0; color: rgba(243,238,226,.6); }
+  .foto svg { width: 64px; height: 64px; }
+
+  .aba-out { --c: 20px; width: 100%; height: 100%; padding: 1.5px; background: rgba(227,194,122,.55); }
+  .aba-in { --c: 19.4px; width: 100%; height: 100%; background: linear-gradient(180deg, #0B2A5C 0%, #071A3A 100%); }
+  .turma { left: 1230px; top: 430px; font: 600 84px/1.2 'Cormorant Garamond', serif; letter-spacing: .02em; white-space: nowrap; }
+  .turma .script { font: 400 70px/1 'Great Vibes', cursive; letter-spacing: 0; margin-right: 22px; padding: 6px 4px; filter: drop-shadow(0 2px 3px rgba(0,0,0,.45)); }
+  .so-escuro { -webkit-mask: url(fundo-gala.png) 0 0 / 2400px 1782px no-repeat, url(mascara-paineis.png) 0 0 / 2400px 1782px no-repeat;
+               -webkit-mask-composite: xor; mask: url(fundo-gala.png) 0 0 / 2400px 1782px no-repeat exclude, url(mascara-paineis.png) 0 0 / 2400px 1782px no-repeat; }
+
+  .selo { position: absolute; border-radius: 50%; padding: 6px; background: var(--foil); box-shadow: 0 10px 24px rgba(0,0,0,.5); }
+  .selo .anel { width: 100%; height: 100%; border-radius: 50%; padding: 3px; background: #061E47; }
+  .selo .disco { width: 100%; height: 100%; border-radius: 50%; overflow: hidden; }
+  .selo img { width: 100%; height: 100%; display: block; }
+
+  .equipe { left: 1965px; top: 446px; width: 410px; display: flex; flex-direction: column; align-items: center; gap: 28px; text-align: center; }
+  .cargo b { display: block; font: 600 22px 'Cormorant SC', serif; letter-spacing: .22em; color: var(--ouro-solido); opacity: .92; margin-bottom: 4px; }
+  .cargo span { display: block; font: 600 28px/33px 'Cormorant Garamond', serif; color: #fff; }
+  .cargo span.vazio { color: rgba(243,238,226,.45); font-style: italic; }
+
+  .lista { left: 1050px; top: 962px; width: 1014px; display: flex; justify-content: space-between; gap: 30px; }
+  .col { font: 600 23px/34px 'Cormorant Garamond', serif; letter-spacing: .01em; white-space: nowrap; padding-left: 14px; border-left: 1px solid rgba(227,194,122,.3); }
+  .col:first-child { border-left: 0; padding-left: 0; }
+  .col .eu { color: #EFD18A; }
+
+  .prof { left: 1238px; top: 1262px; width: 760px; display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
+  .prof b { font: 600 22px 'Cormorant SC', serif; letter-spacing: .22em; color: var(--ouro-solido); margin-top: 12px; }
+  .prof b:first-child { margin-top: 0; }
+  .prof span { font: 600 26px/34px 'Cormorant Garamond', serif; }
+  .prof span.vazio { color: rgba(243,238,226,.45); font-style: italic; }
+
+  .crianca { left: 1238px; top: 1446px; font: 400 96px/1.18 'Great Vibes', cursive; white-space: nowrap; filter: drop-shadow(0 2px 4px rgba(0,0,10,.45)); padding: 14px 24px 14px; }
+</style></head><body>
+<div class="p">
+  <div class="acab so-escuro ornato" id="ornato-escuro"></div>
+  <div class="acab so-paineis ornato" id="ornato"></div>
+  <div class="acab so-recorte textura"></div>
+
+  <div class="t ano ouro">2026</div>
+
+  <div class="t c aos ouro">Aos Familiares</div>
+  <div class="t c ded" id="dedicatoria">Pelo amor, pela paciência e por cada passo dado ao nosso lado, dedicamos a vocês esta conquista. Com gratidão.</div>
+
+  <div class="sombra" style="left:690px;top:402px;width:1080px;height:522px"><div class="ch aba-out"><div class="ch aba-in"></div></div></div>
+  <div class="t c turma"><span class="script ouro">Turma</span><span id="turma-nome">Grupo V · A</span></div>
+
+  <div class="sombra" style="left:704px;top:540px;width:1052px;height:368px"><div class="ch m1"><div class="ch m2"><div class="ch m3"><div class="ch m4"><div class="ch foto" id="foto-turma">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+    Foto da turma<small>com as professoras</small></div></div></div></div></div></div>
+
+  <div class="sombra" style="left:210px;top:930px;width:440px;height:566px"><div class="ch m1"><div class="ch m2"><div class="ch m3"><div class="ch m4"><div class="ch foto" id="foto-familia">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+    Foto com<br>a família</div></div></div></div></div></div>
+
+  <div class="sombra" style="left:1622px;top:1246px;width:330px;height:490px"><div class="ch m1"><div class="ch m2"><div class="ch m3"><div class="ch m4"><div class="ch foto" id="foto-beca">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+    Foto<br>de beca</div></div></div></div></div></div>
+
+  <div class="selo" style="left:1862px;top:196px;width:212px;height:212px"><div class="anel"><div class="disco"><img src="logo-900.png"></div></div></div>
+
+  <div class="t c equipe">
+    <div class="cargo"><b>Diretora</b><span>Maria das Graças de O. Gomes</span></div>
+    <div class="cargo"><b>Coordenadora</b><span>Maria Gislene Flor Sátiro do Nascimento</span></div>
+    <div class="cargo"><b>Oradora</b><span id="oradora" class="vazio">a definir</span></div>
+    <div class="cargo"><b>Juramentista</b><span id="juramentista" class="vazio">a definir</span></div>
+  </div>
+
+  <div class="t lista" id="lista"></div>
+
+  <div class="t c prof">
+    <b>Professora</b><span id="professora" class="vazio">professora do Grupo V · A</span>
+    <b>E demais professores</b><span id="demais" class="vazio">nomes dos demais professores</span>
+  </div>
+
+  <div class="t c crianca ouro" id="crianca"></div>
+  <div class="selo" style="left:1192px;top:1656px;width:94px;height:94px;padding:4px"><div class="anel" style="padding:2px"><div class="disco"><img src="logo-900.png"></div></div></div>
+</div>
+<script>
+  // ---------- ornamentos tom sobre tom: guilloché + faixa de ondas + um ramo de louro em relevo ----------
+  (function () {
+    const NS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', '0 0 2400 1782');
+    const P = (d, st) => `<path d="${d}" ${st}/>`;
+    let g = '';
+    // faixa de ondas entrelaçadas ao longo da borda inclinada do painel grande
+    const a = [1012, 934], b = [698, 1778];
+    const L = Math.hypot(b[0] - a[0], b[1] - a[1]), ux = (b[0] - a[0]) / L, uy = (b[1] - a[1]) / L, nx = -uy, ny = ux; // normal aponta para dentro (direita)
+    for (let k = 0; k < 12; k++) {
+      let d = '';
+      for (let s = 0; s <= L; s += 3) {
+        const off = 46 + 22 * Math.sin(s / 48 * Math.PI * 2 + k * Math.PI / 6);
+        const x = a[0] + ux * s - nx * off, y = a[1] + uy * s - ny * off;
+        d += (s ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1);
+      }
+      g += P(d, 'fill="none" stroke="#7FA2E0" stroke-width=".8"');
+    }
+    // máscara: forte nas bordas e no selo, some atrás da lista e do nome
+    const masc = `<mask id="m"><rect width="2400" height="1782" fill="#fff"/><g filter="url(#bl)" fill="#000">
+      <rect x="1040" y="940" width="1040" height="320" rx="60"/><rect x="760" y="1250" width="860" height="420" rx="80"/>
+      <rect x="1800" y="430" width="340" height="440" rx="60"/></g></mask>
+      <filter id="bl" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="55"/></filter>`;
+    // ramo de louro: um só, assimétrico, subindo da base do painel rumo à foto de beca
+    function ramo(st, folhas, escala) {
+      const q = (t) => { const m = 1 - t; return [m * m * st[0][0] + 2 * m * t * st[1][0] + t * t * st[2][0], m * m * st[0][1] + 2 * m * t * st[1][1] + t * t * st[2][1]]; };
+      let r = `<path d="M${st[0]} Q${st[1]} ${st[2]}" fill="none" stroke="#8FB0E8" stroke-width="${4 * escala}" stroke-linecap="round"/>`;
+      for (let i = 1; i < folhas; i++) {
+        const t = i / folhas, [x, y] = q(t), [x2, y2] = q(Math.min(1, t + .01));
+        const ang = Math.atan2(y2 - y, x2 - x) * 180 / Math.PI, lado = i % 2 ? 1 : -1, tam = (1 - t * .45) * escala;
+        r += `<ellipse cx="0" cy="0" rx="${46 * tam}" ry="${15 * tam}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${(ang + lado * 42).toFixed(1)}) translate(${(40 * tam).toFixed(1)} 0)" fill="#8FB0E8"/>`;
+      }
+      const [xe, ye] = st[2], [xa, ya] = q(.98), ae = Math.atan2(ye - ya, xe - xa) * 180 / Math.PI;
+      return r + `<ellipse cx="0" cy="0" rx="${34 * escala}" ry="${12 * escala}" transform="translate(${xe} ${ye}) rotate(${ae.toFixed(1)}) translate(${26 * escala} 0)" fill="#8FB0E8"/>`;
+    }
+    // embaixo: sobe da base do painel por trás do nome, rumo à foto de beca
+    let louro = ramo([[760, 1770], [1060, 1610], [1600, 1440]], 19, 1);
+    // no topo: espelhado, abraçando o símbolo pela direita e subindo para a esquerda
+    louro += ramo([[2200, 470], [2200, 135], [1745, 165]], 15, .78);
+    svg.innerHTML = `<defs>${masc}<filter id="relevo"><feDropShadow dx="0" dy="1.5" stdDeviation=".6" flood-color="#000" flood-opacity=".55"/></filter></defs>
+      <g mask="url(#m)" opacity=".2">${g}</g>
+      <g opacity=".11" filter="url(#relevo)">${louro}</g>`;
+    document.getElementById('ornato').appendChild(svg);
+  })();
+
+  // ---------- azul-escuro: guilloché tom sobre tom (rosácea + faixas que acompanham as bordas) ----------
+  (function () {
+    const NS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', '0 0 2400 1782');
+    const traco = 'fill="none" stroke="#6F93D8" stroke-width=".8"';
+    let g = '';
+    function rosa(cx, cy, r0, passo, voltas, lobos) {
+      for (let k = 0; k < voltas; k++) {
+        const R = r0 + k * passo, A = 22 + k * .3, fase = k * 0.21; let d = '';
+        for (let i = 0; i <= 720; i++) {
+          const t = i / 720 * Math.PI * 2, r = R + A * Math.sin(lobos * t + fase) + 8 * Math.sin(3 * lobos * t - fase * 1.7);
+          d += (i ? 'L' : 'M') + (cx + r * Math.cos(t)).toFixed(1) + ' ' + (cy + r * Math.sin(t)).toFixed(1);
+        }
+        g += `<path d="${d}Z" ${traco}/>`;
+      }
+    }
+    function faixa(pts, base, amp, linhas, periodo, lado) {
+      // percorre a polilinha e desenha ondas defasadas a 'base' px da borda (lado = +1 / -1)
+      const seg = []; let tot = 0;
+      for (let i = 1; i < pts.length; i++) { const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); seg.push([pts[i - 1], pts[i], tot, l]); tot += l; }
+      const em = (s) => { const sg = seg.find(q => s <= q[2] + q[3]) || seg[seg.length - 1]; const u = (s - sg[2]) / sg[3];
+        const ux = (sg[1][0] - sg[0][0]) / sg[3], uy = (sg[1][1] - sg[0][1]) / sg[3];
+        return [sg[0][0] + (sg[1][0] - sg[0][0]) * u, sg[0][1] + (sg[1][1] - sg[0][1]) * u, -uy * lado, ux * lado]; };
+      for (let k = 0; k < linhas; k++) { let d = '';
+        for (let s = 0; s <= tot; s += 3) { const [x, y, nx, ny] = em(s); const off = base + amp * Math.sin(s / periodo * Math.PI * 2 + k * Math.PI / (linhas / 2));
+          d += (s ? 'L' : 'M') + (x + nx * off).toFixed(1) + ' ' + (y + ny * off).toFixed(1); }
+        g += `<path d="${d}" ${traco}/>`; }
+    }
+    rosa(905, 215, 70, 6, 34, 14);                                                     // no preto entre o "2026" e o painel da direita
+    faixa([[20, 10], [300, 80], [600, 132], [900, 172], [1200, 194], [1470, 200]], 52, 18, 10, 56, 1); // acompanha a borda de cima
+    faixa([[2392, 96], [2340, 520], [2290, 960], [2238, 1430]], 36, 10, 6, 62, 1);       // faixa estreita da direita
+    faixa([[260, 1735], [480, 1700], [720, 1668]], 34, 10, 6, 62, -1);                    // base, à esquerda
+    const masc = `<mask id="me"><rect width="2400" height="1782" fill="#fff"/><g filter="url(#ble)" fill="#000">
+      <rect x="170" y="200" width="420" height="190" rx="40"/></g></mask>
+      <filter id="ble" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="40"/></filter>`;
+    svg.innerHTML = `<defs>${masc}</defs><g mask="url(#me)" opacity=".24">${g}</g>`;
+    document.getElementById('ornato-escuro').appendChild(svg);
+  })();
+
+  // ---------- conteúdo ----------
+  // ---------- dados da placa (window.DADOS) ----------
+  const D = Object.assign({ turma: 'Grupo V · A', alunos: [], homenageado: '', fotoTurma: '', fotoFamilia: '', fotoBeca: '',
+    oradora: '', juramentista: '', professora: '', demais: '', dedicatoria: '' }, window.DADOS || (location.hash.length > 2 ? JSON.parse(decodeURIComponent(location.hash.slice(1))) : {}));
+  const minusc = new Set(['De','Da','Do','Dos','Das','E']);
+  const arruma = (n) => String(n || '').replace(/\s+/g, ' ').trim().split(' ').map((p, i) => i && minusc.has(p) ? p.toLowerCase() : p).join(' ');
+  const alunos = D.alunos.map(arruma);
+  const homenageado = arruma(D.homenageado) || alunos[0] || '';
+  document.getElementById('turma-nome').textContent = D.turma;
+  const preencher = (id, valor) => { const e = document.getElementById(id); if (valor) { e.textContent = valor; e.classList.remove('vazio'); } };
+  document.getElementById('professora').textContent = 'professora do ' + D.turma; preencher('oradora', D.oradora); preencher('juramentista', D.juramentista); preencher('professora', D.professora); preencher('demais', D.demais);
+  if (D.dedicatoria) document.getElementById('dedicatoria').textContent = D.dedicatoria;
+  for (const [id, url] of [['foto-turma', D.fotoTurma], ['foto-familia', D.fotoFamilia], ['foto-beca', D.fotoBeca]]) {
+    if (!url) continue;
+    const e = document.getElementById(id); e.innerHTML = ''; e.style.background = '#061630';
+    const img = document.createElement('img'); img.src = url; img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
+    e.appendChild(img);
+  }
+  window.__imagens = [...document.images].map(i => i.decode().catch(() => {}));
+
+  const Lst = document.getElementById('lista'); const por = Math.ceil(alunos.length / 3);
+  for (let c = 0; c < 3; c++) {
+    const col = document.createElement('div'); col.className = 'col';
+    col.innerHTML = alunos.slice(c * por, c * por + por).map(n => `<div class="${n === homenageado ? 'eu' : ''}">${n}</div>`).join('');
+    Lst.appendChild(col);
+  }
+
+  const C = document.getElementById('crianca');
+  const fracas = new Set(['de','da','do','dos','das','e']);
+  function quebrar(nome) {
+    if (nome.length <= 22) return [nome];
+    const p = nome.split(' '); let melhor = null;
+    for (let i = 1; i < p.length; i++) {
+      if (fracas.has(p[i - 1].toLowerCase())) continue;
+      const a = p.slice(0, i).join(' '), b = p.slice(i).join(' '), d = Math.abs(a.length - b.length);
+      if (!melhor || d < melhor.d) melhor = { a, b, d };
+    }
+    return melhor ? [melhor.a, melhor.b] : [nome];
+  }
+  const linhas = quebrar(homenageado);
+  C.innerHTML = linhas.join('<br>');
+  let f = linhas.length > 1 ? 84 : 96; C.style.fontSize = f + 'px';
+  C.style.top = (linhas.length > 1 ? 1418 : 1478) + 'px';
+
+  Promise.all([document.fonts.ready, ...(window.__imagens || [])]).then(() => {
+    while (C.offsetWidth > 820 && f > 64) { f--; C.style.fontSize = f + 'px'; }
+    let fl = 23; const cols = [...Lst.children];
+    while (Lst.scrollWidth > 1014 && fl > 20) { fl--; cols.forEach(c => c.style.fontSize = fl + 'px'); }
+    const fimLista = Lst.getBoundingClientRect().bottom; const pr = document.querySelector('.prof'); if (fimLista > 1240) pr.style.top = (fimLista + 26) + 'px'; document.body.dataset.pronto = '1';
+  });
+</script>
+</body></html>
