@@ -98,21 +98,53 @@ function FotoTurma({ chave, turma, url, aoMudar }: { chave: string; turma: "a" |
   );
 }
 
+/** Opções de foto: tocar abre a foto grande (com setas para comparar) e o botão para usar aquela. */
 function Opcoes({ titulo, fotos, escolha, aoEscolher }: { titulo: string; fotos: string[]; escolha: number; aoEscolher: (i: number) => void }) {
+  const [ver, setVer] = useState<number | null>(null);
+  useEffect(() => {
+    if (ver === null) return;
+    const tecla = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setVer(null);
+      if (e.key === "ArrowRight") setVer((v) => (v === null ? v : (v + 1) % fotos.length));
+      if (e.key === "ArrowLeft") setVer((v) => (v === null ? v : (v - 1 + fotos.length) % fotos.length));
+    };
+    window.addEventListener("keydown", tecla); return () => window.removeEventListener("keydown", tecla);
+  }, [ver, fotos.length]);
   if (fotos.length < 2) return null;
+  const seta = { position: "absolute", top: "50%", transform: "translateY(-50%)", width: 52, height: 52, borderRadius: 26, border: `1px solid ${C.borda}`, background: "rgba(7,20,48,.8)", color: "#fff", fontSize: 26, cursor: "pointer" } as const;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      <span style={{ fontSize: 13, letterSpacing: ".12em", textTransform: "uppercase", color: C.ouro }}>{titulo}: escolha uma</span>
+      <span style={{ fontSize: 13, letterSpacing: ".12em", textTransform: "uppercase", color: C.ouro }}>{titulo}: toque para ver grande</span>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
         {fotos.map((u, i) => (
-          <button key={i} type="button" onClick={() => aoEscolher(i)} aria-pressed={i === escolha}
-            style={{ position: "relative", width: 96, height: 128, padding: 0, borderRadius: 8, overflow: "hidden", cursor: "pointer",
+          <button key={i} type="button" onClick={() => setVer(i)} aria-label={`Ver ${titulo}, opção ${i + 1}, grande`}
+            style={{ position: "relative", width: 132, height: 176, padding: 0, borderRadius: 8, overflow: "hidden", cursor: "zoom-in",
               border: i === escolha ? `3px solid ${C.ouro}` : "3px solid transparent", boxShadow: i === escolha ? "0 0 0 2px rgba(227,194,122,.35)" : "none", background: "#0A2350" }}>
-            <img src={u} alt={`${titulo}, opção ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+            <img src={u} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
             <span style={{ position: "absolute", left: 4, top: 4, background: "rgba(0,0,0,.65)", color: "#fff", borderRadius: 6, fontSize: 12, padding: "1px 6px" }}>{i + 1}</span>
+            {i === escolha && <span style={{ position: "absolute", left: 0, right: 0, bottom: 0, background: "rgba(227,194,122,.92)", color: "#14213D", fontSize: 12, fontWeight: 700, padding: "3px 0" }}>na placa</span>}
           </button>
         ))}
       </div>
+      {ver !== null && (
+        <div role="dialog" aria-modal="true" aria-label={`${titulo}, opção ${ver + 1}`} onClick={() => setVer(null)}
+          style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(3,8,20,.92)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, padding: 16 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <img src={fotos[ver]} alt={`${titulo}, opção ${ver + 1}`} style={{ maxWidth: "min(92vw, 900px)", maxHeight: "74vh", borderRadius: 10, boxShadow: "0 20px 60px rgba(0,0,0,.6)" }} />
+            <button type="button" aria-label="Foto anterior" onClick={() => setVer((ver - 1 + fotos.length) % fotos.length)} style={{ ...seta, left: -12 }}>‹</button>
+            <button type="button" aria-label="Próxima foto" onClick={() => setVer((ver + 1) % fotos.length)} style={{ ...seta, right: -12 }}>›</button>
+          </div>
+          <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
+            <span style={{ color: C.suave, fontSize: 15 }}>{titulo} · opção {ver + 1} de {fotos.length}</span>
+            {ver === escolha
+              ? <span style={{ color: C.verde, fontWeight: 700, fontSize: 15 }}>Esta é a que está na placa ✓</span>
+              : <button type="button" onClick={() => { aoEscolher(ver); setVer(null); }}
+                  style={{ minHeight: 46, padding: "0 22px", borderRadius: 10, border: 0, background: C.ouro, color: "#14213D", fontWeight: 700, fontSize: 16, cursor: "pointer" }}>Usar esta foto na placa</button>}
+            <button type="button" onClick={() => setVer(null)}
+              style={{ minHeight: 46, padding: "0 18px", borderRadius: 10, border: `1px solid ${C.borda}`, background: "transparent", color: C.texto, fontSize: 15, cursor: "pointer" }}>Fechar</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
