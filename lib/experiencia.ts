@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { WEBHOOK_ENVIO } from "@/lib/rematricula-2027";
 
 /**
- * Experiência Amadeus · 4ª edição (sáb 07/11/2026, 14h; as anteriores foram em 10/10, 17/10 e 24/10). Envio do encarte pelo WhatsApp da escola usando o
+ * Experiência Amadeus · 5ª edição (sáb 14/11/2026, 14h; as anteriores foram em 10/10, 17/10, 24/10 e 07/11). Envio do encarte pelo WhatsApp da escola usando o
  * MESMO fluxo do n8n da carta da rematrícula (webhook rematricula-carta): "capa" vai como imagem
  * com o "texto" na legenda; se "imagem" vier preenchida, sai uma segunda imagem. Se "video" vier
  * preenchido, sai o vídeo (com o "texto" na legenda) no lugar da imagem (05/10: o vídeo do convite é o padrão).
@@ -31,7 +31,7 @@ export const textoConvite = (crianca?: string | null, video = false) => {
   const p = primeiro(crianca);
   return `${video ? chamadaVideo(p) + "\n\n" : ""}Olá, família${p ? ` de *${p}*` : ""}! 💛 Aqui é o Centro Educacional Amadeus.
 
-Vocês estão convidados para a *Experiência Amadeus*: no *sábado, 7 de novembro, às 14h*, venham viver um dia dentro da nossa escola junto com ${p || "seu filho ou sua filha"} e sentir na prática um pouco do que vai viver aqui. É *gratuito*.
+Vocês estão convidados para a *Experiência Amadeus*: no *sábado, 14 de novembro, às 14h*, venham viver um dia dentro da nossa escola junto com ${p || "seu filho ou sua filha"} e sentir na prática um pouco do que vai viver aqui. É *gratuito*.
 
 Para confirmar a presença, responda *EU VOU* nesta mensagem. Vai ser uma alegria receber vocês!
 
@@ -41,7 +41,7 @@ ${COMO_CHEGAR}`;
 
 export const textoLembrete = (crianca?: string | null) => {
   const p = primeiro(crianca);
-  return `Olá, família${p ? ` de *${p}*` : ""}! 😊 Passando para lembrar: é *amanhã, sábado (07/11), às 14h*, a *Experiência Amadeus*.
+  return `Olá, família${p ? ` de *${p}*` : ""}! 😊 Passando para lembrar: é *amanhã, sábado (14/11), às 14h*, a *Experiência Amadeus*.
 
 Estamos preparando tudo com muito carinho para receber vocês${p ? ` e ${p}` : ""}. Até amanhã! 💛
 
@@ -65,7 +65,7 @@ export interface Contato {
 }
 
 /** Etiqueta que o fluxo do n8n coloca no contato do WhatsApp da escola quando o pai se inscreve pelo site (Pedro, 24/10). */
-export const ETIQUETA_EDICAO = "Exp. 07/11";
+export const ETIQUETA_EDICAO = "Exp. 14/11";
 
 /** Uma mensagem (1 ou 2 imagens) para um número, pelo fluxo do n8n. Com etiqueta, o fluxo também etiqueta o contato. */
 async function mandar(telefone: string, capa: string, texto: string, imagem = "", video = "", etiqueta = ""): Promise<{ status: StatusEnvio; detalhe?: string }> {
@@ -128,7 +128,7 @@ export const textoConfirmacaoSite = (nome?: string | null) => {
   return `Olá${p ? `, ${p}` : ""}! 💛 Aqui é o Centro Educacional Amadeus.
 
 Sua inscrição na *Experiência Amadeus* está confirmada! 🎉
-📅 *Sábado, 7 de novembro, às 14h*
+📅 *Sábado, 14 de novembro, às 14h*
 👨‍👩‍👧 Venha com seu filho ou sua filha. É gratuito.
 
 Enquanto o sábado não chega, conheça a escola por dentro no nosso folder digital:
@@ -146,7 +146,7 @@ Qualquer dúvida, é só responder esta mensagem. Até sábado!`;
  */
 export async function enviarConfirmacaoSite(telefone: string, nome: string | null) {
   const admin = createAdminClient();
-  const { data: ja } = await admin.from("experiencia_envios").select("id").eq("telefone", telefone).eq("tipo", "confirmacao").eq("status", "enviado").gte("created_at", "2026-10-25").limit(1); // só a confirmação da edição de 07/11 conta
+  const { data: ja } = await admin.from("experiencia_envios").select("id").eq("telefone", telefone).eq("tipo", "confirmacao").eq("status", "enviado").gte("created_at", "2026-11-08").limit(1); // só a confirmação da edição de 07/11 conta
   if (ja?.length) return { telefone, status: "enviado" as StatusEnvio, detalhe: "já tinha recebido" };
   const r = await mandar(telefone, origemDoSite() + ENCARTES.convite.arquivo, textoConfirmacaoSite(nome), "", "", ETIQUETA_EDICAO);
   await admin.from("experiencia_envios").insert({ telefone, tipo: "confirmacao", encarte: "convite", status: r.status, detalhe: r.detalhe ?? null, enviado_por: "site" });
