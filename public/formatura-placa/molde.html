@@ -100,8 +100,8 @@
   <div class="selo" style="left:1894px;top:196px;width:212px;height:212px"><div class="anel"><div class="disco"><img src="logo-900.png"></div></div></div>
 
   <div class="t c equipe">
-    <div class="cargo"><b>Diretora</b><span>Maria das Graças de O. Gomes</span></div>
-    <div class="cargo"><b>Coordenadora</b><span>Maria Gislene Flor Sátiro do Nascimento</span></div>
+    <div class="cargo"><b>Diretora</b><span id="diretora">Maria das Graças de O. Gomes</span></div>
+    <div class="cargo"><b>Coordenadora</b><span id="coordenadora">Maria Gislene Flor Sátiro do Nascimento</span></div>
     <div class="cargo"><b>Oradora</b><span id="oradora" class="vazio">a definir</span></div>
     <div class="cargo"><b>Juramentista</b><span id="juramentista" class="vazio">a definir</span></div>
   </div>
@@ -204,7 +204,14 @@
   // ---------- conteúdo ----------
   // ---------- dados da placa (window.DADOS) ----------
   const D = Object.assign({ turma: 'Grupo V · A', alunos: [], homenageado: '', fotoTurma: '', fotoFamilia: '', fotoBeca: '',
-    oradora: '', juramentista: '', professora: '', demais: '', dedicatoria: '' }, window.DADOS || (location.hash.length > 2 ? JSON.parse(decodeURIComponent(location.hash.slice(1))) : {}));
+    oradora: '', juramentista: '', professora: '', demais: '', dedicatoria: '', tituloMensagem: '', diretora: '', coordenadora: '', nomePlaca: '', ajustes: {} },
+    window.DADOS || (location.hash.length > 2 ? JSON.parse(decodeURIComponent(location.hash.slice(1))) : {}));
+  // no site, cada mudança troca só o #hash: recarrega para montar a placa de novo
+  window.addEventListener('hashchange', () => location.reload());
+  const limpo = (s) => String(s || '').replace(/\s+/g, ' ').trim();
+  if (limpo(D.tituloMensagem)) document.querySelector('.aos').textContent = limpo(D.tituloMensagem);
+  if (limpo(D.diretora)) document.getElementById('diretora').textContent = limpo(D.diretora);
+  if (limpo(D.coordenadora)) document.getElementById('coordenadora').textContent = limpo(D.coordenadora);
   const minusc = new Set(['De','Da','Do','Dos','Das','E']);
   const arruma = (n) => String(n || '').replace(/\s+/g, ' ').trim().split(' ').map((p, i) => i && minusc.has(p) ? p.toLowerCase() : p).join(' ');
   const alunos = D.alunos.map(arruma);
@@ -243,14 +250,15 @@
     }
     return melhor ? [melhor.a, melhor.b] : [nome];
   }
-  const linhas = quebrar(homenageado);
+  const linhas = quebrar(limpo(D.nomePlaca) || homenageado);
   C.innerHTML = linhas.join('<br>');
   let f = linhas.length > 1 ? 96 : 116; C.style.fontSize = f + 'px';
 
   // ---------- REGRA: nenhum texto sai da placa azul-clara nem encosta nas fotos ----------
   // Cada linha de texto é medida e conferida ponto a ponto contra a máscara dos painéis (mascara-paineis.png);
   // se algum ponto cair fora (ou sobre uma foto), a letra daquele bloco diminui até caber.
-  const FOTOS = [[684, 396, 1774, 930], [200, 920, 660, 1506], [1600, 1212, 1990, 1758]];
+  // fotos e os dois selos (o grande no alto e o pequeno embaixo do nome): nenhum texto encosta neles
+  const FOTOS = [[684, 396, 1774, 930], [200, 920, 660, 1506], [1600, 1212, 1990, 1758], [1886, 188, 2114, 416], [1188, 1666, 1290, 1768]];
   let mascara = null;
   function carregarMascara() {
     return new Promise((ok) => {
@@ -311,7 +319,44 @@
     const nomeMaior = () => { let g = f0; tam(C, g); while (g > 56 && !(C.offsetWidth <= 770 && espalhar() && tudoDentro())) tam(C, --g); return g; };
     let g = nomeMaior();
     while (g < MIN_NOME && spans.some((s) => parseFloat(s.style.fontSize) > 28)) { spans.forEach((s) => { const v = parseFloat(s.style.fontSize); if (v > 28) tam(s, v - 2, 1.2); }); g = nomeMaior(); }
-    espalhar(); document.body.dataset.pronto = '1';
+    espalhar();
+
+    // ---------- ajustes feitos à mão pela direção: tamanho (t) e posição (x, y) de cada bloco ----------
+    // Valem a mesma REGRA: se o bloco sair da placa, encostar numa foto ou bater em outro bloco,
+    // ele volta (primeiro o tamanho, depois a posição) até caber; a placa avisa o site que chegou no limite.
+    const BLOCOS = {
+      turma: { els: () => [tn, tr], folga: 8 },
+      mensagem: { els: () => [document.querySelector('.aos'), ded], folga: 12 },
+      equipe: { els: () => [...document.querySelectorAll('.cargo b, .cargo span')], mover: () => [document.querySelector('.equipe')], folga: 6 },
+      lista: { els: () => [...Lst.children], mover: () => [Lst], folga: 4 },
+      prof: { els: () => [...pr.querySelectorAll('b, span')], mover: () => [pr], folga: 6 },
+      nome: { els: () => [C], folga: 8 },
+    };
+    const orig = new Map();
+    for (const k in BLOCOS) for (const el of BLOCOS[k].els()) { const cs = getComputedStyle(el); orig.set(el, [parseFloat(cs.fontSize), cs.lineHeight === 'normal' ? 0 : parseFloat(cs.lineHeight)]); }
+    const linhasDe = (k) => BLOCOS[k].els().flatMap((el) => { const r = document.createRange(); r.selectNodeContents(el); return [...r.getClientRects()].filter((q) => q.width > 2); });
+    const bate = (a, b) => a.left < b.right + 4 && b.left < a.right + 4 && a.top < b.bottom + 4 && b.top < a.bottom + 4;
+    const okBloco = (k) => BLOCOS[k].els().every((el) => dentro(el, BLOCOS[k].folga))
+      && Object.keys(BLOCOS).every((o) => o === k || !linhasDe(k).some((a) => linhasDe(o).some((b) => bate(a, b))));
+    function aplicar(k, m, dx, dy) {
+      const B = BLOCOS[k], mv = (B.mover || B.els)();
+      mv.forEach((el) => { el.style.translate = ''; });
+      for (const el of B.els()) { const [fs, lh] = orig.get(el); el.style.fontSize = (fs * m).toFixed(1) + 'px'; if (lh) el.style.lineHeight = (lh * m).toFixed(1) + 'px'; }
+      if (k === 'turma') { assenta(tn, 376); assenta(tr, 392); }
+      mv.forEach((el) => { el.style.translate = `${dx}px ${dy}px`; });
+    }
+    const limitado = [];
+    for (const k in BLOCOS) {
+      const a = (D.ajustes || {})[k]; if (!a || (!a.t && !a.x && !a.y)) continue;
+      let m = Math.pow(1.06, a.t || 0), dx = a.x || 0, dy = a.y || 0, lim = false;
+      aplicar(k, m, dx, dy);
+      while (!okBloco(k) && m > 1.001) { m = Math.max(1, m - .02); aplicar(k, m, dx, dy); lim = true; }
+      while (!okBloco(k) && (dx || dy)) { dx = Math.abs(dx) < 6 ? 0 : Math.trunc(dx * .8); dy = Math.abs(dy) < 6 ? 0 : Math.trunc(dy * .8); aplicar(k, m, dx, dy); lim = true; }
+      if (lim) limitado.push(k);
+    }
+    document.body.dataset.limitado = limitado.join(',');
+    try { if (parent !== window) parent.postMessage({ tipo: 'placa:pronta', limitado }, location.origin); } catch (e) {}
+    document.body.dataset.pronto = '1';
   });
 </script>
 </body></html>

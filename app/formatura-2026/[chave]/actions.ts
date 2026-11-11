@@ -1,7 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { BUCKET_PLACA, ID_PLACA, campoTextoValido, chavePlacaValida, type DadosPlaca } from "@/lib/formatura-placa";
+import { BUCKET_PLACA, ID_PLACA, blocoValido, campoTextoValido, chavePlacaValida, type Ajuste, type Ajustes, type DadosPlaca } from "@/lib/formatura-placa";
 
 const negado = { ok: false as const, erro: "Link inválido." };
 
@@ -85,6 +85,49 @@ export async function salvarEscolha(chave: string, nome: string, mudanca: { beca
   if (mudanca.aprovada !== undefined) upd.aprovada = !!mudanca.aprovada;
   const { error } = await db.from("formatura_placa_aluno").update(upd).eq("nome", nome);
   return error ? { ok: false as const, erro: "Não consegui salvar. Tente de novo." } : { ok: true as const };
+}
+
+async function criancaExiste(nome: string) {
+  const { data } = await createAdminClient().from("formatura_placa_aluno").select("nome").eq("nome", nome).maybeSingle();
+  return !!data;
+}
+const desaprovar = (nome: string) =>
+  createAdminClient().from("formatura_placa_aluno").update({ aprovada: false, atualizado_em: new Date().toISOString() }).eq("nome", nome);
+
+/** Tamanho e posição de um bloco de texto: em todas as placas (nome = null) ou só na placa de uma criança. */
+export async function salvarAjuste(chave: string, nome: string | null, bloco: string, ajuste: Ajuste) {
+  if (!chavePlacaValida(chave) || !blocoValido(bloco)) return negado;
+  const inteiro = (v: unknown, lim: number) => Number.isInteger(v) && Math.abs(v as number) <= lim;
+  if (!inteiro(ajuste?.t, 12) || !inteiro(ajuste?.x, 600) || !inteiro(ajuste?.y, 600)) return { ok: false as const, erro: "Ajuste inválido." };
+  const a: Ajuste = { t: ajuste.t, x: ajuste.x, y: ajuste.y };
+  const vazio = !a.t && !a.x && !a.y;
+  const dados = await lerDados();
+  if (nome === null) {
+    const g: Ajustes = { ...(dados.ajustes ?? {}) };
+    if (vazio) delete g[bloco]; else g[bloco] = a;
+    return gravarDados({ ...dados, ajustes: g });
+  }
+  if (!(await criancaExiste(nome))) return { ok: false as const, erro: "Criança não encontrada." };
+  const todos = { ...(dados.ajustes_aluno ?? {}) };
+  const meu: Ajustes = { ...(todos[nome] ?? {}) };
+  if (vazio) delete meu[bloco]; else meu[bloco] = a;
+  todos[nome] = meu;
+  const r = await gravarDados({ ...dados, ajustes_aluno: todos });
+  if (r.ok) await desaprovar(nome); // a placa mudou: volta a esperar aprovação
+  return r;
+}
+
+/** Nome da criança como aparece na placa (vazio = o nome do cadastro). */
+export async function salvarNomePlaca(chave: string, nome: string, valor: string) {
+  if (!chavePlacaValida(chave)) return negado;
+  if (!(await criancaExiste(nome))) return { ok: false as const, erro: "Criança não encontrada." };
+  const limpo = String(valor ?? "").replace(/\s+/g, " ").trim().slice(0, 80);
+  const dados = await lerDados();
+  const nomes = { ...(dados.nomes_placa ?? {}) };
+  if (!limpo || limpo === nome) delete nomes[nome]; else nomes[nome] = limpo;
+  const r = await gravarDados({ ...dados, nomes_placa: nomes });
+  if (r.ok) await desaprovar(nome);
+  return r;
 }
 
 type TipoFoto = "beca" | "familia";

@@ -39,8 +39,24 @@ export interface DadosPlaca {
   turma_b_aprovada?: boolean;
   lista_turma_a?: string[]; // todos os alunos da turma (vão na lista da placa, mesmo quem não tem placa)
   lista_turma_b?: string[];
+  // textos da placa que a direção pode reescrever (vazio = o texto padrão do molde)
+  titulo_mensagem?: string;
+  dedicatoria?: string;
+  diretora?: string;
+  coordenadora?: string;
+  // ajustes feitos à mão (tamanho e posição de cada bloco de texto), sempre dentro da regra de não sair da placa
+  ajustes?: Ajustes; // valem para todas as placas
+  ajustes_aluno?: Record<string, Ajustes>; // só daquela criança (somam com os de todas)
+  nomes_placa?: Record<string, string>; // nome da criança como aparece na placa, quando a direção reescreve
 }
 
-const CAMPOS_TEXTO = ["oradora", "juramentista", "professora_a", "professora_b", "demais"] as const;
+/** Blocos de texto da placa que podem ser ajustados. t = passos de tamanho (6% cada), x/y = deslocamento em px da placa (2400 de largura). */
+export const BLOCOS_PLACA = ["mensagem", "equipe", "turma", "lista", "prof", "nome"] as const;
+export type BlocoPlaca = (typeof BLOCOS_PLACA)[number];
+export type Ajuste = { t: number; x: number; y: number };
+export type Ajustes = Partial<Record<BlocoPlaca, Ajuste>>;
+export const blocoValido = (b: string): b is BlocoPlaca => (BLOCOS_PLACA as readonly string[]).includes(b);
+
+const CAMPOS_TEXTO = ["oradora", "juramentista", "professora_a", "professora_b", "demais", "titulo_mensagem", "dedicatoria", "diretora", "coordenadora"] as const;
 export type CampoTexto = (typeof CAMPOS_TEXTO)[number];
 export const campoTextoValido = (c: string): c is CampoTexto => (CAMPOS_TEXTO as readonly string[]).includes(c);

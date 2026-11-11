@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { aprovarFotoTurma, escolherFotoTurma, prepararFotoCrianca, prepararFotoTurma, salvarCampo, salvarEscolha, salvarFotoCrianca, salvarFotoTurma } from "./actions";
+import { aprovarFotoTurma, escolherFotoTurma, prepararFotoCrianca, prepararFotoTurma, salvarAjuste, salvarCampo, salvarEscolha, salvarFotoCrianca, salvarFotoTurma, salvarNomePlaca } from "./actions";
 
 export interface Crianca {
   nome: string;
@@ -14,7 +14,24 @@ export interface Crianca {
   aprovada: boolean;
   observacao: string | null;
 }
-interface Textos { oradora: string; juramentista: string; professora_a: string; professora_b: string; demais: string }
+interface Textos {
+  oradora: string; juramentista: string; professora_a: string; professora_b: string; demais: string;
+  titulo_mensagem: string; dedicatoria: string; diretora: string; coordenadora: string;
+}
+// os textos que já vêm no molde (public/formatura-placa/molde.html): aparecem no campo para a direção editar
+const PADRAO = {
+  titulo_mensagem: "Aos Familiares",
+  dedicatoria: "Pelo amor, pela paciência e por cada passo dado ao nosso lado, dedicamos a vocês esta conquista. Com gratidão.",
+  diretora: "Maria das Graças de O. Gomes",
+  coordenadora: "Maria Gislene Flor Sátiro do Nascimento",
+};
+type Ajuste = { t: number; x: number; y: number };
+type Ajustes = Partial<Record<string, Ajuste>>;
+const BLOCOS: [string, string][] = [
+  ["nome", "Nome da criança"], ["prof", "Professoras"], ["lista", "Nomes da turma"],
+  ["mensagem", "Mensagem aos familiares"], ["equipe", "Direção, oradora e juramentista"], ["turma", "Título da turma"],
+];
+const somar = (a?: Ajuste, b?: Ajuste): Ajuste => ({ t: (a?.t ?? 0) + (b?.t ?? 0), x: (a?.x ?? 0) + (b?.x ?? 0), y: (a?.y ?? 0) + (b?.y ?? 0) });
 
 const C = {
   fundo: "#071430", painel: "#0B1E45", borda: "rgba(227,194,122,.28)", ouro: "#E3C27A", ouroClaro: "#F3DFA6",
@@ -24,13 +41,19 @@ const serif = "var(--f-serif), 'Cormorant Garamond', Georgia, serif";
 const script = "var(--f-script), 'Great Vibes', cursive";
 
 /** Placa em miniatura: o molde em public/formatura-placa, escalado para a largura do cartão. */
-function Placa({ dados, titulo }: { dados: object; titulo: string }) {
+function Placa({ dados, titulo, aoMontar }: { dados: object; titulo: string; aoMontar?: (limitado: string[]) => void }) {
   const caixa = useRef<HTMLDivElement>(null);
   const [esc, setEsc] = useState(0.15);
   useEffect(() => {
     const el = caixa.current; if (!el) return;
     const ro = new ResizeObserver(() => setEsc(el.clientWidth / 2400));
     ro.observe(el); return () => ro.disconnect();
+  }, []);
+  // o molde avisa quando terminou de montar e quais blocos bateram no limite da placa
+  const aviso = useRef(aoMontar); aviso.current = aoMontar;
+  useEffect(() => {
+    const f = (e: MessageEvent) => { if (e.origin === location.origin && e.data?.tipo === "placa:pronta") aviso.current?.(e.data.limitado ?? []); };
+    window.addEventListener("message", f); return () => window.removeEventListener("message", f);
   }, []);
   const src = "/formatura-placa/molde.html#" + encodeURIComponent(JSON.stringify(dados));
   return (
@@ -47,6 +70,7 @@ function Campo({ chave, campo, rotulo, valor, dica, longo }: { chave: string; ca
   const salvo = useRef(valor);
   async function salvar() {
     if (v.trim() === salvo.current.trim()) return;
+    if (!v.trim() && campo in PADRAO) setV(PADRAO[campo as keyof typeof PADRAO]); // apagou tudo: volta o texto padrão
     setEstado("salvando");
     const r = await salvarCampo(chave, campo, v);
     if (r.ok) { salvo.current = v; setEstado("salvo"); window.dispatchEvent(new CustomEvent("placa:texto", { detail: { campo, valor: v.trim() } })); }
@@ -62,7 +86,7 @@ function Campo({ chave, campo, rotulo, valor, dica, longo }: { chave: string; ca
         </span>
       </span>
       {longo
-        ? <textarea rows={2} value={v} onChange={(e) => setV(e.target.value)} onBlur={salvar} style={{ ...estilo, resize: "vertical" }} />
+        ? <textarea rows={campo === "dedicatoria" ? 4 : 2} value={v} onChange={(e) => setV(e.target.value)} onBlur={salvar} style={{ ...estilo, resize: "vertical" }} />
         : <input value={v} onChange={(e) => setV(e.target.value)} onBlur={salvar} style={estilo} />}
       {dica && <span style={{ fontSize: 13, color: C.suave }}>{dica}</span>}
     </label>
@@ -265,12 +289,119 @@ function Opcoes({ titulo, fotos, escolha, aoEscolher }: { titulo: string; fotos:
   );
 }
 
-export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoTurma: ft0, sugestoes, turmaAprovada, listas }: { chave: string; foco: string | null; criancas: Crianca[]; textos: Textos; fotoTurma: { a: string; b: string }; sugestoes?: { a: Sugestao[]; b: Sugestao[] }; turmaAprovada?: { a: boolean; b: boolean }; listas?: { a: string[]; b: string[] } }) {
+/** Nome da criança como sai na placa (só nesta placa). */
+function NomePlaca({ chave, nome, valor, aoSalvar }: { chave: string; nome: string; valor: string; aoSalvar: (v: string) => void }) {
+  const [v, setV] = useState(valor || nome);
+  const [estado, setEstado] = useState("");
+  async function salvar() {
+    const novo = v.replace(/\s+/g, " ").trim();
+    if (novo === (valor || nome)) return;
+    setEstado("salvando…");
+    const r = await salvarNomePlaca(chave, nome, novo);
+    if (!r.ok) return setEstado(r.erro);
+    if (!novo) setV(nome);
+    aoSalvar(novo === nome ? "" : novo); setEstado("salvo ✓");
+  }
+  return (
+    <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <span style={{ display: "flex", justifyContent: "space-between", fontSize: 13, letterSpacing: ".14em", textTransform: "uppercase", color: C.ouro }}>
+        Nome da criança na placa
+        <span style={{ letterSpacing: 0, textTransform: "none", color: estado.includes("✓") ? C.verde : C.suave }}>{estado}</span>
+      </span>
+      <input value={v} onChange={(e) => setV(e.target.value)} onBlur={salvar} onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+        style={{ width: "100%", background: "rgba(255,255,255,.06)", border: `1px solid ${C.borda}`, borderRadius: 10, padding: "12px 14px", color: C.texto, fontSize: 16, fontFamily: "inherit", outline: "none" }} />
+      <span style={{ fontSize: 13, color: C.suave }}>Só nesta placa. Apague tudo para voltar ao nome do cadastro.</span>
+    </label>
+  );
+}
+
+/**
+ * Ajustar o texto da placa: escolhe um bloco e aumenta, diminui ou muda de lugar.
+ * A placa confere a REGRA (não sai da placa, não encosta nas fotos, não bate em outro texto):
+ * se a mudança não couber, ela é desfeita e aparece o aviso.
+ */
+function AjustarTexto({ chave, nome, global, meu, mudar, limitado, aoDesaprovar }: {
+  chave: string; nome: string; global: Ajustes; meu: Ajustes; aoDesaprovar: () => void;
+  mudar: (escopo: "todas" | "esta", bloco: string, a: Ajuste) => void; limitado: { blocos: string[]; vez: number } | null;
+}) {
+  const [escopo, setEscopo] = useState<"esta" | "todas">("esta");
+  const [bloco, setBloco] = useState("nome");
+  const [estado, setEstado] = useState("");
+  const espera = useRef<{ escopo: "todas" | "esta"; bloco: string; antes: Ajuste; depois: Ajuste; crescer: boolean } | null>(null);
+  const atual = (escopo === "todas" ? global : meu)[bloco] ?? { t: 0, x: 0, y: 0 };
+
+  // a placa terminou de montar: aceita (e salva) ou desfaz a última mudança
+  useEffect(() => {
+    const p = espera.current; if (!limitado || !p) return;
+    espera.current = null;
+    if (p.crescer && limitado.blocos.includes(p.bloco)) {
+      mudar(p.escopo, p.bloco, p.antes);
+      setEstado("Não cabe mais: passaria da placa, encostaria numa foto ou bateria em outro texto.");
+      return;
+    }
+    setEstado("salvando…");
+    salvarAjuste(chave, p.escopo === "todas" ? null : nome, p.bloco, p.depois).then((r) => { setEstado(r.ok ? "salvo ✓" : r.erro); if (r.ok && p.escopo === "esta") aoDesaprovar(); });
+  }, [limitado]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function passo(d: Partial<Ajuste>, crescer: boolean) {
+    if (espera.current) return;
+    const depois = { t: Math.max(-12, Math.min(12, atual.t + (d.t ?? 0))), x: atual.x + (d.x ?? 0), y: atual.y + (d.y ?? 0) };
+    espera.current = { escopo, bloco, antes: atual, depois, crescer };
+    setEstado("ajustando…"); mudar(escopo, bloco, depois);
+    // se a placa não responder (rede lenta), salva assim mesmo
+    setTimeout(() => { const p = espera.current; if (p && p.depois === depois) { espera.current = null; salvarAjuste(chave, p.escopo === "todas" ? null : nome, p.bloco, p.depois).then((r) => { setEstado(r.ok ? "salvo ✓" : r.erro); if (r.ok && p.escopo === "esta") aoDesaprovar(); }); } }, 12000);
+  }
+  const P = 12; // passo de posição, em px da placa (2400 de largura)
+  const b = (rot: string, aria: string, f: () => void) => (
+    <button type="button" aria-label={aria} onClick={f} style={{ ...botaoSec, minWidth: 52, minHeight: 48, fontSize: 18 }}>{rot}</button>
+  );
+  const chip = (ativo: boolean) => ({ minHeight: 40, padding: "0 14px", borderRadius: 999, cursor: "pointer", fontSize: 14, fontWeight: 600,
+    border: `1px solid ${ativo ? C.ouro : C.borda}`, background: ativo ? C.ouro : "transparent", color: ativo ? "#14213D" : C.texto } as const);
+  const mexido = atual.t || atual.x || atual.y;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+        <span style={{ fontSize: 13, letterSpacing: ".12em", textTransform: "uppercase", color: C.ouro, marginRight: 4 }}>Mudar</span>
+        <button type="button" onClick={() => setEscopo("esta")} style={chip(escopo === "esta")}>Só nesta placa</button>
+        <button type="button" onClick={() => setEscopo("todas")} style={chip(escopo === "todas")}>Em todas as placas</button>
+      </div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {BLOCOS.map(([k, r]) => <button key={k} type="button" onClick={() => { setBloco(k); setEstado(""); }} style={chip(bloco === k)}>{r}</button>)}
+      </div>
+      <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          {b("A−", "Diminuir", () => passo({ t: -1 }, false))}
+          {b("A+", "Aumentar", () => passo({ t: 1 }, true))}
+        </div>
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          {b("←", "Mover para a esquerda", () => passo({ x: -P }, true))}
+          {b("↑", "Mover para cima", () => passo({ y: -P }, true))}
+          {b("↓", "Mover para baixo", () => passo({ y: P }, true))}
+          {b("→", "Mover para a direita", () => passo({ x: P }, true))}
+        </div>
+        {mexido ? <button type="button" onClick={() => passo({ t: -atual.t, x: -atual.x, y: -atual.y }, false)} style={{ ...botaoSec, minHeight: 48, padding: "0 14px" }}>Voltar ao normal</button> : null}
+      </div>
+      {estado && <span style={{ fontSize: 14, color: estado.includes("✓") ? C.verde : estado.startsWith("Não cabe") ? "#FFC98A" : C.suave }}>{estado}</span>}
+    </div>
+  );
+}
+
+export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoTurma: ft0, sugestoes, turmaAprovada, listas, ajustes: aj0 }: { chave: string; foco: string | null; criancas: Crianca[]; textos: Textos; fotoTurma: { a: string; b: string }; sugestoes?: { a: Sugestao[]; b: Sugestao[] }; turmaAprovada?: { a: boolean; b: boolean }; listas?: { a: string[]; b: string[] }; ajustes?: { todas: Ajustes; porCrianca: Record<string, Ajustes>; nomes: Record<string, string> } }) {
   const [criancas, setCriancas] = useState(inicial);
   const [textos, setTextos] = useState(t0);
   const [fotoTurma, setFotoTurma] = useState(ft0);
   const [filtro, setFiltro] = useState<"todas" | "escolher" | "sem" | "aprovadas">("todas");
   const [grande, setGrande] = useState<string | null>(null);
+  const [ajG, setAjG] = useState<Ajustes>(aj0?.todas ?? {});
+  const [ajA, setAjA] = useState<Record<string, Ajustes>>(aj0?.porCrianca ?? {});
+  const [nomes, setNomes] = useState<Record<string, string>>(aj0?.nomes ?? {});
+  const [limitado, setLimitado] = useState<{ blocos: string[]; vez: number } | null>(null);
+  const [ajustar, setAjustar] = useState(false);
+  const mudarAjuste = (nome: string) => (escopo: "todas" | "esta", bloco: string, a: Ajuste) => {
+    if (escopo === "todas") setAjG((g) => ({ ...g, [bloco]: a }));
+    else setAjA((m) => ({ ...m, [nome]: { ...(m[nome] ?? {}), [bloco]: a } }));
+  };
+  const desaprovar = (nome: string) => setCriancas((l) => l.map((c) => (c.nome === nome ? { ...c, aprovada: false } : c)));
 
   useEffect(() => {
     const f = (e: Event) => { const { campo, valor } = (e as CustomEvent).detail; setTextos((x) => ({ ...x, [campo]: valor })); };
@@ -292,6 +423,9 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
       turma: c.turma, alunos: porTurma[c.turma] ?? [], homenageado: c.nome,
       fotoBeca: c.beca[c.escolhaBeca] ?? "", fotoFamilia: c.familia[c.escolhaFamilia] ?? "", fotoTurma: b ? fotoTurma.b : fotoTurma.a,
       oradora: textos.oradora, juramentista: textos.juramentista, professora: b ? textos.professora_b : textos.professora_a, demais: textos.demais,
+      tituloMensagem: textos.titulo_mensagem, dedicatoria: textos.dedicatoria, diretora: textos.diretora, coordenadora: textos.coordenadora,
+      nomePlaca: nomes[c.nome] ?? "",
+      ajustes: Object.fromEntries(BLOCOS.map(([k]) => [k, somar(ajG[k], ajA[c.nome]?.[k])])),
     };
   };
 
@@ -328,7 +462,9 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
             {proxima && <a href={linkDe(proxima)} style={botaoNav}>Próxima ›</a>}
           </div>
         </div>
-        <div style={{ borderRadius: 12, overflow: "hidden" }}><Placa dados={dadosDe(so)} titulo={`Placa de ${so.nome}`} /></div>
+        {/* ajustando o texto, a placa fica presa no alto da tela para ver cada mudança enquanto toca nos botões */}
+        <div style={{ borderRadius: 12, overflow: "hidden", ...(ajustar && { position: "sticky", top: 0, zIndex: 5, boxShadow: "0 12px 30px rgba(0,0,0,.55)",
+          width: "min(100%, calc(48vh * 2400 / 1782))", margin: "0 auto", background: C.fundo }) }}><Placa dados={dadosDe(so)} titulo={`Placa de ${so.nome}`} aoMontar={(l) => setLimitado({ blocos: l, vez: Date.now() })} /></div>
         {semFotos(so) && <div style={{ fontSize: 16, color: "#FFC98A" }}>As fotos desta criança ainda não chegaram no Drive.</div>}
         {so.observacao && !semFotos(so) && <div style={{ fontSize: 16, color: C.suave }}>{so.observacao}</div>}
         <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
@@ -338,7 +474,30 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
         <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
           <TrocarFoto chave={chave} nome={so.nome} tipo="beca" titulo="a foto de beca" aoEnviar={(u, i) => setCriancas((l) => l.map((c) => c.nome !== so.nome ? c : { ...c, beca: [...c.beca, u], escolhaBeca: i, aprovada: false }))} />
           <TrocarFoto chave={chave} nome={so.nome} tipo="familia" titulo="a foto da família" aoEnviar={(u, i) => setCriancas((l) => l.map((c) => c.nome !== so.nome ? c : { ...c, familia: [...c.familia, u], escolhaFamilia: i, aprovada: false, observacao: null }))} />
+          <button type="button" onClick={() => setAjustar((v) => !v)} aria-expanded={ajustar}
+            style={{ ...botaoSec, minHeight: 44, padding: "0 16px", fontSize: 15, ...(ajustar && { borderColor: C.ouro, color: C.ouro }) }}>
+            {ajustar ? "Fechar ajuste do texto" : "Ajustar o texto da placa"}
+          </button>
         </div>
+        {ajustar && (
+          <section style={{ display: "flex", flexDirection: "column", gap: 18, padding: 20, borderRadius: 16, background: C.painel, border: `1px solid ${C.borda}` }}>
+            <div>
+              <h2 style={{ margin: 0, fontFamily: serif, fontSize: 26, fontWeight: 600 }}>Ajustar o texto</h2>
+              <p style={{ margin: "4px 0 0", color: C.suave, fontSize: 15, lineHeight: 1.5 }}>
+                Escolha o texto e use os botões: a placa muda na hora, aqui em cima. Nada pode sair da placa nem encostar nas fotos:
+                quando não couber mais, a placa avisa e volta.
+              </p>
+            </div>
+            <AjustarTexto chave={chave} nome={so.nome} global={ajG} meu={ajA[so.nome] ?? {}} mudar={mudarAjuste(so.nome)} limitado={limitado} aoDesaprovar={() => desaprovar(so.nome)} />
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, paddingTop: 8, borderTop: `1px solid rgba(227,194,122,.14)` }}>
+              <NomePlaca chave={chave} nome={so.nome} valor={nomes[so.nome] ?? ""} aoSalvar={(v) => { setNomes((m) => ({ ...m, [so.nome]: v })); desaprovar(so.nome); }} />
+              <Campo chave={chave} campo="titulo_mensagem" rotulo="Título da mensagem" valor={textos.titulo_mensagem || PADRAO.titulo_mensagem} dica="Vale para todas as placas." />
+              <Campo chave={chave} campo="diretora" rotulo="Diretora" valor={textos.diretora || PADRAO.diretora} dica="Vale para todas as placas." />
+              <Campo chave={chave} campo="coordenadora" rotulo="Coordenadora" valor={textos.coordenadora || PADRAO.coordenadora} dica="Vale para todas as placas." />
+            </div>
+            <Campo chave={chave} campo="dedicatoria" rotulo="Mensagem aos familiares" valor={textos.dedicatoria || PADRAO.dedicatoria} longo dica="Vale para todas as placas. A letra se ajusta sozinha ao espaço." />
+          </section>
+        )}
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           {!semFotos(so) && !so.aprovada && (
             <button type="button" onClick={async () => { await mudar(so.nome, { aprovada: true }); window.location.href = linkDe(proxima); }}
@@ -382,6 +541,7 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
             <Campo chave={chave} campo="professora_b" rotulo="Professora do Grupo V · B" valor={textos.professora_b} />
           </div>
           <Campo chave={chave} campo="demais" rotulo="E demais professores" valor={textos.demais} longo dica="Separe os nomes com vírgula." />
+          <Campo chave={chave} campo="dedicatoria" rotulo="Mensagem aos familiares" valor={textos.dedicatoria || PADRAO.dedicatoria} longo dica="Vale para todas as placas. Para mudar tamanho e posição dos textos, abra uma placa e toque em “Ajustar o texto da placa”." />
         </section>
 
         <section style={{ display: "flex", flexDirection: "column", gap: 18, padding: 24, borderRadius: 18, background: C.painel, border: `1px solid ${C.borda}` }}>
