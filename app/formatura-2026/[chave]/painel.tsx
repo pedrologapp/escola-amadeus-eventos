@@ -145,7 +145,7 @@ function EditorCorte({ url, aspecto, inicial, titulo, aoSalvar, aoFechar }: {
   function carregou(e: React.SyntheticEvent<HTMLImageElement>) {
     const n = { w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight }; setNat(n);
     // corte salvo antes, ajustado ao formato desta moldura
-    if (inicial) { const h = alturaDe(inicial.w, n); if (inicial.y + h <= 1.002 && Math.abs(h - inicial.h) < 0.02) { setR({ ...inicial, h }); return; } }
+    if (inicial && inicial.x + inicial.w <= 1.002 && inicial.y + inicial.h <= 1.002) { setR(inicial); return; }
     setR(padrao(n));
   }
   const ponto = (e: React.PointerEvent) => { const q = caixa.current!.getBoundingClientRect(); return { x: (e.clientX - q.left) / q.width, y: (e.clientY - q.top) / q.height }; };
@@ -180,10 +180,13 @@ function EditorCorte({ url, aspecto, inicial, titulo, aoSalvar, aoFechar }: {
     setR({ w, h, x: dirX > 0 ? a.ax : a.ax - w, y: dirY > 0 ? a.ay : a.ay - h });
   }
   const soltar = () => { arr.current = null; };
+  // a foto pode esticar até 8% para caber na moldura (não se nota); passando disso, a placa corta o excesso pelo meio
+  const ESTICA = 1.08;
   const naPlaca = (c: Corte): Corte => {
-    if (!nat) return c; const kw = (nat.h * aspecto) / nat.w;
-    if (c.w > c.h * kw) { const w = c.h * kw; return { ...c, x: c.x + (c.w - w) / 2, w }; }
-    const h = alturaDe(c.w); return { ...c, y: c.y + (c.h - h) / 2, h };
+    if (!nat) return c; const kw = (nat.h * aspecto) / nat.w; // largura que acompanha uma altura, sem esticar
+    if (c.w > c.h * kw * ESTICA) { const w = c.h * kw * ESTICA; return { ...c, x: c.x + (c.w - w) / 2, w }; }
+    if (c.w < (c.h * kw) / ESTICA) { const h = (c.w * ESTICA) / kw; return { ...c, y: c.y + (c.h - h) / 2, h }; }
+    return c;
   };
   const ef = r ? naPlaca(r) : null;
   async function salvar(c: Corte | null) {
@@ -210,7 +213,7 @@ function EditorCorte({ url, aspecto, inicial, titulo, aoSalvar, aoFechar }: {
     <div role="dialog" aria-modal="true" aria-label={titulo}
       style={{ position: "fixed", inset: 0, zIndex: 70, background: "rgba(3,8,20,.96)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, padding: 16 }}>
       <div style={{ color: C.texto, fontFamily: serif, fontSize: 24, fontWeight: 600, textAlign: "center" }}>{titulo}</div>
-      <div style={{ color: C.suave, fontSize: 14, textAlign: "center", maxWidth: 560 }}>Arraste o quadro para escolher a parte da foto e puxe um lado (só aquele lado anda) ou um canto dourado. A parte clara, com o tracejado branco, é exatamente o que vai para a placa.</div>
+      <div style={{ color: C.suave, fontSize: 14, textAlign: "center", maxWidth: 560 }}>Arraste o quadro para escolher a parte da foto e puxe um lado (só aquele lado anda) ou um canto dourado. A parte clara, com o tracejado branco, é exatamente o que vai para a placa (a foto se ajusta um pouquinho à moldura, até 8%).</div>
       {/* margem em volta da foto para as bolinhas dos cantos nunca ficarem escondidas */}
       <div onPointerMove={mover} onPointerUp={soltar} onPointerCancel={soltar} style={{ padding: 20, touchAction: "none", userSelect: "none" }}>
         <div ref={caixa} style={{ position: "relative", lineHeight: 0 }}>
