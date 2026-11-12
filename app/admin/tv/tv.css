@@ -60,15 +60,15 @@
 
 /* barra de baixo */
 #rodape {
-  position: absolute; left: 0; right: 0; bottom: 0; height: 84px; z-index: 50;
-  display: flex; align-items: center; gap: 28px; padding: 0 44px;
-  background: linear-gradient(90deg, var(--marinho2), #173C93); color: #fff; font-size: 30px;
+  position: absolute; left: 0; right: 0; bottom: 0; height: 128px; z-index: 50;
+  display: flex; align-items: center; gap: 34px; padding: 0 56px;
+  background: linear-gradient(90deg, var(--marinho2), #173C93); color: #fff; font-size: 40px;
   box-shadow: 0 -8px 30px rgba(0,0,0,.25);
 }
-#rodape img { height: 52px; }
-#rodape .hora { margin-left: auto; font-family: Ralton; font-size: 44px; color: var(--amarelo); }
+#rodape img { height: 78px; }
+#rodape .hora { margin-left: auto; font-family: Ralton; font-size: 104px; line-height: 1; color: var(--amarelo); text-shadow: 0 4px 0 rgba(0,0,0,.25); letter-spacing: .02em; }
 #rodape .data { opacity: .85; }
-#progresso { position: absolute; left: 0; bottom: 84px; height: 6px; background: var(--amarelo); z-index: 51; width: 0; }
+#progresso { position: absolute; left: 0; bottom: 128px; height: 6px; background: var(--amarelo); z-index: 51; width: 0; }
 
 /* ---- 1. saudação ---- */
 .cena-saudacao .titulo { position: absolute; left: 0; right: 0; top: 250px; text-align: center; }
@@ -98,7 +98,7 @@
 .cena-aniversariantes .card b { display: block; font-family: Ralton; font-size: 58px; color: var(--tinta); }
 .cena-aniversariantes .card small { font-size: 34px; color: #5A6478; }
 .cena-aniversariantes .exemplo { position: absolute; left: 230px; top: 910px; width: 800px; font-size: 26px; color: #9AA3B5; }
-.cena-aniversariantes .desenho { position: absolute; right: 50px; bottom: 110px; width: 820px; }
+.cena-aniversariantes .desenho { position: absolute; right: 50px; bottom: 150px; width: 820px; }
 .balao { position: absolute; bottom: -200px; width: 90px; height: 110px; border-radius: 50% 50% 48% 48%; }
 .balao::after { content: ""; position: absolute; left: 50%; top: 100%; width: 2px; height: 120px; background: rgba(0,0,0,.25); }
 .on .balao { animation: sobeBalao linear forwards; }
@@ -113,7 +113,7 @@
 .cena-promo .desenho { position: absolute; right: 40px; bottom: 30px; width: 760px; }
 
 /* ---- 5. frase ---- */
-.cena-frase .txt { position: absolute; inset: 0 0 84px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.cena-frase .txt { position: absolute; inset: 0 0 128px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 .cena-frase .l3d { font-size: 150px; margin: .06em 0; }
 .cena-frase .l3d.azul { font-size: 96px; }
 .cena-frase .quem { position: absolute; bottom: 150px; left: 0; right: 0; text-align: center; font-family: Scrib; font-size: 40px; color: #AFCBFF; }
@@ -138,12 +138,12 @@
 .cena-formatura .rastro .cobre { stroke-dasharray: 3200; stroke-dashoffset: 3200; }
 .on.cena-formatura .rastro .cobre { animation: rastro 9s ease-in-out forwards; animation-delay: 1.5s; }
 @keyframes rastro { to { stroke-dashoffset: 0; } }
-.cena-formatura .desenho { position: absolute; left: 50%; bottom: 84px; width: 1300px; transform: translateX(-50%); }
+.cena-formatura .desenho { position: absolute; left: 50%; bottom: 128px; width: 1300px; transform: translateX(-50%); }
 
 /* ---- 7. encerramento ---- */
 .cena-fim { background: var(--creme); }
 .cena-fim::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(transparent 0 58px, #DCE5F1 58px 60px); opacity: .6; }
-.cena-fim .centro { position: absolute; inset: 0 0 84px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.cena-fim .centro { position: absolute; inset: 0 0 128px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .cena-fim img { width: 420px; }
 .on.cena-fim img { animation: gira 1.4s cubic-bezier(.2,1.3,.4,1) both; }
 @keyframes gira { from { transform: scale(.3) rotate(-120deg); opacity: 0; } }
@@ -259,7 +259,7 @@
 
 /* aviso em destaque (um por tela) */
 .cena-aviso .onda { opacity: .95; }
-.cena-aviso .quadro { position: absolute; inset: 0 0 84px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 160px; }
+.cena-aviso .quadro { position: absolute; inset: 0 0 128px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 160px; }
 .cena-aviso .rot { font-family: DM; font-size: 36px; letter-spacing: .3em; color: #FFE08A; margin-bottom: 30px; }
 .cena-aviso .icone { font-size: 190px; line-height: 1; margin-bottom: 20px; filter: drop-shadow(0 18px 24px rgba(0,0,0,.35)); }
 .on.cena-aviso .icone { animation: pula .8s cubic-bezier(.2,1.6,.4,1) both, flutua 4s ease-in-out infinite .8s; }
