@@ -2,9 +2,10 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ChevronLeft, ChevronRight, Copy, GripVertical, Loader2, Minus, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Copy, Loader2, Minus, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import type { BlocoTv, ItemTv, TipoItem } from "@/lib/tv";
-import { apagarItem, ativarItem, salvarBlocos, salvarItem, type ItemForm } from "@/app/admin/(authed)/comunicacao/tv/actions";
+import { apagarItem, ativarItem, salvarItem, type ItemForm } from "@/app/admin/(authed)/comunicacao/tv/actions";
+import { ligarBloco, ordenarBlocos } from "./actions";
 import { EditorAgenda, EditorAvisos, EditorRecados } from "@/app/admin/(authed)/comunicacao/tv/editores";
 
 /**
@@ -51,8 +52,8 @@ const NA_RECEPCAO_NAO = "aniversariantes"; // a TV da recepção é aberta: sem 
 
 const mmss = (s: number) => `${Math.floor(s / 60)}min${String(s % 60).padStart(2, "0")}`;
 
-export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa }: {
-  itens: ItemTv[]; blocos: BlocoTv[]; nomes: Nomes; hoje: string; hojePassa: Record<string, number>;
+export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa, equipe }: {
+  itens: ItemTv[]; blocos: BlocoTv[]; nomes: Nomes; hoje: string; hojePassa: Record<string, number>; equipe: boolean;
 }) {
   const router = useRouter();
   const [blocos, setBlocos] = useState(iniciais);
@@ -68,10 +69,20 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa }:
   const recarregarTv = () => { if (tv.current) tv.current.src = tv.current.src; };
   const mudou = () => { router.refresh(); recarregarTv(); };
 
+  const rodar = (fn: () => Promise<{ ok: true } | { ok: false; erro: string }>) =>
+    comecar(async () => {
+      const r = await fn();
+      setAviso(r.ok ? { ok: true, txt: "Salvo. Entra na próxima volta da TV." } : { ok: false, txt: r.erro });
+      if (r.ok) mudou();
+    });
+  const ligar = (id: string, ativo: boolean) => {
+    setBlocos(blocos.map((b) => (b.id === id ? { ...b, ativo } : b)));
+    rodar(() => ligarBloco(id, ativo));
+  };
   const gravar = (novos: BlocoTv[]) => {
     setBlocos(novos);
     comecar(async () => {
-      const r = await salvarBlocos(novos);
+      const r = await ordenarBlocos(novos);
       setAviso(r.ok ? { ok: true, txt: "Salvo. Entra na próxima volta da TV." } : { ok: false, txt: r.erro });
       if (r.ok) mudou();
     });
@@ -135,13 +146,43 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa }:
           <section>
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <h2 className="text-lg font-extrabold text-[#1B3B7C]">O roteiro</h2>
-              <span className="text-sm text-[#5A6478]">Uma volta: {mmss(volta)}. Arraste para mudar a ordem.</span>
+              <span className="text-sm text-[#5A6478]">Uma volta: {mmss(volta)}.</span>
               <span className="ml-auto h-5 text-sm font-semibold">
                 {salvando ? <span className="inline-flex items-center gap-1 text-[#5A6478]"><Loader2 className="size-4 animate-spin" /> salvando</span>
                   : aviso && <span className={aviso.ok ? "text-emerald-700" : "text-red-700"}>{aviso.txt}</span>}
               </span>
             </div>
-            <div className="mt-3 space-y-4">
+            {/* a fila: a ordem em que as telas passam na TV */}
+            <div className="mt-3 rounded-2xl bg-white p-3 ring-1 ring-[#E3E8F2]">
+              <p className="mb-2 text-xs font-semibold text-[#8A95AA]">{equipe ? "A ordem na TV. Arraste para mudar." : "A ordem na TV."}</p>
+              <ol className="flex flex-wrap items-center gap-1.5">
+                {blocos.map((b, i) => {
+                  const v = VISUAL[b.id] ?? { fundo: "#12307A", icone: "📺" };
+                  const passa = b.ativo && b.id !== NA_RECEPCAO_NAO && !!hojePassa[b.id];
+                  return (
+                    <li
+                      key={b.id}
+                      draggable={equipe}
+                      onDragStart={() => setArrastando(b.id)}
+                      onDragEnd={() => setArrastando(null)}
+                      onDragOver={(e) => equipe && e.preventDefault()}
+                      onDrop={() => equipe && soltarEm(b.id)}
+                      onClick={() => setEscolhido(b.id)}
+                      title={nomes[b.id]?.nome ?? b.id}
+                      className={`flex items-center gap-1 ${equipe ? "cursor-grab" : "cursor-pointer"} ${arrastando === b.id ? "opacity-30" : ""}`}
+                    >
+                      {i > 0 && <span className="text-[10px] text-[#CBD3E1]">›</span>}
+                      <span className={`relative flex h-8 w-11 items-center justify-center rounded-md text-base ring-1 ring-inset ring-black/10 ${passa ? "" : "opacity-35 grayscale"} ${escolhido === b.id ? "ring-2 ring-[#FFC21C] ring-offset-1" : ""}`} style={{ background: v.fundo }}>
+                        {v.icone}
+                        <span className={`absolute left-0.5 top-0 text-[8px] font-extrabold ${v.claro ? "text-[#8A95AA]" : "text-white/70"}`}>{i + 1}</span>
+                      </span>
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
+
+            <div className="mt-4 space-y-4">
               {GRUPOS.map((g) => {
                 const doGrupo = blocos.filter((b) => g.ids.includes(b.id));
                 if (!doGrupo.length) return null;
@@ -157,25 +198,19 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa }:
                         return (
                           <li
                             key={b.id}
-                            draggable
-                            onDragStart={() => setArrastando(b.id)}
-                            onDragEnd={() => setArrastando(null)}
-                            onDragOver={(e) => e.preventDefault()}
-                            onDrop={() => soltarEm(b.id)}
                             onClick={() => setEscolhido(b.id)}
-                            className={`flex cursor-pointer items-center gap-2.5 rounded-xl bg-white p-1.5 pr-2 transition ${escolhido === b.id ? "ring-[3px] ring-[#FFC21C]" : "ring-1 ring-[#E3E8F2] hover:ring-[#B9C6DF]"} ${arrastando === b.id ? "opacity-40" : ""} ${b.ativo ? "" : "opacity-55"}`}
+                            className={`flex cursor-pointer items-center gap-2.5 rounded-xl bg-white p-1.5 pr-2 transition ${escolhido === b.id ? "ring-[3px] ring-[#FFC21C]" : "ring-1 ring-[#E3E8F2] hover:ring-[#B9C6DF]"} ${b.ativo ? "" : "opacity-55"}`}
                           >
-                            <span className={`relative flex h-10 w-14 shrink-0 items-center justify-center rounded-lg text-xl ${b.ativo ? "" : "grayscale"}`} style={{ background: v.fundo }}>
+                            <span className={`relative flex h-10 w-14 shrink-0 items-center justify-center rounded-lg text-xl ring-1 ring-inset ring-black/10 ${b.ativo ? "" : "grayscale"}`} style={{ background: v.fundo }}>
                               {v.icone}
                               <span className={`absolute left-1 top-0.5 text-[9px] font-extrabold ${v.claro ? "text-[#8A95AA]" : "text-white/70"}`}>{blocos.indexOf(b) + 1}</span>
                             </span>
                             <span className="min-w-0 flex-1">
-                              <span className="block truncate text-[13px] font-bold leading-tight text-[#1A2240]">{nomes[b.id]?.nome ?? b.id}</span>
+                              <span className="line-clamp-2 block text-[13px] font-bold leading-tight text-[#1A2240]">{nomes[b.id]?.nome ?? b.id}</span>
                               <span className={`flex items-center gap-1 text-[11px] font-semibold ${passa ? "text-emerald-700" : "text-[#8A95AA]"}`}>
                                 <span className={`size-1.5 rounded-full ${passa ? "bg-emerald-500" : "bg-[#CBD3E1]"}`} /> {estado}
                               </span>
                             </span>
-                            <GripVertical className="size-4 shrink-0 text-[#CBD3E1]" />
                           </li>
                         );
                       })}
@@ -193,43 +228,49 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa }:
             <div className="rounded-3xl bg-white p-5 shadow-[0_10px_30px_rgba(27,59,124,.1)] ring-1 ring-[#E3E8F2]">
               <div className="flex items-center gap-3">
                 <span className="flex size-12 items-center justify-center rounded-2xl text-2xl" style={{ background: VISUAL[atual.id]?.fundo }}>{VISUAL[atual.id]?.icone}</span>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <h2 className="truncate font-[family-name:var(--font-serifa)] text-2xl font-bold text-[#1B3B7C]">{nomes[atual.id]?.nome ?? atual.id}</h2>
                   <p className="text-sm text-[#5A6478]">{nomes[atual.id]?.equipe || LISTA[atual.id] ? "Vocês colocam o conteúdo" : "Entra sozinho"}</p>
                 </div>
-              </div>
-
-              {/* os ajustes do cartão: tudo num lugar só */}
-              <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3 rounded-2xl bg-[#F4F7FC] px-4 py-3 text-sm font-semibold text-[#1B3B7C]">
-                <label className="flex items-center gap-2">
+                <label className="flex shrink-0 items-center gap-2 text-sm font-semibold text-[#1B3B7C]">
                   Na TV
                   <button
                     type="button"
                     role="switch"
                     aria-checked={atual.ativo}
-                    onClick={() => muda(atual.id, { ativo: !atual.ativo })}
+                    onClick={() => ligar(atual.id, !atual.ativo)}
                     className={`h-6 w-11 rounded-full p-0.5 transition ${atual.ativo ? "bg-emerald-500" : "bg-[#CBD3E1]"}`}
                   >
                     <span className={`block size-5 rounded-full bg-white shadow transition ${atual.ativo ? "translate-x-5" : ""}`} />
                   </button>
                 </label>
-                <span className="flex items-center gap-1">
-                  Tempo
-                  <button type="button" aria-label="Menos tempo" onClick={() => muda(atual.id, { segundos: Math.max(4, atual.segundos - 2) })} className="ml-1 inline-flex size-7 items-center justify-center rounded-lg bg-white hover:bg-[#E3E8F2]"><Minus className="size-3.5" /></button>
-                  <span className="w-10 text-center tabular-nums text-[#1A2240]">{atual.segundos}s</span>
-                  <button type="button" aria-label="Mais tempo" onClick={() => muda(atual.id, { segundos: Math.min(60, atual.segundos + 2) })} className="inline-flex size-7 items-center justify-center rounded-lg bg-white hover:bg-[#E3E8F2]"><Plus className="size-3.5" /></button>
-                </span>
-                <span className="flex items-center gap-1">
-                  Lugar
-                  <button type="button" aria-label="Passar antes" onClick={() => mover(atual.id, -1)} className="ml-1 inline-flex size-7 items-center justify-center rounded-lg bg-white hover:bg-[#E3E8F2]"><ChevronLeft className="size-4" /></button>
-                  <span className="w-6 text-center tabular-nums text-[#1A2240]">{blocos.findIndex((b) => b.id === atual.id) + 1}</span>
-                  <button type="button" aria-label="Passar depois" onClick={() => mover(atual.id, 1)} className="inline-flex size-7 items-center justify-center rounded-lg bg-white hover:bg-[#E3E8F2]"><ChevronRight className="size-4" /></button>
-                </span>
               </div>
 
+              {/* o conteúdo (o que a escola faz) */}
               <div className="mt-5">
                 <Editor id={atual.id} itens={itens} hoje={hoje} origem={nomes[atual.id]?.origem ?? ""} onMudou={mudou} />
               </div>
+
+              {/* ordem e tempo: só a equipe Arboria */}
+              {equipe && (
+                <div className="mt-5 border-t border-dashed border-[#D5DDEB] pt-4">
+                  <p className="text-xs font-extrabold uppercase tracking-wider text-[#8A95AA]">Ajustes da equipe Arboria</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm font-semibold text-[#1B3B7C]">
+                    <span className="flex items-center gap-1">
+                      Tempo
+                      <button type="button" aria-label="Menos tempo" onClick={() => muda(atual.id, { segundos: Math.max(4, atual.segundos - 2) })} className="ml-1 inline-flex size-7 items-center justify-center rounded-lg bg-[#F4F7FC] hover:bg-[#E3E8F2]"><Minus className="size-3.5" /></button>
+                      <span className="w-10 text-center tabular-nums text-[#1A2240]">{atual.segundos}s</span>
+                      <button type="button" aria-label="Mais tempo" onClick={() => muda(atual.id, { segundos: Math.min(60, atual.segundos + 2) })} className="inline-flex size-7 items-center justify-center rounded-lg bg-[#F4F7FC] hover:bg-[#E3E8F2]"><Plus className="size-3.5" /></button>
+                    </span>
+                    <span className="flex items-center gap-1">
+                      Lugar
+                      <button type="button" aria-label="Passar antes" onClick={() => mover(atual.id, -1)} className="ml-1 inline-flex size-7 items-center justify-center rounded-lg bg-[#F4F7FC] hover:bg-[#E3E8F2]"><ChevronLeft className="size-4" /></button>
+                      <span className="w-6 text-center tabular-nums text-[#1A2240]">{blocos.findIndex((b) => b.id === atual.id) + 1}</span>
+                      <button type="button" aria-label="Passar depois" onClick={() => mover(atual.id, 1)} className="inline-flex size-7 items-center justify-center rounded-lg bg-[#F4F7FC] hover:bg-[#E3E8F2]"><ChevronRight className="size-4" /></button>
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </aside>
