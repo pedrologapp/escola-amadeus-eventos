@@ -2,10 +2,11 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ChevronLeft, ChevronRight, Copy, Loader2, Minus, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Copy, Loader2, Lock, Minus, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import type { BlocoTv, ItemTv, TipoItem } from "@/lib/tv";
 import { apagarItem, ativarItem, salvarItem, type ItemForm } from "@/app/admin/(authed)/comunicacao/tv/actions";
 import { ligarBloco, ordenarBlocos } from "./actions";
+import { FIXOS } from "./fixos";
 import { EditorAgenda, EditorAvisos, EditorRecados } from "@/app/admin/(authed)/comunicacao/tv/editores";
 
 /**
@@ -56,6 +57,9 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa, e
   itens: ItemTv[]; blocos: BlocoTv[]; nomes: Nomes; hoje: string; hojePassa: Record<string, number>; equipe: boolean;
 }) {
   const router = useRouter();
+  // a escola mexe em tudo, menos nas telas fixas do Arboria (./fixos.ts)
+  const mexe = (id: string) => equipe || !FIXOS[id];
+  const noLugar = (l: BlocoTv[]) => (equipe ? l : [...l.filter((b) => FIXOS[b.id] === "inicio"), ...l.filter((b) => !FIXOS[b.id]), ...l.filter((b) => FIXOS[b.id] === "fim")]);
   const [blocos, setBlocos] = useState(iniciais);
   const [escolhido, setEscolhido] = useState<string>(iniciais.find((b) => nomes[b.id]?.equipe)?.id ?? iniciais[0]?.id);
   const [arrastando, setArrastando] = useState<string | null>(null);
@@ -79,7 +83,8 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa, e
     setBlocos(blocos.map((b) => (b.id === id ? { ...b, ativo } : b)));
     rodar(() => ligarBloco(id, ativo));
   };
-  const gravar = (novos: BlocoTv[]) => {
+  const gravar = (lista: BlocoTv[]) => {
+    const novos = noLugar(lista);
     setBlocos(novos);
     comecar(async () => {
       const r = await ordenarBlocos(novos);
@@ -154,7 +159,7 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa, e
             </div>
             {/* a fila: a ordem em que as telas passam na TV */}
             <div className="mt-3 rounded-2xl bg-white p-3 ring-1 ring-[#E3E8F2]">
-              <p className="mb-2 text-xs font-semibold text-[#8A95AA]">{equipe ? "A ordem na TV. Arraste para mudar." : "A ordem na TV."} As apagadas não passam hoje.</p>
+              <p className="mb-2 text-xs font-semibold text-[#8A95AA]">A ordem na TV: arraste para mudar. As apagadas não passam hoje; as com cadeado são fixas.</p>
               <ol className="flex flex-wrap items-center gap-1.5">
                 {blocos.map((b, i) => {
                   const v = VISUAL[b.id] ?? { fundo: "#12307A", icone: "📺" };
@@ -162,19 +167,20 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa, e
                   return (
                     <li
                       key={b.id}
-                      draggable={equipe}
+                      draggable={mexe(b.id)}
                       onDragStart={() => setArrastando(b.id)}
                       onDragEnd={() => setArrastando(null)}
-                      onDragOver={(e) => equipe && e.preventDefault()}
-                      onDrop={() => equipe && soltarEm(b.id)}
+                      onDragOver={(e) => mexe(b.id) && e.preventDefault()}
+                      onDrop={() => mexe(b.id) && soltarEm(b.id)}
                       onClick={() => setEscolhido(b.id)}
                       title={`${nomes[b.id]?.nome ?? b.id}${passa ? "" : " (não passa hoje)"}`}
-                      className={`flex items-center gap-1 ${equipe ? "cursor-grab" : "cursor-pointer"} ${arrastando === b.id ? "opacity-30" : ""}`}
+                      className={`flex items-center gap-1 ${mexe(b.id) ? "cursor-grab" : "cursor-pointer"} ${arrastando === b.id ? "opacity-30" : ""}`}
                     >
                       {i > 0 && <span className="text-[10px] text-[#CBD3E1]">›</span>}
                       <span className={`relative flex h-8 w-11 items-center justify-center rounded-md text-base ring-1 ring-inset ring-black/10 ${passa ? "" : "opacity-35 grayscale"} ${escolhido === b.id ? "ring-2 ring-[#FFC21C] ring-offset-1" : ""}`} style={{ background: v.fundo }}>
                         {v.icone}
                         <span className={`absolute left-0.5 top-0 text-[8px] font-extrabold ${v.claro ? "text-[#8A95AA]" : "text-white/70"}`}>{i + 1}</span>
+                        {FIXOS[b.id] && <Lock className={`absolute bottom-0.5 right-0.5 size-2.5 ${v.claro ? "text-[#8A95AA]" : "text-white/70"}`} />}
                       </span>
                     </li>
                   );
@@ -232,18 +238,22 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa, e
                   <h2 className="truncate font-[family-name:var(--font-serifa)] text-2xl font-bold text-[#1B3B7C]">{nomes[atual.id]?.nome ?? atual.id}</h2>
                   <p className="text-sm text-[#5A6478]">{nomes[atual.id]?.equipe || LISTA[atual.id] ? "Vocês colocam o conteúdo" : "Entra sozinho"}</p>
                 </div>
-                <label className="flex shrink-0 items-center gap-2 text-sm font-semibold text-[#1B3B7C]">
-                  Na TV
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={atual.ativo}
-                    onClick={() => ligar(atual.id, !atual.ativo)}
-                    className={`h-6 w-11 rounded-full p-0.5 transition ${atual.ativo ? "bg-emerald-500" : "bg-[#CBD3E1]"}`}
-                  >
-                    <span className={`block size-5 rounded-full bg-white shadow transition ${atual.ativo ? "translate-x-5" : ""}`} />
-                  </button>
-                </label>
+                {mexe(atual.id) ? (
+                  <label className="flex shrink-0 items-center gap-2 text-sm font-semibold text-[#1B3B7C]">
+                    Na TV
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={atual.ativo}
+                      onClick={() => ligar(atual.id, !atual.ativo)}
+                      className={`h-6 w-11 rounded-full p-0.5 transition ${atual.ativo ? "bg-emerald-500" : "bg-[#CBD3E1]"}`}
+                    >
+                      <span className={`block size-5 rounded-full bg-white shadow transition ${atual.ativo ? "translate-x-5" : ""}`} />
+                    </button>
+                  </label>
+                ) : (
+                  <span className="flex shrink-0 items-center gap-1.5 text-sm font-semibold text-[#8A95AA]"><Lock className="size-4" /> Tela fixa</span>
+                )}
               </div>
 
               {/* o conteúdo (o que a escola faz) */}
@@ -251,10 +261,10 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa, e
                 <Editor id={atual.id} itens={itens} hoje={hoje} origem={nomes[atual.id]?.origem ?? ""} onMudou={mudou} />
               </div>
 
-              {/* ordem e tempo: só a equipe Arboria */}
-              {equipe && (
+              {/* ordem e tempo (as telas fixas, só a equipe Arboria) */}
+              {mexe(atual.id) && (
                 <div className="mt-5 border-t border-dashed border-[#D5DDEB] pt-4">
-                  <p className="text-xs font-extrabold uppercase tracking-wider text-[#8A95AA]">Ajustes da equipe Arboria</p>
+                  <p className="text-xs font-extrabold uppercase tracking-wider text-[#8A95AA]">{FIXOS[atual.id] ? "Ajustes da equipe Arboria" : "Tempo e lugar"}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm font-semibold text-[#1B3B7C]">
                     <span className="flex items-center gap-1">
                       Tempo
