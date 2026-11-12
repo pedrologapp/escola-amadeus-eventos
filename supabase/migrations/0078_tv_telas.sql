@@ -1,4 +1,4 @@
--- (12/11/2026) TV: telas criadas pela escola a partir de formatos prontos (aviso, celebração, programação…).
+-- (12/11/2026, já aplicada no banco) TV: telas criadas pela escola a partir de formatos prontos (aviso, celebração, programação…).
 -- Cada tela entra no roteiro junto com os blocos de tv_blocos, pela mesma "ordem" (aqui pode ser quebrada,
 -- ex.: 10.5 = entre o bloco 10 e o 11). O código antigo da TV não lê esta tabela.
 create table if not exists public.tv_telas (
