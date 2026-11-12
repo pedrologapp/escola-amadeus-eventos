@@ -40,6 +40,7 @@ const VISUAL: Record<string, { fundo: string; icone: string; claro?: boolean }> 
 const LISTA: Record<string, { tipo: TipoItem; titulo: string; dica: string; exemplo: string; comData?: boolean }> = {
   sabia: { tipo: "curiosidade", titulo: "Você sabia?", dica: "Passa uma por dia, girando sozinha. O trecho entre *asteriscos* sai em destaque.", exemplo: "O polvo tem *três corações*" },
   frase: { tipo: "frase", titulo: "Frase do dia", dica: "Passa uma por dia, girando sozinha. A palavra entre *asteriscos* sai em amarelo.", exemplo: "Ler é *viajar* sem sair do lugar" },
+  rodape: { tipo: "rodape", titulo: "Faixa do rodapé", dica: "As frases passam na faixa do rodapé da TV, da direita para a esquerda, uma depois da outra, como num telejornal.", exemplo: "Matrículas 2027 abertas" },
   saudacao: { tipo: "comemoracao", titulo: "Datas comemorativas", dica: "Aparecem na saudação naquele dia, todo ano. O resto da saudação (bom dia e a data) é automático.", exemplo: "Dia do Professor", comData: true },
 };
 
@@ -214,6 +215,11 @@ export function Gerenciador({ itens, blocos: iniciais, telas, podeCriar, nomes, 
                 </button>
               </section>
             )}
+            {/* a faixa de notícias do rodapé */}
+            <section className="rounded-3xl bg-white p-5 ring-1 ring-[#E3E8F2]">
+              <h2 className="text-lg font-extrabold text-[#1B3B7C]">Faixa do rodapé</h2>
+              <div className="mt-3"><ListaSimples conf={LISTA.rodape} itens={itens} hoje={hoje} origem="" onMudou={mudou} /></div>
+            </section>
             <section className="rounded-3xl bg-white p-5 ring-1 ring-[#E3E8F2]">
               <button type="button" onClick={() => setGiraAberto(!giraAberto)} aria-expanded={giraAberto} className="flex w-full items-center gap-2 text-left">
                 <h2 className="text-lg font-extrabold text-[#1B3B7C]">Gira sozinho, um por dia</h2>

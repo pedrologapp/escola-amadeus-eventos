@@ -21,7 +21,7 @@ async function logado() {
   return !!data.user;
 }
 
-const TIPOS: TipoItem[] = ["aviso", "recado", "agenda", "frase", "curiosidade", "comemoracao"];
+const TIPOS: TipoItem[] = ["aviso", "recado", "agenda", "frase", "curiosidade", "comemoracao", "rodape"];
 const data = (v: string | null | undefined) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null);
 
 export interface ItemForm {

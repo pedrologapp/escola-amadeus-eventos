@@ -14,7 +14,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 const FUSO = "America/Fortaleza";
 
-export type TipoItem = "aviso" | "recado" | "agenda" | "frase" | "curiosidade" | "comemoracao";
+export type TipoItem = "aviso" | "recado" | "agenda" | "frase" | "curiosidade" | "comemoracao" | "rodape";
 
 export const TIPOS: { id: TipoItem; nome: string; dica: string }[] = [
   { id: "aviso", nome: "Aviso em destaque", dica: "Ocupa a tela toda, com título grande. Ex.: Arena Arbória, resultado na quinta." },
@@ -22,6 +22,7 @@ export const TIPOS: { id: TipoItem; nome: string; dica: string }[] = [
   { id: "agenda", nome: "Agenda da semana", dica: "Algo marcado num dia. Aparece na agenda da semana daquele dia." },
   { id: "frase", nome: "Frase", dica: "Gira sozinha, uma por dia. Palavra entre *asteriscos* sai em amarelo." },
   { id: "curiosidade", nome: "Você sabia?", dica: "Gira sozinha, uma por dia. Trecho entre *asteriscos* sai em destaque." },
+  { id: "rodape", nome: "Frase do rodapé", dica: "Passa na faixa de notícias do rodapé, da direita para a esquerda. Ex.: Matrículas 2027 abertas." },
   { id: "comemoracao", nome: "Data comemorativa", dica: "Aparece na saudação naquele dia, todo ano." },
 ];
 
@@ -94,6 +95,8 @@ export interface RoteiroTv {
   hoje: string;
   cenas: Cena[];
   atualizado: string;
+  /** as frases da faixa de notícias do rodapé (12/11/2026) */
+  rodape?: string[];
 }
 
 export const hojeLocal = () => new Date().toLocaleDateString("en-CA", { timeZone: FUSO });
@@ -300,5 +303,6 @@ async function montarRoteiro(hoje: string): Promise<RoteiroTv> {
         c({});
     }
   }
-  return { hoje, cenas, atualizado: new Date().toISOString() };
+  const rodape = valem.filter((i) => i.tipo === "rodape").map((i) => i.titulo.split("*").join("")).filter(Boolean);
+  return { hoje, cenas, atualizado: new Date().toISOString(), rodape };
 }
