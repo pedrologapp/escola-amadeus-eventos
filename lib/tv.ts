@@ -64,7 +64,7 @@ export interface BlocoTv {
 }
 
 /** Telas criadas pela escola a partir de um formato pronto (tabela tv_telas, migração 0078). */
-export type FormatoTela = "aviso" | "celebracao" | "programacao" | "contagem" | "foto";
+export type FormatoTela = "aviso" | "recado" | "frase" | "sabia" | "celebracao" | "programacao" | "contagem" | "foto";
 
 export interface TelaTv {
   id: string;

@@ -86,6 +86,19 @@ function limpar(formato: FormatoTela, c: Record<string, unknown>): Record<string
     if (!titulo) return "Escreva o título.";
     return { icone: txt(c.icone, 16), titulo, texto: txt(c.texto, 200) };
   }
+  if (formato === "recado") {
+    const linhas = (Array.isArray(c.linhas) ? c.linhas : [])
+      .map((l) => ({ icone: txt((l as { icone?: unknown }).icone, 16), texto: txt((l as { texto?: unknown }).texto, 120) }))
+      .filter((l) => l.texto)
+      .slice(0, 4);
+    if (!linhas.length) return "Escreva pelo menos um recado.";
+    return { linhas };
+  }
+  if (formato === "frase" || formato === "sabia") {
+    const texto = txt(c.texto, 160);
+    if (!texto) return "Escreva o texto.";
+    return { texto };
+  }
   if (formato === "celebracao") {
     const titulo = txt(c.titulo, 40);
     if (!titulo) return "Escreva o título.";

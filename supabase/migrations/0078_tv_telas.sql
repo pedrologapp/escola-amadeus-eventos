@@ -3,7 +3,7 @@
 -- ex.: 10.5 = entre o bloco 10 e o 11). O código antigo da TV não lê esta tabela.
 create table if not exists public.tv_telas (
   id uuid primary key default gen_random_uuid(),
-  formato text not null check (formato in ('aviso', 'celebracao', 'programacao', 'contagem', 'foto')),
+  formato text not null check (formato in ('aviso', 'recado', 'frase', 'sabia', 'celebracao', 'programacao', 'contagem', 'foto')),
   campos jsonb not null default '{}'::jsonb,  -- o que se escreveu em cada formato (títulos, linhas, horários…)
   ordem numeric not null,
   segundos integer not null default 12,

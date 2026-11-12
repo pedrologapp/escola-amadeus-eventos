@@ -17,6 +17,18 @@ export const FORMATOS: { id: FormatoTela; nome: string; dica: string; icone: str
     novo: { icone: "📣", titulo: "", texto: "" },
   },
   {
+    id: "recado", nome: "Recado", dica: "A folha de caderno, com até 4 lembretes", icone: "📝", fundo: "#FDFBF6",
+    novo: { linhas: [{ icone: "📌", texto: "" }] },
+  },
+  {
+    id: "frase", nome: "Frase", dica: "Uma frase grande, palavra por palavra", icone: "💬", fundo: "linear-gradient(135deg,#0B2260,#12307A)",
+    novo: { texto: "" },
+  },
+  {
+    id: "sabia", nome: "Você sabia?", dica: "Uma curiosidade, com a lâmpada", icone: "💡", fundo: "linear-gradient(135deg,#7B5EA7,#2E8FF0)",
+    novo: { texto: "" },
+  },
+  {
     id: "celebracao", nome: "Celebração", dica: "Formaturas e grandes momentos, com o aviãozinho", icone: "🎓", fundo: "linear-gradient(180deg,#0B2260,#3A7BE0)",
     novo: { pre: "o voo mais bonito do ano", titulo: "Formatura", linha: "" },
   },
@@ -28,20 +40,21 @@ export const FORMATOS: { id: FormatoTela; nome: string; dica: string; icone: str
 
 export const visualTela = (t: TelaTv | undefined) => {
   const f = FORMATOS.find((x) => x.id === t?.formato);
-  return { fundo: f?.fundo ?? "#12307A", icone: f?.icone ?? "📺", claro: t?.formato === "programacao" };
+  return { fundo: f?.fundo ?? "#12307A", icone: f?.icone ?? "📺", claro: t?.formato === "programacao" || t?.formato === "recado" };
 };
 
 export const nomeTela = (t: TelaTv | undefined) => {
   if (!t) return "Tela";
   const c = t.campos as Record<string, string>;
-  const nome = [c.titulo, c.linha].filter(Boolean).join(" ").replace(/\*/g, "");
+  const recado = t.formato === "recado" && Array.isArray(t.campos.linhas) ? String((t.campos.linhas as { texto?: string }[])[0]?.texto ?? "") : "";
+  const nome = [c.titulo, c.linha, c.texto, recado].filter(Boolean).join(" ").replace(/\*/g, "").slice(0, 60);
   return nome || FORMATOS.find((x) => x.id === t.formato)?.nome || "Tela";
 };
 
 export const formatoTela = (t: TelaTv | undefined) => FORMATOS.find((x) => x.id === t?.formato)?.nome ?? "";
 
 /** A tela como fica na TV, parada no fim da animação. */
-function Previa({ formato, campos }: { formato: FormatoTela; campos: Record<string, unknown> }) {
+export function Previa({ formato, campos }: { formato: FormatoTela; campos: Record<string, unknown> }) {
   const roteiro = { hoje: "", atualizado: "previa", cenas: [{ id: "tela", chave: "previa", segundos: 999, dados: { formato, ...campos } }] };
   return (
     <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-[#0B1430] shadow-[0_14px_34px_rgba(18,48,122,.2)]">
@@ -64,6 +77,37 @@ function Campos({ formato, c, set }: { formato: FormatoTela; c: Record<string, u
           <div className="flex-1"><span className={rotulo}>Título grande</span><input autoFocus value={s("titulo")} onChange={(e) => set({ ...c, titulo: e.target.value })} placeholder="Ex.: Feira de Ciências hoje!" className={`${campo} font-bold`} /></div>
         </div>
         <div><span className={rotulo}>Frase de baixo</span><input value={s("texto")} onChange={(e) => set({ ...c, texto: e.target.value })} placeholder="Ex.: Das 8h às 11h, venha ver os projetos!" className={campo} /></div>
+      </div>
+    );
+  }
+  if (formato === "frase" || formato === "sabia") {
+    return (
+      <div>
+        <span className={rotulo}>{formato === "frase" ? "A frase" : "A curiosidade"}</span>
+        <textarea autoFocus rows={3} value={s("texto")} onChange={(e) => set({ ...c, texto: e.target.value })} placeholder={formato === "frase" ? "Ex.: Ler é *viajar* sem sair do lugar" : "Ex.: O polvo tem *três corações*"} className={campo} />
+      </div>
+    );
+  }
+  if (formato === "recado") {
+    const itens = (Array.isArray(c.linhas) ? c.linhas : []) as { icone: string; texto: string }[];
+    const muda = (i: number, p: Partial<{ icone: string; texto: string }>) => set({ ...c, linhas: itens.map((l, j) => (j === i ? { ...l, ...p } : l)) });
+    return (
+      <div>
+        <span className={rotulo}>Recados (até 4)</span>
+        <div className="space-y-2">
+          {itens.map((l, i) => (
+            <div key={i} className="flex gap-2">
+              <input value={l.icone} onChange={(e) => muda(i, { icone: e.target.value })} className="w-14 shrink-0 rounded-xl border border-[#D5DDEB] bg-white px-2 py-2.5 text-center text-lg outline-none focus:border-[#1B3B7C]" />
+              <input autoFocus={i === itens.length - 1} value={l.texto} onChange={(e) => muda(i, { texto: e.target.value })} placeholder="Ex.: Traga a garrafinha com nome" className={campo} />
+              <button type="button" aria-label="Tirar este recado" onClick={() => set({ ...c, linhas: itens.filter((_, j) => j !== i) })} className="shrink-0 rounded-xl px-2 text-[#8A95AA] hover:bg-red-50 hover:text-red-700"><X className="size-4" /></button>
+            </div>
+          ))}
+        </div>
+        {itens.length < 4 && (
+          <button type="button" onClick={() => set({ ...c, linhas: [...itens, { icone: "📌", texto: "" }] })} className="mt-2 inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-sm font-bold text-[#1B3B7C] hover:bg-[#EEF2FA]">
+            <Plus className="size-4" /> mais um recado
+          </button>
+        )}
       </div>
     );
   }
@@ -163,7 +207,7 @@ export function NovaTela({ onFechar, onCriada }: { onFechar: () => void; onCriad
         {!formato ? (
           <>
             <p className="mt-1 text-[15px] text-[#5A6478]">Escolha o formato.</p>
-            <div className="mt-5 grid gap-4 sm:grid-cols-3">
+            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {FORMATOS.map((f) => (
                 <button key={f.id} type="button" onClick={() => setFormato(f.id)} className="group rounded-2xl bg-white p-2 text-left ring-1 ring-[#E3E8F2] transition hover:-translate-y-0.5 hover:ring-[3px] hover:ring-[#FFC21C]">
                   <div className="pointer-events-none"><Previa formato={f.id} campos={EXEMPLO[f.id]} /></div>
@@ -184,6 +228,9 @@ export function NovaTela({ onFechar, onCriada }: { onFechar: () => void; onCriad
 /** Os exemplos da galeria. */
 const EXEMPLO: Record<string, Record<string, unknown>> = {
   aviso: { icone: "🔬", titulo: "Feira de Ciências!", texto: "Sexta, das 8h às 11h. Venha ver os projetos." },
+  recado: { linhas: [{ icone: "🧪", texto: "Feira de Ciências na sexta!" }, { icone: "🎒", texto: "Traga a garrafinha com nome" }] },
+  frase: { texto: "Ler é *viajar* sem sair do lugar" },
+  sabia: { texto: "O polvo tem *três corações*" },
   celebracao: { pre: "o voo mais bonito do ano", titulo: "Formatura", linha: "Grupo V 2026" },
   programacao: { titulo: "Programação da *Feira*", linhas: [{ hora: "8h", texto: "Abertura no pátio" }, { hora: "9h", texto: "Visita às salas" }, { hora: "10h30", texto: "Apresentações" }] },
 };

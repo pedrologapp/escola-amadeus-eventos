@@ -7,8 +7,9 @@ import type { BlocoTv, ItemTv, TelaTv, TipoItem } from "@/lib/tv";
 import { apagarItem, ativarItem, salvarItem, type ItemForm } from "@/app/admin/(authed)/comunicacao/tv/actions";
 import { ligarBloco, ordenarBlocos } from "./actions";
 import { FIXOS } from "./fixos";
+import { AvisosDestaque } from "./avisos";
 import { EditorTela, NovaTela, formatoTela, nomeTela, visualTela } from "./telas";
-import { EditorAgenda, EditorAvisos, EditorRecados } from "@/app/admin/(authed)/comunicacao/tv/editores";
+import { EditorAgenda, EditorRecados } from "@/app/admin/(authed)/comunicacao/tv/editores";
 
 /**
  * O gerenciador da TV (Pedro, 12/11/2026). Três partes numa tela só:
@@ -185,35 +186,34 @@ export function Gerenciador({ itens, blocos: iniciais, telas, podeCriar, nomes, 
             <EditorAgenda itens={itens} hoje={hoje} onMudou={mudou} />
             <div className="grid gap-6 lg:grid-cols-2">
               <EditorRecados itens={itens} hoje={hoje} onMudou={mudou} abrirNovo={0} />
-              {podeCriar ? (
-                <section className="rounded-3xl bg-white p-5 ring-1 ring-[#E3E8F2]">
-                  <h2 className="text-lg font-extrabold text-[#1B3B7C]">Telas criadas</h2>
-                  <p className="text-sm text-[#5A6478]">Avisos, formaturas, programações… Toque numa para mudar.</p>
-                  <ul className="mt-3 space-y-2">
-                    {telas.map((t) => {
-                      const v = visualTela(t);
-                      const passa = !!hojePassa[`tela:${t.id}`];
-                      return (
-                        <li key={t.id}>
-                          <button type="button" onClick={() => { setAba("telas"); setEscolhido(`tela:${t.id}`); }} className="flex w-full items-center gap-3 rounded-xl p-1.5 text-left hover:bg-[#F4F7FC]">
-                            <span className={`flex h-9 w-14 shrink-0 items-center justify-center rounded-lg text-lg ring-1 ring-inset ring-black/10 ${passa ? "" : "opacity-40 grayscale"}`} style={{ background: v.fundo }}>{v.icone}</span>
-                            <span className="min-w-0 flex-1">
-                              <span className="block truncate text-sm font-bold text-[#1A2240]">{nomeTela(t)}</span>
-                              <span className={`text-xs font-semibold ${passa ? "text-emerald-700" : "text-[#8A95AA]"}`}>{passa ? "passa hoje" : "não passa hoje"}</span>
-                            </span>
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                  <button type="button" onClick={() => setCriando(true)} className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#C9D3E4] py-4 text-[15px] font-bold text-[#1B3B7C] hover:border-[#1B3B7C] hover:bg-[#F4F7FC]">
-                    <Plus className="size-5" /> Nova tela
-                  </button>
-                </section>
-              ) : (
-                <EditorAvisos itens={itens} hoje={hoje} onMudou={mudou} abrirNovo={0} />
-              )}
+              <AvisosDestaque itens={itens} hoje={hoje} onMudou={mudou} />
             </div>
+            {podeCriar && (
+              <section className="rounded-3xl bg-white p-5 ring-1 ring-[#E3E8F2]">
+                <h2 className="text-lg font-extrabold text-[#1B3B7C]">Telas criadas</h2>
+                <p className="text-sm text-[#5A6478]">Avisos, formaturas, programações… Toque numa para mudar.</p>
+                <ul className="mt-3 space-y-2">
+                  {telas.map((t) => {
+                    const v = visualTela(t);
+                    const passa = !!hojePassa[`tela:${t.id}`];
+                    return (
+                      <li key={t.id}>
+                        <button type="button" onClick={() => { setAba("telas"); setEscolhido(`tela:${t.id}`); }} className="flex w-full items-center gap-3 rounded-xl p-1.5 text-left hover:bg-[#F4F7FC]">
+                          <span className={`flex h-9 w-14 shrink-0 items-center justify-center rounded-lg text-lg ring-1 ring-inset ring-black/10 ${passa ? "" : "opacity-40 grayscale"}`} style={{ background: v.fundo }}>{v.icone}</span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-bold text-[#1A2240]">{nomeTela(t)}</span>
+                            <span className={`text-xs font-semibold ${passa ? "text-emerald-700" : "text-[#8A95AA]"}`}>{passa ? "passa hoje" : "não passa hoje"}</span>
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <button type="button" onClick={() => setCriando(true)} className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#C9D3E4] py-4 text-[15px] font-bold text-[#1B3B7C] hover:border-[#1B3B7C] hover:bg-[#F4F7FC]">
+                  <Plus className="size-5" /> Nova tela
+                </button>
+              </section>
+            )}
             <section className="rounded-3xl bg-white p-5 ring-1 ring-[#E3E8F2]">
               <button type="button" onClick={() => setGiraAberto(!giraAberto)} aria-expanded={giraAberto} className="flex w-full items-center gap-2 text-left">
                 <h2 className="text-lg font-extrabold text-[#1B3B7C]">Gira sozinho, um por dia</h2>
@@ -362,7 +362,7 @@ export function Gerenciador({ itens, blocos: iniciais, telas, podeCriar, nomes, 
 }
 
 function Editor({ id, itens, hoje, origem, onMudou }: { id: string; itens: ItemTv[]; hoje: string; origem: string; onMudou: () => void }) {
-  if (id === "avisos") return <EditorAvisos itens={itens} hoje={hoje} onMudou={onMudou} abrirNovo={0} />;
+  if (id === "avisos") return <AvisosDestaque itens={itens} hoje={hoje} onMudou={onMudou} />;
   if (id === "recados") return <EditorRecados itens={itens} hoje={hoje} onMudou={onMudou} abrirNovo={0} />;
   if (id === "agenda") return <EditorAgenda itens={itens} hoje={hoje} onMudou={onMudou} />;
   if (LISTA[id]) return <ListaSimples key={id} conf={LISTA[id]} itens={itens} hoje={hoje} origem={id === "saudacao" ? origem : ""} onMudou={onMudou} />;

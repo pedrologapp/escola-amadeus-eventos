@@ -290,6 +290,12 @@ function conteudo(c: Cena, hora: number) {
       // telas criadas pela escola: cada formato usa o desenho de uma cena pronta
       const f = String(d.formato);
       if (f === "aviso") return conteudo({ ...c, id: "avisos" }, hora);
+      if (f === "recado") {
+        const lista = ((d.linhas as { icone?: string; texto: string }[] | undefined) ?? []).filter((l) => l.texto).slice(0, 4).map((l) => ({ texto: l.texto, icone: l.icone || null }));
+        return conteudo({ ...c, id: "recados", dados: { lista } }, hora);
+      }
+      if (f === "frase") return conteudo({ ...c, id: "frase" }, hora);
+      if (f === "sabia") return conteudo({ ...c, id: "sabia" }, hora);
       if (f === "celebracao") return conteudo({ ...c, id: "formatura" }, hora);
       if (f === "programacao") {
         const linhas = ((d.linhas as { hora: string; texto: string }[] | undefined) ?? []).filter((l) => l.hora || l.texto);
@@ -331,6 +337,9 @@ const CLASSE: Record<string, string> = {
   formatura: "cena-formatura",
   fim: "cena-fim",
   "tela-aviso": "cena-aviso doodles",
+  "tela-recado": "cena-recados doodles",
+  "tela-frase": "cena-frase doodles",
+  "tela-sabia": "cena-sabia doodles",
   "tela-celebracao": "cena-formatura",
   "tela-programacao": "cena-recados cena-programacao doodles",
 };
