@@ -202,7 +202,7 @@ export async function roteiroDoDia(): Promise<RoteiroTv> {
   const hoje = hojeLocal();
   const turno = horaLocal() >= 7 ? "dia" : "madrugada";
   try {
-    return await unstable_cache(() => montarRoteiro(hoje), ["tv-roteiro", "v4", hoje, turno], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })();
+    return await unstable_cache(() => montarRoteiro(hoje), ["tv-roteiro", "v5", hoje, turno], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })();
   } catch (e) {
     // nada fica guardado: a TV mostra só o relógio e pede de novo em 1 minuto (app/admin/tv/player.tsx)
     console.error(e);
