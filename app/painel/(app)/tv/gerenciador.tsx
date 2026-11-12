@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ChevronLeft, ChevronRight, Copy, Loader2, Lock, Minus, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
+import { Check, ChevronDown, ChevronLeft, ChevronRight, Copy, GripVertical, Loader2, Lock, Minus, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import type { BlocoTv, ItemTv, TipoItem } from "@/lib/tv";
 import { apagarItem, ativarItem, salvarItem, type ItemForm } from "@/app/admin/(authed)/comunicacao/tv/actions";
 import { ligarBloco, ordenarBlocos } from "./actions";
@@ -67,6 +67,7 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa, e
   const [aviso, setAviso] = useState<{ ok: boolean; txt: string } | null>(null);
   const [copiado, setCopiado] = useState(false);
   const [aba, setAba] = useState<"conteudo" | "telas">("conteudo");
+  const [giraAberto, setGiraAberto] = useState(false);
   const [gira, setGira] = useState<"sabia" | "frase" | "saudacao">("sabia");
   const tv = useRef<HTMLIFrameElement>(null);
   // no PC a TV é a deste servidor; no ar, o endereço público (em admin.* o /tv é este gerenciador)
@@ -167,7 +168,12 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa, e
               <EditorAvisos itens={itens} hoje={hoje} onMudou={mudou} abrirNovo={0} />
             </div>
             <section className="rounded-3xl bg-white p-5 ring-1 ring-[#E3E8F2]">
-              <h2 className="text-lg font-extrabold text-[#1B3B7C]">Gira sozinho, um por dia</h2>
+              <button type="button" onClick={() => setGiraAberto(!giraAberto)} aria-expanded={giraAberto} className="flex w-full items-center gap-2 text-left">
+                <h2 className="text-lg font-extrabold text-[#1B3B7C]">Gira sozinho, um por dia</h2>
+                <span className="text-sm text-[#8A95AA]">Você sabia?, frase do dia e datas comemorativas</span>
+                <ChevronDown className={`ml-auto size-5 text-[#8A95AA] transition ${giraAberto ? "rotate-180" : ""}`} />
+              </button>
+              {giraAberto && (<>
               <div className="mt-3 flex flex-wrap gap-2">
                 {(["sabia", "frase", "saudacao"] as const).map((id) => (
                   <button key={id} type="button" onClick={() => setGira(id)} className={`rounded-xl px-3 py-1.5 text-sm font-bold ${gira === id ? "bg-[#1B3B7C] text-white" : "bg-[#EEF2FA] text-[#1B3B7C]"}`}>
@@ -176,6 +182,7 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa, e
                 ))}
               </div>
               <div className="mt-4"><ListaSimples key={gira} conf={LISTA[gira]} itens={itens} hoje={hoje} origem="" onMudou={mudou} /></div>
+              </>)}
             </section>
           </div>
           <aside className="space-y-3 xl:sticky xl:top-24 xl:self-start">
@@ -198,74 +205,41 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa, e
                   : aviso && <span className={aviso.ok ? "text-emerald-700" : "text-red-700"}>{aviso.txt}</span>}
               </span>
             </div>
-            {/* a fila: a ordem em que as telas passam na TV */}
-            <div className="mt-3 rounded-2xl bg-white p-3 ring-1 ring-[#E3E8F2]">
-              <p className="mb-2 text-xs font-semibold text-[#8A95AA]">A ordem na TV: arraste para mudar. As apagadas não passam hoje; as com cadeado são fixas.</p>
-              <ol className="flex flex-wrap items-center gap-1.5">
-                {blocos.map((b, i) => {
-                  const v = VISUAL[b.id] ?? { fundo: "#12307A", icone: "📺" };
-                  const passa = b.ativo && b.id !== NA_RECEPCAO_NAO && !!hojePassa[b.id];
-                  return (
-                    <li
-                      key={b.id}
-                      draggable={mexe(b.id)}
-                      onDragStart={() => setArrastando(b.id)}
-                      onDragEnd={() => setArrastando(null)}
-                      onDragOver={(e) => mexe(b.id) && e.preventDefault()}
-                      onDrop={() => mexe(b.id) && soltarEm(b.id)}
-                      onClick={() => setEscolhido(b.id)}
-                      title={`${nomes[b.id]?.nome ?? b.id}${passa ? "" : " (não passa hoje)"}`}
-                      className={`flex items-center gap-1 ${mexe(b.id) ? "cursor-grab" : "cursor-pointer"} ${arrastando === b.id ? "opacity-30" : ""}`}
-                    >
-                      {i > 0 && <span className="text-[10px] text-[#CBD3E1]">›</span>}
-                      <span className={`relative flex h-8 w-11 items-center justify-center rounded-md text-base ring-1 ring-inset ring-black/10 ${passa ? "" : "opacity-35 grayscale"} ${escolhido === b.id ? "ring-2 ring-[#FFC21C] ring-offset-1" : ""}`} style={{ background: v.fundo }}>
-                        {v.icone}
-                        <span className={`absolute left-0.5 top-0 text-[8px] font-extrabold ${v.claro ? "text-[#8A95AA]" : "text-white/70"}`}>{i + 1}</span>
-                        {FIXOS[b.id] && <Lock className={`absolute bottom-0.5 right-0.5 size-2.5 ${v.claro ? "text-[#8A95AA]" : "text-white/70"}`} />}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ol>
-            </div>
-
-            <div className="mt-4 space-y-4">
-              {GRUPOS.map((g) => {
-                const doGrupo = blocos.filter((b) => g.ids.includes(b.id));
-                if (!doGrupo.length) return null;
+            {/* as telas na ordem em que passam, uma embaixo da outra */}
+            <p className="mt-1 text-sm text-[#8A95AA]">Arraste para mudar a ordem. As apagadas não passam hoje; as com cadeado são fixas.</p>
+            <ol className="mt-3 space-y-2">
+              {blocos.map((b, i) => {
+                const v = VISUAL[b.id] ?? { fundo: "#12307A", icone: "📺" };
+                const fora = b.id === NA_RECEPCAO_NAO;
+                const passa = b.ativo && !fora && !!hojePassa[b.id];
+                const estado = !b.ativo ? "desligada" : fora ? "só na TV com login" : passa ? "passa hoje" : "vazia hoje";
+                const funcao = GRUPOS.find((g) => g.ids.includes(b.id))?.nome ?? "";
                 return (
-                  <div key={g.nome}>
-                    <h3 className="mb-2 text-xs font-extrabold uppercase tracking-wider text-[#8A95AA]">{g.nome}</h3>
-                    <ol className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                      {doGrupo.map((b) => {
-                        const v = VISUAL[b.id] ?? { fundo: "#12307A", icone: "📺" };
-                        const fora = b.id === NA_RECEPCAO_NAO;
-                        const passa = b.ativo && !fora && !!hojePassa[b.id];
-                        const estado = !b.ativo ? "desligado" : fora ? "só com login" : passa ? "passa hoje" : "vazio hoje";
-                        return (
-                          <li
-                            key={b.id}
-                            onClick={() => setEscolhido(b.id)}
-                            className={`flex cursor-pointer items-center gap-2.5 rounded-xl bg-white p-1.5 pr-2 transition ${escolhido === b.id ? "ring-[3px] ring-[#FFC21C]" : "ring-1 ring-[#E3E8F2] hover:ring-[#B9C6DF]"} ${b.ativo ? "" : "opacity-55"}`}
-                          >
-                            <span className={`relative flex h-10 w-14 shrink-0 items-center justify-center rounded-lg text-xl ring-1 ring-inset ring-black/10 ${b.ativo ? "" : "grayscale"}`} style={{ background: v.fundo }}>
-                              {v.icone}
-                              <span className={`absolute left-1 top-0.5 text-[9px] font-extrabold ${v.claro ? "text-[#8A95AA]" : "text-white/70"}`}>{blocos.indexOf(b) + 1}</span>
-                            </span>
-                            <span className="min-w-0 flex-1">
-                              <span className="line-clamp-2 block text-[13px] font-bold leading-tight text-[#1A2240]">{nomes[b.id]?.nome ?? b.id}</span>
-                              <span className={`flex items-center gap-1 text-[11px] font-semibold ${passa ? "text-emerald-700" : "text-[#8A95AA]"}`}>
-                                <span className={`size-1.5 rounded-full ${passa ? "bg-emerald-500" : "bg-[#CBD3E1]"}`} /> {estado}
-                              </span>
-                            </span>
-                          </li>
-                        );
-                      })}
-                    </ol>
-                  </div>
+                  <li
+                    key={b.id}
+                    draggable={mexe(b.id)}
+                    onDragStart={() => setArrastando(b.id)}
+                    onDragEnd={() => setArrastando(null)}
+                    onDragOver={(e) => mexe(b.id) && e.preventDefault()}
+                    onDrop={() => mexe(b.id) && soltarEm(b.id)}
+                    onClick={() => setEscolhido(b.id)}
+                    className={`flex cursor-pointer items-center gap-3 rounded-2xl bg-white p-2 pr-4 transition ${escolhido === b.id ? "ring-[3px] ring-[#FFC21C]" : "ring-1 ring-[#E3E8F2] hover:ring-[#B9C6DF]"} ${arrastando === b.id ? "opacity-40" : ""}`}
+                  >
+                    <span className="w-6 shrink-0 text-center text-sm font-extrabold tabular-nums text-[#8A95AA]">{i + 1}</span>
+                    <span className={`flex h-11 w-[70px] shrink-0 items-center justify-center rounded-lg text-xl ring-1 ring-inset ring-black/10 ${passa ? "" : "opacity-40 grayscale"}`} style={{ background: v.fundo }}>{v.icone}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className={`block truncate text-[15px] font-bold ${passa ? "text-[#1A2240]" : "text-[#8A95AA]"}`}>{nomes[b.id]?.nome ?? b.id}</span>
+                      <span className="block truncate text-xs text-[#8A95AA]">{funcao}</span>
+                    </span>
+                    <span className={`hidden shrink-0 items-center gap-1.5 text-xs font-semibold sm:flex ${passa ? "text-emerald-700" : "text-[#8A95AA]"}`}>
+                      <span className={`size-2 rounded-full ${passa ? "bg-emerald-500" : "bg-[#CBD3E1]"}`} /> {estado}
+                    </span>
+                    <span className="w-10 shrink-0 text-right text-sm font-semibold tabular-nums text-[#5A6478]">{b.segundos}s</span>
+                    {FIXOS[b.id] ? <Lock className="size-4 shrink-0 text-[#8A95AA]" /> : <GripVertical className={`size-4 shrink-0 ${mexe(b.id) ? "text-[#B9C6DF]" : "text-transparent"}`} />}
+                  </li>
                 );
               })}
-            </div>
+            </ol>
           </section>
         </div>
 
