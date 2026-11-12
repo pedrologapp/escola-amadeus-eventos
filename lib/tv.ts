@@ -63,6 +63,20 @@ export interface BlocoTv {
   segundos: number;
 }
 
+/** Telas criadas pela escola a partir de um formato pronto (tabela tv_telas, migração 0078). */
+export type FormatoTela = "aviso" | "celebracao" | "programacao" | "contagem" | "foto";
+
+export interface TelaTv {
+  id: string;
+  formato: FormatoTela;
+  campos: Record<string, unknown>;
+  ordem: number;
+  segundos: number;
+  inicio: string | null;
+  fim: string | null;
+  ativo: boolean;
+}
+
 export interface Aniversariante {
   nome: string;
   turma: string;
@@ -105,6 +119,20 @@ export async function lerItensEBlocos() {
   // banco fora do ar (ex.: Supabase pausado): falha de verdade, para o roteiro vazio não ficar guardado o dia todo
   if (e1 || e2) throw new Error(`TV: não consegui ler o banco (${(e1 ?? e2)?.message})`);
   return { itens: (itens ?? []) as ItemTv[], blocos: (blocos ?? []) as BlocoTv[] };
+}
+
+/** As telas criadas. null = a tabela ainda não existe (migração 0078 não aplicada): a TV segue como antes. */
+export async function lerTelas(): Promise<TelaTv[] | null> {
+  const { data, error } = await createAdminClient()
+    .from("tv_telas")
+    .select("id, formato, campos, ordem, segundos, inicio, fim, ativo")
+    .order("ordem")
+    .order("criado_em");
+  if (error) {
+    if (error.code === "42P01" || error.code === "PGRST205" || /tv_telas/.test(error.message)) return null;
+    throw new Error(`TV: telas (${error.message})`);
+  }
+  return (data ?? []).map((t) => ({ ...t, ordem: Number(t.ordem) })) as TelaTv[];
 }
 
 async function aniversariantes(hoje: string): Promise<Aniversariante[]> {
@@ -171,7 +199,7 @@ export async function roteiroDoDia(): Promise<RoteiroTv> {
   const hoje = hojeLocal();
   const turno = horaLocal() >= 7 ? "dia" : "madrugada";
   try {
-    return await unstable_cache(() => montarRoteiro(hoje), ["tv-roteiro", "v3", hoje, turno], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })();
+    return await unstable_cache(() => montarRoteiro(hoje), ["tv-roteiro", "v4", hoje, turno], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })();
   } catch (e) {
     // nada fica guardado: a TV mostra só o relógio e pede de novo em 1 minuto (app/admin/tv/player.tsx)
     console.error(e);
@@ -196,7 +224,9 @@ export async function roteiroPublico(): Promise<RoteiroTv> {
 
 /** Monta as cenas do dia. */
 async function montarRoteiro(hoje: string): Promise<RoteiroTv> {
-  const { itens, blocos } = await lerItensEBlocos();
+  const [{ itens, blocos: todosBlocos }, telas] = await Promise.all([lerItensEBlocos(), lerTelas()]);
+  // com as telas criadas, a formatura fixa vira uma tela (formato celebração) e o bloco antigo sai
+  const blocos = telas ? todosBlocos.filter((b) => b.id !== "formatura") : todosBlocos;
   const valem = itens.filter((i) => valeHoje(i, hoje));
   const de = (t: TipoItem) => valem.filter((i) => i.tipo === t);
   const [nivers, evento, qrFolder, qrPesquisa] = await Promise.all([
@@ -213,8 +243,22 @@ async function montarRoteiro(hoje: string): Promise<RoteiroTv> {
   const diasSemana = diasDaSemana(hoje);
   const agenda = itens.filter((i) => i.tipo === "agenda" && i.ativo && i.data && diasSemana.includes(i.data));
 
+  // blocos e telas criadas na mesma fila, pela ordem
+  const fila: ({ tipo: "bloco"; b: BlocoTv; ordem: number } | { tipo: "tela"; t: TelaTv; ordem: number })[] = [
+    ...blocos.map((b) => ({ tipo: "bloco" as const, b, ordem: b.ordem })),
+    ...(telas ?? []).map((t) => ({ tipo: "tela" as const, t, ordem: t.ordem })),
+  ].sort((x, y) => x.ordem - y.ordem);
+
   const cenas: Cena[] = [];
-  for (const b of blocos) {
+  for (const f of fila) {
+    if (f.tipo === "tela") {
+      const t = f.t;
+      if (t.ativo && (!t.inicio || t.inicio <= hoje) && (!t.fim || t.fim >= hoje)) {
+        cenas.push({ id: "tela", chave: `tela:${t.id}`, segundos: t.segundos, dados: { formato: t.formato, ...t.campos } });
+      }
+      continue;
+    }
+    const b = f.b;
     if (!b.ativo) continue;
     const c = (dados: Record<string, unknown>, chave = b.id) => cenas.push({ id: b.id, chave, segundos: b.segundos, dados });
     switch (b.id) {

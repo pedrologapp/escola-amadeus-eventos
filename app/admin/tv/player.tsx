@@ -267,9 +267,13 @@ function conteudo(c: Cena, hora: number) {
             <path d="M100 78 L96 100 L120 112" fill="#B9CCEF" stroke="#083078" strokeWidth="5" />
           </svg>
           <div className="txt">
-            <div className="pre surge" style={st(0.4)}>o voo mais bonito do ano</div>
-            <div className="l3d dest"><span className="p" style={st(0.9)}>Formatura</span></div>
-            <div className="l3d azul ano"><span className="p" style={st(1.4)}>5º</span> <span className="p" style={st(1.6)}>ano</span> <span className="p" style={st(1.8)}>2026</span></div>
+            <div className="pre surge" style={st(0.4)}>{String(d.pre ?? "o voo mais bonito do ano")}</div>
+            <div className="l3d dest"><span className="p" style={st(0.9)}>{String(d.titulo ?? "Formatura")}</span></div>
+            <div className="l3d azul ano">
+              {String(d.linha ?? "5º ano 2026").split(" ").map((w, i) => (
+                <span key={i}>{i > 0 && " "}<span className="p" style={st(1.4 + i * 0.2)}>{w}</span></span>
+              ))}
+            </div>
           </div>
           <Traco nome="formatura" className="" />
         </>
@@ -282,6 +286,26 @@ function conteudo(c: Cena, hora: number) {
           <div className="fr surge" style={st(1.2)}>30 anos educando para a vida</div>
         </div>
       );
+    case "tela": {
+      // telas criadas pela escola: cada formato usa o desenho de uma cena pronta
+      const f = String(d.formato);
+      if (f === "aviso") return conteudo({ ...c, id: "avisos" }, hora);
+      if (f === "celebracao") return conteudo({ ...c, id: "formatura" }, hora);
+      if (f === "programacao") {
+        const linhas = ((d.linhas as { hora: string; texto: string }[] | undefined) ?? []).filter((l) => l.hora || l.texto);
+        return (
+          <div className="card surge" style={st(0)}>
+            <h2 className="surge" style={st(0.3)}><Destaque texto={String(d.titulo || "Programação")} /></h2>
+            <ul>
+              {linhas.slice(0, 6).map((l, i) => (
+                <li key={i} className="surge" style={st(1 + i * 0.6)}><i className="hora">{l.hora}</i><span><Destaque texto={l.texto} /></span></li>
+              ))}
+            </ul>
+          </div>
+        );
+      }
+      return null;
+    }
     default:
       return null;
   }
@@ -306,6 +330,9 @@ const CLASSE: Record<string, string> = {
   qr: "cena-qr doodles",
   formatura: "cena-formatura",
   fim: "cena-fim",
+  "tela-aviso": "cena-aviso doodles",
+  "tela-celebracao": "cena-formatura",
+  "tela-programacao": "cena-recados cena-programacao doodles",
 };
 
 /** embutida: dentro de uma caixa numa página (o portal); clicar abre em tela cheia. */
@@ -397,7 +424,7 @@ export function PlayerTv({ roteiro, previa, congelada = null, embutida = false }
       {escala > 0 && (
         <div id="palco" style={{ left: "50%", top: "50%", transformOrigin: "center", transform: `translate(-50%, -50%) scale(${escala})` }}>
           {cenas.map((c, i) => (
-            <section key={`${roteiro.atualizado}:${c.chave}`} className={`cena ${CLASSE[c.id] ?? ""} ${c.id === "evento" && !(c.dados as D).ilustracao ? "sem-ilus doodles" : ""} ${i === atual ? "on" : ""} ${i === saindo ? "sai" : ""}`}>
+            <section key={`${roteiro.atualizado}:${c.chave}`} className={`cena ${CLASSE[c.id === "tela" ? `tela-${String((c.dados as D).formato)}` : c.id] ?? ""} ${c.id === "evento" && !(c.dados as D).ilustracao ? "sem-ilus doodles" : ""} ${i === atual ? "on" : ""} ${i === saindo ? "sai" : ""}`}>
               {(i === atual || i === saindo) && conteudo(c, hora)}
             </section>
           ))}

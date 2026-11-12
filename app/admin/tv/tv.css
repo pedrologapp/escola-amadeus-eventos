@@ -283,3 +283,6 @@
 .f-ralton { font-family: Ralton, sans-serif; }
 .f-scrib { font-family: Scrib, sans-serif; }
 .f-caveat { font-family: Caveat, cursive; }
+
+/* ===== telas criadas: programação (horário no lugar do ícone) ===== */
+.cena-programacao li i.hora { width: auto; min-width: 170px; padding: 0 24px; font-family: DM, sans-serif; font-size: 46px; font-weight: 700; color: var(--marinho); background: #FFF1BF; }

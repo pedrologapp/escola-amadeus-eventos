@@ -3,10 +3,11 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check, ChevronDown, ChevronLeft, ChevronRight, Copy, GripVertical, Loader2, Lock, Minus, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
-import type { BlocoTv, ItemTv, TipoItem } from "@/lib/tv";
+import type { BlocoTv, ItemTv, TelaTv, TipoItem } from "@/lib/tv";
 import { apagarItem, ativarItem, salvarItem, type ItemForm } from "@/app/admin/(authed)/comunicacao/tv/actions";
 import { ligarBloco, ordenarBlocos } from "./actions";
 import { FIXOS } from "./fixos";
+import { EditorTela, NovaTela, formatoTela, nomeTela, visualTela } from "./telas";
 import { EditorAgenda, EditorAvisos, EditorRecados } from "@/app/admin/(authed)/comunicacao/tv/editores";
 
 /**
@@ -53,14 +54,22 @@ const NA_RECEPCAO_NAO = "aniversariantes"; // a TV da recepção é aberta: sem 
 
 const mmss = (s: number) => `${Math.floor(s / 60)}min${String(s % 60).padStart(2, "0")}`;
 
-export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa, equipe }: {
-  itens: ItemTv[]; blocos: BlocoTv[]; nomes: Nomes; hoje: string; hojePassa: Record<string, number>; equipe: boolean;
+export function Gerenciador({ itens, blocos: iniciais, telas, podeCriar, nomes, hoje, hojePassa, equipe }: {
+  itens: ItemTv[]; blocos: BlocoTv[]; telas: TelaTv[]; podeCriar: boolean; nomes: Nomes; hoje: string; hojePassa: Record<string, number>; equipe: boolean;
 }) {
   const router = useRouter();
   // a escola mexe em tudo, menos nas telas fixas do Arboria (./fixos.ts)
   const mexe = (id: string) => equipe || !FIXOS[id];
   const noLugar = (l: BlocoTv[]) => (equipe ? l : [...l.filter((b) => FIXOS[b.id] === "inicio"), ...l.filter((b) => !FIXOS[b.id]), ...l.filter((b) => FIXOS[b.id] === "fim")]);
   const [blocos, setBlocos] = useState(iniciais);
+  // quando o servidor manda a lista de novo (depois de salvar, criar ou apagar), ela vale
+  const [vindos, setVindos] = useState(iniciais);
+  if (vindos !== iniciais) { setVindos(iniciais); setBlocos(iniciais); }
+  const [criando, setCriando] = useState(false);
+  // as telas criadas vêm na lista como "tela:<id>"
+  const telaDe = (id: string) => (id.startsWith("tela:") ? telas.find((t) => t.id === id.slice(5)) : undefined);
+  const vis = (id: string) => (id.startsWith("tela:") ? visualTela(telaDe(id)) : VISUAL[id] ?? { fundo: "#12307A", icone: "📺" });
+  const nome = (id: string) => (id.startsWith("tela:") ? nomeTela(telaDe(id)) : nomes[id]?.nome ?? id);
   const [escolhido, setEscolhido] = useState<string>(iniciais.find((b) => nomes[b.id]?.equipe)?.id ?? iniciais[0]?.id);
   const [arrastando, setArrastando] = useState<string | null>(null);
   const [salvando, comecar] = useTransition();
@@ -90,7 +99,7 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa, e
     const novos = noLugar(lista);
     setBlocos(novos);
     comecar(async () => {
-      const r = await ordenarBlocos(novos);
+      const r = await ordenarBlocos(novos.map((b) => ({ id: b.id, segundos: b.segundos })));
       setAviso(r.ok ? { ok: true, txt: "Salvo. Entra na próxima volta da TV." } : { ok: false, txt: r.erro });
       if (r.ok) mudou();
     });
@@ -139,6 +148,12 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa, e
 
   return (
     <div>
+      {criando && (
+        <NovaTela
+          onFechar={() => setCriando(false)}
+          onCriada={(id) => { setCriando(false); setAba("telas"); if (id) setEscolhido(`tela:${id}`); mudou(); }}
+        />
+      )}
       {/* título */}
       <div className="flex flex-wrap items-end gap-3">
         <div>
@@ -148,6 +163,11 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa, e
         <div className="ml-auto flex items-center gap-2 rounded-2xl border border-dashed border-[#C9D3E4] px-4 py-2 text-sm text-[#8A95AA]" title="Vem no próximo passo">
           <span className="text-base">🎪</span> Modo evento <span className="text-xs">(em breve)</span>
         </div>
+        {podeCriar && (
+          <button type="button" onClick={() => setCriando(true)} className="inline-flex items-center gap-2 rounded-2xl bg-[#1B3B7C] px-5 py-2.5 text-[15px] font-bold text-white shadow-[0_8px_20px_rgba(27,59,124,.25)] hover:brightness-110">
+            <Plus className="size-5" /> Nova tela
+          </button>
+        )}
       </div>
 
       <div className="mt-5 flex gap-1 border-b border-[#E3E8F2]">
@@ -165,7 +185,34 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa, e
             <EditorAgenda itens={itens} hoje={hoje} onMudou={mudou} />
             <div className="grid gap-6 lg:grid-cols-2">
               <EditorRecados itens={itens} hoje={hoje} onMudou={mudou} abrirNovo={0} />
-              <EditorAvisos itens={itens} hoje={hoje} onMudou={mudou} abrirNovo={0} />
+              {podeCriar ? (
+                <section className="rounded-3xl bg-white p-5 ring-1 ring-[#E3E8F2]">
+                  <h2 className="text-lg font-extrabold text-[#1B3B7C]">Telas criadas</h2>
+                  <p className="text-sm text-[#5A6478]">Avisos, formaturas, programações… Toque numa para mudar.</p>
+                  <ul className="mt-3 space-y-2">
+                    {telas.map((t) => {
+                      const v = visualTela(t);
+                      const passa = !!hojePassa[`tela:${t.id}`];
+                      return (
+                        <li key={t.id}>
+                          <button type="button" onClick={() => { setAba("telas"); setEscolhido(`tela:${t.id}`); }} className="flex w-full items-center gap-3 rounded-xl p-1.5 text-left hover:bg-[#F4F7FC]">
+                            <span className={`flex h-9 w-14 shrink-0 items-center justify-center rounded-lg text-lg ring-1 ring-inset ring-black/10 ${passa ? "" : "opacity-40 grayscale"}`} style={{ background: v.fundo }}>{v.icone}</span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm font-bold text-[#1A2240]">{nomeTela(t)}</span>
+                              <span className={`text-xs font-semibold ${passa ? "text-emerald-700" : "text-[#8A95AA]"}`}>{passa ? "passa hoje" : "não passa hoje"}</span>
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <button type="button" onClick={() => setCriando(true)} className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#C9D3E4] py-4 text-[15px] font-bold text-[#1B3B7C] hover:border-[#1B3B7C] hover:bg-[#F4F7FC]">
+                    <Plus className="size-5" /> Nova tela
+                  </button>
+                </section>
+              ) : (
+                <EditorAvisos itens={itens} hoje={hoje} onMudou={mudou} abrirNovo={0} />
+              )}
             </div>
             <section className="rounded-3xl bg-white p-5 ring-1 ring-[#E3E8F2]">
               <button type="button" onClick={() => setGiraAberto(!giraAberto)} aria-expanded={giraAberto} className="flex w-full items-center gap-2 text-left">
@@ -209,11 +256,11 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa, e
             <p className="mt-1 text-sm text-[#8A95AA]">Arraste para mudar a ordem. As apagadas não passam hoje; as com cadeado são fixas.</p>
             <ol className="mt-3 space-y-2">
               {blocos.map((b, i) => {
-                const v = VISUAL[b.id] ?? { fundo: "#12307A", icone: "📺" };
+                const v = vis(b.id);
                 const fora = b.id === NA_RECEPCAO_NAO;
                 const passa = b.ativo && !fora && !!hojePassa[b.id];
                 const estado = !b.ativo ? "desligada" : fora ? "só na TV com login" : passa ? "passa hoje" : "vazia hoje";
-                const funcao = GRUPOS.find((g) => g.ids.includes(b.id))?.nome ?? "";
+                const funcao = telaDe(b.id) ? `Criada por vocês · ${formatoTela(telaDe(b.id))}` : GRUPOS.find((g) => g.ids.includes(b.id))?.nome ?? "";
                 return (
                   <li
                     key={b.id}
@@ -228,7 +275,7 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa, e
                     <span className="w-6 shrink-0 text-center text-sm font-extrabold tabular-nums text-[#8A95AA]">{i + 1}</span>
                     <span className={`flex h-11 w-[70px] shrink-0 items-center justify-center rounded-lg text-xl ring-1 ring-inset ring-black/10 ${passa ? "" : "opacity-40 grayscale"}`} style={{ background: v.fundo }}>{v.icone}</span>
                     <span className="min-w-0 flex-1">
-                      <span className={`block truncate text-[15px] font-bold ${passa ? "text-[#1A2240]" : "text-[#8A95AA]"}`}>{nomes[b.id]?.nome ?? b.id}</span>
+                      <span className={`block truncate text-[15px] font-bold ${passa ? "text-[#1A2240]" : "text-[#8A95AA]"}`}>{nome(b.id)}</span>
                       <span className="block truncate text-xs text-[#8A95AA]">{funcao}</span>
                     </span>
                     <span className={`hidden shrink-0 items-center gap-1.5 text-xs font-semibold sm:flex ${passa ? "text-emerald-700" : "text-[#8A95AA]"}`}>
@@ -248,10 +295,10 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa, e
           {atual && (
             <div className="rounded-3xl bg-white p-5 shadow-[0_10px_30px_rgba(27,59,124,.1)] ring-1 ring-[#E3E8F2]">
               <div className="flex items-center gap-3">
-                <span className="flex size-12 items-center justify-center rounded-2xl text-2xl" style={{ background: VISUAL[atual.id]?.fundo }}>{VISUAL[atual.id]?.icone}</span>
+                <span className="flex size-12 items-center justify-center rounded-2xl text-2xl" style={{ background: vis(atual.id).fundo }}>{vis(atual.id).icone}</span>
                 <div className="min-w-0 flex-1">
-                  <h2 className="truncate font-[family-name:var(--font-serifa)] text-2xl font-bold text-[#1B3B7C]">{nomes[atual.id]?.nome ?? atual.id}</h2>
-                  <p className="text-sm text-[#5A6478]">{nomes[atual.id]?.equipe || LISTA[atual.id] ? "Vocês colocam o conteúdo" : "Entra sozinho"}</p>
+                  <h2 className="truncate font-[family-name:var(--font-serifa)] text-2xl font-bold text-[#1B3B7C]">{nome(atual.id)}</h2>
+                  <p className="text-sm text-[#5A6478]">{telaDe(atual.id) ? `Criada por vocês · ${formatoTela(telaDe(atual.id))}` : nomes[atual.id]?.equipe || LISTA[atual.id] ? "Vocês colocam o conteúdo" : "Entra sozinho"}</p>
                 </div>
                 {mexe(atual.id) ? (
                   <label className="flex shrink-0 items-center gap-2 text-sm font-semibold text-[#1B3B7C]">
@@ -273,7 +320,16 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa, e
 
               {/* o conteúdo (o que a escola faz) */}
               <div className="mt-5">
-                <Editor id={atual.id} itens={itens} hoje={hoje} origem={nomes[atual.id]?.origem ?? ""} onMudou={mudou} />
+                {telaDe(atual.id) ? (
+                  <EditorTela
+                    key={atual.id}
+                    tela={telaDe(atual.id)}
+                    formato={telaDe(atual.id)!.formato}
+                    onPronto={(id) => { if (id) setEscolhido(`tela:${id}`); else setEscolhido(blocos[0]?.id); mudou(); }}
+                  />
+                ) : (
+                  <Editor id={atual.id} itens={itens} hoje={hoje} origem={nomes[atual.id]?.origem ?? ""} onMudou={mudou} />
+                )}
               </div>
 
               {/* ordem e tempo (as telas fixas, só a equipe Arboria) */}
