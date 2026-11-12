@@ -154,7 +154,7 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa, e
             </div>
             {/* a fila: a ordem em que as telas passam na TV */}
             <div className="mt-3 rounded-2xl bg-white p-3 ring-1 ring-[#E3E8F2]">
-              <p className="mb-2 text-xs font-semibold text-[#8A95AA]">{equipe ? "A ordem na TV. Arraste para mudar." : "A ordem na TV."}</p>
+              <p className="mb-2 text-xs font-semibold text-[#8A95AA]">{equipe ? "A ordem na TV. Arraste para mudar." : "A ordem na TV."} As apagadas não passam hoje.</p>
               <ol className="flex flex-wrap items-center gap-1.5">
                 {blocos.map((b, i) => {
                   const v = VISUAL[b.id] ?? { fundo: "#12307A", icone: "📺" };
@@ -168,7 +168,7 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa, e
                       onDragOver={(e) => equipe && e.preventDefault()}
                       onDrop={() => equipe && soltarEm(b.id)}
                       onClick={() => setEscolhido(b.id)}
-                      title={nomes[b.id]?.nome ?? b.id}
+                      title={`${nomes[b.id]?.nome ?? b.id}${passa ? "" : " (não passa hoje)"}`}
                       className={`flex items-center gap-1 ${equipe ? "cursor-grab" : "cursor-pointer"} ${arrastando === b.id ? "opacity-30" : ""}`}
                     >
                       {i > 0 && <span className="text-[10px] text-[#CBD3E1]">›</span>}
