@@ -34,7 +34,7 @@ const BLOCOS: [string, string][] = [
 type Corte = { x: number; y: number; w: number; h: number };
 type Cortes = Partial<Record<"beca" | "familia", Corte>>;
 // proporção (largura / altura) de cada moldura de foto na placa (public/formatura-placa/molde.html)
-const ASPECTO = { turma: 1024 / 466, familia: 404 / 530, beca: 334 / 490 } as const;
+const ASPECTO = { turma: 1024 / 466, familia: 404 / 676, beca: 334 / 490 } as const;
 const somar = (a?: Ajuste, b?: Ajuste): Ajuste => ({ t: (a?.t ?? 0) + (b?.t ?? 0), x: (a?.x ?? 0) + (b?.x ?? 0), y: (a?.y ?? 0) + (b?.y ?? 0) });
 
 const C = {
