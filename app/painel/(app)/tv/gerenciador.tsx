@@ -39,7 +39,14 @@ const LISTA: Record<string, { tipo: TipoItem; titulo: string; dica: string; exem
   saudacao: { tipo: "comemoracao", titulo: "Datas comemorativas", dica: "Aparecem na saudação naquele dia, todo ano. O resto da saudação (bom dia e a data) é automático.", exemplo: "Dia do Professor", comData: true },
 };
 
-const LINK_TV = "https://www.escolaamadeus.com/tv";
+/** O roteiro separado por função (o número no cartão continua sendo a ordem em que passa na TV). */
+const GRUPOS: { nome: string; ids: string[] }[] = [
+  { nome: "Recados da escola", ids: ["avisos", "recados", "agenda"] },
+  { nome: "Conteúdo do dia", ids: ["saudacao", "sabia", "frase"] },
+  { nome: "Automáticos", ids: ["aniversariantes", "evento", "promo", "qr", "formatura", "fim"] },
+];
+
+const LINK_TV ="https://www.escolaamadeus.com/tv";
 const NA_RECEPCAO_NAO = "aniversariantes"; // a TV da recepção é aberta: sem nome de aluno
 
 const mmss = (s: number) => `${Math.floor(s / 60)}min${String(s % 60).padStart(2, "0")}`;
@@ -134,36 +141,49 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa }:
                   : aviso && <span className={aviso.ok ? "text-emerald-700" : "text-red-700"}>{aviso.txt}</span>}
               </span>
             </div>
-            <ol className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {blocos.map((b, i) => {
-                const v = VISUAL[b.id] ?? { fundo: "#12307A", icone: "📺" };
-                const fora = b.id === NA_RECEPCAO_NAO;
-                const passa = b.ativo && !fora && !!hojePassa[b.id];
-                const estado = !b.ativo ? "desligado" : fora ? "só na TV com login" : passa ? (hojePassa[b.id] > 1 ? `passa hoje · ${hojePassa[b.id]} telas` : "passa hoje") : "vazio hoje";
+            <div className="mt-3 space-y-4">
+              {GRUPOS.map((g) => {
+                const doGrupo = blocos.filter((b) => g.ids.includes(b.id));
+                if (!doGrupo.length) return null;
                 return (
-                  <li
-                    key={b.id}
-                    draggable
-                    onDragStart={() => setArrastando(b.id)}
-                    onDragEnd={() => setArrastando(null)}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={() => soltarEm(b.id)}
-                    onClick={() => setEscolhido(b.id)}
-                    className={`group cursor-pointer rounded-2xl bg-white p-2 shadow-[0_4px_14px_rgba(27,59,124,.08)] transition ${escolhido === b.id ? "ring-[3px] ring-[#FFC21C]" : "ring-1 ring-[#E3E8F2] hover:ring-[#B9C6DF]"} ${arrastando === b.id ? "opacity-40" : ""} ${b.ativo ? "" : "opacity-55"}`}
-                  >
-                    <div className="relative flex aspect-video items-center justify-center rounded-xl text-4xl" style={{ background: v.fundo }}>
-                      <span className={`absolute left-2 top-1.5 text-xs font-extrabold ${v.claro ? "text-[#8A95AA]" : "text-white/70"}`}>{i + 1}</span>
-                      <GripVertical className={`absolute right-1.5 top-1.5 size-4 ${v.claro ? "text-[#B9C6DF]" : "text-white/40"}`} />
-                      <span className={b.ativo ? "" : "grayscale"}>{v.icone}</span>
-                    </div>
-                    <p className="mt-2 truncate px-1 text-sm font-bold text-[#1A2240]">{nomes[b.id]?.nome ?? b.id}</p>
-                    <p className={`flex items-center gap-1.5 px-1 pb-1 text-xs font-semibold ${passa ? "text-emerald-700" : "text-[#8A95AA]"}`}>
-                      <span className={`size-2 rounded-full ${passa ? "bg-emerald-500" : "bg-[#CBD3E1]"}`} /> {estado}
-                    </p>
-                  </li>
+                  <div key={g.nome}>
+                    <h3 className="mb-2 text-xs font-extrabold uppercase tracking-wider text-[#8A95AA]">{g.nome}</h3>
+                    <ol className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      {doGrupo.map((b) => {
+                        const v = VISUAL[b.id] ?? { fundo: "#12307A", icone: "📺" };
+                        const fora = b.id === NA_RECEPCAO_NAO;
+                        const passa = b.ativo && !fora && !!hojePassa[b.id];
+                        const estado = !b.ativo ? "desligado" : fora ? "só com login" : passa ? "passa hoje" : "vazio hoje";
+                        return (
+                          <li
+                            key={b.id}
+                            draggable
+                            onDragStart={() => setArrastando(b.id)}
+                            onDragEnd={() => setArrastando(null)}
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={() => soltarEm(b.id)}
+                            onClick={() => setEscolhido(b.id)}
+                            className={`flex cursor-pointer items-center gap-2.5 rounded-xl bg-white p-1.5 pr-2 transition ${escolhido === b.id ? "ring-[3px] ring-[#FFC21C]" : "ring-1 ring-[#E3E8F2] hover:ring-[#B9C6DF]"} ${arrastando === b.id ? "opacity-40" : ""} ${b.ativo ? "" : "opacity-55"}`}
+                          >
+                            <span className={`relative flex h-10 w-14 shrink-0 items-center justify-center rounded-lg text-xl ${b.ativo ? "" : "grayscale"}`} style={{ background: v.fundo }}>
+                              {v.icone}
+                              <span className={`absolute left-1 top-0.5 text-[9px] font-extrabold ${v.claro ? "text-[#8A95AA]" : "text-white/70"}`}>{blocos.indexOf(b) + 1}</span>
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-[13px] font-bold leading-tight text-[#1A2240]">{nomes[b.id]?.nome ?? b.id}</span>
+                              <span className={`flex items-center gap-1 text-[11px] font-semibold ${passa ? "text-emerald-700" : "text-[#8A95AA]"}`}>
+                                <span className={`size-1.5 rounded-full ${passa ? "bg-emerald-500" : "bg-[#CBD3E1]"}`} /> {estado}
+                              </span>
+                            </span>
+                            <GripVertical className="size-4 shrink-0 text-[#CBD3E1]" />
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  </div>
                 );
               })}
-            </ol>
+            </div>
           </section>
         </div>
 
