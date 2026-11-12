@@ -41,7 +41,7 @@ const serif = "var(--f-serif), 'Cormorant Garamond', Georgia, serif";
 const script = "var(--f-script), 'Great Vibes', cursive";
 
 /** Placa em miniatura: o molde em public/formatura-placa, escalado para a largura do cartão. */
-function Placa({ dados, titulo, aoMontar }: { dados: object; titulo: string; aoMontar?: (limitado: string[]) => void }) {
+function Placa({ dados, titulo, aoMontar, interativa }: { dados: object; titulo: string; aoMontar?: (limitado: string[]) => void; interativa?: boolean }) {
   const caixa = useRef<HTMLDivElement>(null);
   const [esc, setEsc] = useState(0.15);
   useEffect(() => {
@@ -59,7 +59,7 @@ function Placa({ dados, titulo, aoMontar }: { dados: object; titulo: string; aoM
   return (
     <div ref={caixa} style={{ position: "relative", width: "100%", aspectRatio: "2400 / 1782", overflow: "hidden" }}>
       <iframe title={titulo} src={src} loading="lazy" scrolling="no"
-        style={{ position: "absolute", left: 0, top: 0, width: 2400, height: 1782, border: 0, transform: `scale(${esc})`, transformOrigin: "0 0", pointerEvents: "none" }} />
+        style={{ position: "absolute", left: 0, top: 0, width: 2400, height: 1782, border: 0, transform: `scale(${esc})`, transformOrigin: "0 0", pointerEvents: interativa ? "auto" : "none" }} />
     </div>
   );
 }
@@ -343,14 +343,23 @@ function AjustarTexto({ chave, nome, global, meu, mudar, limitado, aoDesaprovar 
     salvarAjuste(chave, p.escopo === "todas" ? null : nome, p.bloco, p.depois).then((r) => { setEstado(r.ok ? "salvo ✓" : r.erro); if (r.ok && p.escopo === "esta") aoDesaprovar(); });
   }, [limitado]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function passo(d: Partial<Ajuste>, crescer: boolean) {
+  function passo(d: Partial<Ajuste>, crescer: boolean, k = bloco) {
     if (espera.current) return;
-    const depois = { t: Math.max(-12, Math.min(12, atual.t + (d.t ?? 0))), x: atual.x + (d.x ?? 0), y: atual.y + (d.y ?? 0) };
-    espera.current = { escopo, bloco, antes: atual, depois, crescer };
-    setEstado("ajustando…"); mudar(escopo, bloco, depois);
+    const antes = (escopo === "todas" ? global : meu)[k] ?? { t: 0, x: 0, y: 0 };
+    const lim = (v: number) => Math.max(-600, Math.min(600, Math.round(v)));
+    const depois = { t: Math.max(-12, Math.min(12, antes.t + (d.t ?? 0))), x: lim(antes.x + (d.x ?? 0)), y: lim(antes.y + (d.y ?? 0)) };
+    espera.current = { escopo, bloco: k, antes, depois, crescer };
+    setEstado("ajustando…"); mudar(escopo, k, depois);
     // se a placa não responder (rede lenta), salva assim mesmo
     setTimeout(() => { const p = espera.current; if (p && p.depois === depois) { espera.current = null; salvarAjuste(chave, p.escopo === "todas" ? null : nome, p.bloco, p.depois).then((r) => { setEstado(r.ok ? "salvo ✓" : r.erro); if (r.ok && p.escopo === "esta") aoDesaprovar(); }); } }, 12000);
   }
+  // tocou ou arrastou um texto na própria placa: escolhe aquele bloco e, se arrastou, grava o novo lugar
+  const arrastou = useRef<(k: string, dx: number, dy: number) => void>(() => {});
+  arrastou.current = (k, dx, dy) => { setBloco(k); if (dx || dy) passo({ x: dx, y: dy }, true, k); else setEstado(""); };
+  useEffect(() => {
+    const f = (e: MessageEvent) => { if (e.origin === location.origin && e.data?.tipo === "placa:arrastou" && BLOCOS.some(([k]) => k === e.data.bloco)) arrastou.current(e.data.bloco, Number(e.data.dx) || 0, Number(e.data.dy) || 0); };
+    window.addEventListener("message", f); return () => window.removeEventListener("message", f);
+  }, []);
   const P = 12; // passo de posição, em px da placa (2400 de largura)
   const b = (rot: string, aria: string, f: () => void) => (
     <button type="button" aria-label={aria} onClick={f} style={{ ...botaoSec, minWidth: 52, minHeight: 48, fontSize: 18 }}>{rot}</button>
@@ -464,7 +473,7 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
         </div>
         {/* ajustando o texto, a placa fica presa no alto da tela para ver cada mudança enquanto toca nos botões */}
         <div style={{ borderRadius: 12, overflow: "hidden", ...(ajustar && { position: "sticky", top: 0, zIndex: 5, boxShadow: "0 12px 30px rgba(0,0,0,.55)",
-          width: "min(100%, calc(48vh * 2400 / 1782))", margin: "0 auto", background: C.fundo }) }}><Placa dados={dadosDe(so)} titulo={`Placa de ${so.nome}`} aoMontar={(l) => setLimitado({ blocos: l, vez: Date.now() })} /></div>
+          width: "min(100%, calc(48vh * 2400 / 1782))", margin: "0 auto", background: C.fundo }) }}><Placa dados={{ ...dadosDe(so), arrastar: ajustar }} interativa={ajustar} titulo={`Placa de ${so.nome}`} aoMontar={(l) => setLimitado({ blocos: l, vez: Date.now() })} /></div>
         {semFotos(so) && <div style={{ fontSize: 16, color: "#FFC98A" }}>As fotos desta criança ainda não chegaram no Drive.</div>}
         {so.observacao && !semFotos(so) && <div style={{ fontSize: 16, color: C.suave }}>{so.observacao}</div>}
         <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
@@ -484,7 +493,7 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
             <div>
               <h2 style={{ margin: 0, fontFamily: serif, fontSize: 26, fontWeight: 600 }}>Ajustar o texto</h2>
               <p style={{ margin: "4px 0 0", color: C.suave, fontSize: 15, lineHeight: 1.5 }}>
-                Escolha o texto e use os botões: a placa muda na hora, aqui em cima. Nada pode sair da placa nem encostar nas fotos:
+                Toque num texto da placa e arraste com o dedo até onde quiser, ou escolha o texto abaixo e use os botões (A+ e A− mudam o tamanho). Nada pode sair da placa nem encostar nas fotos:
                 quando não couber mais, a placa avisa e volta.
               </p>
             </div>

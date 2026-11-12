@@ -355,6 +355,35 @@
       if (lim) limitado.push(k);
     }
     document.body.dataset.limitado = limitado.join(',');
+
+    // ---------- arrastar com o dedo (só no site, com "Ajustar o texto" aberto) ----------
+    // o texto acompanha o dedo; ao soltar, o site grava o novo lugar e a placa remonta conferindo a regra
+    if (D.arrastar) {
+      document.body.style.touchAction = 'none'; document.querySelector('.p').style.cursor = 'grab';
+      const blocoEm = (x, y) => Object.keys(BLOCOS).find((k) => linhasDe(k).some((q) => x >= q.left - 24 && x <= q.right + 24 && y >= q.top - 24 && y <= q.bottom + 24));
+      const avisar = (m) => { try { parent.postMessage(m, location.origin); } catch (e) {} };
+      let arr = null;
+      addEventListener('pointerdown', (e) => {
+        const k = blocoEm(e.clientX, e.clientY); if (!k) return;
+        const mv = (BLOCOS[k].mover || BLOCOS[k].els)();
+        arr = { k, x0: e.clientX, y0: e.clientY, mv, ini: mv.map((el) => { const v = (el.style.translate || '0px').split(' ').map(parseFloat); return [v[0] || 0, v[1] || 0]; }) };
+        mv.forEach((el) => { el.style.outline = '4px dashed rgba(243,215,122,.95)'; el.style.outlineOffset = '6px'; });
+        document.querySelector('.p').style.cursor = 'grabbing';
+        try { document.documentElement.setPointerCapture(e.pointerId); } catch (er) {}
+        e.preventDefault();
+      });
+      addEventListener('pointermove', (e) => {
+        if (!arr) return; const dx = e.clientX - arr.x0, dy = e.clientY - arr.y0;
+        arr.mv.forEach((el, i) => { el.style.translate = `${arr.ini[i][0] + dx}px ${arr.ini[i][1] + dy}px`; });
+      });
+      const soltar = (e) => {
+        if (!arr) return; const dx = Math.round(e.clientX - arr.x0), dy = Math.round(e.clientY - arr.y0), k = arr.k;
+        arr.mv.forEach((el) => { el.style.outline = ''; }); document.querySelector('.p').style.cursor = 'grab'; arr = null;
+        avisar({ tipo: 'placa:arrastou', bloco: k, dx: Math.abs(dx) + Math.abs(dy) < 4 ? 0 : dx, dy: Math.abs(dx) + Math.abs(dy) < 4 ? 0 : dy });
+      };
+      addEventListener('pointerup', soltar);
+      addEventListener('pointercancel', () => { if (!arr) return; arr.mv.forEach((el, i) => { el.style.translate = `${arr.ini[i][0]}px ${arr.ini[i][1]}px`; el.style.outline = ''; }); arr = null; });
+    }
     try { if (parent !== window) parent.postMessage({ tipo: 'placa:pronta', limitado }, location.origin); } catch (e) {}
     document.body.dataset.pronto = '1';
   });
