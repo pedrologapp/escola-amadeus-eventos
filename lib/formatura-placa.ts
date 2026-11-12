@@ -60,7 +60,7 @@ export interface DadosPlaca {
 }
 
 /** Corte de uma foto, feito como num editor: a área escolhida (x, y, largura w, altura h) em fração da foto inteira. */
-export type Corte = { x: number; y: number; w: number; h: number };
+export type Corte = { x: number; y: number; w: number; h: number; b?: number }; // b = brilho (1 = normal)
 export const FOTOS_CORTE = ["beca", "familia"] as const;
 export type FotoCorte = (typeof FOTOS_CORTE)[number];
 export const fotoCorteValida = (f: string): f is FotoCorte => (FOTOS_CORTE as readonly string[]).includes(f);
@@ -70,7 +70,8 @@ export function limparCorte(c: unknown): Corte | null | undefined {
   const k = c as Corte; const ok = [k?.x, k?.y, k?.w, k?.h].every((v) => typeof v === "number" && Number.isFinite(v));
   if (!ok || k.w < 0.03 || k.h < 0.03 || k.x < -0.001 || k.y < -0.001 || k.x + k.w > 1.001 || k.y + k.h > 1.001) return undefined;
   const r = (v: number) => Math.round(Math.max(0, Math.min(1, v)) * 10000) / 10000;
-  return { x: r(k.x), y: r(k.y), w: r(k.w), h: r(k.h) };
+  const b = typeof k.b === "number" && Number.isFinite(k.b) ? Math.round(Math.max(0.6, Math.min(1.6, k.b)) * 100) / 100 : 1;
+  return { x: r(k.x), y: r(k.y), w: r(k.w), h: r(k.h), ...(b !== 1 && { b }) };
 }
 
 /** Blocos de texto da placa que podem ser ajustados. t = passos de tamanho (6% cada), x/y = deslocamento em px da placa (2400 de largura). */

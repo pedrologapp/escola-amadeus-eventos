@@ -31,7 +31,7 @@ const BLOCOS: [string, string][] = [
   ["nome", "Nome da criança"], ["prof", "Professoras e auxiliar"], ["lista", "Nomes da turma"],
   ["mensagem", "Mensagem aos familiares"], ["equipe", "Direção, oradora e juramentista"], ["turma", "Título da turma"],
 ];
-type Corte = { x: number; y: number; w: number; h: number };
+type Corte = { x: number; y: number; w: number; h: number; b?: number }; // b = brilho (1 = normal)
 type Cortes = Partial<Record<"beca" | "familia", Corte>>;
 // proporção (largura / altura) de cada moldura de foto na placa (public/formatura-placa/molde.html)
 const ASPECTO = { turma: 1024 / 466, familia: 404 / 676, beca: 334 / 490 } as const;
@@ -116,9 +116,10 @@ function interia(aberta: boolean, url: string, fechar: () => void) {
 /** A foto já cortada como vai na placa (mesma conta do molde). */
 function ImgCortada({ url, corte, alt }: { url: string; corte?: Corte | null; alt: string }) {
   if (!corte) return <img src={url} alt={alt} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />;
+  const filtro = corte.b && corte.b !== 1 ? `brightness(${corte.b})` : undefined;
   return (
     <span style={{ position: "relative", display: "block", width: "100%", height: "100%", overflow: "hidden" }}>
-      <img src={url} alt={alt} style={{ position: "absolute", maxWidth: "none", width: `${100 / corte.w}%`, height: `${100 / corte.h}%`, left: `${(-corte.x / corte.w) * 100}%`, top: `${(-corte.y / corte.h) * 100}%` }} />
+      <img src={url} alt={alt} style={{ position: "absolute", maxWidth: "none", width: `${100 / corte.w}%`, height: `${100 / corte.h}%`, left: `${(-corte.x / corte.w) * 100}%`, top: `${(-corte.y / corte.h) * 100}%`, filter: filtro }} />
     </span>
   );
 }
@@ -134,6 +135,7 @@ function EditorCorte({ url, aspecto, inicial, titulo, aoSalvar, aoFechar }: {
   const [nat, setNat] = useState<{ w: number; h: number } | null>(null);
   const [r, setR] = useState<Corte | null>(null);
   const [estado, setEstado] = useState("");
+  const [brilho, setBrilho] = useState(inicial?.b ?? 1);
   const caixa = useRef<HTMLDivElement>(null);
   const arr = useRef<{ modo: "mover" | "canto" | "l" | "r" | "t" | "b"; ax: number; ay: number; px: number; py: number; ini: Corte } | null>(null);
   // altura (em fração da foto) que acompanha uma largura, no formato da moldura
@@ -218,7 +220,7 @@ function EditorCorte({ url, aspecto, inicial, titulo, aoSalvar, aoFechar }: {
       <div onPointerMove={mover} onPointerUp={soltar} onPointerCancel={soltar} style={{ padding: 20, touchAction: "none", userSelect: "none" }}>
         <div ref={caixa} style={{ position: "relative", lineHeight: 0 }}>
           <div style={{ position: "relative", overflow: "hidden", borderRadius: 4 }}>
-            <img src={url} alt="" draggable={false} onLoad={carregou} style={{ display: "block", maxWidth: "calc(92vw - 40px)", maxHeight: "60vh", pointerEvents: "none" }} />
+            <img src={url} alt="" draggable={false} onLoad={carregou} style={{ display: "block", maxWidth: "calc(92vw - 40px)", maxHeight: "56vh", pointerEvents: "none", filter: brilho !== 1 ? `brightness(${brilho})` : undefined }} />
             {ef && <div style={{ position: "absolute", left: `${ef.x * 100}%`, top: `${ef.y * 100}%`, width: `${ef.w * 100}%`, height: `${ef.h * 100}%`,
               boxShadow: "0 0 0 9999px rgba(3,8,20,.66)", outline: "2px dashed rgba(255,255,255,.85)", pointerEvents: "none" }} />}
           </div>
@@ -233,10 +235,17 @@ function EditorCorte({ url, aspecto, inicial, titulo, aoSalvar, aoFechar }: {
           )}
         </div>
       </div>
+      <label style={{ display: "flex", alignItems: "center", gap: 12, color: C.texto, fontSize: 15, width: "min(520px, 92vw)" }}>
+        <span style={{ fontWeight: 600 }}>☀ Brilho</span>
+        <input type="range" min={0.6} max={1.6} step={0.05} value={brilho} onChange={(e) => setBrilho(Number(e.target.value))}
+          aria-label="Brilho da foto" style={{ flex: 1, accentColor: C.ouro, height: 32 }} />
+        <span style={{ minWidth: 48, textAlign: "right", color: C.suave }}>{brilho === 1 ? "normal" : `${brilho > 1 ? "+" : ""}${Math.round((brilho - 1) * 100)}%`}</span>
+        {brilho !== 1 && <button type="button" onClick={() => setBrilho(1)} style={{ ...bt, minHeight: 36, padding: "0 10px", fontSize: 13 }}>normal</button>}
+      </label>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center", alignItems: "center" }}>
-        <button type="button" onClick={() => ef && salvar(ef)} disabled={!ef} style={{ ...bt, border: 0, background: C.ouro, color: "#14213D", fontWeight: 700 }}>Usar este corte</button>
-        <button type="button" onClick={() => nat && setR(padrao(nat))} style={bt}>Recomeçar</button>
-        {inicial ? <button type="button" onClick={() => salvar(null)} style={bt}>Tirar o corte</button> : null}
+        <button type="button" onClick={() => ef && salvar(brilho !== 1 ? { ...ef, b: brilho } : ef)} disabled={!ef} style={{ ...bt, border: 0, background: C.ouro, color: "#14213D", fontWeight: 700 }}>Salvar</button>
+        <button type="button" onClick={() => { if (nat) setR(padrao(nat)); setBrilho(1); }} style={bt}>Recomeçar</button>
+        {inicial ? <button type="button" onClick={() => salvar(null)} style={bt}>Foto original</button> : null}
         <button type="button" onClick={aoFechar} style={bt}>Cancelar</button>
       </div>
       {estado && <span style={{ color: estado.endsWith("…") ? C.suave : "#FFC98A", fontSize: 14 }}>{estado}</span>}
@@ -320,7 +329,7 @@ function FotoTurma({ chave, turma, url, aoMudar, sugestoes: s0 = [], aprovada: a
       {url && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
           <button type="button" onClick={() => setInteira(true)} style={botaoSec}>Ver foto inteira</button>
-          <button type="button" onClick={() => setCortar(true)} style={botaoSec}>{corte ? "Cortar de novo" : "Cortar a foto"}</button>
+          <button type="button" onClick={() => setCortar(true)} style={botaoSec}>{corte ? "Editar de novo" : "Cortar ou clarear"}</button>
           <button type="button" onClick={trocar} style={botaoSec}>Trocar foto</button>
           <button type="button" onClick={() => aprovar(!aprovada)}
             style={aprovada ? { ...botaoSec, borderColor: C.verde, color: C.verde } : { ...botaoSec, border: 0, background: C.ouro, color: "#14213D" }}>
@@ -330,8 +339,8 @@ function FotoTurma({ chave, turma, url, aoMudar, sugestoes: s0 = [], aprovada: a
       )}
       {interia(inteira, url, () => setInteira(false))}
       {cortar && url && (
-        <EditorCorte url={url} aspecto={ASPECTO.turma} inicial={corte} titulo={`Cortar a foto do Grupo V · ${turma.toUpperCase()}`} aoFechar={() => setCortar(false)}
-          aoSalvar={async (c) => { const r = await salvarCorteTurma(chave, turma, c); if (!r.ok) return r.erro; aoCortar(c); setEstado(c ? "corte salvo ✓ (vale para todas as placas da turma)" : "corte tirado ✓"); return null; }} />
+        <EditorCorte url={url} aspecto={ASPECTO.turma} inicial={corte} titulo={`Foto do Grupo V · ${turma.toUpperCase()}: corte e brilho`} aoFechar={() => setCortar(false)}
+          aoSalvar={async (c) => { const r = await salvarCorteTurma(chave, turma, c); if (!r.ok) return r.erro; aoCortar(c); setEstado(c ? "foto ajustada ✓ (vale para todas as placas da turma)" : "voltou a foto original ✓"); return null; }} />
       )}
       {url && <span style={{ fontSize: 13, color: C.suave }}>O corte fica fixo e vale para todas as placas da turma.</span>}
       {listaSug}
@@ -553,7 +562,7 @@ function CortarFoto({ chave, nome, fotos, cortes, mudar, aoDesaprovar }: {
             style={{ padding: 0, width: 150, aspectRatio: String(ASPECTO[k]), borderRadius: 6, overflow: "hidden", border: `1px solid ${C.borda}`, cursor: "pointer", background: "#0A2350" }}>
             <ImgCortada url={fotos[k]} corte={cortes[k]} alt="" />
           </button>
-          <button type="button" onClick={() => setAberto(k)} style={{ ...botaoSec, padding: "0 14px" }}>{cortes[k] ? "Cortar de novo" : "Cortar esta foto"}</button>
+          <button type="button" onClick={() => setAberto(k)} style={{ ...botaoSec, padding: "0 14px" }}>{cortes[k] ? "Editar de novo" : "Cortar ou clarear"}</button>
         </>
       ) : <span style={{ fontSize: 14, color: C.suave }}>ainda sem foto</span>}
     </div>
@@ -563,9 +572,9 @@ function CortarFoto({ chave, nome, fotos, cortes, mudar, aoDesaprovar }: {
       <div style={{ display: "flex", gap: 28, flexWrap: "wrap" }}>{item("beca", "Foto de beca")}{item("familia", "Foto com a família")}</div>
       {estado && <span style={{ fontSize: 14, color: estado.includes("✓") ? C.verde : C.suave }}>{estado}</span>}
       {aberto && (
-        <EditorCorte url={fotos[aberto]} aspecto={ASPECTO[aberto]} inicial={cortes[aberto]} titulo={aberto === "beca" ? "Cortar a foto de beca" : "Cortar a foto com a família"}
+        <EditorCorte url={fotos[aberto]} aspecto={ASPECTO[aberto]} inicial={cortes[aberto]} titulo={aberto === "beca" ? "Foto de beca: corte e brilho" : "Foto com a família: corte e brilho"}
           aoFechar={() => setAberto(null)}
-          aoSalvar={async (c) => { const r = await salvarCorte(chave, nome, aberto, c); if (!r.ok) return r.erro; mudar(aberto, c); aoDesaprovar(); setEstado(c ? "corte salvo ✓" : "corte tirado ✓"); return null; }} />
+          aoSalvar={async (c) => { const r = await salvarCorte(chave, nome, aberto, c); if (!r.ok) return r.erro; mudar(aberto, c); aoDesaprovar(); setEstado(c ? "foto ajustada ✓" : "voltou a foto original ✓"); return null; }} />
       )}
     </div>
   );
@@ -669,7 +678,7 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
           <TrocarFoto chave={chave} nome={so.nome} tipo="familia" titulo="a foto da família" aoEnviar={(u, i) => { esquecerCorte(so.nome, "familia"); setCriancas((l) => l.map((c) => c.nome !== so.nome ? c : { ...c, familia: [...c.familia, u], escolhaFamilia: i, aprovada: false, observacao: null })); }} />
           <button type="button" onClick={() => { setCortando((v) => !v); setAjustar(false); }} aria-expanded={cortando}
             style={{ ...botaoSec, minHeight: 44, padding: "0 16px", fontSize: 15, ...(cortando && { borderColor: C.ouro, color: C.ouro }) }}>
-            {cortando ? "Fechar corte das fotos" : "Cortar as fotos"}
+            {cortando ? "Fechar edição das fotos" : "Cortar e clarear as fotos"}
           </button>
           <button type="button" onClick={() => { setAjustar((v) => !v); setCortando(false); }} aria-expanded={ajustar}
             style={{ ...botaoSec, minHeight: 44, padding: "0 16px", fontSize: 15, ...(ajustar && { borderColor: C.ouro, color: C.ouro }) }}>
@@ -679,9 +688,9 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
         {cortando && (
           <section style={{ display: "flex", flexDirection: "column", gap: 18, padding: 20, borderRadius: 16, background: C.painel, border: `1px solid ${C.borda}` }}>
             <div>
-              <h2 style={{ margin: 0, fontFamily: serif, fontSize: 26, fontWeight: 600 }}>Cortar as fotos</h2>
+              <h2 style={{ margin: 0, fontFamily: serif, fontSize: 26, fontWeight: 600 }}>Cortar e clarear as fotos</h2>
               <p style={{ margin: "4px 0 0", color: C.suave, fontSize: 15, lineHeight: 1.5 }}>
-                Toque na foto: ela abre inteira e você marca só a parte que vai para a placa, como num editor de fotos. Serve para esconder um fundo ou um acabamento que não deve aparecer.
+                Toque na foto: ela abre inteira e você marca só a parte que vai para a placa, como num editor de fotos. Serve para esconder um fundo ou um acabamento que não deve aparecer. Embaixo da foto há a barra de brilho, para clarear ou escurecer.
               </p>
             </div>
             <CortarFoto chave={chave} nome={so.nome} fotos={{ beca: dadosDe(so).fotoBeca, familia: dadosDe(so).fotoFamilia }} cortes={coA[so.nome] ?? {}}

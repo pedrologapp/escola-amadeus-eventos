@@ -230,7 +230,8 @@
     const img = document.createElement('img'); img.src = url; img.dataset.foto = k;
     const c = (D.cortes || {})[k];
     if (corteOk(c)) { e.style.position = 'relative'; e.style.overflow = 'hidden';
-      img.style.cssText = `position:absolute;display:block;max-width:none;width:${100 / c.w}%;height:${100 / c.h}%;left:${-c.x / c.w * 100}%;top:${-c.y / c.h * 100}%`; }
+      img.style.cssText = `position:absolute;display:block;max-width:none;width:${100 / c.w}%;height:${100 / c.h}%;left:${-c.x / c.w * 100}%;top:${-c.y / c.h * 100}%`;
+      const b = Number(c.b); if (b && b !== 1) img.style.filter = `brightness(${Math.max(0.6, Math.min(1.6, b))})`; }
     else img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
     e.appendChild(img);
   }
