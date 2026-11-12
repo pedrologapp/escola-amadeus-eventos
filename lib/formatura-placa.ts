@@ -26,7 +26,11 @@ export function chavePlacaValida(chave: string | null | undefined): boolean {
 
 /** O que a direção preenche (uma vez, vale para todas as placas da turma). */
 export interface DadosPlaca {
-  oradora?: string;
+  oradora?: string; // antigo (uma só para as duas turmas): hoje vale como a da turma A
+  oradora_a?: string;
+  oradora_b?: string;
+  juramentista_a?: string;
+  juramentista_b?: string;
   juramentista?: string;
   professora_a?: string;
   professora_b?: string;
@@ -50,18 +54,24 @@ export interface DadosPlaca {
   ajustes?: Ajustes; // valem para todas as placas
   ajustes_aluno?: Record<string, Ajustes>; // só daquela criança (somam com os de todas)
   nomes_placa?: Record<string, string>; // nome da criança como aparece na placa, quando a direção reescreve
-  // corte das fotos (aproximar e escolher a parte que aparece); volta ao normal quando a foto é trocada
+  // corte das fotos (a área escolhida no editor); volta ao normal quando a foto é trocada
   cortes_aluno?: Record<string, Partial<Record<"beca" | "familia", Corte>>>;
   cortes_turma?: Partial<Record<"a" | "b", Corte>>;
 }
 
-/** Corte de uma foto: z = passos de aproximação (10% cada, 0 a 20); x/y = deslocamento em % da moldura. */
-export type Corte = { z: number; x: number; y: number };
-export const FOTOS_CORTE = ["beca", "familia", "turma"] as const;
+/** Corte de uma foto, feito como num editor: a área escolhida (x, y, largura w, altura h) em fração da foto inteira. */
+export type Corte = { x: number; y: number; w: number; h: number };
+export const FOTOS_CORTE = ["beca", "familia"] as const;
 export type FotoCorte = (typeof FOTOS_CORTE)[number];
 export const fotoCorteValida = (f: string): f is FotoCorte => (FOTOS_CORTE as readonly string[]).includes(f);
-/** Quanto a foto pode andar sem aparecer a borda, para uma aproximação z. */
-export const folgaCorte = (z: number) => { const s = 1 + 0.1 * z; return (50 * (s - 1)) / s; };
+/** Confere e arredonda um corte; null = sem corte (a foto cobre a moldura pelo centro). */
+export function limparCorte(c: unknown): Corte | null | undefined {
+  if (c === null) return null;
+  const k = c as Corte; const ok = [k?.x, k?.y, k?.w, k?.h].every((v) => typeof v === "number" && Number.isFinite(v));
+  if (!ok || k.w < 0.03 || k.h < 0.03 || k.x < -0.001 || k.y < -0.001 || k.x + k.w > 1.001 || k.y + k.h > 1.001) return undefined;
+  const r = (v: number) => Math.round(Math.max(0, Math.min(1, v)) * 10000) / 10000;
+  return { x: r(k.x), y: r(k.y), w: r(k.w), h: r(k.h) };
+}
 
 /** Blocos de texto da placa que podem ser ajustados. t = passos de tamanho (6% cada), x/y = deslocamento em px da placa (2400 de largura). */
 export const BLOCOS_PLACA = ["mensagem", "equipe", "turma", "lista", "prof", "nome"] as const;
@@ -70,6 +80,6 @@ export type Ajuste = { t: number; x: number; y: number };
 export type Ajustes = Partial<Record<BlocoPlaca, Ajuste>>;
 export const blocoValido = (b: string): b is BlocoPlaca => (BLOCOS_PLACA as readonly string[]).includes(b);
 
-const CAMPOS_TEXTO = ["oradora", "juramentista", "professora_a", "professora_b", "auxiliar_a", "auxiliar_b", "demais", "titulo_mensagem", "dedicatoria", "diretora", "coordenadora"] as const;
+const CAMPOS_TEXTO = ["oradora", "juramentista", "oradora_a", "oradora_b", "juramentista_a", "juramentista_b", "professora_a", "professora_b", "auxiliar_a", "auxiliar_b", "demais", "titulo_mensagem", "dedicatoria", "diretora", "coordenadora"] as const;
 export type CampoTexto = (typeof CAMPOS_TEXTO)[number];
 export const campoTextoValido = (c: string): c is CampoTexto => (CAMPOS_TEXTO as readonly string[]).includes(c);

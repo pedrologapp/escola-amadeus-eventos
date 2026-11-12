@@ -221,33 +221,18 @@
   const preencher = (id, valor) => { const e = document.getElementById(id); if (valor) { e.textContent = valor; e.classList.remove('vazio'); } };
   document.getElementById('professora').textContent = 'professora do ' + D.turma; document.getElementById('auxiliar').textContent = 'auxiliar do ' + D.turma; preencher('auxiliar', D.auxiliar); preencher('oradora', D.oradora); preencher('juramentista', D.juramentista); preencher('professora', D.professora); preencher('demais', D.demais);
   if (D.dedicatoria) document.getElementById('dedicatoria').textContent = D.dedicatoria;
-  // corte de cada foto: aproxima (z, 10% por passo) e escolhe a parte que aparece (x/y em % da moldura), sem nunca mostrar a borda
-  const folgaCorte = (z) => { const s = 1 + 0.1 * z; return 50 * (s - 1) / s; };
-  const cortar = (img, c) => { const z = Math.max(0, Math.min(20, Math.round((c && c.z) || 0))), f = folgaCorte(z), lim = (v) => Math.max(-f, Math.min(f, Number(v) || 0));
-    const x = lim(c && c.x), y = lim(c && c.y); img.style.transform = `scale(${1 + 0.1 * z}) translate(${x}%, ${y}%)`; return { z, x, y }; };
+  // corte de cada foto (feito no site como num editor): x, y, w, h = a área escolhida, em fração da foto inteira.
+  // Essa área preenche a moldura exatamente; sem corte, a foto cobre a moldura pelo centro.
+  const corteOk = (c) => c && [c.x, c.y, c.w, c.h].every((v) => Number.isFinite(v)) && c.w > .02 && c.h > .02 && c.x >= -.001 && c.y >= -.001 && c.x + c.w <= 1.001 && c.y + c.h <= 1.001;
   for (const [id, url, k] of [['foto-turma', D.fotoTurma, 'turma'], ['foto-familia', D.fotoFamilia, 'familia'], ['foto-beca', D.fotoBeca, 'beca']]) {
     if (!url) continue;
     const e = document.getElementById(id); e.innerHTML = ''; e.style.background = '#061630';
-    const img = document.createElement('img'); img.src = url; img.dataset.foto = k; img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;transform-origin:50% 50%';
-    cortar(img, (D.cortes || {})[k]);
+    const img = document.createElement('img'); img.src = url; img.dataset.foto = k;
+    const c = (D.cortes || {})[k];
+    if (corteOk(c)) { e.style.position = 'relative'; e.style.overflow = 'hidden';
+      img.style.cssText = `position:absolute;display:block;max-width:none;width:${100 / c.w}%;height:${100 / c.h}%;left:${-c.x / c.w * 100}%;top:${-c.y / c.h * 100}%`; }
+    else img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
     e.appendChild(img);
-  }
-  // cortando (só no site): a foto escolhida acompanha o dedo; ao soltar, o site grava o novo enquadramento
-  if (D.cortar) {
-    const img = document.querySelector(`img[data-foto="${D.cortar}"]`);
-    if (img) {
-      document.body.style.touchAction = 'none';
-      const caixa = img.parentElement; caixa.style.cursor = 'grab';
-      caixa.parentElement.style.outline = '6px dashed rgba(243,215,122,.95)'; caixa.parentElement.style.outlineOffset = '-6px';
-      let atual = cortar(img, (D.cortes || {})[D.cortar]), arr = null;
-      caixa.addEventListener('pointerdown', (e) => { arr = { x0: e.clientX, y0: e.clientY, ini: { ...atual } }; caixa.style.cursor = 'grabbing';
-        try { caixa.setPointerCapture(e.pointerId); } catch (er) {} e.preventDefault(); });
-      caixa.addEventListener('pointermove', (e) => { if (!arr) return; const s = 1 + 0.1 * arr.ini.z, q = caixa.getBoundingClientRect();
-        atual = cortar(img, { z: arr.ini.z, x: arr.ini.x + (e.clientX - arr.x0) / (s * q.width) * 100, y: arr.ini.y + (e.clientY - arr.y0) / (s * q.height) * 100 }); });
-      const soltar = () => { if (!arr) return; arr = null; caixa.style.cursor = 'grab';
-        try { parent.postMessage({ tipo: 'placa:cortou', foto: D.cortar, z: atual.z, x: Math.round(atual.x * 10) / 10, y: Math.round(atual.y * 10) / 10 }, location.origin); } catch (er) {} };
-      caixa.addEventListener('pointerup', soltar); caixa.addEventListener('pointercancel', soltar);
-    }
   }
   window.__imagens = [...document.images].map(i => i.decode().catch(() => {}));
 
@@ -321,7 +306,7 @@
     const tn = document.getElementById('turma-nome'), tr = document.querySelector('.turma-rot');
     const assenta = (el, chao) => { el.style.top = '0px'; const q = el.getBoundingClientRect(); el.style.top = Math.round(chao - (q.bottom - base.top)) + 'px'; };
     encaixar(tn, 110, 50, 1, () => { assenta(tn, 376); return true; }, 8); assenta(tn, 376);
-    tam(tr, Math.round(parseFloat(tn.style.fontSize) * 1.05), 1); assenta(tr, 392);
+    tam(tr, Math.round(parseFloat(tn.style.fontSize) * 1.5), 1); assenta(tr, 400);
     // lista dos colegas (as duas colunas no mesmo tamanho)
     // a turma inteira vai na lista: testa 2 e 3 colunas e fica com a que deixa a letra maior (sem sair do painel nem encostar na foto de beca)
     function ajustar(nCols) { montarLista(nCols); const cols = [...Lst.children]; let fl = 37;

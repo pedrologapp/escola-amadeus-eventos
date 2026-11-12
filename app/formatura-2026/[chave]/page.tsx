@@ -52,7 +52,7 @@ export default async function PlacasFormatura({ params, searchParams }: { params
       foco={typeof aluno === "string" ? aluno : null}
       criancas={criancas}
       textos={{
-        oradora: dados.oradora ?? "", juramentista: dados.juramentista ?? "",
+        oradora_a: dados.oradora_a ?? dados.oradora ?? "", oradora_b: dados.oradora_b ?? "", juramentista_a: dados.juramentista_a ?? dados.juramentista ?? "", juramentista_b: dados.juramentista_b ?? "",
         professora_a: dados.professora_a ?? "", professora_b: dados.professora_b ?? "", auxiliar_a: dados.auxiliar_a ?? "", auxiliar_b: dados.auxiliar_b ?? "", demais: dados.demais ?? "",
         titulo_mensagem: dados.titulo_mensagem ?? "", dedicatoria: dados.dedicatoria ?? "", diretora: dados.diretora ?? "", coordenadora: dados.coordenadora ?? "",
       }}

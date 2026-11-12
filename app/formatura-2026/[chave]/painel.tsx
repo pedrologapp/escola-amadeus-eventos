@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { aprovarFotoTurma, escolherFotoTurma, prepararFotoCrianca, prepararFotoTurma, salvarAjuste, salvarCampo, salvarCorte, salvarEscolha, salvarFotoCrianca, salvarFotoTurma, salvarNomePlaca } from "./actions";
+import { aprovarFotoTurma, escolherFotoTurma, prepararFotoCrianca, prepararFotoTurma, salvarAjuste, salvarCampo, salvarCorte, salvarCorteTurma, salvarEscolha, salvarFotoCrianca, salvarFotoTurma, salvarNomePlaca } from "./actions";
 
 export interface Crianca {
   nome: string;
@@ -15,7 +15,7 @@ export interface Crianca {
   observacao: string | null;
 }
 interface Textos {
-  oradora: string; juramentista: string; professora_a: string; professora_b: string; auxiliar_a: string; auxiliar_b: string; demais: string;
+  oradora_a: string; oradora_b: string; juramentista_a: string; juramentista_b: string; professora_a: string; professora_b: string; auxiliar_a: string; auxiliar_b: string; demais: string;
   titulo_mensagem: string; dedicatoria: string; diretora: string; coordenadora: string;
 }
 // os textos que já vêm no molde (public/formatura-placa/molde.html): aparecem no campo para a direção editar
@@ -31,11 +31,10 @@ const BLOCOS: [string, string][] = [
   ["nome", "Nome da criança"], ["prof", "Professoras e auxiliar"], ["lista", "Nomes da turma"],
   ["mensagem", "Mensagem aos familiares"], ["equipe", "Direção, oradora e juramentista"], ["turma", "Título da turma"],
 ];
-type Corte = { z: number; x: number; y: number };
+type Corte = { x: number; y: number; w: number; h: number };
 type Cortes = Partial<Record<"beca" | "familia", Corte>>;
-type FotoK = "beca" | "familia" | "turma";
-const folgaCorte = (z: number) => { const s = 1 + 0.1 * z; return (50 * (s - 1)) / s; };
-const FOTOS: [FotoK, string][] = [["beca", "Foto de beca"], ["familia", "Foto com a família"], ["turma", "Foto da turma"]];
+// proporção (largura / altura) de cada moldura de foto na placa (public/formatura-placa/molde.html)
+const ASPECTO = { turma: 1024 / 466, familia: 404 / 530, beca: 334 / 490 } as const;
 const somar = (a?: Ajuste, b?: Ajuste): Ajuste => ({ t: (a?.t ?? 0) + (b?.t ?? 0), x: (a?.x ?? 0) + (b?.x ?? 0), y: (a?.y ?? 0) + (b?.y ?? 0) });
 
 const C = {
@@ -114,7 +113,112 @@ function interia(aberta: boolean, url: string, fechar: () => void) {
   );
 }
 
-function FotoTurma({ chave, turma, url, aoMudar, sugestoes: s0 = [], aprovada: ap0 = false }: { chave: string; turma: "a" | "b"; url: string; aoMudar: (u: string) => void; sugestoes?: Sugestao[]; aprovada?: boolean }) {
+/** A foto já cortada como vai na placa (mesma conta do molde). */
+function ImgCortada({ url, corte, alt }: { url: string; corte?: Corte | null; alt: string }) {
+  if (!corte) return <img src={url} alt={alt} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />;
+  return (
+    <span style={{ position: "relative", display: "block", width: "100%", height: "100%", overflow: "hidden" }}>
+      <img src={url} alt={alt} style={{ position: "absolute", maxWidth: "none", width: `${100 / corte.w}%`, height: `${100 / corte.h}%`, left: `${(-corte.x / corte.w) * 100}%`, top: `${(-corte.y / corte.h) * 100}%` }} />
+    </span>
+  );
+}
+
+/**
+ * Cortar como num editor de fotos: a foto aparece inteira e um quadro (no formato da moldura da placa)
+ * marca a parte que vai aparecer. Arrasta o quadro para mudar de lugar e puxa um canto para aumentar ou diminuir.
+ */
+function EditorCorte({ url, aspecto, inicial, titulo, aoSalvar, aoFechar }: {
+  url: string; aspecto: number; inicial?: Corte | null; titulo: string;
+  aoSalvar: (c: Corte | null) => Promise<string | null>; aoFechar: () => void;
+}) {
+  const [nat, setNat] = useState<{ w: number; h: number } | null>(null);
+  const [r, setR] = useState<Corte | null>(null);
+  const [estado, setEstado] = useState("");
+  const caixa = useRef<HTMLDivElement>(null);
+  const arr = useRef<{ modo: "mover" | "canto"; ax: number; ay: number; px: number; py: number; ini: Corte } | null>(null);
+  // altura (em fração da foto) que acompanha uma largura, no formato da moldura
+  const alturaDe = (w: number, n = nat!) => (w * n.w) / (n.h * aspecto);
+  const padrao = (n: { w: number; h: number }): Corte => {
+    if (n.w / n.h > aspecto) { const w = (aspecto * n.h) / n.w; return { x: (1 - w) / 2, y: 0, w, h: 1 }; }
+    const h = n.w / (aspecto * n.h); return { x: 0, y: (1 - h) / 2, w: 1, h };
+  };
+  function carregou(e: React.SyntheticEvent<HTMLImageElement>) {
+    const n = { w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight }; setNat(n);
+    // corte salvo antes, ajustado ao formato desta moldura
+    if (inicial) { const h = alturaDe(inicial.w, n); if (inicial.y + h <= 1.002 && Math.abs(h - inicial.h) < 0.02) { setR({ ...inicial, h }); return; } }
+    setR(padrao(n));
+  }
+  const ponto = (e: React.PointerEvent) => { const q = caixa.current!.getBoundingClientRect(); return { x: (e.clientX - q.left) / q.width, y: (e.clientY - q.top) / q.height }; };
+  function baixar(e: React.PointerEvent, modo: "mover" | "canto", cx = 0, cy = 0) {
+    if (!r) return; e.preventDefault(); e.stopPropagation();
+    const p = ponto(e);
+    // no canto, o ponto fixo é o canto oposto
+    arr.current = { modo, ax: cx ? r.x : r.x + r.w, ay: cy ? r.y : r.y + r.h, px: p.x, py: p.y, ini: r };
+    try { caixa.current!.setPointerCapture(e.pointerId); } catch {}
+  }
+  function mover(e: React.PointerEvent) {
+    const a = arr.current; if (!a || !nat) return; const p = ponto(e);
+    if (a.modo === "mover") {
+      setR({ ...a.ini, x: Math.max(0, Math.min(1 - a.ini.w, a.ini.x + p.x - a.px)), y: Math.max(0, Math.min(1 - a.ini.h, a.ini.y + p.y - a.py)) });
+      return;
+    }
+    const dirX = p.x >= a.ax ? 1 : -1, dirY = p.y >= a.ay ? 1 : -1;
+    const kw = (nat.h * aspecto) / nat.w; // largura que corresponde a uma altura
+    let w = Math.max(Math.abs(p.x - a.ax), Math.abs(p.y - a.ay) * kw);
+    const maxW = Math.min(dirX > 0 ? 1 - a.ax : a.ax, (dirY > 0 ? 1 - a.ay : a.ay) * kw);
+    w = Math.max(Math.min(w, maxW), Math.min(0.08, maxW));
+    const h = alturaDe(w);
+    setR({ w, h, x: dirX > 0 ? a.ax : a.ax - w, y: dirY > 0 ? a.ay : a.ay - h });
+  }
+  const soltar = () => { arr.current = null; };
+  async function salvar(c: Corte | null) {
+    setEstado("salvando…");
+    const erro = await aoSalvar(c);
+    if (erro) setEstado(erro); else aoFechar();
+  }
+  const canto = (cx: 0 | 1, cy: 0 | 1) => (
+    <span onPointerDown={(e) => baixar(e, "canto", cx, cy)} aria-hidden
+      style={{ position: "absolute", width: 34, height: 34, left: cx ? "auto" : -17, right: cx ? -17 : "auto", top: cy ? "auto" : -17, bottom: cy ? -17 : "auto",
+        borderRadius: "50%", background: C.ouro, border: "3px solid #14213D", boxShadow: "0 2px 8px rgba(0,0,0,.6)", cursor: (cx === cy ? "nwse-resize" : "nesw-resize"), touchAction: "none" }} />
+  );
+  const bt = { minHeight: 48, padding: "0 18px", borderRadius: 10, border: `1px solid ${C.borda}`, background: "transparent", color: C.texto, cursor: "pointer", fontSize: 15, fontWeight: 600 } as const;
+  return (
+    <div role="dialog" aria-modal="true" aria-label={titulo}
+      style={{ position: "fixed", inset: 0, zIndex: 70, background: "rgba(3,8,20,.96)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, padding: 16 }}>
+      <div style={{ color: C.texto, fontFamily: serif, fontSize: 24, fontWeight: 600, textAlign: "center" }}>{titulo}</div>
+      <div style={{ color: C.suave, fontSize: 14, textAlign: "center", maxWidth: 560 }}>Arraste o quadro para escolher a parte da foto e puxe uma bolinha dourada para aumentar ou diminuir. Só o que está dentro do quadro vai para a placa.</div>
+      {/* margem em volta da foto para as bolinhas dos cantos nunca ficarem escondidas */}
+      <div onPointerMove={mover} onPointerUp={soltar} onPointerCancel={soltar} style={{ padding: 20, touchAction: "none", userSelect: "none" }}>
+        <div ref={caixa} style={{ position: "relative", lineHeight: 0 }}>
+          <div style={{ position: "relative", overflow: "hidden", borderRadius: 4 }}>
+            <img src={url} alt="" draggable={false} onLoad={carregou} style={{ display: "block", maxWidth: "calc(92vw - 40px)", maxHeight: "60vh", pointerEvents: "none" }} />
+            {r && <div style={{ position: "absolute", left: `${r.x * 100}%`, top: `${r.y * 100}%`, width: `${r.w * 100}%`, height: `${r.h * 100}%`,
+              boxShadow: "0 0 0 9999px rgba(3,8,20,.62)", pointerEvents: "none" }} />}
+          </div>
+          {r && (
+            <div onPointerDown={(e) => baixar(e, "mover")}
+              style={{ position: "absolute", left: `${r.x * 100}%`, top: `${r.y * 100}%`, width: `${r.w * 100}%`, height: `${r.h * 100}%`, cursor: "move",
+                outline: `3px solid ${C.ouro}`, touchAction: "none" }}>
+              <span style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(255,255,255,.35) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.35) 1px, transparent 1px)",
+                backgroundSize: "33.33% 33.33%", backgroundPosition: "-1px -1px", pointerEvents: "none" }} />
+              {canto(0, 0)}{canto(1, 0)}{canto(0, 1)}{canto(1, 1)}
+            </div>
+          )}
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center", alignItems: "center" }}>
+        <button type="button" onClick={() => r && salvar(r)} disabled={!r} style={{ ...bt, border: 0, background: C.ouro, color: "#14213D", fontWeight: 700 }}>Usar este corte</button>
+        <button type="button" onClick={() => nat && setR(padrao(nat))} style={bt}>Recomeçar</button>
+        {inicial ? <button type="button" onClick={() => salvar(null)} style={bt}>Tirar o corte</button> : null}
+        <button type="button" onClick={aoFechar} style={bt}>Cancelar</button>
+      </div>
+      {estado && <span style={{ color: estado.endsWith("…") ? C.suave : "#FFC98A", fontSize: 14 }}>{estado}</span>}
+    </div>
+  );
+}
+
+function FotoTurma({ chave, turma, url, aoMudar, sugestoes: s0 = [], aprovada: ap0 = false, corte, aoCortar }: { chave: string; turma: "a" | "b"; url: string; aoMudar: (u: string) => void; sugestoes?: Sugestao[]; aprovada?: boolean; corte?: Corte | null; aoCortar: (c: Corte | null) => void }) {
+  const [cortar, setCortar] = useState(false);
   const [estado, setEstado] = useState("");
   const [sugestoes, setSugestoes] = useState(s0);
   const [ver, setVer] = useState<number | null>(null);
@@ -183,12 +287,13 @@ function FotoTurma({ chave, turma, url, aoMudar, sugestoes: s0 = [], aprovada: a
     <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 16, borderRadius: 14, border: `1px solid ${C.borda}`, background: "rgba(255,255,255,.04)" }}>
       <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 600 }}>Grupo V · {turma.toUpperCase()}</div>
       <button type="button" onClick={() => url && setInteira(true)} disabled={!url} aria-label="Ver a foto da turma inteira"
-        style={{ padding: 0, border: aprovada ? `2px solid ${C.verde}` : 0, aspectRatio: "1052 / 372", borderRadius: 8, overflow: "hidden", background: "#0A2350", display: "flex", alignItems: "center", justifyContent: "center", color: C.suave, fontSize: 14, cursor: url ? "zoom-in" : "default" }}>
-        {url ? <img src={url} alt={`Foto da turma ${turma.toUpperCase()}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : "sem foto ainda"}
+        style={{ padding: 0, border: aprovada ? `2px solid ${C.verde}` : 0, aspectRatio: "1024 / 466", borderRadius: 8, overflow: "hidden", background: "#0A2350", display: "flex", alignItems: "center", justifyContent: "center", color: C.suave, fontSize: 14, cursor: url ? "zoom-in" : "default" }}>
+        {url ? <ImgCortada url={url} corte={corte} alt={`Foto da turma ${turma.toUpperCase()}`} /> : "sem foto ainda"}
       </button>
       {url && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
           <button type="button" onClick={() => setInteira(true)} style={botaoSec}>Ver foto inteira</button>
+          <button type="button" onClick={() => setCortar(true)} style={botaoSec}>{corte ? "Cortar de novo" : "Cortar a foto"}</button>
           <button type="button" onClick={trocar} style={botaoSec}>Trocar foto</button>
           <button type="button" onClick={() => aprovar(!aprovada)}
             style={aprovada ? { ...botaoSec, borderColor: C.verde, color: C.verde } : { ...botaoSec, border: 0, background: C.ouro, color: "#14213D" }}>
@@ -197,6 +302,11 @@ function FotoTurma({ chave, turma, url, aoMudar, sugestoes: s0 = [], aprovada: a
         </div>
       )}
       {interia(inteira, url, () => setInteira(false))}
+      {cortar && url && (
+        <EditorCorte url={url} aspecto={ASPECTO.turma} inicial={corte} titulo={`Cortar a foto do Grupo V · ${turma.toUpperCase()}`} aoFechar={() => setCortar(false)}
+          aoSalvar={async (c) => { const r = await salvarCorteTurma(chave, turma, c); if (!r.ok) return r.erro; aoCortar(c); setEstado(c ? "corte salvo ✓ (vale para todas as placas da turma)" : "corte tirado ✓"); return null; }} />
+      )}
+      {url && <span style={{ fontSize: 13, color: C.suave }}>O corte fica fixo e vale para todas as placas da turma.</span>}
       {listaSug}
       <input ref={input} type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) enviar(f); e.target.value = ""; }} />
       <button type="button" onClick={() => input.current?.click()}
@@ -400,56 +510,36 @@ function AjustarTexto({ chave, nome, global, meu, mudar, limitado, aoDesaprovar 
   );
 }
 
-/** Cortar as fotos: aproximar para esconder um fundo ou acabamento e arrastar a foto para escolher a parte que aparece. */
-function CortarFoto({ chave, nome, foto, setFoto, cortes, mudar, temFoto, aoDesaprovar }: {
-  chave: string; nome: string; foto: FotoK; setFoto: (f: FotoK) => void; cortes: Record<FotoK, Corte | undefined>;
-  mudar: (f: FotoK, c: Corte) => void; temFoto: Record<FotoK, boolean>; aoDesaprovar: () => void;
+/** Cortar a foto de beca ou da família desta criança: abre o editor com a foto inteira. */
+function CortarFoto({ chave, nome, fotos, cortes, mudar, aoDesaprovar }: {
+  chave: string; nome: string; fotos: { beca: string; familia: string }; cortes: Cortes;
+  mudar: (f: "beca" | "familia", c: Corte | null) => void; aoDesaprovar: () => void;
 }) {
+  const [aberto, setAberto] = useState<"beca" | "familia" | null>(null);
   const [estado, setEstado] = useState("");
-  const atual = cortes[foto] ?? { z: 0, x: 0, y: 0 };
-  const vez = useRef(0);
-  function gravar(f: FotoK, c: Corte) {
-    const z = Math.max(0, Math.min(20, c.z)), fl = folgaCorte(z), lim = (v: number) => Math.round(Math.max(-fl, Math.min(fl, v)) * 10) / 10;
-    const n = { z, x: lim(c.x), y: lim(c.y) };
-    mudar(f, n); setEstado("salvando…"); const minha = ++vez.current;
-    salvarCorte(chave, nome, f, n).then((r) => { if (minha !== vez.current) return; setEstado(r.ok ? "salvo ✓" : r.erro); if (r.ok && f !== "turma") aoDesaprovar(); });
-  }
-  const cortou = useRef<(d: { foto: FotoK; z: number; x: number; y: number }) => void>(() => {});
-  cortou.current = (d) => gravar(d.foto, { z: d.z, x: d.x, y: d.y });
-  useEffect(() => {
-    const f = (e: MessageEvent) => { if (e.origin === location.origin && e.data?.tipo === "placa:cortou" && FOTOS.some(([k]) => k === e.data.foto))
-      cortou.current({ foto: e.data.foto, z: Number(e.data.z) || 0, x: Number(e.data.x) || 0, y: Number(e.data.y) || 0 }); };
-    window.addEventListener("message", f); return () => window.removeEventListener("message", f);
-  }, []);
-  const P = 3; // passo das setas, em % da moldura
-  const b = (rot: string, aria: string, fn: () => void, off = false) => (
-    <button type="button" aria-label={aria} onClick={fn} disabled={off} style={{ ...botaoSec, minWidth: 52, minHeight: 48, fontSize: 18, opacity: off ? .4 : 1 }}>{rot}</button>
+  const item = (k: "beca" | "familia", rotulo: string) => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-start" }}>
+      <span style={{ fontSize: 13, letterSpacing: ".12em", textTransform: "uppercase", color: C.ouro }}>{rotulo}</span>
+      {fotos[k] ? (
+        <>
+          <button type="button" onClick={() => setAberto(k)} aria-label={`Cortar a ${rotulo.toLowerCase()}`}
+            style={{ padding: 0, width: 150, aspectRatio: String(ASPECTO[k]), borderRadius: 6, overflow: "hidden", border: `1px solid ${C.borda}`, cursor: "pointer", background: "#0A2350" }}>
+            <ImgCortada url={fotos[k]} corte={cortes[k]} alt="" />
+          </button>
+          <button type="button" onClick={() => setAberto(k)} style={{ ...botaoSec, padding: "0 14px" }}>{cortes[k] ? "Cortar de novo" : "Cortar esta foto"}</button>
+        </>
+      ) : <span style={{ fontSize: 14, color: C.suave }}>ainda sem foto</span>}
+    </div>
   );
-  const chip = (ativo: boolean) => ({ minHeight: 40, padding: "0 14px", borderRadius: 999, cursor: "pointer", fontSize: 14, fontWeight: 600,
-    border: `1px solid ${ativo ? C.ouro : C.borda}`, background: ativo ? C.ouro : "transparent", color: ativo ? "#14213D" : C.texto } as const);
-  const semFolga = atual.z <= 0;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        {FOTOS.map(([k, r]) => <button key={k} type="button" disabled={!temFoto[k]} onClick={() => { setFoto(k); setEstado(""); }} style={{ ...chip(foto === k), opacity: temFoto[k] ? 1 : .4 }}>{r}</button>)}
-      </div>
-      {!temFoto[foto] ? <span style={{ fontSize: 14, color: C.suave }}>Esta foto ainda não está na placa.</span> : (
-        <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center" }}>
-          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            {b("−", "Afastar", () => gravar(foto, { ...atual, z: atual.z - 1 }), atual.z <= 0)}
-            {b("+", "Aproximar", () => gravar(foto, { ...atual, z: atual.z + 1 }), atual.z >= 20)}
-          </div>
-          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            {b("←", "Mostrar mais da esquerda", () => gravar(foto, { ...atual, x: atual.x + P }), semFolga)}
-            {b("↑", "Mostrar mais de cima", () => gravar(foto, { ...atual, y: atual.y + P }), semFolga)}
-            {b("↓", "Mostrar mais de baixo", () => gravar(foto, { ...atual, y: atual.y - P }), semFolga)}
-            {b("→", "Mostrar mais da direita", () => gravar(foto, { ...atual, x: atual.x - P }), semFolga)}
-          </div>
-          {atual.z || atual.x || atual.y ? <button type="button" onClick={() => gravar(foto, { z: 0, x: 0, y: 0 })} style={{ ...botaoSec, minHeight: 48, padding: "0 14px" }}>Foto inteira de novo</button> : null}
-        </div>
-      )}
-      {foto === "turma" && temFoto.turma && <span style={{ fontSize: 13, color: C.suave }}>O corte da foto da turma vale para todas as placas da turma.</span>}
+      <div style={{ display: "flex", gap: 28, flexWrap: "wrap" }}>{item("beca", "Foto de beca")}{item("familia", "Foto com a família")}</div>
       {estado && <span style={{ fontSize: 14, color: estado.includes("✓") ? C.verde : C.suave }}>{estado}</span>}
+      {aberto && (
+        <EditorCorte url={fotos[aberto]} aspecto={ASPECTO[aberto]} inicial={cortes[aberto]} titulo={aberto === "beca" ? "Cortar a foto de beca" : "Cortar a foto com a família"}
+          aoFechar={() => setAberto(null)}
+          aoSalvar={async (c) => { const r = await salvarCorte(chave, nome, aberto, c); if (!r.ok) return r.erro; mudar(aberto, c); aoDesaprovar(); setEstado(c ? "corte salvo ✓" : "corte tirado ✓"); return null; }} />
+      )}
     </div>
   );
 }
@@ -466,10 +556,10 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
   const [limitado, setLimitado] = useState<{ blocos: string[]; vez: number } | null>(null);
   const [ajustar, setAjustar] = useState(false);
   const [cortando, setCortando] = useState(false);
-  const [fotoCorte, setFotoCorte] = useState<FotoK>("beca");
   const [coA, setCoA] = useState<Record<string, Cortes>>(co0?.porCrianca ?? {});
   const [coT, setCoT] = useState<Partial<Record<"a" | "b", Corte>>>(co0?.turma ?? {});
   const esquecerCorte = (nome: string, f: "beca" | "familia") => setCoA((m) => { const meu = { ...(m[nome] ?? {}) }; delete meu[f]; return { ...m, [nome]: meu }; });
+  const cortarTurma = (t: "a" | "b") => (c: Corte | null) => setCoT((m) => { const n = { ...m }; if (c) n[t] = c; else delete n[t]; return n; });
   const mudarAjuste = (nome: string) => (escopo: "todas" | "esta", bloco: string, a: Ajuste) => {
     if (escopo === "todas") setAjG((g) => ({ ...g, [bloco]: a }));
     else setAjA((m) => ({ ...m, [nome]: { ...(m[nome] ?? {}), [bloco]: a } }));
@@ -495,7 +585,7 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
     return {
       turma: c.turma, alunos: porTurma[c.turma] ?? [], homenageado: c.nome,
       fotoBeca: c.beca[c.escolhaBeca] ?? "", fotoFamilia: c.familia[c.escolhaFamilia] ?? "", fotoTurma: b ? fotoTurma.b : fotoTurma.a,
-      oradora: textos.oradora, juramentista: textos.juramentista, professora: b ? textos.professora_b : textos.professora_a, auxiliar: b ? textos.auxiliar_b : textos.auxiliar_a, demais: textos.demais,
+      oradora: b ? textos.oradora_b : textos.oradora_a, juramentista: b ? textos.juramentista_b : textos.juramentista_a, professora: b ? textos.professora_b : textos.professora_a, auxiliar: b ? textos.auxiliar_b : textos.auxiliar_a, demais: textos.demais,
       tituloMensagem: textos.titulo_mensagem, dedicatoria: textos.dedicatoria, diretora: textos.diretora, coordenadora: textos.coordenadora,
       nomePlaca: nomes[c.nome] ?? "",
       cortes: { beca: coA[c.nome]?.beca, familia: coA[c.nome]?.familia, turma: b ? coT.b : coT.a },
@@ -539,8 +629,8 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
           </div>
         </div>
         {/* ajustando o texto, a placa fica presa no alto da tela para ver cada mudança enquanto toca nos botões */}
-        <div style={{ borderRadius: 12, overflow: "hidden", ...((ajustar || cortando) && { position: "sticky", top: 0, zIndex: 5, boxShadow: "0 12px 30px rgba(0,0,0,.55)",
-          width: "min(100%, calc(48vh * 2400 / 1782))", margin: "0 auto", background: C.fundo }) }}><Placa dados={{ ...dadosDe(so), arrastar: ajustar, cortar: cortando ? fotoCorte : "" }} interativa={ajustar || cortando} titulo={`Placa de ${so.nome}`} aoMontar={(l) => setLimitado({ blocos: l, vez: Date.now() })} /></div>
+        <div style={{ borderRadius: 12, overflow: "hidden", ...(ajustar && { position: "sticky", top: 0, zIndex: 5, boxShadow: "0 12px 30px rgba(0,0,0,.55)",
+          width: "min(100%, calc(48vh * 2400 / 1782))", margin: "0 auto", background: C.fundo }) }}><Placa dados={{ ...dadosDe(so), arrastar: ajustar }} interativa={ajustar} titulo={`Placa de ${so.nome}`} aoMontar={(l) => setLimitado({ blocos: l, vez: Date.now() })} /></div>
         {semFotos(so) && <div style={{ fontSize: 16, color: "#FFC98A" }}>As fotos desta criança ainda não chegaram no Drive.</div>}
         {so.observacao && !semFotos(so) && <div style={{ fontSize: 16, color: C.suave }}>{so.observacao}</div>}
         <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
@@ -564,15 +654,13 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
             <div>
               <h2 style={{ margin: 0, fontFamily: serif, fontSize: 26, fontWeight: 600 }}>Cortar as fotos</h2>
               <p style={{ margin: "4px 0 0", color: C.suave, fontSize: 15, lineHeight: 1.5 }}>
-                Escolha a foto e toque em + para aproximar: assim some um fundo ou uma borda que não deve aparecer. Depois arraste a foto com o dedo, na própria placa, para escolher a parte que fica.
-                A foto sempre preenche a moldura inteira.
+                Toque na foto: ela abre inteira e você marca só a parte que vai para a placa, como num editor de fotos. Serve para esconder um fundo ou um acabamento que não deve aparecer.
               </p>
             </div>
-            <CortarFoto chave={chave} nome={so.nome} foto={fotoCorte} setFoto={setFotoCorte}
-              cortes={{ beca: coA[so.nome]?.beca, familia: coA[so.nome]?.familia, turma: so.turma.endsWith("B") ? coT.b : coT.a }}
-              temFoto={{ beca: !!dadosDe(so).fotoBeca, familia: !!dadosDe(so).fotoFamilia, turma: !!dadosDe(so).fotoTurma }}
-              mudar={(f, c) => { if (f === "turma") setCoT((m) => ({ ...m, [so.turma.endsWith("B") ? "b" : "a"]: c })); else setCoA((m) => ({ ...m, [so.nome]: { ...(m[so.nome] ?? {}), [f]: c } })); }}
+            <CortarFoto chave={chave} nome={so.nome} fotos={{ beca: dadosDe(so).fotoBeca, familia: dadosDe(so).fotoFamilia }} cortes={coA[so.nome] ?? {}}
+              mudar={(f, c) => setCoA((m) => { const meu = { ...(m[so.nome] ?? {}) }; if (c) meu[f] = c; else delete meu[f]; return { ...m, [so.nome]: meu }; })}
               aoDesaprovar={() => desaprovar(so.nome)} />
+            <p style={{ margin: 0, color: C.suave, fontSize: 14 }}>A foto da turma é cortada uma vez só, na lista das placas (parte 2, Foto de cada turma), e fica igual em todas as placas da turma.</p>
           </section>
         )}
         {ajustar && (
@@ -633,8 +721,10 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
         <section style={{ display: "flex", flexDirection: "column", gap: 18, padding: 24, borderRadius: 18, background: C.painel, border: `1px solid ${C.borda}` }}>
           <h2 style={{ margin: 0, fontFamily: serif, fontSize: 28, fontWeight: 600 }}>1. O que falta preencher</h2>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16 }}>
-            <Campo chave={chave} campo="oradora" rotulo="Oradora" valor={textos.oradora} dica="Nome completo da criança." />
-            <Campo chave={chave} campo="juramentista" rotulo="Juramentista" valor={textos.juramentista} dica="Nome completo da criança." />
+            <Campo chave={chave} campo="oradora_a" rotulo="Oradora do Grupo V · A" valor={textos.oradora_a} dica="Nome completo da criança." />
+            <Campo chave={chave} campo="oradora_b" rotulo="Oradora do Grupo V · B" valor={textos.oradora_b} dica="Nome completo da criança." />
+            <Campo chave={chave} campo="juramentista_a" rotulo="Juramentista do Grupo V · A" valor={textos.juramentista_a} dica="Nome completo da criança." />
+            <Campo chave={chave} campo="juramentista_b" rotulo="Juramentista do Grupo V · B" valor={textos.juramentista_b} dica="Nome completo da criança." />
             <Campo chave={chave} campo="professora_a" rotulo="Professora do Grupo V · A" valor={textos.professora_a} />
             <Campo chave={chave} campo="professora_b" rotulo="Professora do Grupo V · B" valor={textos.professora_b} />
             <Campo chave={chave} campo="auxiliar_a" rotulo="Auxiliar do Grupo V · A" valor={textos.auxiliar_a} />
@@ -648,8 +738,8 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
           <h2 style={{ margin: 0, fontFamily: serif, fontSize: 28, fontWeight: 600 }}>2. Foto de cada turma</h2>
           <p style={{ margin: 0, color: C.suave }}>A foto da turma com as professoras. Pode ser tirada do celular, na maior qualidade.</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
-            <FotoTurma chave={chave} turma="a" aprovada={turmaAprovada?.a} sugestoes={sugestoes?.a} url={fotoTurma.a} aoMudar={(u) => { setFotoTurma((x) => ({ ...x, a: u })); setCoT((m) => ({ ...m, a: undefined })); }} />
-            <FotoTurma chave={chave} turma="b" aprovada={turmaAprovada?.b} sugestoes={sugestoes?.b} url={fotoTurma.b} aoMudar={(u) => { setFotoTurma((x) => ({ ...x, b: u })); setCoT((m) => ({ ...m, b: undefined })); }} />
+            <FotoTurma chave={chave} turma="a" aprovada={turmaAprovada?.a} sugestoes={sugestoes?.a} url={fotoTurma.a} corte={coT.a} aoCortar={cortarTurma("a")} aoMudar={(u) => { setFotoTurma((x) => ({ ...x, a: u })); setCoT((m) => ({ ...m, a: undefined })); }} />
+            <FotoTurma chave={chave} turma="b" aprovada={turmaAprovada?.b} sugestoes={sugestoes?.b} url={fotoTurma.b} corte={coT.b} aoCortar={cortarTurma("b")} aoMudar={(u) => { setFotoTurma((x) => ({ ...x, b: u })); setCoT((m) => ({ ...m, b: undefined })); }} />
           </div>
         </section>
 

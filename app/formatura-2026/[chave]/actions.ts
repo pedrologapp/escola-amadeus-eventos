@@ -1,7 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { BUCKET_PLACA, ID_PLACA, blocoValido, campoTextoValido, chavePlacaValida, folgaCorte, fotoCorteValida, type Ajuste, type Ajustes, type Corte, type DadosPlaca } from "@/lib/formatura-placa";
+import { BUCKET_PLACA, ID_PLACA, blocoValido, campoTextoValido, chavePlacaValida, fotoCorteValida, limparCorte, type Ajuste, type Ajustes, type Corte, type DadosPlaca } from "@/lib/formatura-placa";
 
 const negado = { ok: false as const, erro: "Link inválido." };
 
@@ -134,30 +134,31 @@ export async function salvarNomePlaca(chave: string, nome: string, valor: string
   return r;
 }
 
-/** Corte de uma foto da placa: beca e família só desta criança; a da turma vale para todas as placas da turma. */
-export async function salvarCorte(chave: string, nome: string, foto: string, corte: Corte) {
+/** Corte da foto de beca ou da família (só desta criança); corte null = foto inteira de novo. */
+export async function salvarCorte(chave: string, nome: string, foto: string, corte: Corte | null) {
   if (!chavePlacaValida(chave) || !fotoCorteValida(foto)) return negado;
-  const z = corte?.z;
-  if (!Number.isInteger(z) || z < 0 || z > 20 || !Number.isFinite(corte?.x) || !Number.isFinite(corte?.y)) return { ok: false as const, erro: "Corte inválido." };
-  const f = folgaCorte(z), lim = (v: number) => Math.round(Math.max(-f, Math.min(f, v)) * 10) / 10;
-  const c: Corte = { z, x: lim(corte.x), y: lim(corte.y) };
-  const vazio = !c.z && !c.x && !c.y;
-  const { data: aluno } = await createAdminClient().from("formatura_placa_aluno").select("turma").eq("nome", nome).maybeSingle();
-  if (!aluno) return { ok: false as const, erro: "Criança não encontrada." };
+  const c = limparCorte(corte);
+  if (c === undefined) return { ok: false as const, erro: "Corte inválido." };
+  if (!(await criancaExiste(nome))) return { ok: false as const, erro: "Criança não encontrada." };
   const dados = await lerDados();
-  if (foto === "turma") {
-    const t = String(aluno.turma).endsWith("B") ? "b" : "a";
-    const ct = { ...(dados.cortes_turma ?? {}) };
-    if (vazio) delete ct[t]; else ct[t] = c;
-    return gravarDados({ ...dados, cortes_turma: ct });
-  }
   const todos = { ...(dados.cortes_aluno ?? {}) };
   const meu = { ...(todos[nome] ?? {}) };
-  if (vazio) delete meu[foto]; else meu[foto] = c;
+  if (c) meu[foto] = c; else delete meu[foto];
   todos[nome] = meu;
   const r = await gravarDados({ ...dados, cortes_aluno: todos });
   if (r.ok) await desaprovar(nome);
   return r;
+}
+
+/** Corte da foto da turma: fica fixo e vale para todas as placas daquela turma. */
+export async function salvarCorteTurma(chave: string, turma: "a" | "b", corte: Corte | null) {
+  if (!chavePlacaValida(chave) || (turma !== "a" && turma !== "b")) return negado;
+  const c = limparCorte(corte);
+  if (c === undefined) return { ok: false as const, erro: "Corte inválido." };
+  const dados = await lerDados();
+  const ct = { ...(dados.cortes_turma ?? {}) };
+  if (c) ct[turma] = c; else delete ct[turma];
+  return gravarDados({ ...dados, cortes_turma: ct });
 }
 
 /** Trocou a foto: o corte da anterior não vale mais. */
