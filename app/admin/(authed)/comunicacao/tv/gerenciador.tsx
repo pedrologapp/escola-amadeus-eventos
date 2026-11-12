@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Check, ChevronDown, ChevronLeft, ChevronRight, Copy, GripVertical, Loader2, Lock, Minus, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import type { BlocoTv, ItemTv, TelaTv, TipoItem } from "@/lib/tv";
 import { apagarItem, ativarItem, salvarItem, type ItemForm } from "@/app/admin/(authed)/comunicacao/tv/actions";
-import { ligarBloco, ordenarBlocos } from "./actions";
+import { ligarBloco, ordenarBlocos } from "./telas-acoes";
 import { FIXOS } from "./fixos";
 import { AvisosDestaque } from "./avisos";
 import { EditorTela, NovaTela, formatoTela, nomeTela, visualTela } from "./telas";
@@ -80,7 +80,7 @@ export function Gerenciador({ itens, blocos: iniciais, telas, podeCriar, nomes, 
   const [giraAberto, setGiraAberto] = useState(false);
   const [gira, setGira] = useState<"sabia" | "frase" | "saudacao">("sabia");
   const tv = useRef<HTMLIFrameElement>(null);
-  // no PC a TV é a deste servidor; no ar, o endereço público (em admin.* o /tv é este gerenciador)
+  // no PC a TV é a deste servidor; no ar, o endereço público da TV
   const fonteTv = process.env.NODE_ENV === "production" ? LINK_TV : "/tv";
 
   const recarregarTv = () => { if (tv.current) tv.current.src = tv.current.src; };

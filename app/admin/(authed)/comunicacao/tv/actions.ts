@@ -11,7 +11,6 @@ import { ETIQUETA_TV, type BlocoTv, type TipoItem } from "@/lib/tv";
 function mudou() {
   revalidateTag(ETIQUETA_TV, { expire: 0 });
   revalidatePath("/admin/comunicacao/tv");
-  revalidatePath("/painel/tv");
 }
 
 type Resultado = { ok: true } | { ok: false; erro: string };

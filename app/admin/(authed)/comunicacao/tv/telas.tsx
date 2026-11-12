@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { Check, Copy, Loader2, Plus, Trash2, X } from "lucide-react";
 import type { FormatoTela, TelaTv } from "@/lib/tv";
 import { PlayerTv } from "@/app/admin/tv/player";
-import { apagarTela, duplicarTela, salvarTela, type TelaForm } from "./actions";
+import { apagarTela, duplicarTela, salvarTela, type TelaForm } from "./telas-acoes";
 
 /**
  * Telas criadas pela escola (Pedro, 12/11/2026): "+ Nova tela" abre a galeria de formatos; escolhido o formato,

@@ -1,32 +1,27 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
-import { BLOCOS, TIPOS, hojeLocal, lerItensEBlocos, roteiroDoDia } from "@/lib/tv";
-import { PainelTv } from "./painel";
+import { serifa } from "@/lib/fonte-serifa";
+import { ConteudoTv } from "./conteudo";
+import { ehEquipeTv } from "./equipe";
 
 /**
- * Roteiro da TV Amadeus (29/09/2026): o que passa na TV da recepção. O que é
- * automático já entra sozinho; aqui a equipe põe avisos, recados, agenda,
- * frases e curiosidades, liga/desliga blocos e muda a ordem e o tempo.
+ * Gerenciador da TV (Pedro, 12/11/2026), no mesmo endereço de sempre: admin.eventos.escolaamadeus.com/admin/comunicacao/tv.
+ * Abre na aba "O que passa" (agenda, recados, avisos e o que gira sozinho, no formato em que aparecem na TV) e tem
+ * "Telas e ordem" (a lista na ordem da TV) e "+ Nova tela" (formatos prontos). A TV em si fica em escolaamadeus.com/tv.
+ * A escola preenche, liga/desliga, muda ordem e tempo; as telas fixas (./fixos.ts) só a equipe Arboria (./equipe.ts).
  */
 export const metadata = { title: "TV Amadeus · Admin Amadeus" };
 export const dynamic = "force-dynamic";
 
 export default async function TvAdminPage() {
-  const [{ itens, blocos }, roteiro] = await Promise.all([lerItensEBlocos(), roteiroDoDia()]);
-  // quantas telas cada bloco tem hoje (0 = não passa hoje)
-  const hojePassa: Record<string, number> = {};
-  for (const c of roteiro.cenas) hojePassa[c.id] = (hojePassa[c.id] ?? 0) + 1;
   return (
-    <div className="container mx-auto px-4 py-6">
-      <Link href="/admin/comunicacao" className="inline-flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-amadeus-blue">
-        <ChevronLeft className="size-4" /> Comunicação
-      </Link>
-      <h1 className="mt-2 text-2xl font-extrabold text-amadeus-blue">TV Amadeus</h1>
-      <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-        O que passa na TV da recepção. Ela monta o roteiro de novo a cada volta: aniversariantes do dia, próximo evento e prazo da
-        rematrícula entram sozinhos; o que vocês colocarem aqui aparece na volta seguinte e sai sozinho quando passar a data.
-      </p>
-      <PainelTv itens={itens} blocos={blocos} nomes={BLOCOS} tipos={TIPOS} hoje={hojeLocal()} hojePassa={hojePassa} />
+    <div className={`${serifa.variable} min-h-full bg-[#FBF7EE] text-[#1A2240]`}>
+      <div className="container mx-auto px-4 py-6">
+        <Link href="/admin/comunicacao" className="inline-flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-amadeus-blue">
+          <ChevronLeft className="size-4" /> Comunicação
+        </Link>
+        <div className="mt-3"><ConteudoTv equipe={await ehEquipeTv()} /></div>
+      </div>
     </div>
   );
 }

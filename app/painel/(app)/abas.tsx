@@ -14,7 +14,6 @@ const ABAS = [
   { href: "/admin/comunicacao/aniversarios", rotulo: "Comunicação" },
   { href: "/admin/eventos", rotulo: "Eventos" },
   { href: "/painel/calendario", rotulo: "Calendário" },
-  { href: "/painel/tv", rotulo: "TV" },
 ];
 const MAIS = [
   { href: "/admin/culminancia", rotulo: "Pedagógico" },

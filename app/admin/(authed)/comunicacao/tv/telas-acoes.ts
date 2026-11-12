@@ -19,7 +19,6 @@ const idTela = (id: string) => id.slice(5);
 
 function mudou() {
   revalidateTag(ETIQUETA_TV, { expire: 0 });
-  revalidatePath("/painel/tv");
   revalidatePath("/admin/comunicacao/tv");
 }
 
