@@ -291,7 +291,8 @@
     const ded = document.getElementById('dedicatoria');
     encaixar(ded, 64, 34, 1.34, () => ded.getBoundingClientRect().bottom - base.top <= 902);
     // direção: cada nome no maior tamanho que fica dentro do painel
-    document.querySelectorAll('.cargo span').forEach((s) => encaixar(s, 36, 24, 1.17, null, 6));
+    // (folga larga: a letra fica bem afastada da borda inclinada do painel)
+    document.querySelectorAll('.cargo span').forEach((s) => encaixar(s, 34, 24, 1.17, null, 26));
     // turma: "Grupo V · A" em dourado dentro do painel claro acima da foto
     // as duas palavras assentam na mesma linha de base, logo acima da moldura da foto
     const tn = document.getElementById('turma-nome'), tr = document.querySelector('.turma-rot');
@@ -307,9 +308,34 @@
     // professora e demais professores: maiores, no meio do espaço entre a lista da turma e o nome da criança
     const fimLista = Lst.getBoundingClientRect().bottom - base.top, LIM = 1676; const pr = document.querySelector('.prof');
     pr.style.top = Math.round(fimLista + 20) + 'px';
-    // cada nome numa linha só, o maior que couber; se não couber nem pequeno, quebra em duas
+    // nenhum nome é partido no meio: a linha só quebra entre um nome e outro.
+    // Vários nomes ficam em uma linha ou em duas linhas equilibradas (o que deixar a letra maior),
+    // e professora e demais professores ficam no mesmo tamanho.
     const spans = [...pr.querySelectorAll('span')];
-    spans.forEach((s) => { s.style.whiteSpace = 'nowrap'; encaixar(s, 46, 30, 1.2, null, 6); if (!dentro(s, 6)) { s.style.whiteSpace = 'normal'; encaixar(s, 40, 24, 1.2, null, 6); } });
+    const esc = (t) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    const nomesDe = (t) => limpo(t).split(/\s*[,;]\s*|\s+e\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕ])/).map(limpo).filter(Boolean);
+    const emLinhas = (nomes, k) => { // k linhas com tamanhos parecidos, sem mudar a ordem
+      const total = nomes.join(', ').length, linhas = [[]]; let acc = 0;
+      nomes.forEach((n, i) => { const atual = linhas[linhas.length - 1];
+        if (atual.length && linhas.length < k && acc + n.length / 2 > (total / k) * linhas.length) linhas.push([]);
+        linhas[linhas.length - 1].push(n); acc += n.length + 2; });
+      return linhas;
+    };
+    spans.forEach((s) => {
+      s.style.whiteSpace = 'nowrap';
+      const nomes = s.classList.contains('vazio') ? [] : nomesDe(s.textContent);
+      if (nomes.length < 2) { encaixar(s, 46, 24, 1.2, null, 12); return; }
+      let melhor = null;
+      for (const k of [1, 2, 3]) {
+        if (k > nomes.length || (k === 3 && melhor && melhor.f >= 30)) break;
+        s.innerHTML = emLinhas(nomes, k).map((l) => l.map(esc).join(', ')).join(',<br>');
+        const fk = encaixar(s, 46, 22, 1.25, null, 12);
+        if (dentro(s, 12) && (!melhor || fk > melhor.f)) melhor = { f: fk, html: s.innerHTML };
+      }
+      s.innerHTML = melhor.html; tam(s, melhor.f, 1.25);
+    });
+    const igual = Math.min(...spans.map((s) => parseFloat(s.style.fontSize)));
+    spans.forEach((s) => tam(s, igual, 1.25));
     const espalhar = () => { // três folgas iguais: lista | professores | nome | selo
       const hp = pr.offsetHeight, hc = C.offsetHeight, folga = (LIM - fimLista - hp - hc) / 3;
       pr.style.top = Math.round(fimLista + folga) + 'px'; C.style.top = Math.round(fimLista + 2 * folga + hp) + 'px'; return folga >= 8; };
@@ -318,7 +344,7 @@
     const f0 = f, MIN_NOME = linhas.length > 1 ? 84 : 100;
     const nomeMaior = () => { let g = f0; tam(C, g); while (g > 56 && !(C.offsetWidth <= 770 && espalhar() && tudoDentro())) tam(C, --g); return g; };
     let g = nomeMaior();
-    while (g < MIN_NOME && spans.some((s) => parseFloat(s.style.fontSize) > 28)) { spans.forEach((s) => { const v = parseFloat(s.style.fontSize); if (v > 28) tam(s, v - 2, 1.2); }); g = nomeMaior(); }
+    while (g < MIN_NOME && spans.some((s) => parseFloat(s.style.fontSize) > 28)) { spans.forEach((s) => { const v = parseFloat(s.style.fontSize); if (v > 28) tam(s, v - 2, 1.25); }); g = nomeMaior(); }
     espalhar();
 
     // ---------- ajustes feitos à mão pela direção: tamanho (t) e posição (x, y) de cada bloco ----------
@@ -327,7 +353,7 @@
     const BLOCOS = {
       turma: { els: () => [tn, tr], folga: 8 },
       mensagem: { els: () => [document.querySelector('.aos'), ded], folga: 12 },
-      equipe: { els: () => [...document.querySelectorAll('.cargo b, .cargo span')], mover: () => [document.querySelector('.equipe')], folga: 6 },
+      equipe: { els: () => [...document.querySelectorAll('.cargo b, .cargo span')], mover: () => [document.querySelector('.equipe')], folga: 20 },
       lista: { els: () => [...Lst.children], mover: () => [Lst], folga: 4 },
       prof: { els: () => [...pr.querySelectorAll('b, span')], mover: () => [pr], folga: 6 },
       nome: { els: () => [C], folga: 8 },
