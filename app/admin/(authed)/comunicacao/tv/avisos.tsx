@@ -39,7 +39,6 @@ function Editor({ inicial, onPronto, onCancelar }: { inicial: ItemForm; onPronto
       <Previa formato="aviso" campos={{ icone: f.icone, titulo: f.titulo || "Título do aviso", texto: f.texto }} />
       <div className="mt-4 space-y-3">
         <div className="flex gap-2">
-          <div className="w-16 shrink-0"><span className={rotulo}>Emoji</span><input value={f.icone} onChange={(e) => setF({ ...f, icone: e.target.value })} className={`${campo} text-center text-xl`} /></div>
           <div className="min-w-0 flex-1"><span className={rotulo}>Título grande</span><input autoFocus value={f.titulo} onChange={(e) => setF({ ...f, titulo: e.target.value })} placeholder="Ex.: Feira de Ciências hoje!" className={`${campo} font-bold`} /></div>
         </div>
         <div><span className={rotulo}>Frase de baixo (se quiser)</span><input value={f.texto} onChange={(e) => setF({ ...f, texto: e.target.value })} placeholder="Ex.: Das 8h às 11h, venha ver os projetos!" className={campo} /></div>
@@ -76,7 +75,7 @@ export function AvisosDestaque({ itens, hoje, onMudou }: { itens: ItemTv[]; hoje
     return (
       <li key={i.id} className={`group flex items-center gap-3 rounded-xl p-2 hover:bg-[#F4F7FC] ${s.no ? "" : "opacity-60"}`}>
         <button type="button" onClick={() => abrir(i)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-          <span className="flex h-10 w-14 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#12307A] to-[#0B2260] text-lg">{i.icone || "📣"}</span>
+          <span className="flex h-10 w-14 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#1E3F86] to-[#0B2260]"><img src="/tv/icones/megafone.webp" alt="" className="h-[82%] w-auto object-contain" /></span>
           <span className="min-w-0">
             <span className="block truncate text-[15px] font-bold text-[#1A2240]">{i.titulo.replace(/\*/g, "")}</span>
             <span className={`text-xs font-semibold ${s.no ? "text-emerald-700" : "text-[#8A95AA]"}`}>{s.txt}</span>

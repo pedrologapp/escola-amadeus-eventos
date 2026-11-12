@@ -13,34 +13,34 @@ import { apagarTela, duplicarTela, salvarTela, type TelaForm } from "./telas-aco
 
 export const FORMATOS: { id: FormatoTela; nome: string; dica: string; icone: string; fundo: string; novo: Record<string, unknown> }[] = [
   {
-    id: "aviso", nome: "Aviso", dica: "Título grande e uma frase", icone: "📣", fundo: "linear-gradient(135deg,#12307A,#0B2260)",
-    novo: { icone: "📣", titulo: "", texto: "" },
+    id: "aviso", nome: "Aviso", dica: "Título grande e uma frase", icone: "megafone", fundo: "linear-gradient(135deg,#1E3F86,#0B2260)",
+    novo: { titulo: "", texto: "" },
   },
   {
-    id: "recado", nome: "Recado", dica: "A folha de caderno, com até 4 lembretes", icone: "📝", fundo: "#FDFBF6",
+    id: "recado", nome: "Recado", dica: "A folha de caderno, com até 4 lembretes", icone: "caderno", fundo: "linear-gradient(135deg,#1E3F86,#0B2260)",
     novo: { linhas: [{ icone: "📌", texto: "" }] },
   },
   {
-    id: "frase", nome: "Frase", dica: "Uma frase grande, palavra por palavra", icone: "💬", fundo: "linear-gradient(135deg,#0B2260,#12307A)",
+    id: "frase", nome: "Frase", dica: "Uma frase grande, palavra por palavra", icone: "balao", fundo: "linear-gradient(135deg,#1E3F86,#0B2260)",
     novo: { texto: "" },
   },
   {
-    id: "sabia", nome: "Você sabia?", dica: "Uma curiosidade, com a lâmpada", icone: "💡", fundo: "linear-gradient(135deg,#7B5EA7,#2E8FF0)",
+    id: "sabia", nome: "Você sabia?", dica: "Uma curiosidade, com a lâmpada", icone: "lampada", fundo: "linear-gradient(135deg,#1E3F86,#0B2260)",
     novo: { texto: "" },
   },
   {
-    id: "celebracao", nome: "Celebração", dica: "Formaturas e grandes momentos, com o aviãozinho", icone: "🎓", fundo: "linear-gradient(180deg,#0B2260,#3A7BE0)",
+    id: "celebracao", nome: "Celebração", dica: "Formaturas e grandes momentos", icone: "capelo", fundo: "linear-gradient(135deg,#1E3F86,#0B2260)",
     novo: { pre: "o voo mais bonito do ano", titulo: "Formatura", linha: "" },
   },
   {
-    id: "programacao", nome: "Programação", dica: "Horários e atividades de um dia", icone: "🕘", fundo: "#FDFBF6",
+    id: "programacao", nome: "Programação", dica: "Horários e atividades de um dia", icone: "relogio", fundo: "linear-gradient(135deg,#1E3F86,#0B2260)",
     novo: { titulo: "Programação", linhas: [{ hora: "", texto: "" }] },
   },
 ];
 
 export const visualTela = (t: TelaTv | undefined) => {
   const f = FORMATOS.find((x) => x.id === t?.formato);
-  return { fundo: f?.fundo ?? "#12307A", icone: f?.icone ?? "📺", claro: t?.formato === "programacao" || t?.formato === "recado" };
+  return { fundo: f?.fundo ?? "linear-gradient(135deg,#1E3F86,#0B2260)", icone: f?.icone ?? "estrela", claro: false };
 };
 
 export const nomeTela = (t: TelaTv | undefined) => {
@@ -73,8 +73,7 @@ function Campos({ formato, c, set }: { formato: FormatoTela; c: Record<string, u
     return (
       <div className="space-y-3">
         <div className="flex gap-2">
-          <div className="w-16 shrink-0"><span className={rotulo}>Emoji</span><input value={s("icone")} onChange={(e) => set({ ...c, icone: e.target.value })} className={`${campo} text-center text-xl`} /></div>
-          <div className="flex-1"><span className={rotulo}>Título grande</span><input autoFocus value={s("titulo")} onChange={(e) => set({ ...c, titulo: e.target.value })} placeholder="Ex.: Feira de Ciências hoje!" className={`${campo} font-bold`} /></div>
+                    <div className="flex-1"><span className={rotulo}>Título grande</span><input autoFocus value={s("titulo")} onChange={(e) => set({ ...c, titulo: e.target.value })} placeholder="Ex.: Feira de Ciências hoje!" className={`${campo} font-bold`} /></div>
         </div>
         <div><span className={rotulo}>Frase de baixo</span><input value={s("texto")} onChange={(e) => set({ ...c, texto: e.target.value })} placeholder="Ex.: Das 8h às 11h, venha ver os projetos!" className={campo} /></div>
       </div>

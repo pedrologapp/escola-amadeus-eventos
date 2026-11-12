@@ -21,19 +21,20 @@ import { EditorAgenda, EditorRecados } from "@/app/admin/(authed)/comunicacao/tv
 type Nomes = Record<string, { nome: string; origem: string; equipe?: TipoItem }>;
 
 /** O desenho de cada cartão: a cor do fundo da cena na TV e um ícone. */
+/** O desenho de cada cartão: o azul da TV e o ícone 3D da tela (public/tv/icones). */
 const VISUAL: Record<string, { fundo: string; icone: string; claro?: boolean }> = {
-  saudacao: { fundo: "linear-gradient(135deg,#12307A,#2E5BB8)", icone: "☀️" },
-  aniversariantes: { fundo: "#FDFBF6", icone: "🎂", claro: true },
-  avisos: { fundo: "linear-gradient(135deg,#12307A,#0B2260)", icone: "📣" },
-  recados: { fundo: "#FDFBF6", icone: "📝", claro: true },
-  evento: { fundo: "linear-gradient(135deg,#F29A0C,#FFC21C)", icone: "🎉" },
-  promo: { fundo: "linear-gradient(135deg,#12307A,#1B4BB0)", icone: "🏷️" },
-  agenda: { fundo: "#FDFBF6", icone: "📅", claro: true },
-  sabia: { fundo: "linear-gradient(135deg,#7B5EA7,#2E8FF0)", icone: "💡" },
-  frase: { fundo: "linear-gradient(135deg,#0B2260,#12307A)", icone: "💬" },
-  qr: { fundo: "#FFFFFF", icone: "📱", claro: true },
-  formatura: { fundo: "linear-gradient(180deg,#0B2260,#3A7BE0)", icone: "🎓" },
-  fim: { fundo: "#FDFBF6", icone: "🌳", claro: true },
+  saudacao: { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "sol" },
+  aniversariantes: { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "bolo" },
+  avisos: { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "megafone" },
+  recados: { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "caderno" },
+  evento: { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "ingresso" },
+  promo: { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "capelo" },
+  agenda: { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "calendario" },
+  sabia: { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "lampada" },
+  frase: { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "balao" },
+  qr: { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "celular" },
+  formatura: { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "capelo" },
+  fim: { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "estrela" },
 };
 
 /** Cartões cujo conteúdo é uma lista simples (frases, curiosidades e datas comemorativas). */
@@ -70,7 +71,7 @@ export function Gerenciador({ itens, blocos: iniciais, telas, podeCriar, nomes, 
   const [criando, setCriando] = useState(false);
   // as telas criadas vêm na lista como "tela:<id>"
   const telaDe = (id: string) => (id.startsWith("tela:") ? telas.find((t) => t.id === id.slice(5)) : undefined);
-  const vis = (id: string) => (id.startsWith("tela:") ? visualTela(telaDe(id)) : VISUAL[id] ?? { fundo: "#12307A", icone: "📺" });
+  const vis = (id: string) => (id.startsWith("tela:") ? visualTela(telaDe(id)) : VISUAL[id] ?? { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "estrela" });
   const nome = (id: string) => (id.startsWith("tela:") ? nomeTela(telaDe(id)) : nomes[id]?.nome ?? id);
   const [escolhido, setEscolhido] = useState<string>(iniciais.find((b) => nomes[b.id]?.equipe)?.id ?? iniciais[0]?.id);
   const [arrastando, setArrastando] = useState<string | null>(null);
@@ -200,7 +201,7 @@ export function Gerenciador({ itens, blocos: iniciais, telas, podeCriar, nomes, 
                     return (
                       <li key={t.id}>
                         <button type="button" onClick={() => { setAba("telas"); setEscolhido(`tela:${t.id}`); }} className="flex w-full items-center gap-3 rounded-xl p-1.5 text-left hover:bg-[#F4F7FC]">
-                          <span className={`flex h-9 w-14 shrink-0 items-center justify-center rounded-lg text-lg ring-1 ring-inset ring-black/10 ${passa ? "" : "opacity-40 grayscale"}`} style={{ background: v.fundo }}>{v.icone}</span>
+                          <span className={`flex h-9 w-14 shrink-0 items-center justify-center rounded-lg text-lg ring-1 ring-inset ring-black/10 ${passa ? "" : "opacity-40 grayscale"}`} style={{ background: v.fundo }}><img src={`/tv/icones/${v.icone}.webp`} alt="" className="h-[82%] w-auto object-contain" /></span>
                           <span className="min-w-0 flex-1">
                             <span className="block truncate text-sm font-bold text-[#1A2240]">{nomeTela(t)}</span>
                             <span className={`text-xs font-semibold ${passa ? "text-emerald-700" : "text-[#8A95AA]"}`}>{passa ? "passa hoje" : "não passa hoje"}</span>
@@ -279,7 +280,7 @@ export function Gerenciador({ itens, blocos: iniciais, telas, podeCriar, nomes, 
                     className={`flex cursor-pointer items-center gap-3 rounded-2xl bg-white p-2 pr-4 transition ${escolhido === b.id ? "ring-[3px] ring-[#FFC21C]" : "ring-1 ring-[#E3E8F2] hover:ring-[#B9C6DF]"} ${arrastando === b.id ? "opacity-40" : ""}`}
                   >
                     <span className="w-6 shrink-0 text-center text-sm font-extrabold tabular-nums text-[#8A95AA]">{i + 1}</span>
-                    <span className={`flex h-11 w-[70px] shrink-0 items-center justify-center rounded-lg text-xl ring-1 ring-inset ring-black/10 ${passa ? "" : "opacity-40 grayscale"}`} style={{ background: v.fundo }}>{v.icone}</span>
+                    <span className={`flex h-11 w-[70px] shrink-0 items-center justify-center rounded-lg text-xl ring-1 ring-inset ring-black/10 ${passa ? "" : "opacity-40 grayscale"}`} style={{ background: v.fundo }}><img src={`/tv/icones/${v.icone}.webp`} alt="" className="h-[82%] w-auto object-contain" /></span>
                     <span className="min-w-0 flex-1">
                       <span className={`block truncate text-[15px] font-bold ${passa ? "text-[#1A2240]" : "text-[#8A95AA]"}`}>{nome(b.id)}</span>
                       <span className="block truncate text-xs text-[#8A95AA]">{funcao}</span>
@@ -301,7 +302,7 @@ export function Gerenciador({ itens, blocos: iniciais, telas, podeCriar, nomes, 
           {atual && (
             <div className="rounded-3xl bg-white p-5 shadow-[0_10px_30px_rgba(27,59,124,.1)] ring-1 ring-[#E3E8F2]">
               <div className="flex items-center gap-3">
-                <span className="flex size-12 items-center justify-center rounded-2xl text-2xl" style={{ background: vis(atual.id).fundo }}>{vis(atual.id).icone}</span>
+                <span className="flex size-12 items-center justify-center rounded-2xl text-2xl" style={{ background: vis(atual.id).fundo }}><img src={`/tv/icones/${vis(atual.id).icone}.webp`} alt="" className="h-[82%] w-auto object-contain" /></span>
                 <div className="min-w-0 flex-1">
                   <h2 className="truncate font-[family-name:var(--font-serifa)] text-2xl font-bold text-[#1B3B7C]">{nome(atual.id)}</h2>
                   <p className="text-sm text-[#5A6478]">{telaDe(atual.id) ? `Criada por vocês · ${formatoTela(telaDe(atual.id))}` : nomes[atual.id]?.equipe || LISTA[atual.id] ? "Vocês colocam o conteúdo" : "Entra sozinho"}</p>
@@ -416,7 +417,7 @@ function ListaSimples({ conf, itens, hoje, origem, onMudou }: {
       {/* pôr mais ou alterar */}
       <div className={`mt-3 rounded-2xl p-3 ${f.id ? "bg-[#FFF6DA] ring-2 ring-[#FFC21C]" : "bg-[#F4F7FC]"}`}>
         <div className="flex gap-2">
-          <input value={f.icone} onChange={(e) => setF({ ...f, icone: e.target.value })} placeholder="😀" title="Um emoji (opcional). No Windows: tecla Windows + ponto" className={`${campo.replace("w-full ", "")} w-14 shrink-0 text-center text-lg`} />
+          {conf.comData && <input value={f.icone} onChange={(e) => setF({ ...f, icone: e.target.value })} placeholder="😀" title="Um emoji (opcional). No Windows: tecla Windows + ponto" className={`${campo.replace("w-full ", "")} w-14 shrink-0 text-center text-lg`} />}
           <input value={f.titulo} onChange={(e) => setF({ ...f, titulo: e.target.value })} placeholder={`Ex.: ${conf.exemplo}`} className={`${campo} font-semibold`} />
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-2">

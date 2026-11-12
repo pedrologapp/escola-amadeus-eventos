@@ -52,8 +52,19 @@ function Palavras({ texto, d0 = 0.4, passo = 0.2 }: { texto: string; d0?: number
   );
 }
 
-// eslint-disable-next-line @next/next/no-img-element
-const Icone = ({ nome, d = 0.2 }: { nome: string; d?: number }) => <img className="icone3d" src={`/tv/icones/${nome}.webp`} alt="" style={st(d)} />;
+const Icone = ({ nome, d = 0.2 }: { nome: string; d?: number }) => (
+  <div className={`icone3d icone-${nome}`} style={st(d)}>
+    {/* eslint-disable-next-line @next/next/no-img-element */}
+    <img src={`/tv/icones/${nome}.webp`} alt="" />
+  </div>
+);
+/** manhã até 12h, tarde até 18h, noite depois */
+const periodo = (hora: number) => (hora < 12 ? "manha" : hora < 18 ? "tarde" : "noite");
+/** a última palavra em amarelo (só uma palavra em destaque por título) */
+const ultimaEmDestaque = (t: string) => {
+  const p = t.trim().split(/\s+/);
+  return p.length > 1 ? `${p.slice(0, -1).join(" ")} *${p[p.length - 1]}*` : `*${t.trim()}*`;
+};
 
 /** O layout "cartão": legenda à mão, título, frase e o ícone grande ao lado. */
 function Cartao({ icone, legenda, titulo, texto }: { icone: string; legenda: string; titulo: string; texto?: string }) {
@@ -93,7 +104,7 @@ function conteudo(c: Cena, hora: number) {
       const h = hojeLocal();
       return (
         <>
-          <Icone nome="sol" />
+          <Icone nome={{ manha: "sol", tarde: "sol-tarde", noite: "lua" }[periodo(hora)]} />
           <div className="txt">
             <div className="t1"><Palavras texto={`${oi} *Amadeus!*`} d0={0.3} /></div>
             <p className="t2 surge" style={st(1.4)}>{DIAS[h.getDay()]}, {h.toLocaleDateString("pt-BR", { day: "numeric", month: "long" })}</p>
@@ -123,6 +134,7 @@ function conteudo(c: Cena, hora: number) {
       return <Cartao icone="megafone" legenda="um aviso para vocês" titulo={String(d.titulo)} texto={d.texto ? String(d.texto) : undefined} />;
     case "recados": {
       const lista = d.lista as { texto: string; icone: string | null }[];
+      if (lista.length === 1) return <Cartao icone="caderno" legenda="lembrete rápido" titulo={lista[0].texto} />;
       return (
         <ListaTv icone="caderno" titulo="Recados da *coordenação*">
           {lista.map((r, i) => (
@@ -140,7 +152,7 @@ function conteudo(c: Cena, hora: number) {
           <Icone nome="ingresso" />
           <div className="txt">
             <div className="mao surge" style={st(0.3)}>vem aí</div>
-            <div className="t1"><Palavras texto={`*${nome}*`} d0={0.6} /></div>
+            <div className="t1"><Palavras texto={ultimaEmDestaque(nome)} d0={0.6} /></div>
             <p className="quando surge" style={st(1.6)}>{dataLonga(String(d.data))}</p>
             {d.local ? <p className="onde surge" style={st(1.9)}>{String(d.local)}</p> : null}
             <div className="selo-amarelo surge" style={st(2.3)}>{falta === 0 ? "É hoje!" : falta === 1 ? "É amanhã!" : `Faltam ${falta} dias`}</div>
@@ -172,7 +184,7 @@ function conteudo(c: Cena, hora: number) {
           <h2 className="t1"><Palavras texto="Agenda da *semana*" d0={0.2} /></h2>
           <div className="dias">
             {dias.map((dia, i) => (
-              <div key={dia.data} className={`dia surge ${dia.data === hojeIso ? "hoje" : ""}`} style={st(0.9 + i * 0.15)}>
+              <div key={dia.data} className={`dia surge ${dia.data === hojeIso ? "hoje" : dia.data < hojeIso ? "passou" : ""}`} style={st(0.9 + i * 0.15)}>
                 <b>{SEMANA[i]}</b>
                 <small>{dia.data.slice(8)}/{dia.data.slice(5, 7)}{dia.data === hojeIso ? " · hoje" : ""}</small>
                 {dia.itens.length > 0 && <ul>{dia.itens.map((t, j) => <li key={j}>{t}</li>)}</ul>}
@@ -216,7 +228,7 @@ function conteudo(c: Cena, hora: number) {
           <div className="txt">
             <div className="mao surge" style={st(0.4)}>{String(d.pre ?? "o voo mais bonito do ano")}</div>
             <div className="t1"><Palavras texto={String(d.titulo ?? "Formatura")} d0={0.8} /></div>
-            <div className="linha"><Palavras texto={String(d.linha ?? "")} d0={1.3} /></div>
+            {d.linha ? <div className="linha"><Palavras texto={ultimaEmDestaque(String(d.linha))} d0={1.3} /></div> : null}
           </div>
         </>
       );
@@ -380,8 +392,9 @@ export function PlayerTv({ roteiro, previa, congelada = null, embutida = false }
       }}
     >
       {escala > 0 && (
-        <div id="palco" style={{ left: "50%", top: "50%", transformOrigin: "center", transform: `translate(-50%, -50%) scale(${escala})` }}>
+        <div id="palco" className={`periodo-${periodo(hora)}`} style={{ left: "50%", top: "50%", transformOrigin: "center", transform: `translate(-50%, -50%) scale(${escala})` }}>
           <div className="tv-luz" />
+          {periodo(hora) === "noite" && <div className="tv-estrelas">{ESTRELAS.map((e, i) => <i key={i} style={{ left: e.l, top: e.t, transform: `scale(${e.s})` }} />)}</div>}
           {cenas.map((c, i) => (
             <section key={`${roteiro.atualizado}:${c.chave}`} className={`cena ${CLASSE[c.id === "tela" ? `tela-${String((c.dados as D).formato)}` : c.id] ?? ""} ${i === atual ? "on" : ""} ${i === saindo ? "sai" : ""}`}>
               {(i === atual || i === saindo) && conteudo(c, hora)}

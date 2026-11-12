@@ -24,6 +24,11 @@
 .tv-luz { position: absolute; left: -20%; top: -20%; width: 140%; height: 140%;
   background: radial-gradient(60% 55% at 38% 42%, var(--tv-azul), rgba(30,63,134,0) 70%), radial-gradient(45% 40% at 78% 72%, rgba(255,201,77,.10), rgba(255,201,77,0) 70%);
   animation: tv-respira 14s ease-in-out infinite alternate; }
+.periodo-manha .tv-luz { background: radial-gradient(60% 55% at 38% 38%, #2A56B0, rgba(42,86,176,0) 72%), radial-gradient(45% 40% at 78% 72%, rgba(255,201,77,.10), rgba(255,201,77,0) 70%); }
+.periodo-tarde .tv-luz { background: radial-gradient(60% 55% at 38% 42%, var(--tv-azul), rgba(30,63,134,0) 70%), radial-gradient(55% 50% at 80% 80%, rgba(255,170,70,.18), rgba(255,170,70,0) 70%); }
+#palco.periodo-noite { background: #050C22; }
+.periodo-noite .tv-luz { background: radial-gradient(60% 55% at 38% 42%, #0C1A45, rgba(12,26,69,0) 70%), radial-gradient(45% 40% at 78% 72%, rgba(255,201,77,.04), rgba(255,201,77,0) 70%); }
+.tv-estrelas i { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: #fff; opacity: .45; }
 @keyframes tv-respira { from { transform: translate(-2%, -1%) scale(1); } to { transform: translate(2%, 1.5%) scale(1.06); } }
 .tv-grao { position: absolute; inset: 0; opacity: .08; pointer-events: none; z-index: 30;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
@@ -40,8 +45,12 @@
 .surge { opacity: 0; }
 .on .surge { animation: tv-surge 1s ease forwards; animation-delay: calc(var(--d, 0) * 1s); }
 @keyframes tv-surge { to { opacity: 1; } }
-.icone3d { position: absolute; filter: drop-shadow(0 40px 50px rgba(0,0,0,.45)); }
-.on .icone3d { animation: tv-entra 1.4s cubic-bezier(.2,.8,.2,1) both, tv-boia 7s ease-in-out 1.4s infinite alternate; }
+.icone3d { position: absolute; }
+.icone3d img { position: relative; display: block; width: 100%; z-index: 1; }
+.icone3d:before { content: ""; position: absolute; left: -12%; top: -12%; width: 124%; height: 124%; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,201,77,.08), rgba(255,201,77,0)); }
+.icone3d:after { content: ""; position: absolute; left: 18%; bottom: -6%; width: 64%; height: 9%; border-radius: 50%; background: radial-gradient(closest-side, rgba(0,0,0,.30), rgba(0,0,0,0)); }
+.on .icone3d { animation: tv-entra 1.4s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--d, 0) * 1s); }
+.on .icone3d img { animation: tv-boia 7s ease-in-out 1.4s infinite alternate; }
 @keyframes tv-entra { from { opacity: 0; transform: translateY(40px) scale(.92); } }
 @keyframes tv-boia { to { transform: translateY(-14px); } }
 
@@ -51,38 +60,38 @@
 .t2 { font-size: 58px; line-height: 1.25; color: var(--tv-suave); }
 .t2 b { color: var(--tv-amarelo); font-weight: 700; }
 .mao { font-family: TvMao, Caveat, cursive; font-weight: 700; font-size: 72px; line-height: 1; color: var(--tv-amarelo); }
-.vidro { position: absolute; border-radius: 60px; background: linear-gradient(160deg, rgba(255,255,255,.10), rgba(255,255,255,.03)); border: 1.5px solid rgba(255,255,255,.14); }
+.vidro { position: absolute; border-radius: 60px; background: linear-gradient(160deg, rgba(255,255,255,.10), rgba(255,255,255,.03)); border: 1.5px solid rgba(255,255,255,.14); border-top-color: rgba(255,255,255,.32); }
 .selo-amarelo { display: inline-block; padding: 14px 34px; border-radius: 99px; background: var(--tv-amarelo); color: var(--tv-marinho); font-family: TvTitulo, sans-serif; font-size: 52px; }
 
 /* layout "cartão": cartão de vidro à esquerda, ícone grande à direita (aviso, você sabia?, comemoração) */
-.cartao-tv .vidro { left: 130px; right: 520px; top: 80px; bottom: 30px; }
+.cartao-tv .vidro { left: 150px; right: 520px; top: 80px; bottom: 30px; }
 .cartao-tv .icone3d { right: 110px; top: 170px; width: 600px; }
-.cartao-tv .txt { position: absolute; left: 230px; right: 640px; top: 150px; }
+.cartao-tv .txt { position: absolute; left: 250px; right: 640px; top: 80px; bottom: 30px; display: flex; flex-direction: column; justify-content: center; }
 .cartao-tv .t1 { margin-top: 26px; font-size: 140px; }
 .cartao-tv .t2 { margin-top: 38px; }
 .cartao-tv.longo .t1 { font-size: 104px; }
 .cartao-tv.icone-alto .icone3d { width: 420px; right: 180px; top: 120px; }
 
 /* saudação */
-.cena-saudacao .icone3d { left: 150px; top: 150px; width: 520px; }
-.cena-saudacao .txt { position: absolute; left: 780px; right: 120px; top: 190px; }
-.cena-saudacao .t1 { font-size: 190px; }
+.cena-saudacao .icone3d { right: 150px; top: 170px; width: 520px; }
+.cena-saudacao .txt { position: absolute; left: 150px; right: 720px; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; }
+.cena-saudacao .t1 { font-size: 180px; }
 .cena-saudacao .t2 { margin-top: 30px; font-size: 64px; color: var(--tv-creme); }
 .cena-saudacao .selo-amarelo { margin-top: 44px; }
 
 /* aniversariantes */
-.cena-aniversariantes .icone3d { right: 150px; top: 50px; width: 260px; }
-.cena-aniversariantes h2 { position: absolute; left: 150px; right: 460px; top: 110px; font-size: 104px; }
+.cena-aniversariantes .icone3d { right: 150px; top: 60px; width: 280px; }
+.cena-aniversariantes h2 { position: absolute; left: 150px; right: 480px; top: 110px; font-size: 112px; }
 .cena-aniversariantes .lista { position: absolute; left: 150px; right: 150px; top: 330px; display: grid; grid-template-columns: 1fr 1fr; gap: 26px 34px; }
 .cena-aniversariantes .pessoa { padding: 26px 38px; border-radius: 36px; background: rgba(255,255,255,.07); border: 1.5px solid rgba(255,255,255,.12); }
 .cena-aniversariantes .pessoa b { display: block; font-family: TvTitulo, sans-serif; font-weight: 400; font-size: 60px; color: var(--tv-creme); }
-.cena-aniversariantes .pessoa small { display: block; margin-top: 4px; font-size: 38px; color: var(--tv-suave); }
+.cena-aniversariantes .pessoa small { display: block; margin-top: 4px; font-size: 46px; color: var(--tv-suave); }
 
 /* recados e programação: o título e a lista em cartões */
-.lista-tv .icone3d { right: 150px; top: 60px; width: 300px; }
-.lista-tv h2 { position: absolute; left: 150px; right: 520px; top: 110px; font-size: 112px; }
+.lista-tv .icone3d { right: 150px; top: 60px; width: 280px; }
+.lista-tv h2 { position: absolute; left: 150px; right: 480px; top: 110px; font-size: 112px; }
 .lista-tv ul { position: absolute; left: 150px; right: 150px; top: 330px; list-style: none; display: flex; flex-direction: column; gap: 22px; }
-.lista-tv li { display: flex; align-items: center; gap: 36px; padding: 24px 40px; border-radius: 36px; background: rgba(255,255,255,.07); border: 1.5px solid rgba(255,255,255,.12); font-size: 54px; line-height: 1.2; color: var(--tv-creme); }
+.lista-tv li { display: flex; align-items: center; gap: 36px; padding: 24px 40px; border-radius: 36px; background: rgba(255,255,255,.07); border: 1.5px solid rgba(255,255,255,.12); border-top-color: rgba(255,255,255,.3); font-size: 54px; line-height: 1.2; color: var(--tv-creme); }
 .lista-tv li i { flex: none; font-style: normal; font-size: 58px; }
 .lista-tv li i.hora { min-width: 190px; padding: 6px 22px; border-radius: 24px; background: var(--tv-amarelo); color: var(--tv-marinho); font-family: TvTitulo, sans-serif; font-size: 54px; text-align: center; }
 .lista-tv li b { color: var(--tv-amarelo); font-weight: 700; }
@@ -94,36 +103,38 @@
 .cena-evento .t1 { margin-top: 20px; font-size: 140px; }
 .cena-evento .longo .t1 { font-size: 108px; }
 .cena-evento .quando { margin-top: 36px; font-size: 60px; color: var(--tv-creme); }
-.cena-evento .onde { margin-top: 10px; font-size: 48px; color: var(--tv-suave); }
+.cena-evento .onde { margin-top: 10px; font-size: 52px; color: var(--tv-suave); }
 .cena-evento .selo-amarelo { margin-top: 40px; }
 
 /* agenda da semana */
-.cena-agenda .icone3d { right: 170px; top: 60px; width: 250px; }
-.cena-agenda h2 { position: absolute; left: 150px; top: 110px; font-size: 104px; }
+.cena-agenda .icone3d { right: 150px; top: 60px; width: 280px; }
+.cena-agenda h2 { position: absolute; left: 150px; top: 110px; font-size: 112px; }
 .cena-agenda .dias { position: absolute; left: 150px; right: 150px; top: 300px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 28px; }
-.cena-agenda .dia { height: 560px; border-radius: 34px; padding: 34px 30px; background: rgba(255,255,255,.055); border: 1.5px solid rgba(255,255,255,.10); overflow: hidden; }
+.cena-agenda .dia { height: 470px; border-radius: 34px; padding: 32px 24px; background: rgba(255,255,255,.055); border: 1.5px solid rgba(255,255,255,.10); border-top-color: rgba(255,255,255,.28); overflow: hidden; }
+.cena-agenda .dia.passou { background: rgba(255,255,255,.025); border-color: rgba(255,255,255,.06); }
+.cena-agenda .dia.passou > * { opacity: .45; }
 .cena-agenda .dia.hoje { background: rgba(255,201,77,.10); border-color: rgba(255,201,77,.65); }
 .cena-agenda .dia b { display: block; font-size: 35px; font-weight: 700; white-space: nowrap; }
-.cena-agenda .dia small { display: block; margin-top: 4px; font-size: 34px; color: var(--tv-suave); }
+.cena-agenda .dia small { display: block; margin-top: 4px; font-size: 40px; color: var(--tv-suave); }
 .cena-agenda .hoje small { color: var(--tv-amarelo); }
 .cena-agenda .dia ul { margin-top: 30px; list-style: none; }
 .cena-agenda .dia li { font-size: 38px; line-height: 1.25; padding-left: 20px; border-left: 4px solid var(--tv-amarelo); margin-bottom: 22px; }
 
 /* frase do dia */
-.cena-frase .icone3d { left: 140px; top: 120px; width: 300px; }
-.cena-frase .txt { position: absolute; left: 220px; right: 220px; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+.cena-frase .icone3d { left: 50%; top: 70px; width: 340px; margin-left: -170px; }
+.cena-frase .txt { position: absolute; left: 150px; right: 150px; top: 380px; bottom: 30px; display: flex; flex-direction: column; justify-content: center; text-align: center; }
 
 /* QR codes para os pais */
-.cena-qr .icone3d { left: 150px; top: 170px; width: 420px; }
-.cena-qr .txt { position: absolute; left: 640px; top: 110px; }
-.cena-qr h2 { font-size: 120px; }
+.cena-qr .icone3d { right: 150px; top: 170px; width: 380px; }
+.cena-qr .txt { position: absolute; left: 150px; top: 110px; }
+.cena-qr h2 { font-size: 112px; }
 .cena-qr .t2 { margin-top: 10px; }
-.cena-qr .codigos { position: absolute; left: 640px; right: 150px; top: 420px; display: flex; gap: 50px; }
-.cena-qr .codigo { display: flex; align-items: center; gap: 30px; }
-.cena-qr .caixa { width: 300px; height: 300px; padding: 22px; border-radius: 32px; background: #fff; }
+.cena-qr .codigos { position: absolute; left: 150px; right: 150px; top: 300px; display: flex; gap: 110px; }
+.cena-qr .codigo { display: flex; flex-direction: column; align-items: center; gap: 22px; text-align: center; }
+.cena-qr .caixa { flex: none; width: 340px; height: 340px; padding: 26px; border-radius: 36px; background: #fff; }
 .cena-qr .caixa svg { width: 100%; height: 100%; display: block; }
-.cena-qr .codigo b { display: block; font-family: TvTitulo, sans-serif; font-weight: 400; font-size: 52px; color: var(--tv-creme); }
-.cena-qr .codigo small { display: block; margin-top: 6px; font-size: 34px; color: var(--tv-suave); }
+.cena-qr .codigo b { display: block; font-family: TvTitulo, sans-serif; font-weight: 400; font-size: 56px; color: var(--tv-creme); }
+.cena-qr .codigo small { display: block; margin-top: 6px; font-size: 46px; color: var(--tv-suave); }
 
 /* matrícula antecipada */
 .cena-promo .txt { position: absolute; left: 150px; right: 760px; top: 140px; }
@@ -133,14 +144,14 @@
 .cena-promo .qr { position: absolute; right: 170px; top: 210px; text-align: center; }
 .cena-promo .qr .caixa { width: 420px; height: 420px; padding: 28px; border-radius: 40px; background: #fff; }
 .cena-promo .qr .caixa svg { width: 100%; height: 100%; display: block; }
-.cena-promo .qr p { margin-top: 22px; font-size: 38px; color: var(--tv-suave); }
+.cena-promo .qr p { margin-top: 22px; font-size: 46px; color: var(--tv-suave); }
 
 /* celebração (formaturas) */
 .cena-celebracao .estrela { position: absolute; width: 5px; height: 5px; background: #fff; border-radius: 50%; opacity: .5; }
 .cena-celebracao .icone3d { left: 50%; top: 70px; width: 380px; margin-left: -190px; }
 .cena-celebracao .txt { position: absolute; left: 150px; right: 150px; top: 430px; text-align: center; }
-.cena-celebracao .t1 { margin-top: 18px; font-size: 170px; }
-.cena-celebracao .linha { margin-top: 10px; font-family: TvTitulo, sans-serif; font-size: 120px; color: var(--tv-amarelo); }
+.cena-celebracao .t1 { margin-top: 18px; font-size: 180px; }
+.cena-celebracao .linha { margin-top: 10px; font-family: TvTitulo, sans-serif; font-size: 120px; color: var(--tv-creme); }
 
 /* encerramento */
 .cena-fim .centro { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
