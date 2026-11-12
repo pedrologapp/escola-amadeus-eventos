@@ -348,6 +348,13 @@ export function PlayerTv({ roteiro, previa, congelada = null, embutida = false }
     return () => clearTimeout(r);
   }, [congelada, atual]);
 
+  // sem nenhuma cena (banco estava fora do ar): pede o roteiro de novo a cada minuto
+  useEffect(() => {
+    if (cenas.length || congelada) return;
+    const t = setInterval(() => router.refresh(), 60000);
+    return () => clearInterval(t);
+  }, [cenas.length, router, congelada]);
+
   // anda o roteiro; no fim da volta pede o roteiro novo
   useEffect(() => {
     if (!cenas.length || congelada) return;

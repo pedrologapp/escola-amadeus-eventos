@@ -98,10 +98,12 @@ const diaDoAno = (iso: string) => Math.floor((Date.parse(`${iso}T00:00:00Z`) - D
 
 export async function lerItensEBlocos() {
   const db = createAdminClient();
-  const [{ data: itens }, { data: blocos }] = await Promise.all([
+  const [{ data: itens, error: e1 }, { data: blocos, error: e2 }] = await Promise.all([
     db.from("tv_itens").select("id, tipo, titulo, texto, icone, data, inicio, fim, ativo").order("criado_em", { ascending: true }),
     db.from("tv_blocos").select("id, ativo, ordem, segundos").order("ordem"),
   ]);
+  // banco fora do ar (ex.: Supabase pausado): falha de verdade, para o roteiro vazio não ficar guardado o dia todo
+  if (e1 || e2) throw new Error(`TV: não consegui ler o banco (${(e1 ?? e2)?.message})`);
   return { itens: (itens ?? []) as ItemTv[], blocos: (blocos ?? []) as BlocoTv[] };
 }
 
@@ -110,12 +112,13 @@ async function aniversariantes(hoje: string): Promise<Aniversariante[]> {
   // na segunda, também os do fim de semana
   const semana = new Date(`${hoje}T12:00:00Z`).getUTCDay();
   const desde = semana === 1 ? somaDias(hoje, -2) : hoje;
-  const { data } = await db
+  const { data, error } = await db
     .from("aniversario_envios")
     .select("data, tipo, pessoa_ref, nome")
     .gte("data", desde)
     .lte("data", hoje)
     .not("pessoa_ref", "like", "teste:%");
+  if (error) throw new Error(`TV: aniversariantes (${error.message})`);
   const vistos = new Map<string, { data: string; tipo: string; nome: string; ref: string }>();
   for (const r of data ?? []) if (!vistos.has(r.pessoa_ref)) vistos.set(r.pessoa_ref, { data: r.data, tipo: r.tipo, nome: r.nome, ref: r.pessoa_ref });
   const ids = [...vistos.values()].filter((v) => v.ref.startsWith("aluno:")).map((v) => Number(v.ref.slice(6)));
@@ -164,10 +167,16 @@ const horaLocal = () => Number(new Date().toLocaleString("en-US", { timeZone: FU
  * roteiro a cada volta, mas recebe o guardado, sem ir ao banco. As contagens
  * ("faltam 16 dias") e o relógio são feitos na própria TV.
  */
-export function roteiroDoDia(): Promise<RoteiroTv> {
+export async function roteiroDoDia(): Promise<RoteiroTv> {
   const hoje = hojeLocal();
   const turno = horaLocal() >= 7 ? "dia" : "madrugada";
-  return unstable_cache(() => montarRoteiro(hoje), ["tv-roteiro", "v2", hoje, turno], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })();
+  try {
+    return await unstable_cache(() => montarRoteiro(hoje), ["tv-roteiro", "v3", hoje, turno], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })();
+  } catch (e) {
+    // nada fica guardado: a TV mostra só o relógio e pede de novo em 1 minuto (app/admin/tv/player.tsx)
+    console.error(e);
+    return { hoje, cenas: [], atualizado: new Date().toISOString() };
+  }
 }
 
 export const ETIQUETA_TV = "tv";
@@ -191,7 +200,7 @@ async function montarRoteiro(hoje: string): Promise<RoteiroTv> {
   const valem = itens.filter((i) => valeHoje(i, hoje));
   const de = (t: TipoItem) => valem.filter((i) => i.tipo === t);
   const [nivers, evento, qrFolder, qrPesquisa] = await Promise.all([
-    aniversariantes(hoje).catch(() => []),
+    aniversariantes(hoje), // se o banco falhar, o roteiro não é guardado e a TV tenta de novo
     proximoEvento(hoje).catch(() => null),
     qr("https://www.escolaamadeus.com/conheca"), // folder SEM valores (público)
     qr("https://pesquisa.escolaamadeus.com/escolar"),
