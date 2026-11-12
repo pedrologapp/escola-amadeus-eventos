@@ -66,6 +66,8 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa, e
   const [salvando, comecar] = useTransition();
   const [aviso, setAviso] = useState<{ ok: boolean; txt: string } | null>(null);
   const [copiado, setCopiado] = useState(false);
+  const [aba, setAba] = useState<"conteudo" | "telas">("conteudo");
+  const [gira, setGira] = useState<"sabia" | "frase" | "saudacao">("sabia");
   const tv = useRef<HTMLIFrameElement>(null);
   // no PC a TV é a deste servidor; no ar, o endereço público (em admin.* o /tv é este gerenciador)
   const fonteTv = process.env.NODE_ENV === "production" ? LINK_TV : "/tv";
@@ -116,37 +118,76 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa, e
   const volta = naTv.filter((b) => hojePassa[b.id]).reduce((s, b) => s + b.segundos * hojePassa[b.id], 0);
   const atual = blocos.find((b) => b.id === escolhido);
 
+  const telaTv = (
+    <section className="overflow-hidden rounded-3xl bg-[#0B1430] shadow-[0_20px_50px_rgba(18,48,122,.25)]">
+      <div className="aspect-video w-full">
+        <iframe ref={tv} src={fonteTv} title="A TV ao vivo" className="h-full w-full border-0" />
+      </div>
+      <div className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm text-white/80">
+        <span className="flex items-center gap-2 font-bold text-white"><span className="size-2.5 animate-pulse rounded-full bg-red-500" /> Ao vivo</span>
+        <span className="truncate">{LINK_TV.replace("https://", "")}</span>
+        <div className="ml-auto flex gap-2">
+          <button type="button" onClick={copiar} className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3 py-1.5 font-bold text-[#1B3B7C]">
+            {copiado ? <><Check className="size-4" /> Copiado</> : <><Copy className="size-4" /> Copiar o link</>}
+          </button>
+          <button type="button" onClick={recarregarTv} className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 font-semibold hover:bg-white/10"><RefreshCw className="size-4" /> Recomeçar</button>
+        </div>
+      </div>
+    </section>
+  );
+
   return (
     <div>
       {/* título */}
       <div className="flex flex-wrap items-end gap-3">
         <div>
           <h1 className="font-[family-name:var(--font-serifa)] text-3xl font-bold text-[#1B3B7C]">TV da recepção</h1>
-          <p className="mt-1 text-[15px] text-[#5A6478]">Toque num cartão para mudar o que ele mostra.</p>
+          <p className="mt-1 text-[15px] text-[#5A6478]">{aba === "conteudo" ? "Escreva direto onde aparece. Entra na próxima volta da TV." : "Toque numa tela para ligar, desligar ou mudar a ordem."}</p>
         </div>
         <div className="ml-auto flex items-center gap-2 rounded-2xl border border-dashed border-[#C9D3E4] px-4 py-2 text-sm text-[#8A95AA]" title="Vem no próximo passo">
           <span className="text-base">🎪</span> Modo evento <span className="text-xs">(em breve)</span>
         </div>
       </div>
 
+      <div className="mt-5 flex gap-1 border-b border-[#E3E8F2]">
+        {([["conteudo", "O que passa"], ["telas", "Telas e ordem"]] as const).map(([id, rotulo]) => (
+          <button key={id} type="button" onClick={() => setAba(id)} className={`-mb-px border-b-[3px] px-4 py-2 text-[15px] font-bold ${aba === id ? "border-[#FFC21C] text-[#1B3B7C]" : "border-transparent text-[#8A95AA] hover:text-[#1B3B7C]"}`}>
+            {rotulo}
+          </button>
+        ))}
+      </div>
+
+      {aba === "conteudo" ? (
+        <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+          {/* o dia a dia: cada coisa no formato em que aparece na TV */}
+          <div className="space-y-6">
+            <EditorAgenda itens={itens} hoje={hoje} onMudou={mudou} />
+            <div className="grid gap-6 lg:grid-cols-2">
+              <EditorRecados itens={itens} hoje={hoje} onMudou={mudou} abrirNovo={0} />
+              <EditorAvisos itens={itens} hoje={hoje} onMudou={mudou} abrirNovo={0} />
+            </div>
+            <section className="rounded-3xl bg-white p-5 ring-1 ring-[#E3E8F2]">
+              <h2 className="text-lg font-extrabold text-[#1B3B7C]">Gira sozinho, um por dia</h2>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {(["sabia", "frase", "saudacao"] as const).map((id) => (
+                  <button key={id} type="button" onClick={() => setGira(id)} className={`rounded-xl px-3 py-1.5 text-sm font-bold ${gira === id ? "bg-[#1B3B7C] text-white" : "bg-[#EEF2FA] text-[#1B3B7C]"}`}>
+                    {LISTA[id].titulo}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-4"><ListaSimples key={gira} conf={LISTA[gira]} itens={itens} hoje={hoje} origem="" onMudou={mudou} /></div>
+            </section>
+          </div>
+          <aside className="space-y-3 xl:sticky xl:top-24 xl:self-start">
+            {telaTv}
+            <p className="px-1 text-sm text-[#5A6478]">Aniversariantes, próximo evento e QR codes entram sozinhos. O que vocês colocarem aqui entra na próxima volta da TV.</p>
+          </aside>
+        </div>
+      ) : (
       <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
         {/* esquerda: a TV e o roteiro */}
         <div className="space-y-6">
-          <section className="overflow-hidden rounded-3xl bg-[#0B1430] shadow-[0_20px_50px_rgba(18,48,122,.25)]">
-            <div className="aspect-video w-full">
-              <iframe ref={tv} src={fonteTv} title="A TV ao vivo" className="h-full w-full border-0" />
-            </div>
-            <div className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm text-white/80">
-              <span className="flex items-center gap-2 font-bold text-white"><span className="size-2.5 animate-pulse rounded-full bg-red-500" /> Ao vivo</span>
-              <span className="truncate">{LINK_TV.replace("https://", "")}</span>
-              <div className="ml-auto flex gap-2">
-                <button type="button" onClick={copiar} className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3 py-1.5 font-bold text-[#1B3B7C]">
-                  {copiado ? <><Check className="size-4" /> Copiado</> : <><Copy className="size-4" /> Copiar o link</>}
-                </button>
-                <button type="button" onClick={recarregarTv} className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 font-semibold hover:bg-white/10"><RefreshCw className="size-4" /> Recomeçar</button>
-              </div>
-            </div>
-          </section>
+          {telaTv}
 
           <section>
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -285,6 +326,7 @@ export function Gerenciador({ itens, blocos: iniciais, nomes, hoje, hojePassa, e
           )}
         </aside>
       </div>
+      )}
     </div>
   );
 }
