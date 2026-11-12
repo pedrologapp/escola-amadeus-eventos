@@ -110,6 +110,7 @@
 
   <div class="t c prof">
     <b>Professora</b><span id="professora" class="vazio">professora do Grupo V · A</span>
+    <b>Auxiliar</b><span id="auxiliar" class="vazio">auxiliar do Grupo V · A</span>
     <b>E demais professores</b><span id="demais" class="vazio">nomes dos demais professores</span>
   </div>
 
@@ -204,7 +205,7 @@
   // ---------- conteúdo ----------
   // ---------- dados da placa (window.DADOS) ----------
   const D = Object.assign({ turma: 'Grupo V · A', alunos: [], homenageado: '', fotoTurma: '', fotoFamilia: '', fotoBeca: '',
-    oradora: '', juramentista: '', professora: '', demais: '', dedicatoria: '', tituloMensagem: '', diretora: '', coordenadora: '', nomePlaca: '', ajustes: {} },
+    oradora: '', juramentista: '', professora: '', auxiliar: '', demais: '', dedicatoria: '', tituloMensagem: '', diretora: '', coordenadora: '', nomePlaca: '', ajustes: {}, cortes: {}, cortar: '' },
     window.DADOS || (location.hash.length > 2 ? JSON.parse(decodeURIComponent(location.hash.slice(1))) : {}));
   // no site, cada mudança troca só o #hash: recarrega para montar a placa de novo
   window.addEventListener('hashchange', () => location.reload());
@@ -218,13 +219,35 @@
   const homenageado = arruma(D.homenageado) || alunos[0] || '';
   document.getElementById('turma-nome').textContent = D.turma;
   const preencher = (id, valor) => { const e = document.getElementById(id); if (valor) { e.textContent = valor; e.classList.remove('vazio'); } };
-  document.getElementById('professora').textContent = 'professora do ' + D.turma; preencher('oradora', D.oradora); preencher('juramentista', D.juramentista); preencher('professora', D.professora); preencher('demais', D.demais);
+  document.getElementById('professora').textContent = 'professora do ' + D.turma; document.getElementById('auxiliar').textContent = 'auxiliar do ' + D.turma; preencher('auxiliar', D.auxiliar); preencher('oradora', D.oradora); preencher('juramentista', D.juramentista); preencher('professora', D.professora); preencher('demais', D.demais);
   if (D.dedicatoria) document.getElementById('dedicatoria').textContent = D.dedicatoria;
-  for (const [id, url] of [['foto-turma', D.fotoTurma], ['foto-familia', D.fotoFamilia], ['foto-beca', D.fotoBeca]]) {
+  // corte de cada foto: aproxima (z, 10% por passo) e escolhe a parte que aparece (x/y em % da moldura), sem nunca mostrar a borda
+  const folgaCorte = (z) => { const s = 1 + 0.1 * z; return 50 * (s - 1) / s; };
+  const cortar = (img, c) => { const z = Math.max(0, Math.min(20, Math.round((c && c.z) || 0))), f = folgaCorte(z), lim = (v) => Math.max(-f, Math.min(f, Number(v) || 0));
+    const x = lim(c && c.x), y = lim(c && c.y); img.style.transform = `scale(${1 + 0.1 * z}) translate(${x}%, ${y}%)`; return { z, x, y }; };
+  for (const [id, url, k] of [['foto-turma', D.fotoTurma, 'turma'], ['foto-familia', D.fotoFamilia, 'familia'], ['foto-beca', D.fotoBeca, 'beca']]) {
     if (!url) continue;
     const e = document.getElementById(id); e.innerHTML = ''; e.style.background = '#061630';
-    const img = document.createElement('img'); img.src = url; img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
+    const img = document.createElement('img'); img.src = url; img.dataset.foto = k; img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;transform-origin:50% 50%';
+    cortar(img, (D.cortes || {})[k]);
     e.appendChild(img);
+  }
+  // cortando (só no site): a foto escolhida acompanha o dedo; ao soltar, o site grava o novo enquadramento
+  if (D.cortar) {
+    const img = document.querySelector(`img[data-foto="${D.cortar}"]`);
+    if (img) {
+      document.body.style.touchAction = 'none';
+      const caixa = img.parentElement; caixa.style.cursor = 'grab';
+      caixa.parentElement.style.outline = '6px dashed rgba(243,215,122,.95)'; caixa.parentElement.style.outlineOffset = '-6px';
+      let atual = cortar(img, (D.cortes || {})[D.cortar]), arr = null;
+      caixa.addEventListener('pointerdown', (e) => { arr = { x0: e.clientX, y0: e.clientY, ini: { ...atual } }; caixa.style.cursor = 'grabbing';
+        try { caixa.setPointerCapture(e.pointerId); } catch (er) {} e.preventDefault(); });
+      caixa.addEventListener('pointermove', (e) => { if (!arr) return; const s = 1 + 0.1 * arr.ini.z, q = caixa.getBoundingClientRect();
+        atual = cortar(img, { z: arr.ini.z, x: arr.ini.x + (e.clientX - arr.x0) / (s * q.width) * 100, y: arr.ini.y + (e.clientY - arr.y0) / (s * q.height) * 100 }); });
+      const soltar = () => { if (!arr) return; arr = null; caixa.style.cursor = 'grab';
+        try { parent.postMessage({ tipo: 'placa:cortou', foto: D.cortar, z: atual.z, x: Math.round(atual.x * 10) / 10, y: Math.round(atual.y * 10) / 10 }, location.origin); } catch (er) {} };
+      caixa.addEventListener('pointerup', soltar); caixa.addEventListener('pointercancel', soltar);
+    }
   }
   window.__imagens = [...document.images].map(i => i.decode().catch(() => {}));
 

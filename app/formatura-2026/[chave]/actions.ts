@@ -1,7 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { BUCKET_PLACA, ID_PLACA, blocoValido, campoTextoValido, chavePlacaValida, type Ajuste, type Ajustes, type DadosPlaca } from "@/lib/formatura-placa";
+import { BUCKET_PLACA, ID_PLACA, blocoValido, campoTextoValido, chavePlacaValida, folgaCorte, fotoCorteValida, type Ajuste, type Ajustes, type Corte, type DadosPlaca } from "@/lib/formatura-placa";
 
 const negado = { ok: false as const, erro: "Link inválido." };
 
@@ -42,7 +42,8 @@ export async function salvarFotoTurma(chave: string, turma: "a" | "b", path: str
   const dados = await lerDados();
   const campo = turma === "a" ? "foto_turma_a" : "foto_turma_b";
   const antiga = dados[campo];
-  const r = await gravarDados({ ...dados, [campo]: path });
+  const ct = { ...(dados.cortes_turma ?? {}) }; delete ct[turma];
+  const r = await gravarDados({ ...dados, [campo]: path, cortes_turma: ct });
   const sugestoes = (turma === "a" ? dados.sugestoes_turma_a : dados.sugestoes_turma_b) ?? [];
   if (r.ok && antiga && antiga !== path && !sugestoes.includes(antiga)) await db.storage.from(BUCKET_PLACA).remove([antiga]);
   if (!r.ok) return r;
@@ -66,7 +67,8 @@ export async function escolherFotoTurma(chave: string, turma: "a" | "b", indice:
   const db = createAdminClient();
   const campo = turma === "a" ? "foto_turma_a" : "foto_turma_b";
   const antiga = dados[campo];
-  const r = await gravarDados({ ...dados, [campo]: path });
+  const ct = { ...(dados.cortes_turma ?? {}) }; if (antiga !== path) delete ct[turma];
+  const r = await gravarDados({ ...dados, [campo]: path, cortes_turma: ct });
   if (!r.ok) return r;
   if (antiga && antiga !== path && !sugestoes.includes(antiga)) await db.storage.from(BUCKET_PLACA).remove([antiga]);
   return { ok: true as const };
@@ -84,6 +86,8 @@ export async function salvarEscolha(chave: string, nome: string, mudanca: { beca
   if (mudanca.familia !== undefined) { if (!dentro(mudanca.familia, aluno.fotos_familia)) return { ok: false as const, erro: "Opção inválida." }; upd.escolha_familia = mudanca.familia; }
   if (mudanca.aprovada !== undefined) upd.aprovada = !!mudanca.aprovada;
   const { error } = await db.from("formatura_placa_aluno").update(upd).eq("nome", nome);
+  if (!error && mudanca.beca !== undefined) await esquecerCorte(nome, "beca");
+  if (!error && mudanca.familia !== undefined) await esquecerCorte(nome, "familia");
   return error ? { ok: false as const, erro: "Não consegui salvar. Tente de novo." } : { ok: true as const };
 }
 
@@ -130,6 +134,46 @@ export async function salvarNomePlaca(chave: string, nome: string, valor: string
   return r;
 }
 
+/** Corte de uma foto da placa: beca e família só desta criança; a da turma vale para todas as placas da turma. */
+export async function salvarCorte(chave: string, nome: string, foto: string, corte: Corte) {
+  if (!chavePlacaValida(chave) || !fotoCorteValida(foto)) return negado;
+  const z = corte?.z;
+  if (!Number.isInteger(z) || z < 0 || z > 20 || !Number.isFinite(corte?.x) || !Number.isFinite(corte?.y)) return { ok: false as const, erro: "Corte inválido." };
+  const f = folgaCorte(z), lim = (v: number) => Math.round(Math.max(-f, Math.min(f, v)) * 10) / 10;
+  const c: Corte = { z, x: lim(corte.x), y: lim(corte.y) };
+  const vazio = !c.z && !c.x && !c.y;
+  const { data: aluno } = await createAdminClient().from("formatura_placa_aluno").select("turma").eq("nome", nome).maybeSingle();
+  if (!aluno) return { ok: false as const, erro: "Criança não encontrada." };
+  const dados = await lerDados();
+  if (foto === "turma") {
+    const t = String(aluno.turma).endsWith("B") ? "b" : "a";
+    const ct = { ...(dados.cortes_turma ?? {}) };
+    if (vazio) delete ct[t]; else ct[t] = c;
+    return gravarDados({ ...dados, cortes_turma: ct });
+  }
+  const todos = { ...(dados.cortes_aluno ?? {}) };
+  const meu = { ...(todos[nome] ?? {}) };
+  if (vazio) delete meu[foto]; else meu[foto] = c;
+  todos[nome] = meu;
+  const r = await gravarDados({ ...dados, cortes_aluno: todos });
+  if (r.ok) await desaprovar(nome);
+  return r;
+}
+
+/** Trocou a foto: o corte da anterior não vale mais. */
+async function esquecerCorte(nome: string | null, foto: "beca" | "familia" | "a" | "b") {
+  const dados = await lerDados();
+  if (nome === null) {
+    if (!dados.cortes_turma?.[foto as "a" | "b"]) return;
+    const ct = { ...dados.cortes_turma }; delete ct[foto as "a" | "b"];
+    await gravarDados({ ...dados, cortes_turma: ct });
+  } else {
+    if (!dados.cortes_aluno?.[nome]?.[foto as "beca" | "familia"]) return;
+    const meu = { ...dados.cortes_aluno[nome] }; delete meu[foto as "beca" | "familia"];
+    await gravarDados({ ...dados, cortes_aluno: { ...dados.cortes_aluno, [nome]: meu } });
+  }
+}
+
 type TipoFoto = "beca" | "familia";
 const tipoValido = (t: string): t is TipoFoto => t === "beca" || t === "familia";
 
@@ -161,6 +205,7 @@ export async function salvarFotoCrianca(chave: string, nome: string, tipo: strin
     ...(tipo === "familia" && { observacao: null }),
   }).eq("nome", nome);
   if (error) return { ok: false as const, erro: "Não consegui salvar. Tente de novo." };
+  await esquecerCorte(nome, tipo);
   const { data: assinada } = await db.storage.from(BUCKET_PLACA).createSignedUrl(path, 60 * 60 * 8);
   return { ok: true as const, url: assinada?.signedUrl ?? "", indice: lista.length - 1 };
 }

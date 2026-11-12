@@ -30,6 +30,8 @@ export interface DadosPlaca {
   juramentista?: string;
   professora_a?: string;
   professora_b?: string;
+  auxiliar_a?: string; // auxiliar de cada turma (vai embaixo da professora)
+  auxiliar_b?: string;
   demais?: string;
   foto_turma_a?: string; // caminho no storage
   foto_turma_b?: string;
@@ -48,7 +50,18 @@ export interface DadosPlaca {
   ajustes?: Ajustes; // valem para todas as placas
   ajustes_aluno?: Record<string, Ajustes>; // só daquela criança (somam com os de todas)
   nomes_placa?: Record<string, string>; // nome da criança como aparece na placa, quando a direção reescreve
+  // corte das fotos (aproximar e escolher a parte que aparece); volta ao normal quando a foto é trocada
+  cortes_aluno?: Record<string, Partial<Record<"beca" | "familia", Corte>>>;
+  cortes_turma?: Partial<Record<"a" | "b", Corte>>;
 }
+
+/** Corte de uma foto: z = passos de aproximação (10% cada, 0 a 20); x/y = deslocamento em % da moldura. */
+export type Corte = { z: number; x: number; y: number };
+export const FOTOS_CORTE = ["beca", "familia", "turma"] as const;
+export type FotoCorte = (typeof FOTOS_CORTE)[number];
+export const fotoCorteValida = (f: string): f is FotoCorte => (FOTOS_CORTE as readonly string[]).includes(f);
+/** Quanto a foto pode andar sem aparecer a borda, para uma aproximação z. */
+export const folgaCorte = (z: number) => { const s = 1 + 0.1 * z; return (50 * (s - 1)) / s; };
 
 /** Blocos de texto da placa que podem ser ajustados. t = passos de tamanho (6% cada), x/y = deslocamento em px da placa (2400 de largura). */
 export const BLOCOS_PLACA = ["mensagem", "equipe", "turma", "lista", "prof", "nome"] as const;
@@ -57,6 +70,6 @@ export type Ajuste = { t: number; x: number; y: number };
 export type Ajustes = Partial<Record<BlocoPlaca, Ajuste>>;
 export const blocoValido = (b: string): b is BlocoPlaca => (BLOCOS_PLACA as readonly string[]).includes(b);
 
-const CAMPOS_TEXTO = ["oradora", "juramentista", "professora_a", "professora_b", "demais", "titulo_mensagem", "dedicatoria", "diretora", "coordenadora"] as const;
+const CAMPOS_TEXTO = ["oradora", "juramentista", "professora_a", "professora_b", "auxiliar_a", "auxiliar_b", "demais", "titulo_mensagem", "dedicatoria", "diretora", "coordenadora"] as const;
 export type CampoTexto = (typeof CAMPOS_TEXTO)[number];
 export const campoTextoValido = (c: string): c is CampoTexto => (CAMPOS_TEXTO as readonly string[]).includes(c);

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { aprovarFotoTurma, escolherFotoTurma, prepararFotoCrianca, prepararFotoTurma, salvarAjuste, salvarCampo, salvarEscolha, salvarFotoCrianca, salvarFotoTurma, salvarNomePlaca } from "./actions";
+import { aprovarFotoTurma, escolherFotoTurma, prepararFotoCrianca, prepararFotoTurma, salvarAjuste, salvarCampo, salvarCorte, salvarEscolha, salvarFotoCrianca, salvarFotoTurma, salvarNomePlaca } from "./actions";
 
 export interface Crianca {
   nome: string;
@@ -15,7 +15,7 @@ export interface Crianca {
   observacao: string | null;
 }
 interface Textos {
-  oradora: string; juramentista: string; professora_a: string; professora_b: string; demais: string;
+  oradora: string; juramentista: string; professora_a: string; professora_b: string; auxiliar_a: string; auxiliar_b: string; demais: string;
   titulo_mensagem: string; dedicatoria: string; diretora: string; coordenadora: string;
 }
 // os textos que já vêm no molde (public/formatura-placa/molde.html): aparecem no campo para a direção editar
@@ -28,9 +28,14 @@ const PADRAO = {
 type Ajuste = { t: number; x: number; y: number };
 type Ajustes = Partial<Record<string, Ajuste>>;
 const BLOCOS: [string, string][] = [
-  ["nome", "Nome da criança"], ["prof", "Professoras"], ["lista", "Nomes da turma"],
+  ["nome", "Nome da criança"], ["prof", "Professoras e auxiliar"], ["lista", "Nomes da turma"],
   ["mensagem", "Mensagem aos familiares"], ["equipe", "Direção, oradora e juramentista"], ["turma", "Título da turma"],
 ];
+type Corte = { z: number; x: number; y: number };
+type Cortes = Partial<Record<"beca" | "familia", Corte>>;
+type FotoK = "beca" | "familia" | "turma";
+const folgaCorte = (z: number) => { const s = 1 + 0.1 * z; return (50 * (s - 1)) / s; };
+const FOTOS: [FotoK, string][] = [["beca", "Foto de beca"], ["familia", "Foto com a família"], ["turma", "Foto da turma"]];
 const somar = (a?: Ajuste, b?: Ajuste): Ajuste => ({ t: (a?.t ?? 0) + (b?.t ?? 0), x: (a?.x ?? 0) + (b?.x ?? 0), y: (a?.y ?? 0) + (b?.y ?? 0) });
 
 const C = {
@@ -395,7 +400,61 @@ function AjustarTexto({ chave, nome, global, meu, mudar, limitado, aoDesaprovar 
   );
 }
 
-export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoTurma: ft0, sugestoes, turmaAprovada, listas, ajustes: aj0 }: { chave: string; foco: string | null; criancas: Crianca[]; textos: Textos; fotoTurma: { a: string; b: string }; sugestoes?: { a: Sugestao[]; b: Sugestao[] }; turmaAprovada?: { a: boolean; b: boolean }; listas?: { a: string[]; b: string[] }; ajustes?: { todas: Ajustes; porCrianca: Record<string, Ajustes>; nomes: Record<string, string> } }) {
+/** Cortar as fotos: aproximar para esconder um fundo ou acabamento e arrastar a foto para escolher a parte que aparece. */
+function CortarFoto({ chave, nome, foto, setFoto, cortes, mudar, temFoto, aoDesaprovar }: {
+  chave: string; nome: string; foto: FotoK; setFoto: (f: FotoK) => void; cortes: Record<FotoK, Corte | undefined>;
+  mudar: (f: FotoK, c: Corte) => void; temFoto: Record<FotoK, boolean>; aoDesaprovar: () => void;
+}) {
+  const [estado, setEstado] = useState("");
+  const atual = cortes[foto] ?? { z: 0, x: 0, y: 0 };
+  const vez = useRef(0);
+  function gravar(f: FotoK, c: Corte) {
+    const z = Math.max(0, Math.min(20, c.z)), fl = folgaCorte(z), lim = (v: number) => Math.round(Math.max(-fl, Math.min(fl, v)) * 10) / 10;
+    const n = { z, x: lim(c.x), y: lim(c.y) };
+    mudar(f, n); setEstado("salvando…"); const minha = ++vez.current;
+    salvarCorte(chave, nome, f, n).then((r) => { if (minha !== vez.current) return; setEstado(r.ok ? "salvo ✓" : r.erro); if (r.ok && f !== "turma") aoDesaprovar(); });
+  }
+  const cortou = useRef<(d: { foto: FotoK; z: number; x: number; y: number }) => void>(() => {});
+  cortou.current = (d) => gravar(d.foto, { z: d.z, x: d.x, y: d.y });
+  useEffect(() => {
+    const f = (e: MessageEvent) => { if (e.origin === location.origin && e.data?.tipo === "placa:cortou" && FOTOS.some(([k]) => k === e.data.foto))
+      cortou.current({ foto: e.data.foto, z: Number(e.data.z) || 0, x: Number(e.data.x) || 0, y: Number(e.data.y) || 0 }); };
+    window.addEventListener("message", f); return () => window.removeEventListener("message", f);
+  }, []);
+  const P = 3; // passo das setas, em % da moldura
+  const b = (rot: string, aria: string, fn: () => void, off = false) => (
+    <button type="button" aria-label={aria} onClick={fn} disabled={off} style={{ ...botaoSec, minWidth: 52, minHeight: 48, fontSize: 18, opacity: off ? .4 : 1 }}>{rot}</button>
+  );
+  const chip = (ativo: boolean) => ({ minHeight: 40, padding: "0 14px", borderRadius: 999, cursor: "pointer", fontSize: 14, fontWeight: 600,
+    border: `1px solid ${ativo ? C.ouro : C.borda}`, background: ativo ? C.ouro : "transparent", color: ativo ? "#14213D" : C.texto } as const);
+  const semFolga = atual.z <= 0;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {FOTOS.map(([k, r]) => <button key={k} type="button" disabled={!temFoto[k]} onClick={() => { setFoto(k); setEstado(""); }} style={{ ...chip(foto === k), opacity: temFoto[k] ? 1 : .4 }}>{r}</button>)}
+      </div>
+      {!temFoto[foto] ? <span style={{ fontSize: 14, color: C.suave }}>Esta foto ainda não está na placa.</span> : (
+        <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            {b("−", "Afastar", () => gravar(foto, { ...atual, z: atual.z - 1 }), atual.z <= 0)}
+            {b("+", "Aproximar", () => gravar(foto, { ...atual, z: atual.z + 1 }), atual.z >= 20)}
+          </div>
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            {b("←", "Mostrar mais da esquerda", () => gravar(foto, { ...atual, x: atual.x + P }), semFolga)}
+            {b("↑", "Mostrar mais de cima", () => gravar(foto, { ...atual, y: atual.y + P }), semFolga)}
+            {b("↓", "Mostrar mais de baixo", () => gravar(foto, { ...atual, y: atual.y - P }), semFolga)}
+            {b("→", "Mostrar mais da direita", () => gravar(foto, { ...atual, x: atual.x - P }), semFolga)}
+          </div>
+          {atual.z || atual.x || atual.y ? <button type="button" onClick={() => gravar(foto, { z: 0, x: 0, y: 0 })} style={{ ...botaoSec, minHeight: 48, padding: "0 14px" }}>Foto inteira de novo</button> : null}
+        </div>
+      )}
+      {foto === "turma" && temFoto.turma && <span style={{ fontSize: 13, color: C.suave }}>O corte da foto da turma vale para todas as placas da turma.</span>}
+      {estado && <span style={{ fontSize: 14, color: estado.includes("✓") ? C.verde : C.suave }}>{estado}</span>}
+    </div>
+  );
+}
+
+export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoTurma: ft0, sugestoes, turmaAprovada, listas, ajustes: aj0, cortes: co0 }: { chave: string; foco: string | null; criancas: Crianca[]; textos: Textos; fotoTurma: { a: string; b: string }; sugestoes?: { a: Sugestao[]; b: Sugestao[] }; turmaAprovada?: { a: boolean; b: boolean }; listas?: { a: string[]; b: string[] }; ajustes?: { todas: Ajustes; porCrianca: Record<string, Ajustes>; nomes: Record<string, string> }; cortes?: { porCrianca: Record<string, Cortes>; turma: Partial<Record<"a" | "b", Corte>> } }) {
   const [criancas, setCriancas] = useState(inicial);
   const [textos, setTextos] = useState(t0);
   const [fotoTurma, setFotoTurma] = useState(ft0);
@@ -406,6 +465,11 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
   const [nomes, setNomes] = useState<Record<string, string>>(aj0?.nomes ?? {});
   const [limitado, setLimitado] = useState<{ blocos: string[]; vez: number } | null>(null);
   const [ajustar, setAjustar] = useState(false);
+  const [cortando, setCortando] = useState(false);
+  const [fotoCorte, setFotoCorte] = useState<FotoK>("beca");
+  const [coA, setCoA] = useState<Record<string, Cortes>>(co0?.porCrianca ?? {});
+  const [coT, setCoT] = useState<Partial<Record<"a" | "b", Corte>>>(co0?.turma ?? {});
+  const esquecerCorte = (nome: string, f: "beca" | "familia") => setCoA((m) => { const meu = { ...(m[nome] ?? {}) }; delete meu[f]; return { ...m, [nome]: meu }; });
   const mudarAjuste = (nome: string) => (escopo: "todas" | "esta", bloco: string, a: Ajuste) => {
     if (escopo === "todas") setAjG((g) => ({ ...g, [bloco]: a }));
     else setAjA((m) => ({ ...m, [nome]: { ...(m[nome] ?? {}), [bloco]: a } }));
@@ -431,9 +495,10 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
     return {
       turma: c.turma, alunos: porTurma[c.turma] ?? [], homenageado: c.nome,
       fotoBeca: c.beca[c.escolhaBeca] ?? "", fotoFamilia: c.familia[c.escolhaFamilia] ?? "", fotoTurma: b ? fotoTurma.b : fotoTurma.a,
-      oradora: textos.oradora, juramentista: textos.juramentista, professora: b ? textos.professora_b : textos.professora_a, demais: textos.demais,
+      oradora: textos.oradora, juramentista: textos.juramentista, professora: b ? textos.professora_b : textos.professora_a, auxiliar: b ? textos.auxiliar_b : textos.auxiliar_a, demais: textos.demais,
       tituloMensagem: textos.titulo_mensagem, dedicatoria: textos.dedicatoria, diretora: textos.diretora, coordenadora: textos.coordenadora,
       nomePlaca: nomes[c.nome] ?? "",
+      cortes: { beca: coA[c.nome]?.beca, familia: coA[c.nome]?.familia, turma: b ? coT.b : coT.a },
       ajustes: Object.fromEntries(BLOCOS.map(([k]) => [k, somar(ajG[k], ajA[c.nome]?.[k])])),
     };
   };
@@ -446,6 +511,8 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
 
   async function mudar(nome: string, m: { beca?: number; familia?: number; aprovada?: boolean }) {
     setCriancas((l) => l.map((c) => c.nome !== nome ? c : { ...c, ...(m.beca !== undefined && { escolhaBeca: m.beca }), ...(m.familia !== undefined && { escolhaFamilia: m.familia }), ...(m.aprovada !== undefined && { aprovada: m.aprovada }) }));
+    if (m.beca !== undefined) esquecerCorte(nome, "beca");
+    if (m.familia !== undefined) esquecerCorte(nome, "familia");
     const r = await salvarEscolha(chave, nome, m);
     if (!r.ok) alert(r.erro);
   }
@@ -472,8 +539,8 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
           </div>
         </div>
         {/* ajustando o texto, a placa fica presa no alto da tela para ver cada mudança enquanto toca nos botões */}
-        <div style={{ borderRadius: 12, overflow: "hidden", ...(ajustar && { position: "sticky", top: 0, zIndex: 5, boxShadow: "0 12px 30px rgba(0,0,0,.55)",
-          width: "min(100%, calc(48vh * 2400 / 1782))", margin: "0 auto", background: C.fundo }) }}><Placa dados={{ ...dadosDe(so), arrastar: ajustar }} interativa={ajustar} titulo={`Placa de ${so.nome}`} aoMontar={(l) => setLimitado({ blocos: l, vez: Date.now() })} /></div>
+        <div style={{ borderRadius: 12, overflow: "hidden", ...((ajustar || cortando) && { position: "sticky", top: 0, zIndex: 5, boxShadow: "0 12px 30px rgba(0,0,0,.55)",
+          width: "min(100%, calc(48vh * 2400 / 1782))", margin: "0 auto", background: C.fundo }) }}><Placa dados={{ ...dadosDe(so), arrastar: ajustar, cortar: cortando ? fotoCorte : "" }} interativa={ajustar || cortando} titulo={`Placa de ${so.nome}`} aoMontar={(l) => setLimitado({ blocos: l, vez: Date.now() })} /></div>
         {semFotos(so) && <div style={{ fontSize: 16, color: "#FFC98A" }}>As fotos desta criança ainda não chegaram no Drive.</div>}
         {so.observacao && !semFotos(so) && <div style={{ fontSize: 16, color: C.suave }}>{so.observacao}</div>}
         <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
@@ -481,13 +548,33 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
           <Opcoes titulo="Foto com a família" fotos={so.familia} escolha={so.escolhaFamilia} aoEscolher={(i) => mudar(so.nome, { familia: i })} />
         </div>
         <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-          <TrocarFoto chave={chave} nome={so.nome} tipo="beca" titulo="a foto de beca" aoEnviar={(u, i) => setCriancas((l) => l.map((c) => c.nome !== so.nome ? c : { ...c, beca: [...c.beca, u], escolhaBeca: i, aprovada: false }))} />
-          <TrocarFoto chave={chave} nome={so.nome} tipo="familia" titulo="a foto da família" aoEnviar={(u, i) => setCriancas((l) => l.map((c) => c.nome !== so.nome ? c : { ...c, familia: [...c.familia, u], escolhaFamilia: i, aprovada: false, observacao: null }))} />
-          <button type="button" onClick={() => setAjustar((v) => !v)} aria-expanded={ajustar}
+          <TrocarFoto chave={chave} nome={so.nome} tipo="beca" titulo="a foto de beca" aoEnviar={(u, i) => { esquecerCorte(so.nome, "beca"); setCriancas((l) => l.map((c) => c.nome !== so.nome ? c : { ...c, beca: [...c.beca, u], escolhaBeca: i, aprovada: false })); }} />
+          <TrocarFoto chave={chave} nome={so.nome} tipo="familia" titulo="a foto da família" aoEnviar={(u, i) => { esquecerCorte(so.nome, "familia"); setCriancas((l) => l.map((c) => c.nome !== so.nome ? c : { ...c, familia: [...c.familia, u], escolhaFamilia: i, aprovada: false, observacao: null })); }} />
+          <button type="button" onClick={() => { setCortando((v) => !v); setAjustar(false); }} aria-expanded={cortando}
+            style={{ ...botaoSec, minHeight: 44, padding: "0 16px", fontSize: 15, ...(cortando && { borderColor: C.ouro, color: C.ouro }) }}>
+            {cortando ? "Fechar corte das fotos" : "Cortar as fotos"}
+          </button>
+          <button type="button" onClick={() => { setAjustar((v) => !v); setCortando(false); }} aria-expanded={ajustar}
             style={{ ...botaoSec, minHeight: 44, padding: "0 16px", fontSize: 15, ...(ajustar && { borderColor: C.ouro, color: C.ouro }) }}>
             {ajustar ? "Fechar ajuste do texto" : "Ajustar o texto da placa"}
           </button>
         </div>
+        {cortando && (
+          <section style={{ display: "flex", flexDirection: "column", gap: 18, padding: 20, borderRadius: 16, background: C.painel, border: `1px solid ${C.borda}` }}>
+            <div>
+              <h2 style={{ margin: 0, fontFamily: serif, fontSize: 26, fontWeight: 600 }}>Cortar as fotos</h2>
+              <p style={{ margin: "4px 0 0", color: C.suave, fontSize: 15, lineHeight: 1.5 }}>
+                Escolha a foto e toque em + para aproximar: assim some um fundo ou uma borda que não deve aparecer. Depois arraste a foto com o dedo, na própria placa, para escolher a parte que fica.
+                A foto sempre preenche a moldura inteira.
+              </p>
+            </div>
+            <CortarFoto chave={chave} nome={so.nome} foto={fotoCorte} setFoto={setFotoCorte}
+              cortes={{ beca: coA[so.nome]?.beca, familia: coA[so.nome]?.familia, turma: so.turma.endsWith("B") ? coT.b : coT.a }}
+              temFoto={{ beca: !!dadosDe(so).fotoBeca, familia: !!dadosDe(so).fotoFamilia, turma: !!dadosDe(so).fotoTurma }}
+              mudar={(f, c) => { if (f === "turma") setCoT((m) => ({ ...m, [so.turma.endsWith("B") ? "b" : "a"]: c })); else setCoA((m) => ({ ...m, [so.nome]: { ...(m[so.nome] ?? {}), [f]: c } })); }}
+              aoDesaprovar={() => desaprovar(so.nome)} />
+          </section>
+        )}
         {ajustar && (
           <section style={{ display: "flex", flexDirection: "column", gap: 18, padding: 20, borderRadius: 16, background: C.painel, border: `1px solid ${C.borda}` }}>
             <div>
@@ -501,6 +588,8 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, paddingTop: 8, borderTop: `1px solid rgba(227,194,122,.14)` }}>
               <NomePlaca chave={chave} nome={so.nome} valor={nomes[so.nome] ?? ""} aoSalvar={(v) => { setNomes((m) => ({ ...m, [so.nome]: v })); desaprovar(so.nome); }} />
               <Campo chave={chave} campo="titulo_mensagem" rotulo="Título da mensagem" valor={textos.titulo_mensagem || PADRAO.titulo_mensagem} dica="Vale para todas as placas." />
+              <Campo chave={chave} campo={so.turma.endsWith("B") ? "professora_b" : "professora_a"} rotulo={`Professora do ${so.turma}`} valor={so.turma.endsWith("B") ? textos.professora_b : textos.professora_a} dica="Vale para as placas da turma." />
+              <Campo chave={chave} campo={so.turma.endsWith("B") ? "auxiliar_b" : "auxiliar_a"} rotulo={`Auxiliar do ${so.turma}`} valor={so.turma.endsWith("B") ? textos.auxiliar_b : textos.auxiliar_a} dica="Vale para as placas da turma." />
               <Campo chave={chave} campo="diretora" rotulo="Diretora" valor={textos.diretora || PADRAO.diretora} dica="Vale para todas as placas." />
               <Campo chave={chave} campo="coordenadora" rotulo="Coordenadora" valor={textos.coordenadora || PADRAO.coordenadora} dica="Vale para todas as placas." />
             </div>
@@ -548,6 +637,8 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
             <Campo chave={chave} campo="juramentista" rotulo="Juramentista" valor={textos.juramentista} dica="Nome completo da criança." />
             <Campo chave={chave} campo="professora_a" rotulo="Professora do Grupo V · A" valor={textos.professora_a} />
             <Campo chave={chave} campo="professora_b" rotulo="Professora do Grupo V · B" valor={textos.professora_b} />
+            <Campo chave={chave} campo="auxiliar_a" rotulo="Auxiliar do Grupo V · A" valor={textos.auxiliar_a} />
+            <Campo chave={chave} campo="auxiliar_b" rotulo="Auxiliar do Grupo V · B" valor={textos.auxiliar_b} />
           </div>
           <Campo chave={chave} campo="demais" rotulo="E demais professores" valor={textos.demais} longo dica="Separe os nomes com vírgula." />
           <Campo chave={chave} campo="dedicatoria" rotulo="Mensagem aos familiares" valor={textos.dedicatoria || PADRAO.dedicatoria} longo dica="Vale para todas as placas. Para mudar tamanho e posição dos textos, abra uma placa e toque em “Ajustar o texto da placa”." />
@@ -557,8 +648,8 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
           <h2 style={{ margin: 0, fontFamily: serif, fontSize: 28, fontWeight: 600 }}>2. Foto de cada turma</h2>
           <p style={{ margin: 0, color: C.suave }}>A foto da turma com as professoras. Pode ser tirada do celular, na maior qualidade.</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
-            <FotoTurma chave={chave} turma="a" aprovada={turmaAprovada?.a} sugestoes={sugestoes?.a} url={fotoTurma.a} aoMudar={(u) => setFotoTurma((x) => ({ ...x, a: u }))} />
-            <FotoTurma chave={chave} turma="b" aprovada={turmaAprovada?.b} sugestoes={sugestoes?.b} url={fotoTurma.b} aoMudar={(u) => setFotoTurma((x) => ({ ...x, b: u }))} />
+            <FotoTurma chave={chave} turma="a" aprovada={turmaAprovada?.a} sugestoes={sugestoes?.a} url={fotoTurma.a} aoMudar={(u) => { setFotoTurma((x) => ({ ...x, a: u })); setCoT((m) => ({ ...m, a: undefined })); }} />
+            <FotoTurma chave={chave} turma="b" aprovada={turmaAprovada?.b} sugestoes={sugestoes?.b} url={fotoTurma.b} aoMudar={(u) => { setFotoTurma((x) => ({ ...x, b: u })); setCoT((m) => ({ ...m, b: undefined })); }} />
           </div>
         </section>
 
