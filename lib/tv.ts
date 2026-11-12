@@ -97,6 +97,8 @@ export interface RoteiroTv {
   atualizado: string;
   /** as frases da faixa de notícias do rodapé (12/11/2026) */
   rodape?: string[];
+  /** o modo evento está ligado hoje (12/11/2026) */
+  modoEvento?: boolean;
 }
 
 export const hojeLocal = () => new Date().toLocaleDateString("en-CA", { timeZone: FUSO });
@@ -202,7 +204,7 @@ export async function roteiroDoDia(): Promise<RoteiroTv> {
   const hoje = hojeLocal();
   const turno = horaLocal() >= 7 ? "dia" : "madrugada";
   try {
-    return await unstable_cache(() => montarRoteiro(hoje), ["tv-roteiro", "v5", hoje, turno], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })();
+    return await unstable_cache(() => montarRoteiro(hoje), ["tv-roteiro", "v6", hoje, turno], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })();
   } catch (e) {
     // nada fica guardado: a TV mostra só o relógio e pede de novo em 1 minuto (app/admin/tv/player.tsx)
     console.error(e);
@@ -226,10 +228,25 @@ export async function roteiroPublico(): Promise<RoteiroTv> {
 }
 
 /** Monta as cenas do dia. */
+/**
+ * Modo evento (Pedro, 12/11/2026): um botão no gerenciador. Fica guardado como uma linha de tv_blocos com id
+ * "modo-evento": ativo = ligado, ordem = o dia em que vale (AAAAMMDD), então desliga sozinho no dia seguinte.
+ * Ligado, a TV continua passando tudo, mas o "Você sabia?" passa as curiosidades do evento (curiosidades com
+ * data = o dia do evento), todas, uma tela cada. O evento de hoje ou de amanhã vem logo depois da saudação.
+ */
+export const MODO_EVENTO = "modo-evento";
+export const modoEventoDia = (blocos: BlocoTv[]): string | null => {
+  const b = blocos.find((x) => x.id === MODO_EVENTO);
+  if (!b || !b.ativo || !b.ordem) return null;
+  const t = String(b.ordem);
+  return `${t.slice(0, 4)}-${t.slice(4, 6)}-${t.slice(6, 8)}`;
+};
+
 async function montarRoteiro(hoje: string): Promise<RoteiroTv> {
   const [{ itens, blocos: todosBlocos }, telas] = await Promise.all([lerItensEBlocos(), lerTelas()]);
   // com as telas criadas, a formatura fixa vira uma tela (formato celebração) e o bloco antigo sai
-  const blocos = telas ? todosBlocos.filter((b) => b.id !== "formatura") : todosBlocos;
+  const modoEvento = modoEventoDia(todosBlocos) === hoje;
+  const blocos = (telas ? todosBlocos.filter((b) => b.id !== "formatura") : todosBlocos).filter((b) => b.id !== MODO_EVENTO);
   const valem = itens.filter((i) => valeHoje(i, hoje));
   const de = (t: TipoItem) => valem.filter((i) => i.tipo === t);
   const [nivers, evento, qrFolder, qrPesquisa] = await Promise.all([
@@ -287,7 +304,13 @@ async function montarRoteiro(hoje: string): Promise<RoteiroTv> {
         if (agenda.length) c({ dias: diasSemana.map((d) => ({ data: d, itens: agenda.filter((i) => i.data === d).map((i) => i.titulo) })) });
         break;
       case "sabia": {
-        const s = gira(de("curiosidade"));
+        // as curiosidades com dia marcado são as do evento: passam todas no modo evento, e nunca na roda comum
+        const doEvento = de("curiosidade").filter((i) => i.data === hoje);
+        if (modoEvento && doEvento.length) {
+          for (const i of doEvento) c({ texto: i.titulo, evento: true }, `sabia:${i.id}`);
+          break;
+        }
+        const s = gira(de("curiosidade").filter((i) => !i.data));
         if (s) c({ texto: s.titulo });
         break;
       }
@@ -303,6 +326,13 @@ async function montarRoteiro(hoje: string): Promise<RoteiroTv> {
         c({});
     }
   }
+  // o evento de hoje ou de amanhã é o assunto do dia: vem logo depois da saudação
+  const iEv = cenas.findIndex((x) => x.id === "evento");
+  if (iEv > 0 && String((cenas[iEv].dados as { data?: string }).data ?? "") <= somaDias(hoje, 1)) {
+    const [ev] = cenas.splice(iEv, 1);
+    const iSa = cenas.findIndex((x) => x.id === "saudacao");
+    cenas.splice(iSa + 1, 0, ev);
+  }
   const rodape = valem.filter((i) => i.tipo === "rodape").map((i) => i.titulo.split("*").join("")).filter(Boolean);
-  return { hoje, cenas, atualizado: new Date().toISOString(), rodape };
+  return { hoje, cenas, atualizado: new Date().toISOString(), rodape, modoEvento };
 }

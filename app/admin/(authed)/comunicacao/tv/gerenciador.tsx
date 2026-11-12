@@ -8,6 +8,7 @@ import { apagarItem, ativarItem, salvarItem, type ItemForm } from "@/app/admin/(
 import { ligarBloco, ordenarBlocos } from "./telas-acoes";
 import { FIXOS } from "./fixos";
 import { AvisosDestaque } from "./avisos";
+import { ModoEvento } from "./modo-evento";
 import { EditorTela, NovaTela, formatoTela, nomeTela, visualTela } from "./telas";
 import { EditorAgenda, EditorRecados } from "@/app/admin/(authed)/comunicacao/tv/editores";
 
@@ -57,8 +58,8 @@ const NA_RECEPCAO_NAO = "aniversariantes"; // a TV da recepção é aberta: sem 
 
 const mmss = (s: number) => `${Math.floor(s / 60)}min${String(s % 60).padStart(2, "0")}`;
 
-export function Gerenciador({ itens, blocos: iniciais, telas, podeCriar, nomes, hoje, hojePassa, equipe }: {
-  itens: ItemTv[]; blocos: BlocoTv[]; telas: TelaTv[]; podeCriar: boolean; nomes: Nomes; hoje: string; hojePassa: Record<string, number>; equipe: boolean;
+export function Gerenciador({ itens, blocos: iniciais, telas, podeCriar, nomes, hoje, hojePassa, equipe, modoEvento }: {
+  itens: ItemTv[]; blocos: BlocoTv[]; telas: TelaTv[]; podeCriar: boolean; nomes: Nomes; hoje: string; hojePassa: Record<string, number>; equipe: boolean; modoEvento: string | null;
 }) {
   const router = useRouter();
   // a escola mexe em tudo, menos nas telas fixas do Arboria (./fixos.ts)
@@ -69,6 +70,11 @@ export function Gerenciador({ itens, blocos: iniciais, telas, podeCriar, nomes, 
   const [vindos, setVindos] = useState(iniciais);
   if (vindos !== iniciais) { setVindos(iniciais); setBlocos(iniciais); }
   const [criando, setCriando] = useState(false);
+  const eventoValendo = modoEvento && modoEvento >= hoje ? modoEvento : null;
+  // as telas ligadas que hoje são puladas por falta de conteúdo (as automáticas de fora da recepção não contam)
+  const naoPassam = iniciais
+    .filter((b) => b.ativo && !b.id.startsWith("tela:") && b.id !== "aniversariantes" && !hojePassa[b.id])
+    .map((b) => nomes[b.id]?.nome ?? b.id);
   // as telas criadas vêm na lista como "tela:<id>"
   const telaDe = (id: string) => (id.startsWith("tela:") ? telas.find((t) => t.id === id.slice(5)) : undefined);
   const vis = (id: string) => (id.startsWith("tela:") ? visualTela(telaDe(id)) : VISUAL[id] ?? { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "estrela" });
@@ -163,9 +169,14 @@ export function Gerenciador({ itens, blocos: iniciais, telas, podeCriar, nomes, 
           <h1 className="font-[family-name:var(--font-serifa)] text-3xl font-bold text-[#1B3B7C]">TV da recepção</h1>
           <p className="mt-1 text-[15px] text-[#5A6478]">{aba === "conteudo" ? "Escreva direto onde aparece. Entra na próxima volta da TV." : "Toque numa tela para ligar, desligar ou mudar a ordem."}</p>
         </div>
-        <div className="ml-auto flex items-center gap-2 rounded-2xl border border-dashed border-[#C9D3E4] px-4 py-2 text-sm text-[#8A95AA]" title="Vem no próximo passo">
-          <span className="text-base">🎪</span> Modo evento <span className="text-xs">(em breve)</span>
-        </div>
+        <button
+          type="button"
+          onClick={() => { setAba("conteudo"); setTimeout(() => document.getElementById("modo-evento")?.scrollIntoView({ behavior: "smooth", block: "center" }), 50); }}
+          className={`ml-auto inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-[15px] font-bold ${eventoValendo ? "bg-[#FFC94D] text-[#0B2260]" : "border border-[#C9D3E4] text-[#5A6478] hover:border-[#1B3B7C] hover:text-[#1B3B7C]"}`}
+        >
+          <img src="/tv/icones/ingresso.webp" alt="" className="h-6 w-auto" />
+          {eventoValendo ? `Modo evento: ${eventoValendo === hoje ? "hoje" : "amanhã"}` : "Modo evento"}
+        </button>
         {podeCriar && (
           <button type="button" onClick={() => setCriando(true)} className="inline-flex items-center gap-2 rounded-2xl bg-[#1B3B7C] px-5 py-2.5 text-[15px] font-bold text-white shadow-[0_8px_20px_rgba(27,59,124,.25)] hover:brightness-110">
             <Plus className="size-5" /> Nova tela
@@ -185,6 +196,12 @@ export function Gerenciador({ itens, blocos: iniciais, telas, podeCriar, nomes, 
         <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
           {/* o dia a dia: cada coisa no formato em que aparece na TV */}
           <div className="space-y-6">
+            {naoPassam.length > 0 && (
+              <p className="rounded-2xl bg-[#EEF2FA] px-4 py-3 text-sm text-[#5A6478]">
+                <b className="text-[#1B3B7C]">Hoje não passam, porque estão vazias:</b> {naoPassam.join(", ")}.
+              </p>
+            )}
+            <ModoEvento dia={modoEvento} hoje={hoje} itens={itens} onMudou={mudou} />
             <EditorAgenda itens={itens} hoje={hoje} onMudou={mudou} />
             <div className="grid gap-6 lg:grid-cols-2">
               <EditorRecados itens={itens} hoje={hoje} onMudou={mudou} abrirNovo={0} />
@@ -394,7 +411,7 @@ function ListaSimples({ conf, itens, hoje, origem, onMudou }: {
   const [erro, setErro] = useState<string | null>(null);
   const [pendente, comecar] = useTransition();
   const lista = itens
-    .filter((i) => i.tipo === conf.tipo)
+    .filter((i) => i.tipo === conf.tipo && !(conf.tipo === "curiosidade" && i.data)) // as curiosidades com dia são as do modo evento
     .sort((a, b) => (conf.comData ? (a.data ?? "").slice(5).localeCompare((b.data ?? "").slice(5)) : 0));
 
   const rodar = (fn: () => Promise<{ ok: boolean; erro?: string }>, depois?: () => void) =>

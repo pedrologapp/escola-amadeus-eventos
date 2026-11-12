@@ -3,7 +3,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { ETIQUETA_TV, type FormatoTela } from "@/lib/tv";
+import { ETIQUETA_TV, MODO_EVENTO, type FormatoTela } from "@/lib/tv";
 import { ehEquipeTv } from "./equipe";
 import { FIXOS } from "./fixos";
 
@@ -151,6 +151,18 @@ export async function duplicarTela(id: string): Promise<Resultado & { id?: strin
 export async function apagarTela(id: string): Promise<Resultado> {
   if (!(await logado())) return { ok: false, erro: "Sessão expirada. Entre de novo." };
   const { error } = await createAdminClient().from("tv_telas").delete().eq("id", id);
+  if (error) return { ok: false, erro: error.message };
+  mudou();
+  return { ok: true };
+}
+
+/** Modo evento: liga para um dia (AAAA-MM-DD) ou desliga (null). Desliga sozinho no dia seguinte (lib/tv.ts). */
+export async function ligarModoEvento(dia: string | null): Promise<Resultado> {
+  if (!(await logado())) return { ok: false, erro: "Sessão expirada. Entre de novo." };
+  if (dia && !/^\d{4}-\d{2}-\d{2}$/.test(dia)) return { ok: false, erro: "Dia inválido." };
+  const { error } = await createAdminClient()
+    .from("tv_blocos")
+    .upsert({ id: MODO_EVENTO, ativo: !!dia, ordem: dia ? Number(dia.replace(/-/g, "")) : 0, segundos: 0 });
   if (error) return { ok: false, erro: error.message };
   mudou();
   return { ok: true };

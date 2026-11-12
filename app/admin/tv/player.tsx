@@ -67,15 +67,17 @@ const ultimaEmDestaque = (t: string) => {
 };
 
 /** O layout "cartão": legenda à mão, título, frase e o ícone grande ao lado. */
-function Cartao({ icone, legenda, titulo, texto }: { icone: string; legenda: string; titulo: string; texto?: string }) {
+function Cartao({ icone, legenda, titulo, texto, resposta }: { icone: string; legenda: string; titulo: string; texto?: string; resposta?: string }) {
   const alto = icone === "lampada";
   return (
-    <div className={`cartao-tv ${titulo.length > 28 ? "longo" : ""} ${alto ? "icone-alto" : ""}`}>
+    <div className={`cartao-tv ${titulo.length + (resposta?.length ?? 0) > 28 ? "longo" : ""} ${alto ? "icone-alto" : ""}`}>
       <div className="vidro surge" style={st(0)} />
       <Icone nome={icone} d={0.3} />
       <div className="txt">
         <div className="mao surge" style={st(0.3)}>{legenda}</div>
         <div className="t1"><Palavras texto={titulo} d0={0.6} /></div>
+        {/* pergunta e resposta: a resposta aparece uns segundos depois, em amarelo */}
+        {resposta ? <div className="t1 resposta"><Palavras texto={`*${resposta.replace(/\*/g, "")}*`} d0={3.2} /></div> : null}
         {texto ? <p className="t2 surge" style={st(1.8)}><Destaque texto={texto} /></p> : null}
       </div>
     </div>
@@ -118,7 +120,7 @@ function conteudo(c: Cena, hora: number) {
       return (
         <>
           <Icone nome="bolo" />
-          <h2 className="t1"><Palavras texto="Parabéns, *aniversariantes!*" d0={0.2} /></h2>
+          <h2 className="t1"><Palavras texto="Feliz *aniversário!*" d0={0.2} /></h2>
           <div className="lista">
             {lista.map((p, i) => (
               <div key={i} className="pessoa surge" style={st(1 + i * 0.3)}>
@@ -131,7 +133,7 @@ function conteudo(c: Cena, hora: number) {
       );
     }
     case "avisos":
-      return <Cartao icone="megafone" legenda="um aviso para vocês" titulo={String(d.titulo)} texto={d.texto ? String(d.texto) : undefined} />;
+      return <Cartao icone="megafone" legenda="atenção, famílias!" titulo={String(d.titulo)} texto={d.texto ? String(d.texto) : undefined} />;
     case "recados": {
       const lista = d.lista as { texto: string; icone: string | null }[];
       if (lista.length === 1) return <Cartao icone="caderno" legenda="lembrete rápido" titulo={lista[0].texto} />;
@@ -151,7 +153,7 @@ function conteudo(c: Cena, hora: number) {
           {d.ilustracao ? <div className="ilus" style={{ backgroundImage: `url(${String(d.ilustracao)})` }} /> : null}
           <Icone nome="ingresso" />
           <div className="txt">
-            <div className="mao surge" style={st(0.3)}>vem aí</div>
+            <div className="mao surge" style={st(0.3)}>{falta <= 7 ? "marque na agenda!" : "vem aí"}</div>
             <div className="t1"><Palavras texto={ultimaEmDestaque(nome)} d0={0.6} /></div>
             <p className="quando surge" style={st(1.6)}>{dataLonga(String(d.data))}</p>
             {d.local ? <p className="onde surge" style={st(1.9)}>{String(d.local)}</p> : null}
@@ -194,8 +196,14 @@ function conteudo(c: Cena, hora: number) {
         </>
       );
     }
-    case "sabia":
-      return <Cartao icone="lampada" legenda="você sabia?" titulo={String(d.texto)} />;
+    case "sabia": {
+      // "pergunta? resposta": a TV mostra a pergunta e, logo depois, a resposta
+      const t = String(d.texto);
+      const q = t.indexOf("?");
+      const pergunta = q > 0 && t.slice(q + 1).trim() ? t.slice(0, q + 1) : t;
+      const resposta = pergunta !== t ? t.slice(q + 1).trim() : undefined;
+      return <Cartao icone="lampada" legenda={d.evento ? "hoje na escola" : "você sabia?"} titulo={pergunta} resposta={resposta} />;
+    }
     case "frase": {
       const t = String(d.texto);
       const tam = t.length < 34 ? 150 : t.length < 60 ? 124 : 100;
@@ -235,9 +243,10 @@ function conteudo(c: Cena, hora: number) {
     case "fim":
       return (
         <div className="centro">
+          <div className="t1"><Palavras texto="Até daqui a *pouco!*" d0={0.2} /></div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="surge" style={st(0.2)} src="/tv/logo-horizontal.png" alt="Centro Educacional Amadeus" />
-          <div className="mao surge" style={st(1.2)}>30 anos educando para a vida</div>
+          <img className="surge" style={st(1.2)} src="/tv/logo-horizontal.png" alt="Centro Educacional Amadeus" />
+          <div className="mao surge" style={st(1.8)}>30 anos educando para a vida</div>
         </div>
       );
     case "tela": {

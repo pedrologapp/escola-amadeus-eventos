@@ -1,4 +1,4 @@
-import { BLOCOS, hojeLocal, lerItensEBlocos, lerTelas, roteiroPublico, type BlocoTv } from "@/lib/tv";
+import { BLOCOS, MODO_EVENTO, hojeLocal, lerItensEBlocos, lerTelas, modoEventoDia, roteiroPublico, type BlocoTv } from "@/lib/tv";
 import { Gerenciador } from "./gerenciador";
 
 /**
@@ -15,7 +15,7 @@ export async function ConteudoTv({ equipe }: { equipe: boolean }) {
   }
   // com as telas criadas, a formatura fixa virou uma tela (formato celebração)
   const lista: BlocoTv[] = [
-    ...(telas ? blocos.filter((b) => b.id !== "formatura") : blocos),
+    ...(telas ? blocos.filter((b) => b.id !== "formatura") : blocos).filter((b) => b.id !== MODO_EVENTO),
     ...(telas ?? []).map((t) => ({ id: `tela:${t.id}`, ativo: t.ativo, ordem: t.ordem, segundos: t.segundos })),
   ].sort((a, b) => a.ordem - b.ordem);
   return (
@@ -28,6 +28,7 @@ export async function ConteudoTv({ equipe }: { equipe: boolean }) {
       hoje={hojeLocal()}
       hojePassa={hojePassa}
       equipe={equipe}
+      modoEvento={modoEventoDia(blocos)}
     />
   );
 }
