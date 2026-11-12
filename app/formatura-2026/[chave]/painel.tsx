@@ -135,7 +135,7 @@ function EditorCorte({ url, aspecto, inicial, titulo, aoSalvar, aoFechar }: {
   const [r, setR] = useState<Corte | null>(null);
   const [estado, setEstado] = useState("");
   const caixa = useRef<HTMLDivElement>(null);
-  const arr = useRef<{ modo: "mover" | "canto"; ax: number; ay: number; px: number; py: number; ini: Corte } | null>(null);
+  const arr = useRef<{ modo: "mover" | "canto" | "l" | "r" | "t" | "b"; ax: number; ay: number; px: number; py: number; ini: Corte } | null>(null);
   // altura (em fração da foto) que acompanha uma largura, no formato da moldura
   const alturaDe = (w: number, n = nat!) => (w * n.w) / (n.h * aspecto);
   const padrao = (n: { w: number; h: number }): Corte => {
@@ -149,7 +149,7 @@ function EditorCorte({ url, aspecto, inicial, titulo, aoSalvar, aoFechar }: {
     setR(padrao(n));
   }
   const ponto = (e: React.PointerEvent) => { const q = caixa.current!.getBoundingClientRect(); return { x: (e.clientX - q.left) / q.width, y: (e.clientY - q.top) / q.height }; };
-  function baixar(e: React.PointerEvent, modo: "mover" | "canto", cx = 0, cy = 0) {
+  function baixar(e: React.PointerEvent, modo: "mover" | "canto" | "l" | "r" | "t" | "b", cx = 0, cy = 0) {
     if (!r) return; e.preventDefault(); e.stopPropagation();
     const p = ponto(e);
     // no canto, o ponto fixo é o canto oposto
@@ -162,8 +162,17 @@ function EditorCorte({ url, aspecto, inicial, titulo, aoSalvar, aoFechar }: {
       setR({ ...a.ini, x: Math.max(0, Math.min(1 - a.ini.w, a.ini.x + p.x - a.px)), y: Math.max(0, Math.min(1 - a.ini.h, a.ini.y + p.y - a.py)) });
       return;
     }
-    const dirX = p.x >= a.ax ? 1 : -1, dirY = p.y >= a.ay ? 1 : -1;
     const kw = (nat.h * aspecto) / nat.w; // largura que corresponde a uma altura
+    // puxando um lado: só aquele lado anda, o resto do quadro fica parado
+    if (a.modo !== "canto") {
+      const i = a.ini, M = 0.05;
+      if (a.modo === "l") { const x = Math.max(0, Math.min(i.x + i.w - M, p.x)); setR({ ...i, x, w: i.x + i.w - x }); }
+      if (a.modo === "r") { const d = Math.min(1, Math.max(i.x + M, p.x)); setR({ ...i, w: d - i.x }); }
+      if (a.modo === "t") { const y = Math.max(0, Math.min(i.y + i.h - M, p.y)); setR({ ...i, y, h: i.y + i.h - y }); }
+      if (a.modo === "b") { const d = Math.min(1, Math.max(i.y + M, p.y)); setR({ ...i, h: d - i.y }); }
+      return;
+    }
+    const dirX = p.x >= a.ax ? 1 : -1, dirY = p.y >= a.ay ? 1 : -1;
     let w = Math.max(Math.abs(p.x - a.ax), Math.abs(p.y - a.ay) * kw);
     const maxW = Math.min(dirX > 0 ? 1 - a.ax : a.ax, (dirY > 0 ? 1 - a.ay : a.ay) * kw);
     w = Math.max(Math.min(w, maxW), Math.min(0.08, maxW));
@@ -171,6 +180,12 @@ function EditorCorte({ url, aspecto, inicial, titulo, aoSalvar, aoFechar }: {
     setR({ w, h, x: dirX > 0 ? a.ax : a.ax - w, y: dirY > 0 ? a.ay : a.ay - h });
   }
   const soltar = () => { arr.current = null; };
+  const naPlaca = (c: Corte): Corte => {
+    if (!nat) return c; const kw = (nat.h * aspecto) / nat.w;
+    if (c.w > c.h * kw) { const w = c.h * kw; return { ...c, x: c.x + (c.w - w) / 2, w }; }
+    const h = alturaDe(c.w); return { ...c, y: c.y + (c.h - h) / 2, h };
+  };
+  const ef = r ? naPlaca(r) : null;
   async function salvar(c: Corte | null) {
     setEstado("salvando…");
     const erro = await aoSalvar(c);
@@ -181,19 +196,28 @@ function EditorCorte({ url, aspecto, inicial, titulo, aoSalvar, aoFechar }: {
       style={{ position: "absolute", width: 34, height: 34, left: cx ? "auto" : -17, right: cx ? -17 : "auto", top: cy ? "auto" : -17, bottom: cy ? -17 : "auto",
         borderRadius: "50%", background: C.ouro, border: "3px solid #14213D", boxShadow: "0 2px 8px rgba(0,0,0,.6)", cursor: (cx === cy ? "nwse-resize" : "nesw-resize"), touchAction: "none" }} />
   );
+  const lado = (l: "l" | "r" | "t" | "b") => {
+    const horiz = l === "l" || l === "r";
+    return (
+      <span onPointerDown={(e) => baixar(e, l)} aria-hidden
+        style={{ position: "absolute", width: horiz ? 16 : 54, height: horiz ? 54 : 16, borderRadius: 8, background: C.ouro, border: "3px solid #14213D",
+          boxShadow: "0 2px 8px rgba(0,0,0,.6)", touchAction: "none", cursor: horiz ? "ew-resize" : "ns-resize",
+          ...(horiz ? { top: "50%", marginTop: -27, [l === "l" ? "left" : "right"]: -8 } : { left: "50%", marginLeft: -27, [l === "t" ? "top" : "bottom"]: -8 }) }} />
+    );
+  };
   const bt = { minHeight: 48, padding: "0 18px", borderRadius: 10, border: `1px solid ${C.borda}`, background: "transparent", color: C.texto, cursor: "pointer", fontSize: 15, fontWeight: 600 } as const;
   return (
     <div role="dialog" aria-modal="true" aria-label={titulo}
       style={{ position: "fixed", inset: 0, zIndex: 70, background: "rgba(3,8,20,.96)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, padding: 16 }}>
       <div style={{ color: C.texto, fontFamily: serif, fontSize: 24, fontWeight: 600, textAlign: "center" }}>{titulo}</div>
-      <div style={{ color: C.suave, fontSize: 14, textAlign: "center", maxWidth: 560 }}>Arraste o quadro para escolher a parte da foto e puxe uma bolinha dourada para aumentar ou diminuir. Só o que está dentro do quadro vai para a placa.</div>
+      <div style={{ color: C.suave, fontSize: 14, textAlign: "center", maxWidth: 560 }}>Arraste o quadro para escolher a parte da foto e puxe um lado (só aquele lado anda) ou um canto dourado. A parte clara, com o tracejado branco, é exatamente o que vai para a placa.</div>
       {/* margem em volta da foto para as bolinhas dos cantos nunca ficarem escondidas */}
       <div onPointerMove={mover} onPointerUp={soltar} onPointerCancel={soltar} style={{ padding: 20, touchAction: "none", userSelect: "none" }}>
         <div ref={caixa} style={{ position: "relative", lineHeight: 0 }}>
           <div style={{ position: "relative", overflow: "hidden", borderRadius: 4 }}>
             <img src={url} alt="" draggable={false} onLoad={carregou} style={{ display: "block", maxWidth: "calc(92vw - 40px)", maxHeight: "60vh", pointerEvents: "none" }} />
-            {r && <div style={{ position: "absolute", left: `${r.x * 100}%`, top: `${r.y * 100}%`, width: `${r.w * 100}%`, height: `${r.h * 100}%`,
-              boxShadow: "0 0 0 9999px rgba(3,8,20,.62)", pointerEvents: "none" }} />}
+            {ef && <div style={{ position: "absolute", left: `${ef.x * 100}%`, top: `${ef.y * 100}%`, width: `${ef.w * 100}%`, height: `${ef.h * 100}%`,
+              boxShadow: "0 0 0 9999px rgba(3,8,20,.66)", outline: "2px dashed rgba(255,255,255,.85)", pointerEvents: "none" }} />}
           </div>
           {r && (
             <div onPointerDown={(e) => baixar(e, "mover")}
@@ -201,13 +225,13 @@ function EditorCorte({ url, aspecto, inicial, titulo, aoSalvar, aoFechar }: {
                 outline: `3px solid ${C.ouro}`, touchAction: "none" }}>
               <span style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(255,255,255,.35) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.35) 1px, transparent 1px)",
                 backgroundSize: "33.33% 33.33%", backgroundPosition: "-1px -1px", pointerEvents: "none" }} />
-              {canto(0, 0)}{canto(1, 0)}{canto(0, 1)}{canto(1, 1)}
+              {lado("l")}{lado("r")}{lado("t")}{lado("b")}{canto(0, 0)}{canto(1, 0)}{canto(0, 1)}{canto(1, 1)}
             </div>
           )}
         </div>
       </div>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center", alignItems: "center" }}>
-        <button type="button" onClick={() => r && salvar(r)} disabled={!r} style={{ ...bt, border: 0, background: C.ouro, color: "#14213D", fontWeight: 700 }}>Usar este corte</button>
+        <button type="button" onClick={() => ef && salvar(ef)} disabled={!ef} style={{ ...bt, border: 0, background: C.ouro, color: "#14213D", fontWeight: 700 }}>Usar este corte</button>
         <button type="button" onClick={() => nat && setR(padrao(nat))} style={bt}>Recomeçar</button>
         {inicial ? <button type="button" onClick={() => salvar(null)} style={bt}>Tirar o corte</button> : null}
         <button type="button" onClick={aoFechar} style={bt}>Cancelar</button>
