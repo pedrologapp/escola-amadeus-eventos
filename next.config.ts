@@ -24,6 +24,8 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       { source: "/semanadacrianca", destination: "/semanadacrianca/index.html" },
+      // Casa Interpessoal (Arbória, prof. Francinildo): telas do projeto em loop na TV, sem senha (12/11)
+      { source: "/casainterpessoal", destination: "/casainterpessoal/index.html" },
       // o Mundo do Arboria (jogo 3D, build do Arboria/Mundo/jogo com base /mundo/)
       { source: "/mundo", destination: "/mundo/index.html" },
     ];
