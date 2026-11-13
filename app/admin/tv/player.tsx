@@ -116,6 +116,11 @@ function conteudo(c: Cena, hora: number) {
       );
     }
     case "aniversariantes": {
+      // um por tela (o jeito novo): o nome bem grande, para cada um ter o seu momento
+      if (d.pessoa) {
+        const p = d.pessoa as { nome: string; turma: string; quando: string | null };
+        return <Cartao icone="bolo" legenda={p.quando ? `fez aniversário no ${p.quando}!` : "feliz aniversário!"} titulo={ultimaEmDestaque(p.nome)} texto={p.turma} />;
+      }
       const lista = d.lista as { nome: string; turma: string; quando: string | null }[];
       return (
         <>

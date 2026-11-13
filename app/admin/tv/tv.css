@@ -83,6 +83,9 @@
 /* aniversariantes */
 .cena-aniversariantes .icone3d { right: 150px; top: 60px; width: 280px; }
 .cena-aniversariantes h2 { position: absolute; left: 150px; right: 480px; top: 110px; font-size: 112px; }
+/* um aniversariante por tela: o bolo grande, como nos cartões */
+.cena-aniversariantes .cartao-tv .icone3d { right: 120px; top: 170px; width: 560px; }
+.cena-aniversariantes .cartao-tv .t1 { font-size: 150px; }
 .cena-aniversariantes .lista { position: absolute; left: 150px; right: 150px; top: 330px; display: grid; grid-template-columns: 1fr 1fr; gap: 26px 34px; }
 .cena-aniversariantes .pessoa { padding: 26px 38px; border-radius: 36px; background: rgba(255,255,255,.07); border: 1.5px solid rgba(255,255,255,.12); }
 .cena-aniversariantes .pessoa b { display: block; font-family: TvTitulo, sans-serif; font-weight: 400; font-size: 60px; color: var(--tv-creme); }

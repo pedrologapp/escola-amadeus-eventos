@@ -204,7 +204,7 @@ export async function roteiroDoDia(): Promise<RoteiroTv> {
   const hoje = hojeLocal();
   const turno = horaLocal() >= 7 ? "dia" : "madrugada";
   try {
-    return await unstable_cache(() => montarRoteiro(hoje), ["tv-roteiro", "v6", hoje, turno], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })();
+    return await unstable_cache(() => montarRoteiro(hoje), ["tv-roteiro", "v7", hoje, turno], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })();
   } catch (e) {
     // nada fica guardado: a TV mostra só o relógio e pede de novo em 1 minuto (app/admin/tv/player.tsx)
     console.error(e);
@@ -286,7 +286,8 @@ async function montarRoteiro(hoje: string): Promise<RoteiroTv> {
         c({ comemoracao: comemoracao ? { titulo: comemoracao.titulo, icone: comemoracao.icone } : null });
         break;
       case "aniversariantes":
-        if (nivers.length) c({ lista: nivers.slice(0, 6) });
+        // um aniversariante por tela: cada um tem o seu momento (Pedro, 12/11/2026)
+        nivers.slice(0, 8).forEach((p, i) => c({ pessoa: p }, `aniversariantes:${i}`));
         break;
       case "avisos":
         for (const a of de("aviso")) c({ titulo: a.titulo, texto: a.texto, icone: a.icone }, `aviso:${a.id}`);
@@ -324,6 +325,19 @@ async function montarRoteiro(hoje: string): Promise<RoteiroTv> {
         break;
       default:
         c({});
+    }
+  }
+  // modo evento: as curiosidades do evento se espalham pela volta, uma a cada duas telas (Pedro, 12/11/2026)
+  if (modoEvento) {
+    const doEvento = cenas.filter((x) => x.chave.startsWith("sabia:"));
+    if (doEvento.length) {
+      const resto = cenas.filter((x) => !x.chave.startsWith("sabia:"));
+      const fimIdx = resto.findIndex((x) => x.id === "fim");
+      const antesDoFim = fimIdx >= 0 ? resto.slice(0, fimIdx) : resto;
+      const depois = fimIdx >= 0 ? resto.slice(fimIdx) : [];
+      cenas.length = 0;
+      antesDoFim.forEach((x, i) => { cenas.push(x); if (i % 2 === 1 && doEvento.length) cenas.push(doEvento.shift()!); });
+      cenas.push(...doEvento, ...depois);
     }
   }
   // o evento de hoje ou de amanhã é o assunto do dia: vem logo depois da saudação
