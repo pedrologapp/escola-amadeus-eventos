@@ -156,13 +156,18 @@ export async function apagarTela(id: string): Promise<Resultado> {
   return { ok: true };
 }
 
-/** Modo evento: liga para um dia (AAAA-MM-DD) ou desliga (null). Desliga sozinho no dia seguinte (lib/tv.ts). */
-export async function ligarModoEvento(dia: string | null): Promise<Resultado> {
+/**
+ * Modo evento: liga para um dia (AAAA-MM-DD) ou desliga (null), com horário opcional em minutos (ex.: 8h = 480).
+ * Fora do horário, e no dia seguinte, a TV volta sozinha ao normal (lib/tv.ts).
+ */
+export async function ligarModoEvento(dia: string | null, inicio: number | null = null, fim: number | null = null): Promise<Resultado> {
   if (!(await logado())) return { ok: false, erro: "Sessão expirada. Entre de novo." };
   if (dia && !/^\d{4}-\d{2}-\d{2}$/.test(dia)) return { ok: false, erro: "Dia inválido." };
+  const comHora = inicio !== null && fim !== null;
+  if (comHora && !(inicio >= 0 && fim <= 1440 && inicio < fim)) return { ok: false, erro: "O horário de fim tem de ser depois do início." };
   const { error } = await createAdminClient()
     .from("tv_blocos")
-    .upsert({ id: MODO_EVENTO, ativo: !!dia, ordem: dia ? Number(dia.replace(/-/g, "")) : 0, segundos: 0 });
+    .upsert({ id: MODO_EVENTO, ativo: !!dia, ordem: dia ? Number(dia.replace(/-/g, "")) : 0, segundos: dia && comHora ? inicio * 10000 + fim : 0 });
   if (error) return { ok: false, erro: error.message };
   mudou();
   return { ok: true };

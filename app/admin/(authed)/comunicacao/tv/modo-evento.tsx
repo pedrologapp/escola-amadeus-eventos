@@ -3,18 +3,22 @@
 import { useState, useTransition } from "react";
 import { Check, Loader2, Plus, Trash2 } from "lucide-react";
 import { somaDiasIso } from "./datas";
-import type { ItemTv } from "@/lib/tv";
+import type { ItemTv, ModoEventoTv } from "@/lib/tv";
 import { apagarItem, salvarItem } from "./actions";
 import { ligarModoEvento } from "./telas-acoes";
 
 /**
  * Modo evento (Pedro, 12/11/2026): um botão. Ligado para hoje ou amanhã, a TV continua passando tudo, mas o
  * "Você sabia?" passa as curiosidades do evento (escritas aqui), e o evento do dia vem logo depois da saudação.
- * Desliga sozinho no dia seguinte.
+ * Pode ter horário (ex.: das 8h às 11h): fora dele, e no dia seguinte, a TV volta sozinha ao normal.
  */
-export function ModoEvento({ dia, hoje, itens, onMudou }: { dia: string | null; hoje: string; itens: ItemTv[]; onMudou: () => void }) {
+const hhmm = (m: number | null) => (m === null ? "" : `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`);
+const minutos = (t: string) => { const [h, m] = t.split(":").map(Number); return Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : null; };
+export function ModoEvento({ evento, hoje, itens, onMudou }: { evento: ModoEventoTv | null; hoje: string; itens: ItemTv[]; onMudou: () => void }) {
   const amanha = somaDiasIso(hoje, 1);
-  const valendo = dia && dia >= hoje ? dia : null;
+  const valendo = evento && evento.dia >= hoje ? evento.dia : null;
+  const [ini, setIni] = useState(hhmm(evento?.inicio ?? null));
+  const [fim, setFim] = useState(hhmm(evento?.fim ?? null));
   const [texto, setTexto] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [pendente, comecar] = useTransition();
@@ -33,7 +37,7 @@ export function ModoEvento({ dia, hoje, itens, onMudou }: { dia: string | null; 
       <button
         type="button"
         disabled={pendente}
-        onClick={() => rodar(() => ligarModoEvento(valor))}
+        onClick={() => rodar(() => ligarModoEvento(valor, valor ? minutos(ini) : null, valor ? minutos(fim) : null))}
         className={`rounded-xl px-4 py-2 text-[15px] font-bold transition ${ativo ? (valor ? "bg-[#FFC94D] text-[#0B2260]" : "bg-[#1B3B7C] text-white") : "bg-[#EEF2FA] text-[#1B3B7C] hover:bg-[#E3E8F2]"}`}
       >
         {rotulo}
@@ -53,9 +57,17 @@ export function ModoEvento({ dia, hoje, itens, onMudou }: { dia: string | null; 
       </div>
       <p className="mt-1 text-sm text-[#5A6478]">
         {valendo
-          ? `Ligado para ${valendo === hoje ? "hoje" : "amanhã"}. O "Você sabia?" passa as curiosidades do evento. Desliga sozinho no dia seguinte.`
+          ? `Ligado para ${valendo === hoje ? "hoje" : "amanhã"}${evento?.inicio != null ? `, das ${hhmm(evento.inicio)} às ${hhmm(evento.fim)}` : ", o dia todo"}. Fora disso, a TV volta sozinha ao normal.`
           : `Em dia de evento, o "Você sabia?" passa curiosidades do evento. O resto da TV continua igual.`}
       </p>
+
+      {/* o horário do evento (vazio = o dia todo) */}
+      <div className="mt-3 flex flex-wrap items-center gap-2 text-sm font-semibold text-[#1B3B7C]">
+        Horário: das <input type="time" value={ini} onChange={(e) => setIni(e.target.value)} className="rounded-lg border border-[#D5DDEB] bg-white px-2 py-1.5 text-sm" />
+        às <input type="time" value={fim} onChange={(e) => setFim(e.target.value)} className="rounded-lg border border-[#D5DDEB] bg-white px-2 py-1.5 text-sm" />
+        {valendo && <button type="button" disabled={pendente} onClick={() => rodar(() => ligarModoEvento(valendo, minutos(ini), minutos(fim)))} className="rounded-xl bg-[#1B3B7C] px-3 py-1.5 text-sm font-bold text-white disabled:opacity-50">Salvar horário</button>}
+        <span className="text-xs font-normal text-[#8A95AA]">vazio = o dia todo</span>
+      </div>
 
       {valendo && (
         <div className="mt-4">

@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check, ChevronDown, ChevronLeft, ChevronRight, Copy, GripVertical, Loader2, Lock, Minus, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
-import type { BlocoTv, ItemTv, TelaTv, TipoItem } from "@/lib/tv";
+import type { BlocoTv, ItemTv, ModoEventoTv, TelaTv, TipoItem } from "@/lib/tv";
 import { apagarItem, ativarItem, salvarItem, type ItemForm } from "@/app/admin/(authed)/comunicacao/tv/actions";
 import { ligarBloco, ordenarBlocos } from "./telas-acoes";
 import { FIXOS } from "./fixos";
@@ -59,7 +59,7 @@ const NA_RECEPCAO_NAO = "aniversariantes"; // a TV da recepção é aberta: sem 
 const mmss = (s: number) => `${Math.floor(s / 60)}min${String(s % 60).padStart(2, "0")}`;
 
 export function Gerenciador({ itens, blocos: iniciais, telas, podeCriar, nomes, hoje, hojePassa, equipe, modoEvento }: {
-  itens: ItemTv[]; blocos: BlocoTv[]; telas: TelaTv[]; podeCriar: boolean; nomes: Nomes; hoje: string; hojePassa: Record<string, number>; equipe: boolean; modoEvento: string | null;
+  itens: ItemTv[]; blocos: BlocoTv[]; telas: TelaTv[]; podeCriar: boolean; nomes: Nomes; hoje: string; hojePassa: Record<string, number>; equipe: boolean; modoEvento: ModoEventoTv | null;
 }) {
   const router = useRouter();
   // a escola mexe em tudo, menos nas telas fixas do Arboria (./fixos.ts)
@@ -70,7 +70,7 @@ export function Gerenciador({ itens, blocos: iniciais, telas, podeCriar, nomes, 
   const [vindos, setVindos] = useState(iniciais);
   if (vindos !== iniciais) { setVindos(iniciais); setBlocos(iniciais); }
   const [criando, setCriando] = useState(false);
-  const eventoValendo = modoEvento && modoEvento >= hoje ? modoEvento : null;
+  const eventoValendo = modoEvento && modoEvento.dia >= hoje ? modoEvento.dia : null;
   // as telas ligadas que hoje são puladas por falta de conteúdo (as automáticas de fora da recepção não contam)
   const naoPassam = iniciais
     .filter((b) => b.ativo && !b.id.startsWith("tela:") && b.id !== "aniversariantes" && !hojePassa[b.id])
@@ -201,7 +201,7 @@ export function Gerenciador({ itens, blocos: iniciais, telas, podeCriar, nomes, 
                 <b className="text-[#1B3B7C]">Hoje não passam, porque estão vazias:</b> {naoPassam.join(", ")}.
               </p>
             )}
-            <ModoEvento dia={modoEvento} hoje={hoje} itens={itens} onMudou={mudou} />
+            <ModoEvento evento={modoEvento} hoje={hoje} itens={itens} onMudou={mudou} />
             <EditorAgenda itens={itens} hoje={hoje} onMudou={mudou} />
             <div className="grid gap-6 lg:grid-cols-2">
               <EditorRecados itens={itens} hoje={hoje} onMudou={mudou} abrirNovo={0} />

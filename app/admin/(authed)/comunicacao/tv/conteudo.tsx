@@ -1,4 +1,4 @@
-import { BLOCOS, MODO_EVENTO, hojeLocal, lerItensEBlocos, lerTelas, modoEventoDia, roteiroPublico, type BlocoTv } from "@/lib/tv";
+import { BLOCOS, MODO_EVENTO, hojeLocal, lerItensEBlocos, lerTelas, modoEventoDe, roteiroPublico, type BlocoTv } from "@/lib/tv";
 import { Gerenciador } from "./gerenciador";
 
 /**
@@ -28,7 +28,7 @@ export async function ConteudoTv({ equipe }: { equipe: boolean }) {
       hoje={hojeLocal()}
       hojePassa={hojePassa}
       equipe={equipe}
-      modoEvento={modoEventoDia(blocos)}
+      modoEvento={modoEventoDe(blocos)}
     />
   );
 }

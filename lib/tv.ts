@@ -204,7 +204,9 @@ export async function roteiroDoDia(): Promise<RoteiroTv> {
   const hoje = hojeLocal();
   const turno = horaLocal() >= 7 ? "dia" : "madrugada";
   try {
-    return await unstable_cache(() => montarRoteiro(hoje), ["tv-roteiro", "v7", hoje, turno], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })();
+    // o modo evento muda com o horário: a chave do roteiro guardado diz se ele vale agora (consulta pequena, a cada volta)
+    const evento = modoEventoAgora(await lerModoEvento().catch(() => null), hoje);
+    return await unstable_cache(() => montarRoteiro(hoje, evento), ["tv-roteiro", "v9", hoje, turno, evento ? "evento" : "normal"], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })();
   } catch (e) {
     // nada fica guardado: a TV mostra só o relógio e pede de novo em 1 minuto (app/admin/tv/player.tsx)
     console.error(e);
@@ -235,17 +237,40 @@ export async function roteiroPublico(): Promise<RoteiroTv> {
  * data = o dia do evento), todas, uma tela cada. O evento de hoje ou de amanhã vem logo depois da saudação.
  */
 export const MODO_EVENTO = "modo-evento";
-export const modoEventoDia = (blocos: BlocoTv[]): string | null => {
+export const modoEventoDia = (blocos: BlocoTv[]): string | null => modoEventoDe(blocos)?.dia ?? null;
+
+/**
+ * O modo evento guardado: o dia (em "ordem", AAAAMMDD) e o horário (em "segundos": início em minutos x 10000 + fim em
+ * minutos; 0 = o dia todo). Fora do horário a TV volta sozinha ao normal (Pedro, 12/11/2026).
+ */
+export interface ModoEventoTv { dia: string; inicio: number | null; fim: number | null }
+export function modoEventoDe(blocos: BlocoTv[]): ModoEventoTv | null {
   const b = blocos.find((x) => x.id === MODO_EVENTO);
   if (!b || !b.ativo || !b.ordem) return null;
   const t = String(b.ordem);
-  return `${t.slice(0, 4)}-${t.slice(4, 6)}-${t.slice(6, 8)}`;
+  const h = Number(b.segundos) || 0;
+  return { dia: `${t.slice(0, 4)}-${t.slice(4, 6)}-${t.slice(6, 8)}`, inicio: h ? Math.floor(h / 10000) : null, fim: h ? h % 10000 : null };
+}
+/** Os minutos de agora no fuso da escola (0 a 1439). */
+const minutosLocal = () => {
+  const [h, m] = new Date().toLocaleTimeString("en-GB", { timeZone: FUSO, hour: "2-digit", minute: "2-digit", hour12: false }).split(":").map(Number);
+  return (h % 24) * 60 + m;
 };
+/** O modo evento vale agora? (o dia certo e, se tiver horário, dentro dele) */
+export function modoEventoAgora(me: ModoEventoTv | null, hoje: string, minutos = minutosLocal()) {
+  if (!me || me.dia !== hoje) return false;
+  if (me.inicio === null || me.fim === null) return true;
+  return minutos >= me.inicio && minutos < me.fim;
+}
+async function lerModoEvento(): Promise<ModoEventoTv | null> {
+  const { data } = await createAdminClient().from("tv_blocos").select("id, ativo, ordem, segundos").eq("id", MODO_EVENTO).maybeSingle();
+  return data ? modoEventoDe([data as BlocoTv]) : null;
+}
 
-async function montarRoteiro(hoje: string): Promise<RoteiroTv> {
+async function montarRoteiro(hoje: string, eventoAgora = false): Promise<RoteiroTv> {
   const [{ itens, blocos: todosBlocos }, telas] = await Promise.all([lerItensEBlocos(), lerTelas()]);
   // com as telas criadas, a formatura fixa vira uma tela (formato celebração) e o bloco antigo sai
-  const modoEvento = modoEventoDia(todosBlocos) === hoje;
+  const modoEvento = eventoAgora;
   const blocos = (telas ? todosBlocos.filter((b) => b.id !== "formatura") : todosBlocos).filter((b) => b.id !== MODO_EVENTO);
   const valem = itens.filter((i) => valeHoje(i, hoje));
   const de = (t: TipoItem) => valem.filter((i) => i.tipo === t);
@@ -257,7 +282,7 @@ async function montarRoteiro(hoje: string): Promise<RoteiroTv> {
   ]);
 
   const mmdd = hoje.slice(5);
-  const comemoracao = itens.find((i) => i.tipo === "comemoracao" && i.ativo && i.data?.slice(5) === mmdd) ?? null;
+  const comemoracao = itens.find((i) => i.tipo === "comemoracao" && i.ativo && i.data?.slice(5) === mmdd && (!i.fim || i.fim >= hoje)) ?? null;
   const gira = (lista: ItemTv[]) => (lista.length ? lista[diaDoAno(hoje) % lista.length] : null);
 
   const diasSemana = diasDaSemana(hoje);
@@ -283,7 +308,8 @@ async function montarRoteiro(hoje: string): Promise<RoteiroTv> {
     const c = (dados: Record<string, unknown>, chave = b.id) => cenas.push({ id: b.id, chave, segundos: b.segundos, dados });
     switch (b.id) {
       case "saudacao":
-        c({ comemoracao: comemoracao ? { titulo: comemoracao.titulo, icone: comemoracao.icone } : null });
+        // no modo evento, a saudação vira as boas-vindas ao evento do dia (o nome vem da data comemorativa)
+        c({ comemoracao: comemoracao ? { titulo: comemoracao.titulo, icone: comemoracao.icone, texto: comemoracao.texto } : null, evento: modoEvento && !!comemoracao });
         break;
       case "aniversariantes":
         // um aniversariante por tela: cada um tem o seu momento (Pedro, 12/11/2026)

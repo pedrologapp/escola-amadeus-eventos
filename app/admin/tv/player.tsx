@@ -101,7 +101,20 @@ function conteudo(c: Cena, hora: number) {
   const d = c.dados as D;
   switch (c.id) {
     case "saudacao": {
-      const com = d.comemoracao as { titulo: string; icone: string | null } | null;
+      const com = d.comemoracao as { titulo: string; icone: string | null; texto?: string } | null;
+      // dia de evento: "Bem-vindos à Feira de Conhecimentos!" e o tema embaixo
+      if (d.evento && com) {
+        return (
+          <>
+            <Icone nome="estrela" />
+            <div className="txt">
+              <div className="mao surge" style={st(0.2)}>{hora < 12 ? "bom dia!" : hora < 18 ? "boa tarde!" : "boa noite!"}</div>
+              <div className="t1" style={{ fontSize: 132 }}><Palavras texto={`Bem-vindos à ${ultimaEmDestaque(`${com.titulo}!`)}`} d0={0.4} /></div>
+              {com.texto ? <p className="t2 surge" style={st(1.6)}><Destaque texto={com.texto} /></p> : null}
+            </div>
+          </>
+        );
+      }
       const oi = hora < 12 ? "Bom dia," : hora < 18 ? "Boa tarde," : "Boa noite,";
       const h = hojeLocal();
       return (
