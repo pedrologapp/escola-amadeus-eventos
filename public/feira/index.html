@@ -308,7 +308,8 @@
     respostas.forEach((k) => cont[k]++);
     // cada inteligência aparece 4 vezes; ninguém fica com 0% (todos temos as 8)
     const pct = (k) => Math.round(((cont[k] + 1) / 5) * 100);
-    const lista = ORDEM.map((k) => ({ k, v: pct(k) })).sort((a, b) => b.v - a.v);
+    // (13/11) empate é sorteado: antes, quem vinha primeiro na lista (Linguística, Lógico-matemática) sempre ganhava
+    const lista = ORDEM.map((k) => ({ k, v: pct(k), s: Math.random() })).sort((a, b) => b.v - a.v || a.s - b.s).map(({ k, v }) => ({ k, v }));
     const t = INT[lista[0].k];
     $("destaque").innerHTML = `<img src="/feira/img/${t.b}.webp" alt=""><span class="mao">a que mais brilhou hoje</span><b style="color:${t.claro}">${t.nome}</b><p>${t.frase}</p>`;
     $("barras").innerHTML = lista.map(({ k, v }) => `
@@ -333,7 +334,9 @@
       const imagem = await geraEncarte(pessoa.nome, lista);
       const r = await fetch(WEBHOOK, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nome: pessoa.nome, telefone: pessoa.telefone, resultado: lista, imagem }),
+        // (13/11) também vai a resposta escolhida em cada situação, para a escola guardar
+        body: JSON.stringify({ nome: pessoa.nome, telefone: pessoa.telefone, resultado: lista, imagem,
+          respostas: PERG.map((q, i) => (q.o.find((o) => o[1] === respostas[i]) || [""])[0]) }),
       });
       const j = await r.json().catch(() => ({}));
       // (13/11) o n8n agora guarda numa fila e envia aos poucos, como uma pessoa (para o WhatsApp não bloquear)
