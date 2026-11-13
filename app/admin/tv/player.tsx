@@ -409,11 +409,12 @@ export function PlayerTv({ roteiro, previa, congelada = null, embutida = false }
               {(i === atual || i === saindo) && conteudo(c, hora)}
             </section>
           ))}
+          {/* a marca do canal: a logo da escola pequena no canto, como nas TVs */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="tv-marca" src="/tv/logo-horizontal.png" alt="Centro Educacional Amadeus" />
           <div className="tv-grao" />
           <div id="progresso" ref={barra} />
           <footer id="rodape">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <div className="logo"><img src="/tv/logo-horizontal.png" alt="Centro Educacional Amadeus" /></div>
             <Faixa frases={roteiro.rodape ?? []} />
             <div className="quando">
               <div className="hoje-txt">
