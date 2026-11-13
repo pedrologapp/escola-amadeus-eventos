@@ -332,9 +332,9 @@
         body: JSON.stringify({ nome: pessoa.nome, telefone: pessoa.telefone, resultado: lista, imagem }),
       });
       const j = await r.json().catch(() => ({}));
-      $("enviado").textContent = j.ok ? "Pronto! O seu resultado e o vídeo estão chegando no seu WhatsApp."
-        : j.status === "sem_whatsapp" ? "Não achamos WhatsApp nesse número."
-        : j.status === "repetido" ? "Já enviamos para esse número hoje." : "";
+      // (13/11) o n8n agora guarda numa fila e envia aos poucos, como uma pessoa (para o WhatsApp não bloquear)
+      $("enviado").textContent = j.ok ? "Pronto! O seu resultado vai chegar no seu WhatsApp em alguns minutos."
+        : j.status === "repetido" ? "Já recebemos esse número hoje." : "";
     } catch { $("enviado").textContent = ""; }
   }
 
@@ -412,7 +412,7 @@
     let s = 3; const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
     for (let i = 0; i < 90; i++) { fx.fillStyle = `rgba(255,255,255,${(0.15 + rnd() * 0.45).toFixed(2)})`; fx.beginPath(); fx.arc(rnd() * W, rnd() * y, 1 + rnd() * 1.6, 0, 7); fx.fill(); }
     fx.drawImage(c, 0, 0);
-    return f.toDataURL("image/jpeg", 0.86).split(",")[1];
+    return f.toDataURL("image/jpeg", 0.78).split(",")[1];
   }
 
   const soDigitos = (s) => s.replace(/\D/g, "");
