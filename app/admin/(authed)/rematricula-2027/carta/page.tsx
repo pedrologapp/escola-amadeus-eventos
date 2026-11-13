@@ -1,5 +1,5 @@
 import QRCode from "qrcode";
-import { Fraunces } from "next/font/google";
+import localFont from "next/font/local";
 import { listarAlunos } from "@/lib/rematricula-2027-dados";
 import {
   DEPOIS_DO_PRAZO,
@@ -33,7 +33,7 @@ import { BotaoImprimir } from "./botao-imprimir";
 export const metadata = { title: "Carta 2027 · Admin Amadeus" };
 export const dynamic = "force-dynamic";
 
-const fraunces = Fraunces({ subsets: ["latin"], weight: ["600"], display: "swap" });
+const fraunces = localFont({ src: [{ path: "../../../../../lib/fontes/arquivos/fraunces-600.woff2", weight: "600", style: "normal" }], display: "swap" }); // Fraunces, guardada aqui (antes vinha do Google na publicação)
 
 const SEGMENTO_NOME = { maternal: "Educação Infantil", grupo: "Educação Infantil", ef1: "Ensino Fundamental I", ef2: "Ensino Fundamental II" };
 

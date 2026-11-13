@@ -1,12 +1,8 @@
 import type { Metadata } from "next";
-import { DM_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const dmSans = DM_Sans({
-  variable: "--font-dm-sans",
-  subsets: ["latin"],
-  display: "swap",
-});
+const dmSans = localFont({ src: [{ path: "../lib/fontes/arquivos/dm-sans-100-1000.woff2", weight: "100 1000", style: "normal" }], variable: "--font-dm-sans", display: "swap" }); // DM Sans, guardada aqui (antes vinha do Google na publicação)
 
 export const metadata: Metadata = {
   metadataBase: new URL(

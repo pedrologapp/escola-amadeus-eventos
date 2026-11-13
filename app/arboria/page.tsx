@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { Atkinson_Hyperlegible, Young_Serif } from "next/font/google";
+import localFont from "next/font/local";
 import { SERIES } from "@/lib/arboria-historia";
 import { AppArboria } from "./app";
 import type { CriancaHistoria } from "./actions";
 
 // as mesmas letras do trailer: Atkinson no texto, Young Serif nos títulos
-const atkinson = Atkinson_Hyperlegible({ subsets: ["latin"], weight: ["400", "700"] });
-const youngSerif = Young_Serif({ subsets: ["latin"], weight: "400", variable: "--font-serie" });
+const atkinson = localFont({ src: [{ path: "../../lib/fontes/arquivos/atkinson-hyperlegible-400.woff2", weight: "400", style: "normal" }, { path: "../../lib/fontes/arquivos/atkinson-hyperlegible-700.woff2", weight: "700", style: "normal" }] }); // Atkinson Hyperlegible, guardada aqui (antes vinha do Google na publicação)
+const youngSerif = localFont({ src: [{ path: "../../lib/fontes/arquivos/young-serif-400.woff2", weight: "400", style: "normal" }], variable: "--font-serie" }); // Young Serif, guardada aqui (antes vinha do Google na publicação)
 
 export const metadata: Metadata = {
   title: "Arboria · a jornada do seu filho",

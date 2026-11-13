@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { Caveat } from "next/font/google";
+import localFont from "next/font/local";
 import { DesenhoParque } from "./desenho";
 import { Resposta } from "./resposta";
 import { encerrado } from "@/lib/dia-professor";
 
-const letra = Caveat({ subsets: ["latin"], weight: ["600", "700"] });
+const letra = localFont({ src: [{ path: "../../lib/fontes/arquivos/caveat-600-700.woff2", weight: "600 700", style: "normal" }] }); // Caveat, guardada aqui (antes vinha do Google na publicação)
 
 export const metadata: Metadata = {
   title: "Dia dos Professores · Escola Amadeus",

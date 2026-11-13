@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
-import { Cormorant_Garamond, Great_Vibes } from "next/font/google";
+import localFont from "next/font/local";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BUCKET_PLACA, ID_PLACA, chavePlacaValida, type DadosPlaca } from "@/lib/formatura-placa";
 import { PainelPlacas, type Crianca } from "./painel";
 
-const serif = Cormorant_Garamond({ subsets: ["latin"], weight: ["500", "600", "700"], variable: "--f-serif" });
-const script = Great_Vibes({ subsets: ["latin"], weight: "400", variable: "--f-script" });
+const serif = localFont({ src: [{ path: "../../../lib/fontes/arquivos/cormorant-garamond-500-700.woff2", weight: "500 700", style: "normal" }], variable: "--f-serif" }); // Cormorant Garamond, guardada aqui (antes vinha do Google na publicação)
+const script = localFont({ src: [{ path: "../../../lib/fontes/arquivos/great-vibes-400.woff2", weight: "400", style: "normal" }], variable: "--f-script" }); // Great Vibes, guardada aqui (antes vinha do Google na publicação)
 
 export const metadata = { title: "Placas da formatura 2026", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";

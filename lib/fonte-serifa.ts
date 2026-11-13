@@ -1,4 +1,4 @@
-import { Fraunces } from "next/font/google";
+import localFont from "next/font/local";
 
 /** Fraunces dos títulos do painel novo; um lugar só, usado no painel e na Visão geral do admin.eventos. */
-export const serifa = Fraunces({ subsets: ["latin"], weight: ["600", "700"], variable: "--font-serifa" });
+export const serifa = localFont({ src: [{ path: "./fontes/arquivos/fraunces-600-700.woff2", weight: "600 700", style: "normal" }], variable: "--font-serifa" }); // Fraunces, guardada aqui (antes vinha do Google na publicação)

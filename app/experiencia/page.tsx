@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { Caveat, Fraunces } from "next/font/google";
+import localFont from "next/font/local";
 import { BookOpen, MapPin, MessageCircle } from "lucide-react";
 import { CONTATO } from "@/lib/folder-config";
 import { Inscricao } from "./inscricao";
 
-const letra = Caveat({ subsets: ["latin"], weight: ["600", "700"] });
-const serifa = Fraunces({ subsets: ["latin"], weight: ["600", "700"], style: ["normal", "italic"] });
+const letra = localFont({ src: [{ path: "../../lib/fontes/arquivos/caveat-600-700.woff2", weight: "600 700", style: "normal" }] }); // Caveat, guardada aqui (antes vinha do Google na publicação)
+const serifa = localFont({ src: [{ path: "../../lib/fontes/arquivos/fraunces-600-700-italic.woff2", weight: "600 700", style: "italic" }, { path: "../../lib/fontes/arquivos/fraunces-600-700.woff2", weight: "600 700", style: "normal" }] }); // Fraunces, guardada aqui (antes vinha do Google na publicação)
 
 export const metadata: Metadata = {
   title: "Experiência Amadeus · sábado, 14 de novembro, 14h",

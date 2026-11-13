@@ -1,12 +1,12 @@
 import QRCode from "qrcode";
 import { notFound } from "next/navigation";
-import { Instrument_Serif, Inter_Tight, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { Telao } from "@/app/admin/(authed)/arboria-experiencia/telao/telao";
 import { chaveTelaoValida } from "@/lib/arboria-telao-chave";
 
-const serif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--f-serif" });
-const tight = Inter_Tight({ subsets: ["latin"], weight: ["500", "700", "800"], variable: "--f-tight" });
-const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["600"], variable: "--f-mono" });
+const serif = localFont({ src: [{ path: "../../../../lib/fontes/arquivos/instrument-serif-400-italic.woff2", weight: "400", style: "italic" }, { path: "../../../../lib/fontes/arquivos/instrument-serif-400.woff2", weight: "400", style: "normal" }], variable: "--f-serif" }); // Instrument Serif, guardada aqui (antes vinha do Google na publicação)
+const tight = localFont({ src: [{ path: "../../../../lib/fontes/arquivos/inter-tight-500-800.woff2", weight: "500 800", style: "normal" }], variable: "--f-tight" }); // Inter Tight, guardada aqui (antes vinha do Google na publicação)
+const mono = localFont({ src: [{ path: "../../../../lib/fontes/arquivos/jetbrains-mono-600.woff2", weight: "600", style: "normal" }], variable: "--f-mono" }); // JetBrains Mono, guardada aqui (antes vinha do Google na publicação)
 
 export const metadata = { title: "Telão · Experiência Arboria", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";

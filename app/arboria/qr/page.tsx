@@ -1,9 +1,9 @@
 import QRCode from "qrcode";
-import { Atkinson_Hyperlegible, Young_Serif } from "next/font/google";
+import localFont from "next/font/local";
 
 // as mesmas letras do trailer e do cadastro do pai
-const atkinson = Atkinson_Hyperlegible({ subsets: ["latin"], weight: ["400", "700"] });
-const youngSerif = Young_Serif({ subsets: ["latin"], weight: "400" });
+const atkinson = localFont({ src: [{ path: "../../../lib/fontes/arquivos/atkinson-hyperlegible-400.woff2", weight: "400", style: "normal" }, { path: "../../../lib/fontes/arquivos/atkinson-hyperlegible-700.woff2", weight: "700", style: "normal" }] }); // Atkinson Hyperlegible, guardada aqui (antes vinha do Google na publicação)
+const youngSerif = localFont({ src: [{ path: "../../../lib/fontes/arquivos/young-serif-400.woff2", weight: "400", style: "normal" }] }); // Young Serif, guardada aqui (antes vinha do Google na publicação)
 export const metadata = { title: "Arboria · QR da sala", robots: { index: false } };
 
 const LINK = "https://eventos.escolaamadeus.com/arboria";
