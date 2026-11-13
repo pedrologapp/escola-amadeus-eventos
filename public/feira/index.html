@@ -121,6 +121,8 @@
   .convite .titulo span { color: var(--ouro); }
   .convite .mao { font-size: 26px; margin-top: 6px; }
   .rodape { text-align: center; margin-top: 4px; }
+  .topo-denovo { margin: -6px 0 6px; }
+  .topo-denovo .botao { margin-top: 0; font-size: 22px; padding: 6px 10px 4px; }
 
   /* Nome e WhatsApp */
   #cadastro { justify-content: center; align-items: center; text-align: center; gap: 6px; }
@@ -196,6 +198,8 @@
 
 <!-- 3 e 4. Resultado e final -->
 <section class="tela" id="resultado">
+  <!-- (Pedro, 13/11) "Fazer de novo" também em cima, para a próxima pessoa achar logo -->
+  <div class="rodape topo-denovo"><button class="botao" id="denovoTopo">Fazer de novo</button></div>
   <div class="cab"><div class="mao">você achou que falava de telefone, móvel e viagem…</div><h2 class="titulo">…mas mostrou como a sua mente pensa</h2></div>
   <div class="enviado" id="enviado"></div>
   <div class="destaque" id="destaque"></div>
@@ -441,7 +445,7 @@
 
   $("comecar").onclick = () => mostra("cadastro");
   $("voltar").onclick = () => { if (atual > 0) { atual--; desenhaPergunta(); } };
-  $("denovo").onclick = () => { pessoa = null; $("nome").value = ""; $("zap").value = ""; mostra("abertura"); };
+  $("denovo").onclick = $("denovoTopo").onclick = () => { pessoa = null; $("nome").value = ""; $("zap").value = ""; mostra("abertura"); };
 </script>
 </body>
 </html>
