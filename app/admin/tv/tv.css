@@ -183,3 +183,11 @@
 .tv-marca { position: absolute; left: 56px; top: 26px; height: 50px; opacity: .85; z-index: 25; pointer-events: none; }
 .cena-fim.on ~ .tv-marca { display: none; }
 .previa .trilho { animation-play-state: paused; }
+
+/* (13/11/2026) tela de vídeo: o vídeo cobre a TV inteira (1920x1080), como cinema; as legendas vêm embaixo, no vídeo,
+   então o rodapé e a marca saem enquanto ele passa e voltam depois */
+.cena-video { height: 1080px; transform: none; background: #060c18; }
+.cena-video .tv-video { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; display: block; }
+#rodape, #progresso, .tv-marca { transition: transform .9s ease, opacity .9s ease; }
+.com-video #rodape { transform: translateY(100%); }
+.com-video #progresso, .com-video .tv-marca { opacity: 0; }

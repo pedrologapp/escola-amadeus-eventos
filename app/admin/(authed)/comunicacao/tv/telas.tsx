@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Check, Copy, Loader2, Plus, Trash2, X } from "lucide-react";
 import type { FormatoTela, TelaTv } from "@/lib/tv";
+import { VIDEOS_TV, videoTv } from "@/lib/tv-videos";
 import { PlayerTv } from "@/app/admin/tv/player";
 import { apagarTela, duplicarTela, salvarTela, type TelaForm } from "./telas-acoes";
 
@@ -36,6 +37,11 @@ export const FORMATOS: { id: FormatoTela; nome: string; dica: string; icone: str
     id: "programacao", nome: "Programação", dica: "Horários e atividades de um dia", icone: "relogio", fundo: "linear-gradient(135deg,#1E3F86,#0B2260)",
     novo: { titulo: "Programação", linhas: [{ hora: "", texto: "" }] },
   },
+  {
+    // (13/11/2026) um vídeo pronto, sem som, na TV inteira; dura o tamanho do vídeo
+    id: "video", nome: "Vídeo", dica: "Um vídeo pronto, sem som, na TV inteira", icone: "estrela", fundo: "linear-gradient(135deg,#122140,#060c18)",
+    novo: { video: VIDEOS_TV[0]?.id ?? "" },
+  },
 ];
 
 export const visualTela = (t: TelaTv | undefined) => {
@@ -47,6 +53,7 @@ export const nomeTela = (t: TelaTv | undefined) => {
   if (!t) return "Tela";
   const c = t.campos as Record<string, string>;
   const recado = t.formato === "recado" && Array.isArray(t.campos.linhas) ? String((t.campos.linhas as { texto?: string }[])[0]?.texto ?? "") : "";
+  if (t.formato === "video") return videoTv(c.video)?.nome ?? "Vídeo";
   const nome = [c.titulo, c.linha, c.texto, recado].filter(Boolean).join(" ").replace(/\*/g, "").slice(0, 60);
   return nome || FORMATOS.find((x) => x.id === t.formato)?.nome || "Tela";
 };
@@ -107,6 +114,22 @@ function Campos({ formato, c, set }: { formato: FormatoTela; c: Record<string, u
             <Plus className="size-4" /> mais um recado
           </button>
         )}
+      </div>
+    );
+  }
+  if (formato === "video") {
+    return (
+      <div>
+        <span className={rotulo}>Qual vídeo</span>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {VIDEOS_TV.map((v) => (
+            <button key={v.id} type="button" onClick={() => set({ ...c, video: v.id })} className={`overflow-hidden rounded-2xl bg-white text-left ring-1 transition ${c.video === v.id ? "ring-[3px] ring-[#FFC21C]" : "ring-[#E3E8F2] hover:ring-[#1B3B7C]"}`}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={v.capa} alt="" className="aspect-video w-full object-cover" />
+              <p className="px-3 py-2 text-[15px] font-bold text-[#1A2240]">{v.nome} <span className="font-normal text-[#8A95AA]">· {v.segundos}s, sem som</span></p>
+            </button>
+          ))}
+        </div>
       </div>
     );
   }
@@ -231,5 +254,6 @@ const EXEMPLO: Record<string, Record<string, unknown>> = {
   frase: { texto: "Ler é *viajar* sem sair do lugar" },
   sabia: { texto: "O polvo tem *três corações*" },
   celebracao: { pre: "o voo mais bonito do ano", titulo: "Formatura", linha: "Grupo V 2026" },
+  video: { video: VIDEOS_TV[0]?.id ?? "" },
   programacao: { titulo: "Programação da *Feira*", linhas: [{ hora: "8h", texto: "Abertura no pátio" }, { hora: "9h", texto: "Visita às salas" }, { hora: "10h30", texto: "Apresentações" }] },
 };

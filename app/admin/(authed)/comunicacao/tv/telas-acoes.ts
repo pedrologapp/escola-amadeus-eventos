@@ -4,6 +4,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { ETIQUETA_TV, MODO_EVENTO, type FormatoTela } from "@/lib/tv";
+import { videoTv } from "@/lib/tv-videos";
 import { ehEquipeTv } from "./equipe";
 import { FIXOS } from "./fixos";
 
@@ -111,6 +112,11 @@ function limpar(formato: FormatoTela, c: Record<string, unknown>): Record<string
     if (!linhas.length) return "Escreva pelo menos um horário.";
     return { titulo: txt(c.titulo, 60), linhas };
   }
+  if (formato === "video") {
+    const v = videoTv(c.video);
+    if (!v) return "Escolha o vídeo.";
+    return { video: v.id };
+  }
   return "Formato ainda não disponível.";
 }
 
@@ -130,7 +136,7 @@ export async function salvarTela(f: TelaForm): Promise<Resultado & { id?: string
   }
   const { data: fim } = await db.from("tv_blocos").select("ordem").eq("id", "fim").maybeSingle();
   const ordem = Number(fim?.ordem ?? 99) - 0.5;
-  const { data: nova, error } = await db.from("tv_telas").insert({ ...linha, ordem, segundos: 12 }).select("id").single();
+  const { data: nova, error } = await db.from("tv_telas").insert({ ...linha, ordem, segundos: f.formato === "video" ? (videoTv(campos.video)?.segundos ?? 12) : 12 }).select("id").single();
   if (error) return { ok: false, erro: error.message };
   mudou();
   return { ok: true, id: nova.id as string };

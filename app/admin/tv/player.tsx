@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Cena, RoteiroTv } from "@/lib/tv";
+import { videoTv } from "@/lib/tv-videos";
 import "./tv.css";
 
 /**
@@ -278,6 +279,12 @@ function conteudo(c: Cena, hora: number) {
       if (f === "frase") return conteudo({ ...c, id: "frase" }, hora);
       if (f === "sabia") return conteudo({ ...c, id: "sabia" }, hora);
       if (f === "celebracao") return conteudo({ ...c, id: "formatura" }, hora);
+      if (f === "video") {
+        // o vídeo ocupa a TV inteira, sem som (muted: assim o navegador deixa tocar sozinho); o rodapé fica por cima
+        const v = videoTv(d.video);
+        if (!v) return null;
+        return <video className="tv-video" src={v.src} poster={v.capa} muted autoPlay playsInline preload="auto" />;
+      }
       if (f === "programacao") {
         const linhas = ((d.linhas as { hora: string; texto: string }[] | undefined) ?? []).filter((l) => l.hora || l.texto);
         return (
@@ -314,6 +321,7 @@ const CLASSE: Record<string, string> = {
   "tela-sabia": "cena-sabia",
   "tela-celebracao": "cena-celebracao",
   "tela-programacao": "cena-programacao",
+  "tela-video": "cena-video",
 };
 
 /** A faixa de notícias do rodapé: as frases passam da direita para a esquerda, sem parar. */
@@ -419,7 +427,7 @@ export function PlayerTv({ roteiro, previa, congelada = null, embutida = false }
       }}
     >
       {escala > 0 && (
-        <div id="palco" className={`periodo-${periodo(hora)}`} style={{ left: "50%", top: "50%", transformOrigin: "center", transform: `translate(-50%, -50%) scale(${escala})` }}>
+        <div id="palco" className={`periodo-${periodo(hora)} ${cenas[atual]?.id === "tela" && (cenas[atual]?.dados as D)?.formato === "video" ? "com-video" : ""}`} style={{ left: "50%", top: "50%", transformOrigin: "center", transform: `translate(-50%, -50%) scale(${escala})` }}>
           <div className="tv-luz" />
           {periodo(hora) === "noite" && <div className="tv-estrelas">{ESTRELAS.map((e, i) => <i key={i} style={{ left: e.l, top: e.t, transform: `scale(${e.s})` }} />)}</div>}
           {cenas.map((c, i) => (

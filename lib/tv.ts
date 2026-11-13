@@ -3,6 +3,7 @@ import "server-only";
 import { unstable_cache } from "next/cache";
 import QRCode from "qrcode";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { videoTv } from "@/lib/tv-videos";
 
 /**
  * TV Amadeus (29/09/2026): a TV da recepção roda um roteiro em loop que se
@@ -65,7 +66,7 @@ export interface BlocoTv {
 }
 
 /** Telas criadas pela escola a partir de um formato pronto (tabela tv_telas, migração 0078). */
-export type FormatoTela = "aviso" | "recado" | "frase" | "sabia" | "celebracao" | "programacao" | "contagem" | "foto";
+export type FormatoTela = "aviso" | "recado" | "frase" | "sabia" | "celebracao" | "programacao" | "contagem" | "foto" | "video";
 
 export interface TelaTv {
   id: string;
@@ -206,7 +207,7 @@ export async function roteiroDoDia(): Promise<RoteiroTv> {
   try {
     // o modo evento muda com o horário: a chave do roteiro guardado diz se ele vale agora (consulta pequena, a cada volta)
     const evento = modoEventoAgora(await lerModoEvento().catch(() => null), hoje);
-    return await unstable_cache(() => montarRoteiro(hoje, evento), ["tv-roteiro", "v9", hoje, turno, evento ? "evento" : "normal"], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })();
+    return await unstable_cache(() => montarRoteiro(hoje, evento), ["tv-roteiro", "v10", hoje, turno, evento ? "evento" : "normal"], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })();
   } catch (e) {
     // nada fica guardado: a TV mostra só o relógio e pede de novo em 1 minuto (app/admin/tv/player.tsx)
     console.error(e);
@@ -299,7 +300,9 @@ async function montarRoteiro(hoje: string, eventoAgora = false): Promise<Roteiro
     if (f.tipo === "tela") {
       const t = f.t;
       if (t.ativo && (!t.inicio || t.inicio <= hoje) && (!t.fim || t.fim >= hoje)) {
-        cenas.push({ id: "tela", chave: `tela:${t.id}`, segundos: t.segundos, dados: { formato: t.formato, ...t.campos } });
+        // a tela de vídeo dura o tamanho do vídeo (e some se o vídeo não existir mais)
+        const v = t.formato === "video" ? videoTv(t.campos.video) : null;
+        if (t.formato !== "video" || v) cenas.push({ id: "tela", chave: `tela:${t.id}`, segundos: v ? v.segundos : t.segundos, dados: { formato: t.formato, ...t.campos } });
       }
       continue;
     }
