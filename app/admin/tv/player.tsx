@@ -68,7 +68,7 @@ const ultimaEmDestaque = (t: string) => {
 };
 
 /** O layout "cartão": legenda à mão, título, frase e o ícone grande ao lado. */
-function Cartao({ icone, legenda, titulo, texto, resposta }: { icone: string; legenda: string; titulo: string; texto?: string; resposta?: string }) {
+function Cartao({ icone, legenda, titulo, texto, resposta, dResposta = 3.2, extra }: { icone: string; legenda: string; titulo: string; texto?: string; resposta?: string; dResposta?: number; extra?: string }) {
   const alto = icone === "lampada";
   return (
     <div className={`cartao-tv ${titulo.length + (resposta?.length ?? 0) > 28 ? "longo" : ""} ${alto ? "icone-alto" : ""}`}>
@@ -78,10 +78,37 @@ function Cartao({ icone, legenda, titulo, texto, resposta }: { icone: string; le
         <div className="mao surge" style={st(0.3)}>{legenda}</div>
         <div className="t1"><Palavras texto={titulo} d0={0.6} /></div>
         {/* pergunta e resposta: a resposta aparece uns segundos depois, em amarelo */}
-        {resposta ? <div className="t1 resposta"><Palavras texto={`*${resposta.replace(/\*/g, "")}*`} d0={3.2} /></div> : null}
+        {resposta ? <div className="t1 resposta"><Palavras texto={`*${resposta.replace(/\*/g, "")}*`} d0={dResposta} /></div> : null}
         {texto ? <p className="t2 surge" style={st(1.8)}><Destaque texto={texto} /></p> : null}
+        {extra ? <p className="t3 surge" style={st(3)}><Destaque texto={extra} /></p> : null}
       </div>
     </div>
+  );
+}
+
+/**
+ * O álbum de um evento (16/11/2026): as fotos na TV inteira, uma a cada 4 s, trocando devagar; o nome do evento
+ * fica embaixo, à esquerda. As fotos já vêm todas carregadas (uma em cima da outra), para a troca não piscar.
+ */
+function Album({ legenda, imagens }: { legenda: string; imagens: string[] }) {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    if (imagens.length < 2) return;
+    const t = setInterval(() => setI((x) => (x + 1) % imagens.length), 4000);
+    return () => clearInterval(t);
+  }, [imagens.length]);
+  return (
+    <>
+      {imagens.map((src, k) => (
+        <div key={src + k} className={`foto-cheia ${k === i ? "vez" : ""}`} style={{ backgroundImage: `url(${src})` }} />
+      ))}
+      {legenda ? (
+        <div className="legenda-foto">
+          <div className="mao surge" style={st(0.6)}>{imagens.length > 1 ? "fotos do evento" : "fotos da escola"}</div>
+          <div className="t1"><Palavras texto={legenda} d0={0.9} /></div>
+        </div>
+      ) : null}
+    </>
   );
 }
 
@@ -280,6 +307,69 @@ function conteudo(c: Cena, hora: number) {
           <div className="mao surge" style={st(1.8)}>30 anos educando para a vida</div>
         </div>
       );
+    // ===== as telas novas (Pedro, 16/11/2026) =====
+    case "tempo": {
+      const icone = d.icone === "sol" ? ({ manha: "sol", tarde: "sol-tarde", noite: "lua" } as const)[periodo(hora)] : String(d.icone);
+      return (
+        <>
+          <Icone nome={icone} />
+          <div className="txt">
+            <div className="mao surge" style={st(0.2)}>o tempo em Natal hoje</div>
+            <div className="t1"><Palavras texto={ultimaEmDestaque(String(d.ceu))} d0={0.5} /></div>
+            <p className="graus surge" style={st(1.4)}><b>{String(d.max)}°</b> máxima <span>·</span> <b>{String(d.min)}°</b> mínima</p>
+            {Number(d.chuva) >= 20 ? <p className="t2 surge" style={st(1.8)}>Chance de chuva: {String(d.chuva)}%</p> : null}
+            <div className="selo-amarelo surge" style={st(2.3)}>{String(d.dica)}</div>
+          </div>
+        </>
+      );
+    }
+    case "contagem": {
+      const falta = diasAte(String(d.data));
+      const nome = String(d.nome);
+      return (
+        <div className={nome.length > 22 ? "longo" : ""}>
+          <Icone nome="ampulheta" />
+          <div className="txt">
+            <div className="mao surge" style={st(0.3)}>contagem regressiva</div>
+            <div className="t1"><Palavras texto={ultimaEmDestaque(nome)} d0={0.6} /></div>
+            <p className="quando surge" style={st(1.6)}>{DIAS[new Date(`${String(d.data)}T12:00:00`).getDay()]}, {dataLonga(String(d.data))}</p>
+            <div className="selo-amarelo surge" style={st(2.1)}>{falta === 0 ? "É hoje!" : falta === 1 ? "É amanhã!" : `Faltam ${falta} dias`}</div>
+          </div>
+        </div>
+      );
+    }
+    case "desafio":
+      // a resposta vem uns segundos depois, para dar tempo de pensar
+      return <Cartao icone="desafio" legenda="desafio Amadeus: você sabe?" titulo={String(d.pergunta)} resposta={String(d.resposta)} dResposta={6} />;
+    case "palavra":
+      return <Cartao icone="globo" legenda="palavra do dia em inglês" titulo={`*${String(d.en)}*`} texto={`Quer dizer: ${String(d.pt)}`} extra={`“${String(d.ex)}”`} />;
+    case "inteligencia":
+      return <Cartao icone="arvore" legenda="inteligência do dia" titulo={ultimaEmDestaque(String(d.nome))} texto={String(d.oque)} extra={`*Experimente hoje:* ${String(d.hoje)}`} />;
+    case "fotos":
+      return <Album legenda={String(d.legenda ?? "")} imagens={(d.imagens as string[] | undefined) ?? (d.imagem ? [String(d.imagem)] : [])} />;
+    case "conquistas":
+      if (!d.imagem) return <Cartao icone="trofeu" legenda="orgulho Amadeus!" titulo={String(d.titulo)} texto={d.texto ? String(d.texto) : undefined} />;
+      return (
+        <>
+          <div className="moldura surge" style={{ ...st(0.2), backgroundImage: `url(${String(d.imagem)})` }} />
+          <div className="txt">
+            <div className="mao surge" style={st(0.4)}>orgulho Amadeus!</div>
+            <div className="t1"><Palavras texto={ultimaEmDestaque(String(d.titulo))} d0={0.7} /></div>
+            {d.texto ? <p className="t2 surge" style={st(1.8)}><Destaque texto={String(d.texto)} /></p> : null}
+          </div>
+        </>
+      );
+    case "equipe":
+      return (
+        <>
+          <div className="moldura redonda surge" style={{ ...st(0.2), backgroundImage: `url(${String(d.imagem)})` }} />
+          <div className="txt">
+            <div className="mao surge" style={st(0.4)}>conheça a nossa equipe</div>
+            <div className="t1"><Palavras texto={ultimaEmDestaque(String(d.nome))} d0={0.7} /></div>
+            {d.funcao ? <p className="t2 surge" style={st(1.8)}>{String(d.funcao)}</p> : null}
+          </div>
+        </>
+      );
     case "tela": {
       // telas criadas pela escola: cada formato usa o desenho de uma cena pronta
       const f = String(d.formato);
@@ -321,6 +411,7 @@ function conteudo(c: Cena, hora: number) {
  */
 const FUNDO: Record<string, string> = {
   "cena-promo": "matriculas",
+  // as telas novas de 16/11 ficam com o azul de sempre (Pedro: "não estou gostando dos fundos, coloque aquele fundo mesmo")
 };
 
 function fundoDe(c: Cena) {
@@ -341,6 +432,14 @@ const CLASSE: Record<string, string> = {
   qr: "cena-qr",
   formatura: "cena-celebracao",
   fim: "cena-fim",
+  tempo: "cena-tempo",
+  contagem: "cena-contagem",
+  desafio: "cena-desafio",
+  palavra: "cena-palavra",
+  inteligencia: "cena-inteligencia",
+  fotos: "cena-fotos",
+  conquistas: "cena-conquistas",
+  equipe: "cena-equipe",
   "tela-aviso": "cena-aviso",
   "tela-recado": "cena-recados",
   "tela-frase": "cena-frase",

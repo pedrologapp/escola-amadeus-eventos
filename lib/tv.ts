@@ -4,6 +4,7 @@ import { unstable_cache } from "next/cache";
 import QRCode from "qrcode";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { videoTv } from "@/lib/tv-videos";
+import { DESAFIOS, INTELIGENCIAS_TV, PALAVRAS, dicaDoTempo, tempoEmPalavras } from "@/lib/tv-conteudo";
 
 /**
  * TV Amadeus (29/09/2026): a TV da recepção roda um roteiro em loop que se
@@ -15,7 +16,7 @@ import { videoTv } from "@/lib/tv-videos";
 
 const FUSO = "America/Fortaleza";
 
-export type TipoItem = "aviso" | "recado" | "agenda" | "frase" | "curiosidade" | "comemoracao" | "rodape";
+export type TipoItem = "aviso" | "recado" | "agenda" | "frase" | "curiosidade" | "comemoracao" | "rodape" | "foto" | "conquista" | "pessoa";
 
 export const TIPOS: { id: TipoItem; nome: string; dica: string }[] = [
   { id: "aviso", nome: "Aviso em destaque", dica: "Ocupa a tela toda, com título grande. Ex.: Arena Arbória, resultado na quinta." },
@@ -25,6 +26,9 @@ export const TIPOS: { id: TipoItem; nome: string; dica: string }[] = [
   { id: "curiosidade", nome: "Você sabia?", dica: "Gira sozinha, uma por dia. Trecho entre *asteriscos* sai em destaque." },
   { id: "rodape", nome: "Frase do rodapé", dica: "Passa na faixa de notícias do rodapé, da direita para a esquerda. Ex.: Matrículas 2027 abertas." },
   { id: "comemoracao", nome: "Data comemorativa", dica: "Aparece na saudação naquele dia, todo ano." },
+  { id: "foto", nome: "Foto de evento", dica: "As fotos de um evento, com o nome dele. Passam uma depois da outra." },
+  { id: "conquista", nome: "Conquista", dica: "Um aluno ou turma que ganhou algo, com foto se tiver." },
+  { id: "pessoa", nome: "Nossa equipe", dica: "Foto, nome e função de alguém da equipe. Passa uma pessoa por dia." },
 ];
 
 /** equipe = só passa se alguém da escola colocar o conteúdo; tipo = o que se cadastra para ele. */
@@ -41,7 +45,32 @@ export const BLOCOS: Record<string, { nome: string; origem: string; equipe?: Tip
   qr: { nome: "QR codes para os pais", origem: "Folder 2027 e pesquisa de satisfação" },
   formatura: { nome: "Formatura 5º ano", origem: "Tela fixa com o aviãozinho" },
   fim: { nome: "Encerramento", origem: "Logo dos 30 anos" },
+  // as novas (Pedro, 16/11/2026)
+  tempo: { nome: "O tempo em Natal", origem: "Automático: a previsão do dia, com uma dica" },
+  contagem: { nome: "Contagem regressiva", origem: "Automático: quantos dias faltam para a próxima data da agenda ou data comemorativa" },
+  desafio: { nome: "Desafio Amadeus", origem: "Automático: uma pergunta por dia e a resposta logo depois" },
+  palavra: { nome: "Palavra do dia em inglês", origem: "Automático: uma palavra por dia, com a tradução e uma frase" },
+  inteligencia: { nome: "Inteligência do dia", origem: "Automático: uma das 8 inteligências do Arboria por dia, com algo para experimentar" },
+  fotos: { nome: "Fotos dos eventos", origem: "Cada evento é uma tela que passa as fotos dele, uma depois da outra", equipe: "foto" },
+  conquistas: { nome: "Conquistas", origem: "Alunos e turmas que ganharam algo", equipe: "conquista" },
+  equipe: { nome: "Nossa equipe", origem: "Uma pessoa da equipe por dia, com foto", equipe: "pessoa" },
 };
+
+/**
+ * As telas novas de 16/11/2026: se ainda não têm linha em tv_blocos, a TV usa este lugar e tempo (a ordem fica entre
+ * as de sempre). A linha nasce quando a escola liga, desliga ou muda a ordem no gerenciador.
+ */
+export const NOVOS: BlocoTv[] = [
+  { id: "tempo", ativo: true, ordem: 1.5, segundos: 11 },
+  { id: "contagem", ativo: true, ordem: 5.5, segundos: 11 },
+  { id: "fotos", ativo: true, ordem: 7.2, segundos: 9 },
+  { id: "conquistas", ativo: true, ordem: 7.4, segundos: 12 },
+  { id: "desafio", ativo: true, ordem: 7.6, segundos: 14 },
+  { id: "palavra", ativo: true, ordem: 8.3, segundos: 11 },
+  { id: "equipe", ativo: true, ordem: 8.5, segundos: 11 },
+  { id: "inteligencia", ativo: true, ordem: 8.7, segundos: 13 },
+];
+const comNovos = (blocos: BlocoTv[]) => [...blocos, ...NOVOS.filter((n) => !blocos.some((b) => b.id === n.id))].sort((a, b) => a.ordem - b.ordem);
 
 /** Prazo da matrícula antecipada (o mesmo do folder: 28 de outubro). */
 export const PRAZO_PROMO = "2026-10-28";
@@ -56,6 +85,8 @@ export interface ItemTv {
   inicio: string | null;
   fim: string | null;
   ativo: boolean;
+  /** a foto (fotos, conquistas e equipe), migração 0081 */
+  imagem?: string | null;
 }
 
 export interface BlocoTv {
@@ -118,13 +149,16 @@ const diaDoAno = (iso: string) => Math.floor((Date.parse(`${iso}T00:00:00Z`) - D
 
 export async function lerItensEBlocos() {
   const db = createAdminClient();
-  const [{ data: itens, error: e1 }, { data: blocos, error: e2 }] = await Promise.all([
-    db.from("tv_itens").select("id, tipo, titulo, texto, icone, data, inicio, fim, ativo").order("criado_em", { ascending: true }),
+  const colunas = "id, tipo, titulo, texto, icone, data, inicio, fim, ativo";
+  const [r1, { data: blocos, error: e2 }] = await Promise.all([
+    db.from("tv_itens").select(`${colunas}, imagem`).order("criado_em", { ascending: true }),
     db.from("tv_blocos").select("id, ativo, ordem, segundos").order("ordem"),
   ]);
+  // sem a coluna da foto (migração 0081 ainda não aplicada): lê como antes
+  const { data: itens, error: e1 } = r1.error?.code === "42703" ? await db.from("tv_itens").select(colunas).order("criado_em", { ascending: true }) : r1;
   // banco fora do ar (ex.: Supabase pausado): falha de verdade, para o roteiro vazio não ficar guardado o dia todo
   if (e1 || e2) throw new Error(`TV: não consegui ler o banco (${(e1 ?? e2)?.message})`);
-  return { itens: (itens ?? []) as ItemTv[], blocos: (blocos ?? []) as BlocoTv[] };
+  return { itens: (itens ?? []) as ItemTv[], blocos: comNovos((blocos ?? []) as BlocoTv[]) };
 }
 
 /** As telas criadas. null = a tabela ainda não existe (migração 0078 não aplicada): a TV segue como antes. */
@@ -190,6 +224,54 @@ async function proximoEvento(hoje: string) {
   return { nome, data: data.data_evento as string, local: (data.local as string | null) ?? "", capa: (data.imagem_capa_url as string | null) ?? null, ilustracao };
 }
 
+/**
+ * O tempo em Natal hoje (Open-Meteo, grátis e sem chave). Vem uma vez por dia, junto com o roteiro guardado.
+ * Se a internet falhar, a tela some naquele dia.
+ */
+async function tempoEmNatal() {
+  const url = "https://api.open-meteo.com/v1/forecast?latitude=-5.7945&longitude=-35.2110&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=America%2FFortaleza&forecast_days=1";
+  const r = await fetch(url, { signal: AbortSignal.timeout(6000), cache: "no-store" });
+  if (!r.ok) return null;
+  const j = (await r.json()) as { daily?: { weather_code?: number[]; temperature_2m_max?: number[]; temperature_2m_min?: number[]; precipitation_probability_max?: (number | null)[] } };
+  const d = j.daily;
+  if (!d?.temperature_2m_max?.length) return null;
+  const max = Math.round(d.temperature_2m_max[0]);
+  const min = Math.round(d.temperature_2m_min?.[0] ?? max);
+  const chuva = Math.round(d.precipitation_probability_max?.[0] ?? 0);
+  const ceu = tempoEmPalavras(d.weather_code?.[0] ?? 1);
+  return { ceu: ceu.txt, icone: ceu.icone, max, min, chuva, dica: dicaDoTempo(max, chuva) };
+}
+
+/**
+ * Contagem regressiva: a próxima data que vale a pena esperar, de 2 a 45 dias daqui: algo da agenda ou uma data
+ * comemorativa (todo ano). Não repete o próximo evento, que já tem a contagem dele.
+ */
+function proximaData(hoje: string, itens: ItemTv[], dataEvento: string | null) {
+  const limite = somaDias(hoje, 45);
+  const ano = Number(hoje.slice(0, 4));
+  const candidatos: { nome: string; data: string; icone: string | null }[] = [];
+  for (const i of itens) {
+    if (!i.ativo || !i.data) continue;
+    if (i.tipo === "agenda") candidatos.push({ nome: i.titulo, data: i.data, icone: i.icone });
+    if (i.tipo === "comemoracao") {
+      const mmdd = i.data.slice(5);
+      const esteAno = `${ano}-${mmdd}`;
+      candidatos.push({ nome: i.titulo, data: esteAno >= hoje ? esteAno : `${ano + 1}-${mmdd}`, icone: i.icone });
+    }
+  }
+  const prox = candidatos
+    .filter((x) => x.data >= somaDias(hoje, 2) && x.data <= limite && x.data !== dataEvento)
+    .sort((a, b) => a.data.localeCompare(b.data))[0];
+  return prox ? { nome: prox.nome.replace(/\*/g, ""), data: prox.data, icone: prox.icone } : null;
+}
+
+/** n itens diferentes da lista, começando pelo do dia (gira um por dia). */
+function varias<T>(lista: T[], n: number, hoje = hojeLocal()): T[] {
+  if (!lista.length) return [];
+  const k = diaDoAno(hoje) * n;
+  return Array.from({ length: Math.min(n, lista.length) }, (_, i) => lista[(k + i) % lista.length]);
+}
+
 const qr = (url: string) => QRCode.toString(url, { type: "svg", margin: 1, color: { dark: "#12307A", light: "#FFFFFF" } });
 
 const horaLocal = () => Number(new Date().toLocaleString("en-US", { timeZone: FUSO, hour: "numeric", hour12: false })) % 24;
@@ -207,7 +289,7 @@ export async function roteiroDoDia(): Promise<RoteiroTv> {
   try {
     // o modo evento muda com o horário: a chave do roteiro guardado diz se ele vale agora (consulta pequena, a cada volta)
     const evento = modoEventoAgora(await lerModoEvento().catch(() => null), hoje);
-    return await unstable_cache(() => montarRoteiro(hoje, evento), ["tv-roteiro", "v11", hoje, turno, evento ? "evento" : "normal"], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })();
+    return await unstable_cache(() => montarRoteiro(hoje, evento), ["tv-roteiro", "v14", hoje, turno, evento ? "evento" : "normal"], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })();
   } catch (e) {
     // nada fica guardado: a TV mostra só o relógio e pede de novo em 1 minuto (app/admin/tv/player.tsx)
     console.error(e);
@@ -275,9 +357,10 @@ async function montarRoteiro(hoje: string, eventoAgora = false): Promise<Roteiro
   const blocos = (telas ? todosBlocos.filter((b) => b.id !== "formatura") : todosBlocos).filter((b) => b.id !== MODO_EVENTO);
   const valem = itens.filter((i) => valeHoje(i, hoje));
   const de = (t: TipoItem) => valem.filter((i) => i.tipo === t);
-  const [nivers, evento, qrFolder, qrPesquisa] = await Promise.all([
+  const [nivers, evento, tempo, qrFolder, qrPesquisa] = await Promise.all([
     aniversariantes(hoje), // se o banco falhar, o roteiro não é guardado e a TV tenta de novo
     proximoEvento(hoje).catch(() => null),
+    tempoEmNatal().catch(() => null),
     qr("https://www.escolaamadeus.com/conheca"), // folder SEM valores (público)
     qr("https://pesquisa.escolaamadeus.com/escolar"),
   ]);
@@ -341,13 +424,57 @@ async function montarRoteiro(hoje: string, eventoAgora = false): Promise<Roteiro
           for (const i of doEvento) c({ texto: i.titulo, evento: true }, `sabia:${i.id}`);
           break;
         }
-        const s = gira(de("curiosidade").filter((i) => !i.data));
-        if (s) c({ texto: s.titulo });
+        // três curiosidades por volta: a primeira aqui, as outras espalhadas pela volta (Pedro, 16/11/2026)
+        varias(de("curiosidade").filter((i) => !i.data), 3).forEach((s, k) => c({ texto: s.titulo }, k ? `extra:sabia:${k}` : b.id));
         break;
       }
       case "frase": {
-        const f = gira(de("frase"));
-        if (f) c({ texto: f.titulo });
+        varias(de("frase"), 2).forEach((f, k) => c({ texto: f.titulo }, k ? `extra:frase:${k}` : b.id));
+        break;
+      }
+      case "tempo":
+        if (tempo) c(tempo);
+        break;
+      case "contagem": {
+        const prox = proximaData(hoje, itens, evento?.data ?? null);
+        if (prox) c(prox);
+        break;
+      }
+      case "desafio": {
+        const d = DESAFIOS[diaDoAno(hoje) % DESAFIOS.length];
+        c({ pergunta: d.p, resposta: d.r });
+        break;
+      }
+      case "palavra":
+        c({ ...PALAVRAS[diaDoAno(hoje) % PALAVRAS.length] });
+        break;
+      case "inteligencia":
+        c({ ...INTELIGENCIAS_TV[diaDoAno(hoje) % INTELIGENCIAS_TV.length] });
+        break;
+      case "fotos": {
+        // álbuns de evento (Pedro, 16/11/2026: "um espaço para eventos esporádicos, para colocar as fotos que recebemos"):
+        // as fotos com o mesmo nome de evento formam um álbum; cada álbum é uma tela que passa as fotos, uma a cada 4 s
+        const albuns = new Map<string, string[]>();
+        for (const f of de("foto")) {
+          if (!f.imagem) continue;
+          const nome = f.titulo.trim() || "Fotos da escola";
+          albuns.set(nome, [...(albuns.get(nome) ?? []), f.imagem]);
+        }
+        let n = 0;
+        for (const [nome, todas] of albuns) {
+          // até 12 fotos por volta; com mais, cada dia começa de um ponto diferente
+          const imagens = todas.length <= 12 ? todas : varias(todas, 12);
+          cenas.push({ id: b.id, chave: `album:${n++}`, segundos: Math.min(60, Math.max(8, imagens.length * 4)), dados: { legenda: nome, imagens } });
+        }
+        break;
+      }
+      case "conquistas":
+        for (const q of de("conquista").slice(0, 4)) c({ titulo: q.titulo, texto: q.texto, imagem: q.imagem ?? null }, `conquista:${q.id}`);
+        break;
+      case "equipe": {
+        // uma pessoa por dia
+        const p = gira(de("pessoa").filter((i) => i.imagem));
+        if (p) c({ nome: p.titulo, funcao: p.texto, imagem: p.imagem });
         break;
       }
       case "qr":
@@ -369,6 +496,22 @@ async function montarRoteiro(hoje: string, eventoAgora = false): Promise<Roteiro
       antesDoFim.forEach((x, i) => { cenas.push(x); if (i % 2 === 1 && doEvento.length) cenas.push(doEvento.shift()!); });
       cenas.push(...doEvento, ...depois);
     }
+  }
+  // as curiosidades e frases a mais se espalham pela volta, uma a cada três telas, antes do encerramento
+  const extras = cenas.filter((x) => x.chave.startsWith("extra:"));
+  if (extras.length) {
+    const resto = cenas.filter((x) => !x.chave.startsWith("extra:"));
+    const fimIdx = resto.findIndex((x) => x.id === "fim");
+    const corpo = fimIdx >= 0 ? resto.slice(0, fimIdx) : resto;
+    // em lugares espaçados e nunca colada numa tela do mesmo tipo (curiosidade ao lado de curiosidade)
+    extras.sort((a, b) => a.chave.slice(-1).localeCompare(b.chave.slice(-1)));
+    extras.forEach((e, k) => {
+      let p = Math.max(1, Math.round(((k + 1) * corpo.length) / (extras.length + 1)));
+      while (p < corpo.length && (corpo[p - 1]?.id === e.id || corpo[p]?.id === e.id)) p++;
+      corpo.splice(p, 0, e);
+    });
+    cenas.length = 0;
+    cenas.push(...corpo, ...(fimIdx >= 0 ? resto.slice(fimIdx) : []));
   }
   // o evento de hoje ou de amanhã é o assunto do dia: vem logo depois da saudação
   const iEv = cenas.findIndex((x) => x.id === "evento");

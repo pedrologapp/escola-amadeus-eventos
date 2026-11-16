@@ -3,7 +3,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { ETIQUETA_TV, MODO_EVENTO, type FormatoTela } from "@/lib/tv";
+import { ETIQUETA_TV, MODO_EVENTO, NOVOS, type FormatoTela } from "@/lib/tv";
 import { videoTv } from "@/lib/tv-videos";
 import { ehEquipeTv } from "./equipe";
 import { FIXOS } from "./fixos";
@@ -28,15 +28,33 @@ async function logado() {
   return !!data.user;
 }
 
+/**
+ * Muda um bloco. As telas novas de 16/11/2026 (NOVOS em lib/tv.ts) podem ainda não ter linha no banco: aí a linha
+ * nasce agora, com o lugar e o tempo padrão. Devolve a mensagem de erro, ou null.
+ */
+async function gravarBloco(id: string, mudanca: { ativo?: boolean; ordem?: number; segundos?: number }): Promise<string | null> {
+  const db = createAdminClient();
+  const { data, error } = await db.from("tv_blocos").update(mudanca).eq("id", id).select("id");
+  if (error) return error.message;
+  if (data?.length) return null;
+  const padrao = NOVOS.find((n) => n.id === id);
+  if (!padrao) return null;
+  const { error: e2 } = await db.from("tv_blocos").insert({ id, ativo: padrao.ativo, ordem: Math.round(padrao.ordem), segundos: padrao.segundos, ...mudanca });
+  return e2?.message ?? null;
+}
+
 /** Liga ou desliga uma tela (bloco ou tela criada). */
 export async function ligarBloco(id: string, ativo: boolean): Promise<Resultado> {
   if (!(await logado())) return { ok: false, erro: "Sessão expirada. Entre de novo." };
   if (FIXOS[id] && !(await ehEquipeTv())) return { ok: false, erro: "Esta tela é fixa do Arboria." };
   const db = createAdminClient();
-  const { error } = ehTela(id)
-    ? await db.from("tv_telas").update({ ativo: !!ativo }).eq("id", idTela(id))
-    : await db.from("tv_blocos").update({ ativo: !!ativo }).eq("id", id);
-  if (error) return { ok: false, erro: error.message };
+  if (ehTela(id)) {
+    const { error } = await db.from("tv_telas").update({ ativo: !!ativo }).eq("id", idTela(id));
+    if (error) return { ok: false, erro: error.message };
+  } else {
+    const erro = await gravarBloco(id, { ativo: !!ativo });
+    if (erro) return { ok: false, erro };
+  }
   mudou();
   return { ok: true };
 }
@@ -57,8 +75,8 @@ export async function ordenarBlocos(lista: { id: string; segundos: number }[]): 
   const blocos = fila.map((b, i) => ({ ...b, ordem: i + 1 })).filter((b) => !ehTela(b.id));
   const telas = fila.map((b, i) => ({ ...b, ordem: i + 1 })).filter((b) => ehTela(b.id));
   for (const b of blocos) {
-    const { error } = await db.from("tv_blocos").update({ ordem: b.ordem, segundos: seg(b.segundos) }).eq("id", b.id);
-    if (error) return { ok: false, erro: error.message };
+    const erro = await gravarBloco(b.id, { ordem: b.ordem, segundos: seg(b.segundos) });
+    if (erro) return { ok: false, erro };
   }
   for (const t of telas) {
     const { error } = await db.from("tv_telas").update({ ordem: t.ordem, segundos: seg(t.segundos) }).eq("id", idTela(t.id));

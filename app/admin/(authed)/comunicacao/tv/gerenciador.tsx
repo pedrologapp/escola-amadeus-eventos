@@ -8,6 +8,7 @@ import { apagarItem, ativarItem, salvarItem, type ItemForm } from "@/app/admin/(
 import { ligarBloco, ordenarBlocos } from "./telas-acoes";
 import { FIXOS } from "./fixos";
 import { AvisosDestaque } from "./avisos";
+import { FotosTv } from "./fotos";
 import { ModoEvento } from "./modo-evento";
 import { EditorTela, NovaTela, formatoTela, nomeTela, visualTela } from "./telas";
 import { EditorAgenda, EditorRecados } from "@/app/admin/(authed)/comunicacao/tv/editores";
@@ -36,6 +37,15 @@ const VISUAL: Record<string, { fundo: string; icone: string; claro?: boolean }> 
   qr: { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "celular" },
   formatura: { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "capelo" },
   fim: { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "estrela" },
+  // as novas (16/11/2026)
+  tempo: { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "nuvem" },
+  contagem: { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "ampulheta" },
+  desafio: { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "desafio" },
+  palavra: { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "globo" },
+  inteligencia: { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "arvore" },
+  fotos: { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "camera" },
+  conquistas: { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "trofeu" },
+  equipe: { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "coracao" },
 };
 
 /** Cartões cujo conteúdo é uma lista simples (frases, curiosidades e datas comemorativas). */
@@ -49,8 +59,9 @@ const LISTA: Record<string, { tipo: TipoItem; titulo: string; dica: string; exem
 /** O roteiro separado por função (o número no cartão continua sendo a ordem em que passa na TV). */
 const GRUPOS: { nome: string; ids: string[] }[] = [
   { nome: "Recados da escola", ids: ["avisos", "recados", "agenda"] },
-  { nome: "Conteúdo do dia", ids: ["saudacao", "sabia", "frase"] },
-  { nome: "Automáticos", ids: ["aniversariantes", "evento", "promo", "qr", "formatura", "fim"] },
+  { nome: "Fotos da escola", ids: ["fotos", "conquistas", "equipe"] },
+  { nome: "Conteúdo do dia", ids: ["saudacao", "sabia", "frase", "desafio", "palavra", "inteligencia"] },
+  { nome: "Automáticos", ids: ["aniversariantes", "evento", "promo", "qr", "formatura", "fim", "tempo", "contagem"] },
 ];
 
 const LINK_TV ="https://www.escolaamadeus.com/tv";
@@ -206,6 +217,12 @@ export function Gerenciador({ itens, blocos: iniciais, telas, podeCriar, nomes, 
             <div className="grid gap-6 lg:grid-cols-2">
               <EditorRecados itens={itens} hoje={hoje} onMudou={mudou} abrirNovo={0} />
               <AvisosDestaque itens={itens} hoje={hoje} onMudou={mudou} />
+            </div>
+            {/* as telas com foto (16/11/2026): só passam quando alguém coloca */}
+            <FotosTv tipo="foto" itens={itens} hoje={hoje} onMudou={mudou} />
+            <div className="grid gap-6 lg:grid-cols-2">
+              <FotosTv tipo="conquista" itens={itens} hoje={hoje} onMudou={mudou} />
+              <FotosTv tipo="pessoa" itens={itens} hoje={hoje} onMudou={mudou} />
             </div>
             {podeCriar && (
               <section className="rounded-3xl bg-white p-5 ring-1 ring-[#E3E8F2]">
@@ -389,6 +406,9 @@ function Editor({ id, itens, hoje, origem, onMudou }: { id: string; itens: ItemT
   if (id === "avisos") return <AvisosDestaque itens={itens} hoje={hoje} onMudou={onMudou} />;
   if (id === "recados") return <EditorRecados itens={itens} hoje={hoje} onMudou={onMudou} abrirNovo={0} />;
   if (id === "agenda") return <EditorAgenda itens={itens} hoje={hoje} onMudou={onMudou} />;
+  if (id === "fotos") return <FotosTv tipo="foto" itens={itens} hoje={hoje} onMudou={onMudou} />;
+  if (id === "conquistas") return <FotosTv tipo="conquista" itens={itens} hoje={hoje} onMudou={onMudou} />;
+  if (id === "equipe") return <FotosTv tipo="pessoa" itens={itens} hoje={hoje} onMudou={onMudou} />;
   if (LISTA[id]) return <ListaSimples key={id} conf={LISTA[id]} itens={itens} hoje={hoje} origem={id === "saudacao" ? origem : ""} onMudou={onMudou} />;
   const extra = id === NA_RECEPCAO_NAO
     ? "Na TV da recepção este cartão não aparece, porque o endereço é aberto e ele tem o nome dos alunos. Ele passa só na TV com login."

@@ -209,3 +209,34 @@
 #rodape, #progresso, .tv-marca { transition: transform .9s ease, opacity .9s ease; }
 .com-video #rodape { transform: translateY(100%); }
 .com-video #progresso, .com-video .tv-marca { opacity: 0; }
+
+/* ===== as telas novas (Pedro, 16/11/2026) ===== */
+/* o terceiro texto do cartão (a frase de exemplo, o "experimente hoje") */
+.cartao-tv .t3 { margin-top: 26px; font-size: 46px; line-height: 1.3; color: var(--tv-creme); }
+.cartao-tv .t3 b { color: var(--tv-amarelo); font-weight: 700; }
+.cena-inteligencia .cartao-tv .t2, .cena-palavra .cartao-tv .t2 { font-size: 50px; }
+/* tempo e contagem: o texto à esquerda e o ícone grande à direita, como a saudação */
+.cena-tempo .icone3d, .cena-contagem .icone3d { right: 150px; top: 170px; width: 520px; }
+.cena-tempo .txt, .cena-contagem .txt { position: absolute; left: 150px; right: 720px; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; }
+.cena-tempo .t1, .cena-contagem .t1 { margin-top: 18px; font-size: 128px; }
+.cena-contagem .longo .t1 { font-size: 100px; }
+.cena-tempo .graus { margin-top: 28px; font-size: 56px; color: var(--tv-creme); }
+.cena-tempo .graus b { font-family: TvTitulo, sans-serif; font-weight: 400; font-size: 96px; color: var(--tv-amarelo); }
+.cena-tempo .graus span { margin: 0 18px; opacity: .5; }
+.cena-tempo .t2 { margin-top: 12px; }
+.cena-tempo .selo-amarelo, .cena-contagem .selo-amarelo { margin-top: 36px; align-self: flex-start; font-size: 46px; }
+.cena-contagem .quando { margin-top: 30px; font-size: 58px; color: var(--tv-creme); }
+/* fotos da escola: a foto na TV inteira, a legenda embaixo à esquerda */
+.cena-fotos .foto-cheia { position: absolute; inset: 0; background-color: #071331; background-size: cover; background-position: center; opacity: 0; transition: opacity 1.2s ease; }
+.cena-fotos .foto-cheia.vez { opacity: 1; animation: tv-aproxima 6s ease-out both; }
+.cena-fotos .legenda-foto { position: absolute; left: 0; right: 0; bottom: 0; padding: 120px 150px 50px; background: linear-gradient(0deg, rgba(7,19,49,.85), rgba(7,19,49,0)); }
+.cena-fotos .legenda-foto .t1 { margin-top: 10px; font-size: 96px; }
+/* conquistas e equipe: a foto numa moldura à direita, o texto à esquerda */
+.moldura { position: absolute; right: 150px; top: 120px; width: 600px; height: 680px; border-radius: 48px; background-size: cover; background-position: center; border: 10px solid var(--tv-creme); box-shadow: 0 30px 60px rgba(0,0,0,.35); }
+.moldura.redonda { top: 140px; width: 640px; height: 640px; border-radius: 50%; }
+.cena-conquistas .txt, .cena-equipe .txt { position: absolute; left: 150px; right: 840px; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; }
+.cena-conquistas .t1, .cena-equipe .t1 { margin-top: 18px; font-size: 120px; }
+.cena-conquistas .t2, .cena-equipe .t2 { margin-top: 30px; }
+/* os ícones novos são mais "cheios": um pouco menores, para não encostar no texto */
+.cena-desafio .cartao-tv .icone3d, .cena-palavra .cartao-tv .icone3d, .cena-inteligencia .cartao-tv .icone3d, .cena-conquistas .cartao-tv .icone3d { width: 440px; right: 150px; top: 190px; }
+.cena-desafio .cartao-tv .icone3d { width: 360px; right: 190px; top: 150px; }
