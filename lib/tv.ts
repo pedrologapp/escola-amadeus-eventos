@@ -225,16 +225,16 @@ async function proximoEvento(hoje: string) {
 }
 
 /**
- * O tempo em Natal hoje (Open-Meteo, grátis e sem chave). Vem uma vez por dia, junto com o roteiro guardado.
- * Se a internet falhar, a tela some naquele dia.
+ * O tempo em Natal hoje (Open-Meteo, grátis e sem chave). Fica guardado à parte do roteiro, por uma hora; se o serviço
+ * não responder, nada fica guardado, a tela do tempo é pulada naquela volta e a TV tenta de novo na próxima.
  */
 async function tempoEmNatal() {
   const url = "https://api.open-meteo.com/v1/forecast?latitude=-5.7945&longitude=-35.2110&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=America%2FFortaleza&forecast_days=1";
-  const r = await fetch(url, { signal: AbortSignal.timeout(6000), cache: "no-store" });
-  if (!r.ok) return null;
+  const r = await fetch(url, { signal: AbortSignal.timeout(4000) });
+  if (!r.ok) throw new Error(`tempo: ${r.status}`);
   const j = (await r.json()) as { daily?: { weather_code?: number[]; temperature_2m_max?: number[]; temperature_2m_min?: number[]; precipitation_probability_max?: (number | null)[] } };
   const d = j.daily;
-  if (!d?.temperature_2m_max?.length) return null;
+  if (!d?.temperature_2m_max?.length) throw new Error("tempo: resposta vazia");
   const max = Math.round(d.temperature_2m_max[0]);
   const min = Math.round(d.temperature_2m_min?.[0] ?? max);
   const chuva = Math.round(d.precipitation_probability_max?.[0] ?? 0);
@@ -289,7 +289,13 @@ export async function roteiroDoDia(): Promise<RoteiroTv> {
   try {
     // o modo evento muda com o horário: a chave do roteiro guardado diz se ele vale agora (consulta pequena, a cada volta)
     const evento = modoEventoAgora(await lerModoEvento().catch(() => null), hoje);
-    return await unstable_cache(() => montarRoteiro(hoje, evento), ["tv-roteiro", "v14", hoje, turno, evento ? "evento" : "normal"], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })();
+    const [r, tempo] = await Promise.all([
+      unstable_cache(() => montarRoteiro(hoje, evento), ["tv-roteiro", "v15", hoje, turno, evento ? "evento" : "normal"], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })(),
+      unstable_cache(tempoEmNatal, ["tv-tempo", hoje], { revalidate: 60 * 60 })().catch((e) => { console.error("TV: o tempo não veio", e); return null; }),
+    ]);
+    // a tela do tempo recebe a previsão; sem previsão, ela sai desta volta
+    const cenas = r.cenas.flatMap((c) => (c.id !== "tempo" ? [c] : tempo ? [{ ...c, dados: tempo }] : []));
+    return { ...r, cenas };
   } catch (e) {
     // nada fica guardado: a TV mostra só o relógio e pede de novo em 1 minuto (app/admin/tv/player.tsx)
     console.error(e);
@@ -357,10 +363,9 @@ async function montarRoteiro(hoje: string, eventoAgora = false): Promise<Roteiro
   const blocos = (telas ? todosBlocos.filter((b) => b.id !== "formatura") : todosBlocos).filter((b) => b.id !== MODO_EVENTO);
   const valem = itens.filter((i) => valeHoje(i, hoje));
   const de = (t: TipoItem) => valem.filter((i) => i.tipo === t);
-  const [nivers, evento, tempo, qrFolder, qrPesquisa] = await Promise.all([
+  const [nivers, evento, qrFolder, qrPesquisa] = await Promise.all([
     aniversariantes(hoje), // se o banco falhar, o roteiro não é guardado e a TV tenta de novo
     proximoEvento(hoje).catch(() => null),
-    tempoEmNatal().catch(() => null),
     qr("https://www.escolaamadeus.com/conheca"), // folder SEM valores (público)
     qr("https://pesquisa.escolaamadeus.com/escolar"),
   ]);
@@ -433,7 +438,8 @@ async function montarRoteiro(hoje: string, eventoAgora = false): Promise<Roteiro
         break;
       }
       case "tempo":
-        if (tempo) c(tempo);
+        // o lugar da tela; a previsão entra na hora de entregar o roteiro (roteiroDoDia)
+        c({});
         break;
       case "contagem": {
         const prox = proximaData(hoje, itens, evento?.data ?? null);
