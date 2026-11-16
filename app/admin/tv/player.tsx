@@ -519,7 +519,9 @@ export function PlayerTv({ roteiro, previa, congelada = null, embutida = false }
   // a volta: começa pela hora do dia (quem abre a TV agora não vê o mesmo que viu de manhã) e anda a cada volta
   const [volta, setVolta] = useState(0);
   useEffect(() => {
-    if (!congelada && !previa) setVolta(Math.floor(Date.now() / 300000));
+    if (congelada || previa) return;
+    const t = setTimeout(() => setVolta(Math.floor(Date.now() / 300000)), 0);
+    return () => clearTimeout(t);
   }, [congelada, previa]);
   const cenas = useMemo(() => daVolta(roteiro, volta, previa || !!congelada), [roteiro, volta, previa, congelada]);
   // congelada (?cena=3&t=5): para na cena 3 no segundo 5, para conferir
