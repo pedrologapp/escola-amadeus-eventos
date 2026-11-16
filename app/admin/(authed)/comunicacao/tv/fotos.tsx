@@ -61,7 +61,7 @@ function PreviaFoto({ tipo, f }: { tipo: Tipo; f: ItemForm }) {
   const roteiro = { hoje: "", atualizado: "previa", cenas: [{ id: CONF_FOTOS[tipo].bloco, chave: "previa", segundos: 999, dados }] };
   return (
     <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-[#0B1430]">
-      {f.imagem || tipo === "conquista" ? <PlayerTv roteiro={roteiro} previa congelada={{ cena: 0, t: 8 }} /> : (
+      {f.imagem || tipo === "conquista" ? <PlayerTv key={f.imagem || "sem-foto"} roteiro={roteiro} previa congelada={{ cena: 0, t: 8 }} /> : (
         <div className="flex h-full items-center justify-center text-sm font-semibold text-white/60">Escolha a foto para ver como fica</div>
       )}
     </div>
