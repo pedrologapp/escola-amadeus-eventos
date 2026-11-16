@@ -34,7 +34,7 @@ export const BLOCOS: Record<string, { nome: string; origem: string; equipe?: Tip
   avisos: { nome: "Avisos em destaque", origem: "Cada aviso é uma tela inteira", equipe: "aviso" },
   recados: { nome: "Recados da coordenação", origem: "Lembretes curtos para pais e alunos", equipe: "recado" },
   evento: { nome: "Próximo evento", origem: "Automático: o próximo evento publicado, com contagem" },
-  promo: { nome: "Matrícula antecipada", origem: "Automático: some sozinho depois do prazo" },
+  promo: { nome: "Matrículas 2027", origem: "Automático: a matrícula antecipada até o prazo; depois, matrículas abertas" },
   agenda: { nome: "Agenda da semana", origem: "Provas, passeios, reuniões de cada dia", equipe: "agenda" },
   sabia: { nome: "Você sabia?", origem: "Gira sozinho, um por dia (já tem uma lista pronta)", equipe: "curiosidade" },
   frase: { nome: "Frase do dia", origem: "Gira sozinha, uma por dia (já tem uma lista pronta)", equipe: "frase" },
@@ -207,7 +207,7 @@ export async function roteiroDoDia(): Promise<RoteiroTv> {
   try {
     // o modo evento muda com o horário: a chave do roteiro guardado diz se ele vale agora (consulta pequena, a cada volta)
     const evento = modoEventoAgora(await lerModoEvento().catch(() => null), hoje);
-    return await unstable_cache(() => montarRoteiro(hoje, evento), ["tv-roteiro", "v10", hoje, turno, evento ? "evento" : "normal"], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })();
+    return await unstable_cache(() => montarRoteiro(hoje, evento), ["tv-roteiro", "v11", hoje, turno, evento ? "evento" : "normal"], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })();
   } catch (e) {
     // nada fica guardado: a TV mostra só o relógio e pede de novo em 1 minuto (app/admin/tv/player.tsx)
     console.error(e);
@@ -328,7 +328,8 @@ async function montarRoteiro(hoje: string, eventoAgora = false): Promise<Roteiro
         if (evento) c(evento);
         break;
       case "promo":
-        if (hoje <= PRAZO_PROMO) c({ prazo: PRAZO_PROMO, qr: qrFolder });
+        // até o prazo, a matrícula antecipada; depois, "matrículas 2027 abertas" (Pedro, 16/11/2026)
+        c({ prazo: hoje <= PRAZO_PROMO ? PRAZO_PROMO : null, qr: qrFolder });
         break;
       case "agenda":
         if (agenda.length) c({ dias: diasSemana.map((d) => ({ data: d, itens: agenda.filter((i) => i.data === d).map((i) => i.titulo) })) });

@@ -22,6 +22,15 @@ export const VIDEOS_TV: VideoTv[] = [
     capa: "/tv/videos/arboria-intro.jpg",
     segundos: 99,
   },
+  {
+    // o filme manifesto do Amadeus (o mesmo da apresentação do financeiro da Experiência: public/experiencia-geekie-ef881fab/
+    // video/manifesto.mp4), sem o som; o final com "matrículas 2026 abertas" foi cortado e a logo fica parada 2,5 s
+    id: "amadeus-manifesto",
+    nome: "Amadeus: o filme manifesto",
+    src: "/tv/videos/amadeus-manifesto.mp4",
+    capa: "/tv/videos/amadeus-manifesto.jpg",
+    segundos: 85,
+  },
 ];
 
 export const videoTv = (id: unknown) => VIDEOS_TV.find((v) => v.id === id) ?? null;

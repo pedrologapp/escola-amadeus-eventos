@@ -182,6 +182,18 @@ function conteudo(c: Cena, hora: number) {
       );
     }
     case "promo": {
+      // depois do prazo da antecipada: matrículas abertas, com o WhatsApp para agendar a visita (Pedro, 16/11/2026)
+      if (!d.prazo)
+        return (
+          <>
+            <div className="txt">
+              <div className="mao surge" style={st(0.3)}>venha fazer parte</div>
+              <div className="t1"><Palavras texto="Matrículas *2027* abertas!" d0={0.6} /></div>
+              <p className="t2 surge" style={st(1.8)}>Agende uma visita pelo WhatsApp <b>(84) 9 8145-0229</b>.</p>
+            </div>
+            <div className="qr surge" style={st(1.2)}><div className="caixa" dangerouslySetInnerHTML={{ __html: String(d.qr) }} /><p>Aponte a câmera e conheça a escola</p></div>
+          </>
+        );
       const falta = diasAte(String(d.prazo));
       return (
         <>
@@ -300,6 +312,20 @@ function conteudo(c: Cena, hora: number) {
     default:
       return null;
   }
+}
+
+/**
+ * O fundo fosco com foto real (do filme manifesto do Amadeus, em Full HD, já desfocada em public/tv/fundos), com um véu
+ * azul por cima para o texto aparecer. Só nas telas novas: as que já existiam ficam com o fundo de sempre
+ * (Pedro, 16/11/2026: "não quero que mude o fundo do que já temos, é apenas dos novos").
+ */
+const FUNDO: Record<string, string> = {
+  "cena-promo": "matriculas",
+};
+
+function fundoDe(c: Cena) {
+  const foto = FUNDO[CLASSE[c.id === "tela" ? `tela-${String((c.dados as D).formato)}` : c.id] ?? ""];
+  return foto ? <div className="tv-fundo" style={{ backgroundImage: `url(/tv/fundos/${foto}.jpg)` }} /> : null;
 }
 
 const CLASSE: Record<string, string> = {
@@ -431,7 +457,8 @@ export function PlayerTv({ roteiro, previa, congelada = null, embutida = false }
           <div className="tv-luz" />
           {periodo(hora) === "noite" && <div className="tv-estrelas">{ESTRELAS.map((e, i) => <i key={i} style={{ left: e.l, top: e.t, transform: `scale(${e.s})` }} />)}</div>}
           {cenas.map((c, i) => (
-            <section key={`${roteiro.atualizado}:${c.chave}`} className={`cena ${CLASSE[c.id === "tela" ? `tela-${String((c.dados as D).formato)}` : c.id] ?? ""} ${i === atual ? "on" : ""} ${i === saindo ? "sai" : ""}`}>
+            <section key={`${roteiro.atualizado}:${c.chave}`} className={`cena ${CLASSE[c.id === "tela" ? `tela-${String((c.dados as D).formato)}` : c.id] ?? ""} tr${i % 3} ${i === atual ? "on" : ""} ${i === saindo ? "sai" : ""}`}>
+              {(i === atual || i === saindo) && fundoDe(c)}
               {(i === atual || i === saindo) && conteudo(c, hora)}
             </section>
           ))}

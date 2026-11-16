@@ -38,6 +38,24 @@
 .cena.on { opacity: 1; transform: scale(1); z-index: 2; }
 .cena.sai { opacity: 0; z-index: 1; }
 
+/* o fundo fosco: a foto já vem desfocada; o véu azul é mais forte do lado do texto (Pedro, 16/11/2026) */
+.tv-fundo { position: absolute; inset: 0; z-index: -1; background-size: cover; background-position: center; }
+.tv-fundo:after { content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, rgba(9,24,66,.80) 0%, rgba(9,24,66,.55) 55%, rgba(9,24,66,.30) 100%), linear-gradient(0deg, rgba(9,24,66,.5), rgba(9,24,66,0) 30%); }
+.on .tv-fundo { animation: tv-aproxima 14s ease-out both; }
+@keyframes tv-aproxima { from { transform: scale(1.1); } to { transform: scale(1); } }
+
+/* as transições: a tela que sai se apaga e a nova entra, cada vez de um jeito (cortina, círculo, diagonal);
+   o fundo azul é o mesmo de sempre, só a tela com foto traz o próprio */
+.cena.on.tr0, .cena.on.tr1, .cena.on.tr2 { opacity: 1; transform: none; transition: none; }
+.cena.sai { transition: opacity .7s ease; }
+.cena.on.tr0 { animation: tv-cortina 1s cubic-bezier(.7,0,.25,1) both; }
+.cena.on.tr1 { animation: tv-circulo 1s cubic-bezier(.6,0,.3,1) both; }
+.cena.on.tr2 { animation: tv-diagonal 1s cubic-bezier(.7,0,.25,1) both; }
+@keyframes tv-cortina { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes tv-circulo { from { clip-path: circle(0% at 72% 45%); } to { clip-path: circle(140% at 72% 45%); } }
+@keyframes tv-diagonal { from { clip-path: polygon(0 0, 0 0, -40% 100%, -40% 100%); } to { clip-path: polygon(0 0, 140% 0, 100% 100%, -40% 100%); } }
+
 /* animações de entrada */
 .p { display: inline-block; opacity: 0; transform: translateY(26px); }
 .on .p { animation: tv-sobe .8s cubic-bezier(.2,.8,.2,1) forwards; animation-delay: calc(var(--d, 0) * 1s); }
@@ -145,7 +163,7 @@
 .cena-promo .t1 { margin-top: 20px; font-size: 118px; }
 .cena-promo .t2 { margin-top: 30px; }
 .cena-promo .selo-amarelo { margin-top: 36px; }
-.cena-promo .qr { position: absolute; right: 170px; top: 210px; text-align: center; }
+.cena-promo .qr { position: absolute; right: 170px; top: 210px; width: 420px; text-align: center; }
 .cena-promo .qr .caixa { width: 420px; height: 420px; padding: 28px; border-radius: 40px; background: #fff; }
 .cena-promo .qr .caixa svg { width: 100%; height: 100%; display: block; }
 .cena-promo .qr p { margin-top: 22px; font-size: 46px; color: var(--tv-suave); }
