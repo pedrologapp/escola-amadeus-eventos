@@ -131,6 +131,25 @@ export interface RoteiroTv {
   rodape?: string[];
   /** o modo evento está ligado hoje (12/11/2026) */
   modoEvento?: boolean;
+  /**
+   * O monte de perguntas do dia: curiosidades e desafios misturados (Pedro, 16/11/2026: "mesclar isso, como perguntas
+   * aleatórias"). As cenas "pergunta:*" são lugares na volta; a TV tira uma pergunta diferente do monte a cada volta.
+   */
+  perguntas?: PerguntaTv[];
+}
+
+export type PerguntaTv = { tipo: "sabia"; texto: string; s: number } | { tipo: "desafio"; pergunta: string; resposta: string; s: number };
+
+/** A lista embaralhada sempre do mesmo jeito para a mesma semente (o mesmo dia dá a mesma ordem). */
+function embaralha<T>(lista: T[], semente: number): T[] {
+  const a = [...lista];
+  let x = (semente * 2654435761) >>> 0 || 1;
+  for (let i = a.length - 1; i > 0; i--) {
+    x = (x * 1664525 + 1013904223) >>> 0;
+    const j = x % (i + 1);
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }
 
 export const hojeLocal = () => new Date().toLocaleDateString("en-CA", { timeZone: FUSO });
@@ -290,7 +309,7 @@ export async function roteiroDoDia(): Promise<RoteiroTv> {
     // o modo evento muda com o horário: a chave do roteiro guardado diz se ele vale agora (consulta pequena, a cada volta)
     const evento = modoEventoAgora(await lerModoEvento().catch(() => null), hoje);
     const [r, tempo] = await Promise.all([
-      unstable_cache(() => montarRoteiro(hoje, evento), ["tv-roteiro", "v16", hoje, turno, evento ? "evento" : "normal"], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })(),
+      unstable_cache(() => montarRoteiro(hoje, evento), ["tv-roteiro", "v18", hoje, turno, evento ? "evento" : "normal"], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })(),
       unstable_cache(tempoEmNatal, ["tv-tempo", hoje], { revalidate: 60 * 60 })().catch((e) => { console.error("TV: o tempo não veio", e); return null; }),
     ]);
     // a tela do tempo recebe a previsão; sem previsão, ela sai desta volta
@@ -383,6 +402,18 @@ async function montarRoteiro(hoje: string, eventoAgora = false): Promise<Roteiro
     ...(telas ?? []).map((t) => ({ tipo: "tela" as const, t, ordem: t.ordem })),
   ].sort((x, y) => x.ordem - y.ordem);
 
+  // o monte de perguntas do dia: curiosidades e desafios juntos, embaralhados (cada dia numa ordem)
+  // (o que a escola desligar no gerenciador sai do monte)
+  const bl = (id: string) => blocos.find((x) => x.id === id);
+  const perguntas: PerguntaTv[] = embaralha<PerguntaTv>(
+    [
+      ...(bl("sabia")?.ativo ? de("curiosidade").filter((i) => !i.data).map((i) => ({ tipo: "sabia" as const, texto: i.titulo, s: bl("sabia")!.segundos })) : []),
+      ...(bl("desafio")?.ativo ? DESAFIOS.map((d) => ({ tipo: "desafio" as const, pergunta: d.p, resposta: d.r, s: bl("desafio")!.segundos })) : []),
+    ],
+    diaDoAno(hoje) + 1,
+  );
+  let nPerg = 0;
+
   const cenas: Cena[] = [];
   for (const f of fila) {
     if (f.tipo === "tela") {
@@ -429,8 +460,8 @@ async function montarRoteiro(hoje: string, eventoAgora = false): Promise<Roteiro
           for (const i of doEvento) c({ texto: i.titulo, evento: true }, `sabia:${i.id}`);
           break;
         }
-        // três curiosidades por volta: a primeira aqui, as outras espalhadas pela volta (Pedro, 16/11/2026)
-        varias(de("curiosidade").filter((i) => !i.data), 3).forEach((s, k) => c({ texto: s.titulo }, k ? `extra:sabia:${k}` : b.id));
+        // três lugares de pergunta por volta (Pedro, 16/11/2026); o que passa em cada um sai do monte, na TV
+        if (perguntas.length) for (let k = 0; k < 3; k++) c({ slot: nPerg++ }, `pergunta:sabia:${k}`);
         break;
       }
       case "frase": {
@@ -447,8 +478,8 @@ async function montarRoteiro(hoje: string, eventoAgora = false): Promise<Roteiro
         break;
       }
       case "desafio": {
-        const d = DESAFIOS[diaDoAno(hoje) % DESAFIOS.length];
-        c({ pergunta: d.p, resposta: d.r });
+        // um lugar de pergunta: pode sair um desafio ou uma curiosidade (o monte é um só)
+        if (perguntas.length) c({ slot: nPerg++ }, "pergunta:desafio");
         break;
       }
       case "palavra":
@@ -462,23 +493,24 @@ async function montarRoteiro(hoje: string, eventoAgora = false): Promise<Roteiro
         // as fotos com o mesmo nome de evento formam um álbum; cada álbum é uma tela que passa as fotos, uma a cada 4 s
         // com turma (Pedro, 16/11/2026: "adicionar a foto por turma, aí já mostra qual é a turma"), cada turma do
         // evento é uma tela: o nome do evento em cima e a turma grande
-        const albuns = new Map<string, { evento: string; turma: string; imagens: string[] }>();
+        // cada evento é UMA tela com todas as fotos, uma depois da outra; o nome da turma troca junto com a foto
+        // (Pedro, 16/11/2026: "coloquei 6, apareceu 2, mudou de tela... não apareceu o restante")
+        const albuns = new Map<string, { evento: string; fotos: { imagem: string; turma: string }[] }>();
         for (const f of de("foto")) {
           if (!f.imagem) continue;
           const evento = f.titulo.trim() || "Fotos da escola";
-          const turma = f.texto.trim();
-          const k = `${evento}\u0000${turma}`;
-          const a = albuns.get(k) ?? { evento, turma, imagens: [] };
-          a.imagens.push(f.imagem);
-          albuns.set(k, a);
+          const a = albuns.get(evento) ?? { evento, fotos: [] };
+          a.fotos.push({ imagem: f.imagem, turma: f.texto.trim() });
+          albuns.set(evento, a);
         }
         let n = 0;
         for (const a of albuns.values()) {
-          // até 12 fotos por volta (8 por turma); com mais, cada dia começa de um ponto diferente
-          const max = a.turma ? 8 : 12;
-          const imagens = a.imagens.length <= max ? a.imagens : varias(a.imagens, max);
-          const dados = a.turma ? { legenda: a.turma, sobre: a.evento, imagens } : { legenda: a.evento, imagens };
-          cenas.push({ id: b.id, chave: `album:${n++}`, segundos: Math.min(60, Math.max(8, imagens.length * 4)), dados });
+          // as fotos da mesma turma juntas, as turmas em ordem (1º ano, 2º ano...); até 60 por evento
+          const fotos = [...a.fotos].sort((x, y) => x.turma.localeCompare(y.turma, "pt-BR", { numeric: true })).slice(0, 60);
+          const comTurma = fotos.some((f) => f.turma);
+          const dados = { legenda: a.evento, imagens: fotos.map((f) => f.imagem), ...(comTurma ? { turmas: fotos.map((f) => f.turma) } : {}) };
+          // 4 s por foto; a TV passa até 12 por volta e, com mais, continua de onde parou na volta seguinte
+          cenas.push({ id: b.id, chave: `album:${n++}`, segundos: Math.min(48, Math.max(8, Math.min(12, fotos.length) * 4)), dados });
         }
         break;
       }
@@ -511,22 +543,6 @@ async function montarRoteiro(hoje: string, eventoAgora = false): Promise<Roteiro
       cenas.push(...doEvento, ...depois);
     }
   }
-  // as curiosidades e frases a mais se espalham pela volta, uma a cada três telas, antes do encerramento
-  const extras = cenas.filter((x) => x.chave.startsWith("extra:"));
-  if (extras.length) {
-    const resto = cenas.filter((x) => !x.chave.startsWith("extra:"));
-    const fimIdx = resto.findIndex((x) => x.id === "fim");
-    const corpo = fimIdx >= 0 ? resto.slice(0, fimIdx) : resto;
-    // em lugares espaçados e nunca colada numa tela do mesmo tipo (curiosidade ao lado de curiosidade)
-    extras.sort((a, b) => a.chave.slice(-1).localeCompare(b.chave.slice(-1)));
-    extras.forEach((e, k) => {
-      let p = Math.max(1, Math.round(((k + 1) * corpo.length) / (extras.length + 1)));
-      while (p < corpo.length && (corpo[p - 1]?.id === e.id || corpo[p]?.id === e.id)) p++;
-      corpo.splice(p, 0, e);
-    });
-    cenas.length = 0;
-    cenas.push(...corpo, ...(fimIdx >= 0 ? resto.slice(fimIdx) : []));
-  }
   // o evento de hoje ou de amanhã é o assunto do dia: vem logo depois da saudação
   const iEv = cenas.findIndex((x) => x.id === "evento");
   if (iEv > 0 && String((cenas[iEv].dados as { data?: string }).data ?? "") <= somaDias(hoje, 1)) {
@@ -534,6 +550,33 @@ async function montarRoteiro(hoje: string, eventoAgora = false): Promise<Roteiro
     const iSa = cenas.findIndex((x) => x.id === "saudacao");
     cenas.splice(iSa + 1, 0, ev);
   }
+  // as perguntas (desafio e você sabia?) e as frases a mais se espalham pela volta, antes do encerramento, em
+  // lugares espaçados: pergunta nunca colada em outra pergunta (Pedro, 16/11/2026: "nunca uma pergunta desafio
+  // deveria vir depois de uma curiosidade ou vice-versa"), frase nunca colada em frase
+  const ehPergunta = (x: Cena) => x.id === "sabia" || x.id === "desafio";
+  const soltas = (x: Cena) => x.chave.startsWith("pergunta:") || x.chave.startsWith("extra:");
+  const lugares = cenas.filter((x) => x.chave.startsWith("pergunta:"));
+  const extras = cenas.filter((x) => x.chave.startsWith("extra:"));
+  if (lugares.length || extras.length) {
+    const resto = cenas.filter((x) => !soltas(x));
+    const fimIdx = resto.findIndex((x) => x.id === "fim");
+    const corpo = fimIdx >= 0 ? resto.slice(0, fimIdx) : resto;
+    const espalha = (itens: Cena[], colide: (a: Cena, e: Cena) => boolean) => {
+      const base = corpo.length;
+      itens.forEach((e, k) => {
+        // o ponto ideal na volta (sem contar o que já entrou) e, se colar em algo parecido, um pouco mais para a frente
+        let p = Math.max(1, Math.round(((k + 1) * base) / (itens.length + 1)) + k);
+        // (e nunca no meio de duas telas do mesmo tipo, como dois aniversariantes seguidos)
+        const ruim = (q: number) => (corpo[q - 1] && colide(corpo[q - 1], e)) || (corpo[q] && colide(corpo[q], e)) || (corpo[q - 1] && corpo[q] && corpo[q - 1].id === corpo[q].id);
+        while (p < corpo.length && ruim(p)) p++;
+        corpo.splice(Math.min(p, corpo.length), 0, e);
+      });
+    };
+    espalha(lugares, (a) => ehPergunta(a));
+    espalha(extras, (a, e) => a.id === e.id);
+    cenas.length = 0;
+    cenas.push(...corpo, ...(fimIdx >= 0 ? resto.slice(fimIdx) : []));
+  }
   const rodape = valem.filter((i) => i.tipo === "rodape").map((i) => i.titulo.split("*").join("")).filter(Boolean);
-  return { hoje, cenas, atualizado: new Date().toISOString(), rodape, modoEvento };
+  return { hoje, cenas, atualizado: new Date().toISOString(), rodape, modoEvento, ...(nPerg ? { perguntas } : {}) };
 }

@@ -90,7 +90,7 @@ function Cartao({ icone, legenda, titulo, texto, resposta, dResposta = 3.2, extr
  * O álbum de um evento (16/11/2026): as fotos na TV inteira, uma a cada 4 s, trocando devagar; o nome do evento
  * fica embaixo, à esquerda. As fotos já vêm todas carregadas (uma em cima da outra), para a troca não piscar.
  */
-function Album({ legenda, imagens, sobre }: { legenda: string; imagens: string[]; sobre?: string }) {
+function Album({ legenda, imagens, sobre, turmas }: { legenda: string; imagens: string[]; sobre?: string; turmas?: string[] }) {
   const [i, setI] = useState(0);
   useEffect(() => {
     if (imagens.length < 2) return;
@@ -104,8 +104,9 @@ function Album({ legenda, imagens, sobre }: { legenda: string; imagens: string[]
       ))}
       {legenda ? (
         <div className="legenda-foto">
-          <div className="mao surge" style={st(0.6)}>{sobre || (imagens.length > 1 ? "fotos do evento" : "fotos da escola")}</div>
-          <div className="t1"><Palavras texto={legenda} d0={0.9} /></div>
+          {/* com turma: o evento pequeno em cima e a turma grande, que troca junto com a foto */}
+          <div className="mao surge" style={st(0.6)}>{turmas?.[i] ? legenda : sobre || (imagens.length > 1 ? "fotos do evento" : "fotos da escola")}</div>
+          <div className="t1" key={turmas?.[i] || legenda}><Palavras texto={turmas?.[i] || legenda} d0={turmas && i ? 0.2 : 0.9} /></div>
         </div>
       ) : null}
     </>
@@ -346,7 +347,7 @@ function conteudo(c: Cena, hora: number) {
     case "inteligencia":
       return <Cartao icone="arvore" legenda="inteligência do dia" titulo={ultimaEmDestaque(String(d.nome))} texto={String(d.oque)} extra={`*Experimente hoje:* ${String(d.hoje)}`} />;
     case "fotos":
-      return <Album legenda={String(d.legenda ?? "")} sobre={d.sobre ? String(d.sobre) : undefined} imagens={(d.imagens as string[] | undefined) ?? (d.imagem ? [String(d.imagem)] : [])} />;
+      return <Album legenda={String(d.legenda ?? "")} sobre={d.sobre ? String(d.sobre) : undefined} turmas={d.turmas as string[] | undefined} imagens={(d.imagens as string[] | undefined) ?? (d.imagem ? [String(d.imagem)] : [])} />;
     case "conquistas":
       if (!d.imagem) return <Cartao icone="trofeu" legenda="orgulho Amadeus!" titulo={String(d.titulo)} texto={d.texto ? String(d.texto) : undefined} />;
       return (
@@ -471,9 +472,56 @@ function Faixa({ frases }: { frases: string[] }) {
 }
 
 /** embutida: dentro de uma caixa numa página (o portal); clicar abre em tela cheia. */
+const ehVideo = (c: Cena) => c.id === "tela" && (c.dados as D).formato === "video";
+/** Os vídeos passam numa volta sim, duas não, um de cada vez (Pedro, 16/11/2026: "não aparecerem toda hora"). */
+const VIDEO_A_CADA = 3;
+const FOTOS_POR_VOLTA = 12;
+
+/**
+ * O que passa nesta volta (o roteiro do dia é o mesmo; a volta muda o que vai em cada lugar):
+ * - cada lugar de pergunta tira uma pergunta diferente do monte do dia (desafio ou você sabia?);
+ * - o vídeo só numa volta a cada 3, e um vídeo por vez;
+ * - álbum com muitas fotos: 12 por volta, continuando de onde parou.
+ * Na prévia do gerenciador passa tudo, como está no roteiro.
+ */
+function daVolta(roteiro: RoteiroTv, volta: number, tudo: boolean): Cena[] {
+  // desafio e curiosidade se revezam nos lugares (um desafio, uma curiosidade...), cada um andando na sua lista
+  const desafios = (roteiro.perguntas ?? []).filter((p) => p.tipo === "desafio");
+  const sabias = (roteiro.perguntas ?? []).filter((p) => p.tipo === "sabia");
+  const montes = [desafios, sabias].filter((m) => m.length);
+  const lugares = roteiro.cenas.filter((c) => c.chave.startsWith("pergunta:")).length;
+  const videos = roteiro.cenas.filter(ehVideo);
+  const videoDaVez = tudo || !videos.length || volta % VIDEO_A_CADA ? null : videos[Math.floor(volta / VIDEO_A_CADA) % videos.length];
+  return roteiro.cenas.flatMap((c): Cena[] => {
+    if (ehVideo(c)) return tudo || c === videoDaVez ? [c] : [];
+    if (c.chave.startsWith("pergunta:")) {
+      if (!montes.length) return [];
+      const g = volta * lugares + Number((c.dados as D).slot ?? 0);
+      const m = montes[g % montes.length];
+      const p = m[Math.floor(g / montes.length) % m.length];
+      return p.tipo === "desafio"
+        ? [{ ...c, id: "desafio", segundos: p.s, dados: { pergunta: p.pergunta, resposta: p.resposta } }]
+        : [{ ...c, id: "sabia", segundos: p.s, dados: { texto: p.texto } }];
+    }
+    const imagens = (c.dados as D).imagens as string[] | undefined;
+    if (c.id === "fotos" && imagens && imagens.length > FOTOS_POR_VOLTA && !tudo) {
+      const turmas = (c.dados as D).turmas as string[] | undefined;
+      const k0 = (volta * FOTOS_POR_VOLTA) % imagens.length;
+      const ks = Array.from({ length: FOTOS_POR_VOLTA }, (_, k) => (k0 + k) % imagens.length);
+      return [{ ...c, dados: { ...c.dados, imagens: ks.map((k) => imagens[k]), ...(turmas ? { turmas: ks.map((k) => turmas[k]) } : {}) } }];
+    }
+    return [c];
+  });
+}
+
 export function PlayerTv({ roteiro, previa, congelada = null, embutida = false }: { roteiro: RoteiroTv; previa: boolean; congelada?: { cena: number; t: number } | null; embutida?: boolean }) {
   const router = useRouter();
-  const cenas = roteiro.cenas;
+  // a volta: começa pela hora do dia (quem abre a TV agora não vê o mesmo que viu de manhã) e anda a cada volta
+  const [volta, setVolta] = useState(0);
+  useEffect(() => {
+    if (!congelada && !previa) setVolta(Math.floor(Date.now() / 300000));
+  }, [congelada, previa]);
+  const cenas = useMemo(() => daVolta(roteiro, volta, previa || !!congelada), [roteiro, volta, previa, congelada]);
   // congelada (?cena=3&t=5): para na cena 3 no segundo 5, para conferir
   const [atual, setAtual] = useState(congelada ? Math.min(congelada.cena, Math.max(0, cenas.length - 1)) : 0);
   const [saindo, setSaindo] = useState<number | null>(null);
@@ -528,6 +576,7 @@ export function PlayerTv({ roteiro, previa, congelada = null, embutida = false }
       if (atual + 1 >= cenas.length) {
         router.refresh();
         setAtual(0);
+        setVolta((v) => v + 1);
       } else setAtual(atual + 1);
     }, c.segundos * 1000);
     return () => clearTimeout(t);
