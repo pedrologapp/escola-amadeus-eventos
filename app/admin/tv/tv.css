@@ -240,3 +240,8 @@
 /* os ícones novos são mais "cheios": um pouco menores, para não encostar no texto */
 .cena-desafio .cartao-tv .icone3d, .cena-palavra .cartao-tv .icone3d, .cena-inteligencia .cartao-tv .icone3d, .cena-conquistas .cartao-tv .icone3d { width: 440px; right: 150px; top: 190px; }
 .cena-desafio .cartao-tv .icone3d { width: 360px; right: 190px; top: 150px; }
+/* conquistas: a foto inteira, sem cortar, grande à direita (16/11/2026) */
+.cena-conquistas .foto-inteira { position: absolute; right: 120px; top: 60px; width: 900px; height: 800px; display: flex; align-items: center; justify-content: center; }
+.cena-conquistas .foto-inteira img { max-width: 100%; max-height: 100%; border-radius: 36px; border: 10px solid var(--tv-creme); box-shadow: 0 30px 60px rgba(0,0,0,.35); }
+.cena-conquistas .foto-inteira ~ .txt { right: 1060px; }
+.cena-conquistas .foto-inteira ~ .txt .t1 { font-size: 104px; }

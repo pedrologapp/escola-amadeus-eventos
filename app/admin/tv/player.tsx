@@ -351,7 +351,11 @@ function conteudo(c: Cena, hora: number) {
       if (!d.imagem) return <Cartao icone="trofeu" legenda="orgulho Amadeus!" titulo={String(d.titulo)} texto={d.texto ? String(d.texto) : undefined} />;
       return (
         <>
-          <div className="moldura surge" style={{ ...st(0.2), backgroundImage: `url(${String(d.imagem)})` }} />
+          {/* a foto inteira, sem cortar, do tamanho que couber (Pedro, 16/11/2026: "está saindo cortada, pode deixar maior") */}
+          <div className="foto-inteira surge" style={st(0.2)}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={String(d.imagem)} alt="" />
+          </div>
           <div className="txt">
             <div className="mao surge" style={st(0.4)}>orgulho Amadeus!</div>
             <div className="t1"><Palavras texto={ultimaEmDestaque(String(d.titulo))} d0={0.7} /></div>
