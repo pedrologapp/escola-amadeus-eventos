@@ -90,7 +90,7 @@ function Cartao({ icone, legenda, titulo, texto, resposta, dResposta = 3.2, extr
  * O álbum de um evento (16/11/2026): as fotos na TV inteira, uma a cada 4 s, trocando devagar; o nome do evento
  * fica embaixo, à esquerda. As fotos já vêm todas carregadas (uma em cima da outra), para a troca não piscar.
  */
-function Album({ legenda, imagens }: { legenda: string; imagens: string[] }) {
+function Album({ legenda, imagens, sobre }: { legenda: string; imagens: string[]; sobre?: string }) {
   const [i, setI] = useState(0);
   useEffect(() => {
     if (imagens.length < 2) return;
@@ -104,7 +104,7 @@ function Album({ legenda, imagens }: { legenda: string; imagens: string[] }) {
       ))}
       {legenda ? (
         <div className="legenda-foto">
-          <div className="mao surge" style={st(0.6)}>{imagens.length > 1 ? "fotos do evento" : "fotos da escola"}</div>
+          <div className="mao surge" style={st(0.6)}>{sobre || (imagens.length > 1 ? "fotos do evento" : "fotos da escola")}</div>
           <div className="t1"><Palavras texto={legenda} d0={0.9} /></div>
         </div>
       ) : null}
@@ -346,7 +346,7 @@ function conteudo(c: Cena, hora: number) {
     case "inteligencia":
       return <Cartao icone="arvore" legenda="inteligência do dia" titulo={ultimaEmDestaque(String(d.nome))} texto={String(d.oque)} extra={`*Experimente hoje:* ${String(d.hoje)}`} />;
     case "fotos":
-      return <Album legenda={String(d.legenda ?? "")} imagens={(d.imagens as string[] | undefined) ?? (d.imagem ? [String(d.imagem)] : [])} />;
+      return <Album legenda={String(d.legenda ?? "")} sobre={d.sobre ? String(d.sobre) : undefined} imagens={(d.imagens as string[] | undefined) ?? (d.imagem ? [String(d.imagem)] : [])} />;
     case "conquistas":
       if (!d.imagem) return <Cartao icone="trofeu" legenda="orgulho Amadeus!" titulo={String(d.titulo)} texto={d.texto ? String(d.texto) : undefined} />;
       return (

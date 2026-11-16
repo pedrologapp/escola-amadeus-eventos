@@ -80,15 +80,16 @@ export async function salvarItem(f: ItemForm): Promise<Resultado> {
  * Álbum de evento (Pedro, 16/11/2026): várias fotos de uma vez com o mesmo nome (o nome do evento). Cada foto vira um
  * item "foto"; na TV, as do mesmo nome passam juntas numa tela só.
  */
-export async function salvarAlbum(nome: string, urls: string[], inicio: string, fim: string): Promise<Resultado> {
+export async function salvarAlbum(nome: string, lista: { url: string; turma: string }[], inicio: string, fim: string): Promise<Resultado> {
   if (!(await logado())) return { ok: false, erro: "Sessão expirada. Entre de novo." };
   const titulo = nome.trim().slice(0, 80);
   if (!titulo) return { ok: false, erro: "Escreva o nome do evento." };
-  const fotos = urls.filter((u) => /^https:\/\//.test(u)).slice(0, 60);
+  // a turma de cada foto (Pedro, 16/11/2026: "adicionar a foto por turma, aí já mostra qual é a turma") fica no texto
+  const fotos = lista.filter((f) => /^https:\/\//.test(f.url)).slice(0, 200);
   if (!fotos.length) return { ok: false, erro: "Escolha as fotos." };
   if (data(inicio) && data(fim) && inicio > fim) return { ok: false, erro: "O “até” está antes do “a partir de”." };
   const { error } = await createAdminClient().from("tv_itens").insert(
-    fotos.map((imagem) => ({ tipo: "foto", titulo, texto: "", imagem, inicio: data(inicio), fim: data(fim) })),
+    fotos.map((f) => ({ tipo: "foto", titulo, texto: f.turma.trim().slice(0, 40), imagem: f.url, inicio: data(inicio), fim: data(fim) })),
   );
   if (error) return { ok: false, erro: error.message };
   mudou();

@@ -142,7 +142,8 @@ async function subir(a: File): Promise<string | null> {
  */
 export function AlbunsTv({ itens, hoje, onMudou }: { itens: ItemTv[]; hoje: string; onMudou: () => void }) {
   const [aberto, setAberto] = useState<{ nome: string; inicio: string; fim: string; existente: boolean } | null>(null);
-  const [fotos, setFotos] = useState<string[]>([]);
+  const [fotos, setFotos] = useState<{ url: string; turma: string }[]>([]);
+  const [turma, setTurma] = useState("");
   const [subindo, setSubindo] = useState<{ feitas: number; total: number } | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [pendente, comecar] = useTransition();
@@ -151,17 +152,18 @@ export function AlbunsTv({ itens, hoje, onMudou }: { itens: ItemTv[]; hoje: stri
   // as fotos agrupadas pelo nome do evento
   const albuns = new Map<string, ItemTv[]>();
   for (const i of itens.filter((x) => x.tipo === "foto")) albuns.set(i.titulo, [...(albuns.get(i.titulo) ?? []), i]);
-  const lista = [...albuns.entries()].map(([nome, fs]) => ({ nome, fotos: fs, ativo: fs.some((f) => f.ativo), inicio: fs[0].inicio, fim: fs[0].fim }));
+  const lista = [...albuns.entries()].map(([nome, fs]) => ({ nome, fotos: fs, ativo: fs.some((f) => f.ativo), turmas: new Set(fs.map((f) => f.texto.trim()).filter(Boolean)).size, inicio: fs[0].inicio, fim: fs[0].fim }));
 
   const escolher = async (arqs: FileList | null) => {
     if (!arqs?.length) return;
     setErro(null);
     const todas = [...arqs].filter((a) => a.type.startsWith("image/"));
     setSubindo({ feitas: 0, total: todas.length });
-    const novas: string[] = [];
+    const novas: { url: string; turma: string }[] = [];
+    const daTurma = turma.trim();
     for (const a of todas) {
       const url = await subir(a);
-      if (url) novas.push(url);
+      if (url) novas.push({ url, turma: daTurma });
       setSubindo((s) => (s ? { ...s, feitas: s.feitas + 1 } : s));
     }
     setSubindo(null);
@@ -176,6 +178,7 @@ export function AlbunsTv({ itens, hoje, onMudou }: { itens: ItemTv[]; hoje: stri
       if (!r.ok) return setErro(r.erro);
       setAberto(null);
       setFotos([]);
+      setTurma("");
       onMudou();
     });
   const acao = (fn: () => Promise<{ ok: boolean }>) => comecar(async () => { if ((await fn()).ok) onMudou(); });
@@ -189,7 +192,7 @@ export function AlbunsTv({ itens, hoje, onMudou }: { itens: ItemTv[]; hoje: stri
   return (
     <section className="rounded-3xl bg-white p-5 ring-1 ring-[#E3E8F2]">
       <h2 className="text-lg font-extrabold text-[#1B3B7C]">Fotos dos eventos</h2>
-      <p className="text-sm text-[#5A6478]">Aconteceu um evento? Escreva o nome e escolha as fotos, várias de uma vez. Na TV, as fotos passam uma depois da outra, com o nome do evento.</p>
+      <p className="text-sm text-[#5A6478]">Aconteceu um evento? Escreva o nome e escolha as fotos, várias de uma vez. Com a turma escrita, cada turma vira uma tela na TV, com o nome dela.</p>
 
       {aberto ? (
         <div className="mt-4 space-y-3 rounded-2xl bg-[#F4F7FC] p-4">
@@ -198,16 +201,18 @@ export function AlbunsTv({ itens, hoje, onMudou }: { itens: ItemTv[]; hoje: stri
           ) : (
             <div><span className={rotulo}>Nome do evento</span><input autoFocus value={aberto.nome} onChange={(e) => setAberto({ ...aberto, nome: e.target.value })} placeholder="Ex.: Feira de Empreendedorismo" className={`${campo} font-bold`} /></div>
           )}
+          <div><span className={rotulo}>Turma <span className="font-normal normal-case text-[#8A95AA]">(opcional: escreva, escolha as fotos dela, depois troque para a próxima)</span></span><input value={turma} onChange={(e) => setTurma(e.target.value)} placeholder="Ex.: 5º ano A" className={campo} /></div>
           <input ref={arquivo} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { escolher(e.target.files); e.target.value = ""; }} />
           <button type="button" disabled={!!subindo} onClick={() => arquivo.current?.click()} className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#C9D3E4] bg-white py-5 text-[15px] font-bold text-[#1B3B7C] hover:border-[#1B3B7C]">
-            {subindo ? <><Loader2 className="size-5 animate-spin" /> Enviando {subindo.feitas} de {subindo.total}…</> : <><ImagePlus className="size-5" /> {fotos.length ? "Escolher mais fotos" : "Escolher as fotos"}</>}
+            {subindo ? <><Loader2 className="size-5 animate-spin" /> Enviando {subindo.feitas} de {subindo.total}…</> : <><ImagePlus className="size-5" /> {turma.trim() ? `Escolher as fotos do ${turma.trim()}` : fotos.length ? "Escolher mais fotos" : "Escolher as fotos"}</>}
           </button>
           {fotos.length > 0 && (
             <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-              {fotos.map((u, k) => (
-                <div key={u} className="group relative aspect-video overflow-hidden rounded-lg bg-[#0B1430]">
+              {fotos.map((f, k) => (
+                <div key={f.url} className="group relative aspect-video overflow-hidden rounded-lg bg-[#0B1430]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={u} alt="" className="h-full w-full object-cover" />
+                  <img src={f.url} alt="" className="h-full w-full object-cover" />
+                  {f.turma && <span className="absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-black/75 px-1.5 pb-0.5 pt-3 text-[11px] font-bold text-white">{f.turma}</span>}
                   <button type="button" aria-label="Tirar esta foto" onClick={() => setFotos(fotos.filter((_, j) => j !== k))} className="absolute right-1 top-1 hidden rounded-md bg-black/60 p-1 text-white group-hover:block"><Trash2 className="size-3.5" /></button>
                 </div>
               ))}
@@ -225,7 +230,7 @@ export function AlbunsTv({ itens, hoje, onMudou }: { itens: ItemTv[]; hoje: stri
             <button type="button" disabled={pendente || !!subindo || !fotos.length || !aberto.nome.trim()} onClick={salvar} className="inline-flex items-center gap-1.5 rounded-xl bg-[#1B3B7C] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50">
               {pendente ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />} Colocar na TV{fotos.length ? ` (${fotos.length} foto${fotos.length > 1 ? "s" : ""})` : ""}
             </button>
-            <button type="button" onClick={() => { setAberto(null); setFotos([]); setErro(null); }} className="rounded-xl px-3 py-2.5 text-sm font-semibold text-[#5A6478] hover:bg-black/5">Cancelar</button>
+            <button type="button" onClick={() => { setAberto(null); setFotos([]); setTurma(""); setErro(null); }} className="rounded-xl px-3 py-2.5 text-sm font-semibold text-[#5A6478] hover:bg-black/5">Cancelar</button>
           </div>
         </div>
       ) : (
@@ -245,7 +250,7 @@ export function AlbunsTv({ itens, hoje, onMudou }: { itens: ItemTv[]; hoje: stri
                       </div>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[15px] font-bold text-[#1A2240]">{a.nome}</span>
-                        <span className={`text-xs font-semibold ${s.no ? "text-emerald-700" : "text-[#8A95AA]"}`}>{a.fotos.length} foto{a.fotos.length > 1 ? "s" : ""} · {s.txt}</span>
+                        <span className={`text-xs font-semibold ${s.no ? "text-emerald-700" : "text-[#8A95AA]"}`}>{a.fotos.length} foto{a.fotos.length > 1 ? "s" : ""}{a.turmas ? ` · ${a.turmas} turma${a.turmas > 1 ? "s" : ""}` : ""} · {s.txt}</span>
                       </span>
                       <button type="button" aria-label="Pôr mais fotos" title="Pôr mais fotos" onClick={() => setAberto({ nome: a.nome, inicio: a.inicio ?? "", fim: a.fim ?? "", existente: true })} className="inline-flex size-8 items-center justify-center rounded-lg text-[#1B3B7C] hover:bg-[#EEF2FA]"><Plus className="size-4" /></button>
                       <button type="button" role="switch" aria-checked={a.ativo} aria-label={a.ativo ? "Tirar da TV" : "Voltar para a TV"} disabled={pendente} onClick={() => acao(() => mudarAlbum(a.nome, { ativo: !a.ativo }))} className={`mx-1 h-5 w-9 rounded-full p-0.5 ${a.ativo ? "bg-emerald-500" : "bg-[#CBD3E1]"}`}>

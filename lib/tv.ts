@@ -290,7 +290,7 @@ export async function roteiroDoDia(): Promise<RoteiroTv> {
     // o modo evento muda com o horário: a chave do roteiro guardado diz se ele vale agora (consulta pequena, a cada volta)
     const evento = modoEventoAgora(await lerModoEvento().catch(() => null), hoje);
     const [r, tempo] = await Promise.all([
-      unstable_cache(() => montarRoteiro(hoje, evento), ["tv-roteiro", "v15", hoje, turno, evento ? "evento" : "normal"], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })(),
+      unstable_cache(() => montarRoteiro(hoje, evento), ["tv-roteiro", "v16", hoje, turno, evento ? "evento" : "normal"], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })(),
       unstable_cache(tempoEmNatal, ["tv-tempo", hoje], { revalidate: 60 * 60 })().catch((e) => { console.error("TV: o tempo não veio", e); return null; }),
     ]);
     // a tela do tempo recebe a previsão; sem previsão, ela sai desta volta
@@ -460,17 +460,25 @@ async function montarRoteiro(hoje: string, eventoAgora = false): Promise<Roteiro
       case "fotos": {
         // álbuns de evento (Pedro, 16/11/2026: "um espaço para eventos esporádicos, para colocar as fotos que recebemos"):
         // as fotos com o mesmo nome de evento formam um álbum; cada álbum é uma tela que passa as fotos, uma a cada 4 s
-        const albuns = new Map<string, string[]>();
+        // com turma (Pedro, 16/11/2026: "adicionar a foto por turma, aí já mostra qual é a turma"), cada turma do
+        // evento é uma tela: o nome do evento em cima e a turma grande
+        const albuns = new Map<string, { evento: string; turma: string; imagens: string[] }>();
         for (const f of de("foto")) {
           if (!f.imagem) continue;
-          const nome = f.titulo.trim() || "Fotos da escola";
-          albuns.set(nome, [...(albuns.get(nome) ?? []), f.imagem]);
+          const evento = f.titulo.trim() || "Fotos da escola";
+          const turma = f.texto.trim();
+          const k = `${evento}\u0000${turma}`;
+          const a = albuns.get(k) ?? { evento, turma, imagens: [] };
+          a.imagens.push(f.imagem);
+          albuns.set(k, a);
         }
         let n = 0;
-        for (const [nome, todas] of albuns) {
-          // até 12 fotos por volta; com mais, cada dia começa de um ponto diferente
-          const imagens = todas.length <= 12 ? todas : varias(todas, 12);
-          cenas.push({ id: b.id, chave: `album:${n++}`, segundos: Math.min(60, Math.max(8, imagens.length * 4)), dados: { legenda: nome, imagens } });
+        for (const a of albuns.values()) {
+          // até 12 fotos por volta (8 por turma); com mais, cada dia começa de um ponto diferente
+          const max = a.turma ? 8 : 12;
+          const imagens = a.imagens.length <= max ? a.imagens : varias(a.imagens, max);
+          const dados = a.turma ? { legenda: a.turma, sobre: a.evento, imagens } : { legenda: a.evento, imagens };
+          cenas.push({ id: b.id, chave: `album:${n++}`, segundos: Math.min(60, Math.max(8, imagens.length * 4)), dados });
         }
         break;
       }
