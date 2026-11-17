@@ -29,6 +29,22 @@ const GUARDA = "homenagem9ano:passe";
 const ler = () => { try { return localStorage.getItem(GUARDA); } catch { return null; } };
 const guardar = (v: string | null) => { try { if (v) localStorage.setItem(GUARDA, v); else localStorage.removeItem(GUARDA); } catch {} };
 
+/** "17052011" → "17/05/2011" enquanto digita (só números; as barras entram sozinhas). */
+function mascaraData(v: string) {
+  const d = v.replace(/\D/g, "").slice(0, 8);
+  return [d.slice(0, 2), d.slice(2, 4), d.slice(4, 8)].filter(Boolean).join("/");
+}
+
+/** "17/05/2011" → "2011-05-17" (ou null se a data não existe). */
+function isoDaData(v: string): string | null {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(v);
+  if (!m) return null;
+  const [, d, mes, a] = m;
+  const data = new Date(Number(a), Number(mes) - 1, Number(d));
+  if (data.getDate() !== Number(d) || data.getMonth() !== Number(mes) - 1 || Number(a) < 2000 || Number(a) > 2020) return null;
+  return `${a}-${mes}-${d}`;
+}
+
 /** Reduz a foto no navegador (lado maior 2400 px, JPEG): foto de celular vira ~1 MB. */
 async function reduzir(file: File): Promise<Blob> {
   const bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
@@ -122,9 +138,11 @@ export function Homenagem() {
   const fazerEntrada = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!escolhido) return;
+    const iso = isoDaData(nascimento);
+    if (!iso) return setErro("Data incompleta ou inválida. Digite dia, mês e ano, ex.: 17/05/2011.");
     setOcupado(true);
     setErro(null);
-    const r = await entrar(escolhido.id, nascimento).catch(() => ({ ok: false as const, erro: "Sem conexão. Tente de novo." }));
+    const r = await entrar(escolhido.id, iso).catch(() => ({ ok: false as const, erro: "Sem conexão. Tente de novo." }));
     setOcupado(false);
     if (!r.ok) return setErro(r.erro);
     guardar(r.passe);
@@ -284,12 +302,21 @@ export function Homenagem() {
                   </div>
                   <label className="block">
                     <span className="text-[15px] font-bold text-[#EAD7A4]">Data de nascimento de {escolhido.nome.split(" ")[0]}</span>
-                    <input type="date" value={nascimento} onChange={(e) => setNascimento(e.target.value)} max="2014-12-31" min="2008-01-01" className="hom-campo mt-1.5" />
+                    <input
+                      value={nascimento}
+                      onChange={(e) => setNascimento(mascaraData(e.target.value))}
+                      inputMode="numeric"
+                      autoComplete="off"
+                      placeholder="DD/MM/AAAA"
+                      maxLength={10}
+                      className="hom-campo mt-1.5 !text-[20px] tracking-[0.08em]"
+                    />
+                    <span className="mt-1.5 block text-[14px] text-[#C9BFAE]">Digite só os números. Ex.: 17052011</span>
                   </label>
                 </>
               )}
               {aviso}
-              <button disabled={ocupado || !escolhido || !nascimento} className="hom-botao w-full">
+              <button disabled={ocupado || !escolhido || nascimento.length < 10} className="hom-botao w-full">
                 {ocupado ? <Loader2 className="h-5 w-5 animate-spin" /> : <>Entrar <ArrowRight className="h-5 w-5" /></>}
               </button>
             </form>
