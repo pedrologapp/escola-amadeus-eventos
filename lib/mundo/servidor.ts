@@ -124,7 +124,7 @@ export async function estadoParaTablet(alunoId: string) {
     const { data: au } = await db().from("mundo_aulas").select("codigo, destino, ate").eq("turma_id", a.turma_id).maybeSingle();
     if (au && new Date(au.ate) > new Date()) {
       let chamada = false;
-      if (au.destino === "corte") { const { data: c } = await db().from("mundo_corte").select("estado").eq("turma_id", a.turma_id).maybeSingle(); chamada = !!(c?.estado as { levados?: boolean } | undefined)?.levados; }
+      if (au.destino === "corte") { const { data: c } = await db().from("mundo_corte").select("estado").eq("turma_id", a.turma_id).maybeSingle(); const ce = c?.estado as { levados?: boolean; liberados?: string[] } | undefined; chamada = !!ce?.levados && !(ce?.liberados || []).includes(alunoId); }   // (17/11) o aprovado pelo professor fica no mundo
       aula = { codigo: au.codigo, destino: au.destino, chamada };
     }
   }

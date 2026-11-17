@@ -82,7 +82,7 @@ async function votosJuri(turmaId: string, juriId: number) {
 type Estado = {
   n: number; fase: "livre" | "tema" | "funcao"; faseId: number; temas: string[]; tema: string | null; funcao: string | null;
   postos: Record<string, string>; sorteio: { funcao: string; candidatos: string[]; vencedores: string[]; em: string } | null; v: number;
-  slide: number; levados: boolean; sorteando: unknown; extra: Record<string, number>; modo?: string; ideia?: { id: number; texto: string } | null; parte2?: boolean; cerimonia?: boolean; ajeitar?: number; destravar?: { aluno: string; id: number } | null;
+  slide: number; levados: boolean; sorteando: unknown; extra: Record<string, number>; modo?: string; ideia?: { id: number; texto: string } | null; liberados?: string[]; votoPers?: { id: number; opcoes: { aluno: string; autor: string; texto: string }[]; fim?: { aluno: string; moedas: number }[] } | null; parte2?: boolean; cerimonia?: boolean; ajeitar?: number; destravar?: { aluno: string; id: number } | null;
   desistencias: { aluno: string; funcao: string; pedido: string; aprovado: boolean; em: string }[];
   log: { em: string; op: string; info: string }[];
   debate: Debate;   // (27/10, Pedro) o registro do que o professor fez (temas, postos, sorteio...); fica só no banco
@@ -121,7 +121,7 @@ async function ler(turmaId: string): Promise<Estado> {
   const { data } = await db().from("mundo_corte").select("estado").eq("turma_id", turmaId).maybeSingle();
   const e = (data?.estado || {}) as Partial<Estado>;
   const n = e.n || (await turmaDe(turmaId)).filter((a) => a.id !== "teste").length || 30;
-  return { n: Math.max(20, Math.min(35, n)), fase: e.fase || "livre", faseId: e.faseId || 1, temas: e.temas || [], tema: e.tema ?? null, funcao: e.funcao ?? null, postos: e.postos || {}, sorteio: e.sorteio ?? null, v: e.v || 0, slide: e.slide || 0, levados: !!e.levados, sorteando: e.sorteando ?? null, extra: e.extra || {}, desistencias: e.desistencias || [], log: e.log || [], debate: (e.debate as Debate) || DEBATE_VAZIO(), parte2: !!e.parte2, cerimonia: !!e.cerimonia, ajeitar: e.ajeitar || 0, destravar: e.destravar || null, modo: e.modo === "arena" ? "arena" : "corte", ideia: e.ideia ?? null };   // (05/11) sem isto, cada clique seguinte apagava o "debate iniciado"
+  return { n: Math.max(20, Math.min(35, n)), fase: e.fase || "livre", faseId: e.faseId || 1, temas: e.temas || [], tema: e.tema ?? null, funcao: e.funcao ?? null, postos: e.postos || {}, sorteio: e.sorteio ?? null, v: e.v || 0, slide: e.slide || 0, levados: !!e.levados, sorteando: e.sorteando ?? null, extra: e.extra || {}, desistencias: e.desistencias || [], log: e.log || [], debate: (e.debate as Debate) || DEBATE_VAZIO(), parte2: !!e.parte2, cerimonia: !!e.cerimonia, ajeitar: e.ajeitar || 0, destravar: e.destravar || null, modo: e.modo === "arena" ? "arena" : "corte", ideia: e.ideia ?? null, liberados: e.liberados || [], votoPers: e.votoPers ?? null };   // (05/11) sem isto, cada clique seguinte apagava o "debate iniciado"
 }
 async function gravar(turmaId: string, e: Estado) {
   e.v++; await db().from("mundo_corte").upsert({ turma_id: turmaId, estado: e, atualizado_em: new Date().toISOString() }, { onConflict: "turma_id" });
@@ -130,7 +130,7 @@ async function gravar(turmaId: string, e: Estado) {
   await avisar(CANAL_MUNDO, "corte", { turmaId, estado: publico(e) });   // quem ainda está no mundo (os slides: "Olhe para a TV")
   return e;
 }
-const publico = (e: Estado) => ({ modo: e.modo || "corte", ideia: e.ideia || null, destravar: e.destravar || null, ajeitar: e.ajeitar || 0, cerimonia: !!e.cerimonia, parte2: !!e.parte2, n: e.n, fase: e.fase, faseId: e.faseId, temas: e.temas, tema: e.tema, funcao: e.funcao, postos: e.postos, sorteio: e.sorteio, v: e.v, slide: e.slide, levados: e.levados, sorteando: e.sorteando, extra: e.extra, desistencias: e.desistencias.slice(-30), debate: e.debate,
+const publico = (e: Estado) => ({ modo: e.modo || "corte", ideia: e.ideia || null, liberados: e.liberados || [], votoPers: e.votoPers || null, destravar: e.destravar || null, ajeitar: e.ajeitar || 0, cerimonia: !!e.cerimonia, parte2: !!e.parte2, n: e.n, fase: e.fase, faseId: e.faseId, temas: e.temas, tema: e.tema, funcao: e.funcao, postos: e.postos, sorteio: e.sorteio, v: e.v, slide: e.slide, levados: e.levados, sorteando: e.sorteando, extra: e.extra, desistencias: e.desistencias.slice(-30), debate: e.debate,
   funcaoInfo: e.funcao ? funcoes(e.n, e.extra).find((f) => f.id === e.funcao) || null : null });
 async function acoes(turmaId: string, fase: number) {
   const { data } = await db().from("mundo_corte_acoes").select("aluno_id, tipo, valor, em").eq("turma_id", turmaId).eq("fase", fase).order("em");
@@ -159,7 +159,7 @@ export async function corteDoAluno(alunoId: string) {
   return { estado: publico(e), maos: Object.keys(ac.maos), eu: { juri: meuJuri, candidato: ac.quero.includes(alunoId), voto: ac.votos[alunoId] ?? null, mao: !!ac.maos[alunoId], desistindo: !!ac.desistir[alunoId] && !e.desistencias.some((x) => x.aluno === alunoId && x.pedido === ac.desistir[alunoId].em), plateia: Math.max(0, lista.findIndex((x) => x.id === alunoId)) } };
 }
 export async function acaoDoAluno(alunoId: string, tipo: string, valor: string) {
-  if (!["quero", "desisto", "voto", "mao", "desistir", "juri", "fala", "manchete", "camera", "palmas", "nota", "martelo", "tempoExtra", "responder", "aprovar", "explicar", "destaque", "anotacao", "falaDoDia", "mancheteTexto", "votoTime", "previsao", "passoTime", "ideia"].includes(tipo)) throw new Erro(400, "Ação desconhecida.");
+  if (!["quero", "desisto", "voto", "mao", "desistir", "juri", "fala", "manchete", "camera", "palmas", "nota", "martelo", "tempoExtra", "responder", "aprovar", "explicar", "destaque", "anotacao", "falaDoDia", "mancheteTexto", "votoTime", "previsao", "passoTime", "ideia", "moeda"].includes(tipo)) throw new Erro(400, "Ação desconhecida.");
   const { data: a } = await db().from("mundo_alunos").select("turma_id").eq("id", alunoId).maybeSingle(); if (!a) throw new Erro(404, "Aluno não encontrado.");
   const e = await ler(a.turma_id);
   if ((tipo === "quero" || tipo === "desisto") && e.fase !== "funcao") throw new Erro(409, "Nenhuma função aberta agora.");
@@ -233,6 +233,15 @@ export async function acaoDoAluno(alunoId: string, tipo: string, valor: string) 
     await db().from("mundo_corte_acoes").insert({ turma_id: a.turma_id, fase: FASE_JURI + e.debate.juriId, aluno_id: alunoId, tipo: "juri", valor: String(valor) });
     await gravar(a.turma_id, e); return { ok: true };
   }
+  if (tipo === "moeda") {   // (17/11, Pedro) a votação dos personagens: até 3 moedas, uma por personagem; tocar de novo tira
+    const vp = e.votoPers; if (!vp || vp.fim) throw new Erro(409, "A votação não está aberta agora.");
+    const autor = String(valor || ""); if (!vp.opcoes.some((o) => o.aluno === autor)) throw new Erro(400, "Personagem não encontrado.");
+    if (autor === alunoId) throw new Erro(400, "No seu personagem não vale. Escolha o de um colega!");
+    const v = vp.id + "|" + autor, { data: minhas } = await db().from("mundo_corte_acoes").select("valor").eq("turma_id", a.turma_id).eq("tipo", "moeda").eq("aluno_id", alunoId).like("valor", vp.id + "|%");
+    if ((minhas || []).some((m) => m.valor === v)) { await db().from("mundo_corte_acoes").delete().eq("turma_id", a.turma_id).eq("tipo", "moeda").eq("aluno_id", alunoId).eq("valor", v); return { ok: true, tirou: true }; }
+    if ((minhas || []).length >= 3) throw new Erro(409, "Você já usou as 3 moedas.");
+    await db().from("mundo_corte_acoes").insert({ turma_id: a.turma_id, fase: 0, aluno_id: alunoId, tipo: "moeda", valor: v }); return { ok: true };
+  }
   if (tipo === "ideia") {   // (17/11, Pedro) a resposta escrita à pergunta aberta do professor (fica nas ações; o Comando lista)
     if (!e.ideia) throw new Erro(409, "A pergunta não está aberta agora."); const v = String(valor || "").trim().slice(0, 12000); if (!v) throw new Erro(400, "Escreva a sua ideia primeiro.");
     await db().from("mundo_corte_acoes").insert({ turma_id: a.turma_id, fase: 0, aluno_id: alunoId, tipo: "ideia", valor: e.ideia.id + "|" + v }); return { ok: true };
@@ -248,13 +257,18 @@ async function ideiasDe(turmaId: string) {   // (17/11) as respostas escritas de
   const { data } = await db().from("mundo_corte_acoes").select("aluno_id, valor, em").eq("turma_id", turmaId).eq("tipo", "ideia").gte("em", hoje.toISOString()).order("em", { ascending: false }).limit(200);
   return (data || []).map((r) => ({ aluno: r.aluno_id, texto: String(r.valor).replace(/^\d+\|/, ""), em: r.em }));
 }
+async function moedasDe(turmaId: string, id: number) {   // (17/11) as moedas de cada personagem
+  const { data } = await db().from("mundo_corte_acoes").select("aluno_id, valor").eq("turma_id", turmaId).eq("tipo", "moeda").like("valor", id + "|%");
+  const total: Record<string, number> = {}, quem = new Set<string>(); for (const r of data || []) { const au = String(r.valor).split("|")[1]; total[au] = (total[au] || 0) + 1; quem.add(r.aluno_id); }
+  return { total, votantes: quem.size };
+}
 export async function painel(turmaId: string) {
   const [e, alunos, { data: on }, mundo] = await Promise.all([ler(turmaId), turmaDe(turmaId), db().from("mundo_online").select("aluno_id, sala").gte("visto_em", new Date(Date.now() - 60e3).toISOString()), estadoMundo()]);
   const curtos = nomesCurtos(alunos);
   const online = new Map((on || []).map((o) => [o.aluno_id, o.sala]));
   const ac = await acoes(turmaId, e.faseId);
   const pendentes = Object.entries(ac.desistir).filter(([id, p]) => !e.desistencias.some((x) => x.aluno === id && x.pedido === p.em)).map(([id, p]) => ({ aluno: id, assento: p.assento, em: p.em }));
-  return { ideias: await ideiasDe(turmaId), estado: publico(e), funcoes: funcoes(e.n, e.extra), mundo: mundo.ligado, desistir: pendentes, alunos: alunos.map((a) => ({ id: a.id, nome: a.nome, curto: curtos[a.id], online: online.get(a.id) || null })), palmas: await palmasDe(turmaId, e.debate.id || 0), notas: await notasDe(turmaId, e.debate.id || 0), pontos: calcularPontos(e, await votosJuri(turmaId, e.debate.juriId), await palmasPorFala(turmaId, e.debate.id || 0), await notasDe(turmaId, e.debate.id || 0), await extrasDe(turmaId, e.debate.id || 0)), extras: await extrasDe(turmaId, e.debate.id || 0), juri: await votosJuri(turmaId, e.debate.juriId), quero: ac.quero, votos: ac.votos, maos: ac.maos };
+  return { moedas: e.votoPers ? await moedasDe(turmaId, e.votoPers.id) : null, ideias: await ideiasDe(turmaId), estado: publico(e), funcoes: funcoes(e.n, e.extra), mundo: mundo.ligado, desistir: pendentes, alunos: alunos.map((a) => ({ id: a.id, nome: a.nome, curto: curtos[a.id], online: online.get(a.id) || null })), palmas: await palmasDe(turmaId, e.debate.id || 0), notas: await notasDe(turmaId, e.debate.id || 0), pontos: calcularPontos(e, await votosJuri(turmaId, e.debate.juriId), await palmasPorFala(turmaId, e.debate.id || 0), await notasDe(turmaId, e.debate.id || 0), await extrasDe(turmaId, e.debate.id || 0)), extras: await extrasDe(turmaId, e.debate.id || 0), juri: await votosJuri(turmaId, e.debate.juriId), quero: ac.quero, votos: ac.votos, maos: ac.maos };
 }
 export async function acaoDoProfessor(turmaId: string, b: Record<string, unknown>) {
   const e = await ler(turmaId), F = funcoes(e.n, e.extra), op = String(b.op || "");
@@ -285,7 +299,22 @@ export async function acaoDoProfessor(turmaId: string, b: Record<string, unknown
     if (base + novo > MAX[f]) throw new Erro(409, "Não cabe mais na sala: no máximo " + MAX[f] + " nesta função.");
     e.extra = { ...e.extra, [f]: novo };
     const ok = new Set(funcoes(e.n, e.extra).flatMap((x) => x.assentos)); for (const s of Object.keys(e.postos)) if (!ok.has(s)) delete e.postos[s]; }   // quem estava na vaga que saiu volta à plateia
-  else if (op === "ideia") e.ideia = b.ligar === false ? null : { id: Date.now(), texto: String(b.texto || "Qual deveria ser o próximo personagem da Corte?").slice(0, 3000) };   // (17/11, Pedro) a pergunta aberta para todos escreverem
+  else if (op === "votoPers") {   // (17/11, Pedro) abrir (com todas as fichas de hoje, a última de cada aluno), mostrar o resultado ou fechar
+    if (b.ligar === false) e.votoPers = null;
+    else if (b.resultado) { if (e.votoPers) { const m = await moedasDe(turmaId, e.votoPers.id); e.votoPers.fim = e.votoPers.opcoes.map((o) => ({ aluno: o.aluno, moedas: m.total[o.aluno] || 0 })).filter((x) => x.moedas > 0).sort((x, y) => y.moedas - x.moedas).slice(0, 5); } }
+    else {
+      const [ids, alunos] = await Promise.all([ideiasDe(turmaId), turmaDe(turmaId)]); const nome = (id: string) => { const n = (alunos.find((x) => x.id === id)?.nome || id).split(" "); return n.slice(0, 2).join(" "); };
+      const vistos = new Set<string>(), opcoes: { aluno: string; autor: string; texto: string }[] = [];
+      for (const r of ids) if (!vistos.has(r.aluno) && r.aluno !== "teste") { vistos.add(r.aluno); opcoes.push({ aluno: r.aluno, autor: nome(r.aluno), texto: r.texto.slice(0, 1500) }); }
+      if (!opcoes.length) throw new Erro(409, "Ainda não chegou nenhuma ficha hoje.");
+      e.votoPers = { id: Date.now(), opcoes: opcoes.reverse() }; e.ideia = null;
+    }
+  }
+  else if (op === "aprovarIdeia") {   // (17/11, Pedro) aprovou a ficha: só esse aluno volta ao mundo (e não é puxado de novo para a Corte)
+    const al = String(b.aluno || ""); if (!al) throw new Erro(400, "Falta o aluno."); e.liberados = [...new Set([...(e.liberados || []), al])];
+    const { data: au } = await db().from("mundo_aulas").select("codigo").eq("turma_id", turmaId).maybeSingle(); if (au) await avisar(canalAula(au.codigo), "voltarMundo", { alunoId: al });
+  }
+  else if (op === "ideia") { if (b.ligar !== false) e.liberados = []; e.ideia = b.ligar === false ? null : { id: Date.now(), texto: String(b.texto || "Qual deveria ser o próximo personagem da Corte?").slice(0, 3000) }; }   // (17/11, Pedro) a pergunta aberta para todos escreverem
   else if (op === "modo") e.modo = b.modo === "arena" ? "arena" : "corte";   // (06/11) Corte (todas as funções) ou Arena (só A favor x Contra, e os Cronistas)
   else if (op === "arena") {   // (06/11, Pedro: 'só os a favor e contra... e os cronistas') os alunos dados (os que estão na Corte) viram dois times sorteados; os Cronistas ficam
     const q = distribuir(Math.max(30, e.n)) as Record<string, number>, ids = (Array.isArray(b.alunos) ? b.alunos : []).map(String);
