@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { listarTurma, type AlunoNono } from "@/lib/homenagem-9ano";
+import { ALUNO_TESTE, listarTurma, type AlunoNono } from "@/lib/homenagem-9ano";
 import { BUCKET_HOMENAGEM, URL_HOMENAGEM, type StatusParte } from "@/lib/homenagem-9ano-texto";
 import { PainelHomenagem, type EnvioAdmin } from "./painel";
 
@@ -60,7 +60,7 @@ export default async function HomenagemAdmin() {
         As famílias gravam a mensagem (parte 1) e o poema (parte 2). Assista, aprove ou peça para gravar de novo: o pedido aparece para a família na página dela.
       </p>
       {erro && <p className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{erro}</p>}
-      <PainelHomenagem link={URL_HOMENAGEM} turma={turma.map((a) => ({ id: a.id, nome: a.nome }))} envios={envios} />
+      <PainelHomenagem link={URL_HOMENAGEM} turma={turma.filter((a) => a.id !== ALUNO_TESTE.id).map((a) => ({ id: a.id, nome: a.nome }))} envios={envios} />
     </div>
   );
 }

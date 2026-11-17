@@ -16,7 +16,14 @@ export interface AlunoNono {
   nascimento: string; // AAAA-MM-DD
 }
 
+/** Aluno de mentira para a escola testar a página (entra como qualquer família; não conta na turma do admin). */
+export const ALUNO_TESTE: AlunoNono = { id: 999999, nome: "Aluno Teste", nascimento: "2011-01-01" };
+
 export async function listarTurma(): Promise<AlunoNono[]> {
+  return [...(await listarTurmaReal()), ALUNO_TESTE];
+}
+
+async function listarTurmaReal(): Promise<AlunoNono[]> {
   const token = process.env.ACTIVESOFT_TOKEN;
   if (!token) throw new Error("ACTIVESOFT_TOKEN não configurada");
   const pedir = () =>
