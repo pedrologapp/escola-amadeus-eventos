@@ -5,6 +5,7 @@ import {
   Heart,
   Palette,
   Sparkles,
+  Video,
   Waves,
 } from "lucide-react";
 import { ModuloCard, type Modulo } from "@/components/admin/modulo-card";
@@ -21,6 +22,13 @@ export const metadata = { title: "Campanhas · Admin Amadeus" };
 
 // A Rematrícula 2027 tem aba própria no menu (/admin/rematricula-2027).
 const EM_ANDAMENTO: Modulo[] = [
+  {
+    href: "/admin/homenagem-9ano",
+    icone: Video,
+    titulo: "Homenagem do 9º ano",
+    descricao: "Vídeos das famílias para a formatura: a mensagem e o poema de cada uma, para assistir, aprovar e baixar.",
+    selo: "Novo",
+  },
   {
     href: "/admin/culminancia",
     icone: Palette,
