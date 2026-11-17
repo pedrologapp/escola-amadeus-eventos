@@ -155,3 +155,20 @@ export function dicaDoTempo(max: number, chuva: number): string {
   if (chuva >= 30) return "Pode chover: bom ter um guarda-chuva por perto.";
   return "Bom dia para aprender!";
 }
+
+/**
+ * Quem mudou o mundo (Pedro, 17/11/2026: "queria que tivesse frases assim", como os banners da sala). Uma pessoa por
+ * volta, sorteada. Só frases que a pessoa disse de verdade; fotos de uso livre da Wikimedia Commons em /tv/pessoas.
+ */
+export const PESSOAS_TV: { id: string; nome: string; frase: string }[] = [
+  { id: "mandela", nome: "Nelson Mandela", frase: "A educação é a arma mais poderosa que você pode usar para mudar o mundo." },
+  { id: "malala", nome: "Malala Yousafzai", frase: "Uma criança, um professor, um livro e uma caneta podem mudar o mundo." },
+  { id: "freire", nome: "Paulo Freire", frase: "Se a educação sozinha não transforma a sociedade, sem ela tampouco a sociedade muda." },
+  { id: "mlk", nome: "Martin Luther King Jr.", frase: "Eu tenho um sonho." },
+  { id: "michelle", nome: "Michelle Obama", frase: "Não há limite para o que nós, mulheres, podemos realizar." },
+  { id: "senna", nome: "Ayrton Senna", frase: "Faça tudo com muito amor e com muita fé em Deus, que um dia você chega lá." },
+  { id: "greta", nome: "Greta Thunberg", frase: "Ninguém é pequeno demais para fazer a diferença." },
+  { id: "krenak", nome: "Ailton Krenak", frase: "O futuro é ancestral." },
+  { id: "einstein", nome: "Albert Einstein", frase: "A imaginação é mais importante que o conhecimento." },
+  { id: "curie", nome: "Marie Curie", frase: "Nada na vida deve ser temido, somente compreendido." },
+];

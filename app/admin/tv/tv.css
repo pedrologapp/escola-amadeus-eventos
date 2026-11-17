@@ -245,3 +245,12 @@
 .cena-conquistas .foto-inteira img { max-width: 100%; max-height: 100%; border-radius: 36px; border: 10px solid var(--tv-creme); box-shadow: 0 30px 60px rgba(0,0,0,.35); }
 .cena-conquistas .foto-inteira ~ .txt { right: 1060px; }
 .cena-conquistas .foto-inteira ~ .txt .t1 { font-size: 104px; }
+
+/* frase de quem mudou o mundo (17/11/2026): no jeito dos banners da sala */
+.cena-inspira { background: #0B0B0D; }
+.inspira-foto { position: absolute; left: 0; top: 0; width: 820px; height: 920px; background-size: cover; background-position: center 20%; filter: grayscale(1) contrast(1.08);
+  -webkit-mask-image: linear-gradient(90deg, #000 55%, transparent 100%), linear-gradient(0deg, transparent 0%, #000 22%); -webkit-mask-composite: source-in; mask-image: linear-gradient(90deg, #000 55%, transparent 100%), linear-gradient(0deg, transparent 0%, #000 22%); mask-composite: intersect; }
+.cena-inspira .txt { position: absolute; left: 800px; right: 150px; top: 0; height: 920px; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+.cena-inspira .mao { color: rgba(246,239,224,.6); font-size: 64px; }
+.inspira-nome { margin-top: 24px; font-family: Georgia, "Times New Roman", serif; font-weight: 700; font-size: 104px; line-height: 1.02; letter-spacing: .02em; text-transform: uppercase; color: #F4F1EA; }
+.inspira-frase { margin-top: 44px; font-family: Georgia, "Times New Roman", serif; font-size: 62px; line-height: 1.22; color: #E8E4DA; }

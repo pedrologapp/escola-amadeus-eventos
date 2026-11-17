@@ -364,6 +364,18 @@ function conteudo(c: Cena, hora: number) {
           </div>
         </>
       );
+    case "inspira":
+      // frase de quem mudou o mundo (17/11/2026), no jeito dos banners da sala: foto em preto e branco, nome e frase
+      return (
+        <>
+          <div className="inspira-foto surge" style={{ ...st(0.1), backgroundImage: `url(${String(d.imagem)})` }} />
+          <div className="txt">
+            <div className="mao surge" style={st(0.4)}>quem mudou o mundo</div>
+            <div className="inspira-nome surge" style={st(0.7)}>{String(d.nome)}</div>
+            <p className="inspira-frase surge" style={st(1.3)}>“{String(d.frase)}”</p>
+          </div>
+        </>
+      );
     case "equipe":
       return (
         <>
@@ -445,6 +457,7 @@ const CLASSE: Record<string, string> = {
   fotos: "cena-fotos",
   conquistas: "cena-conquistas",
   equipe: "cena-equipe",
+  inspira: "cena-inspira",
   "tela-aviso": "cena-aviso",
   "tela-recado": "cena-recados",
   "tela-frase": "cena-frase",
@@ -502,6 +515,11 @@ function daVolta(roteiro: RoteiroTv, volta: number, tudo: boolean): Cena[] {
       return p.tipo === "desafio"
         ? [{ ...c, id: "desafio", segundos: p.s, dados: { pergunta: p.pergunta, resposta: p.resposta } }]
         : [{ ...c, id: "sabia", segundos: p.s, dados: { texto: p.texto } }];
+    }
+    if (c.id === "inspira") {
+      // uma pessoa por volta, na ordem sorteada do dia (Pedro, 17/11/2026)
+      const ps = roteiro.pessoas ?? [];
+      return ps.length ? [{ ...c, dados: ps[volta % ps.length] }] : [];
     }
     const imagens = (c.dados as D).imagens as string[] | undefined;
     if (c.id === "fotos" && imagens && imagens.length > FOTOS_POR_VOLTA && !tudo) {

@@ -46,6 +46,7 @@ const VISUAL: Record<string, { fundo: string; icone: string; claro?: boolean }> 
   fotos: { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "camera" },
   conquistas: { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "trofeu" },
   equipe: { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "coracao" },
+  inspira: { fundo: "linear-gradient(135deg,#1E3F86,#0B2260)", icone: "estrela" },
 };
 
 /** Cartões cujo conteúdo é uma lista simples (frases, curiosidades e datas comemorativas). */
@@ -60,7 +61,7 @@ const LISTA: Record<string, { tipo: TipoItem; titulo: string; dica: string; exem
 const GRUPOS: { nome: string; ids: string[] }[] = [
   { nome: "Recados da escola", ids: ["avisos", "recados", "agenda"] },
   { nome: "Fotos da escola", ids: ["fotos", "conquistas", "equipe"] },
-  { nome: "Conteúdo do dia", ids: ["saudacao", "sabia", "frase", "desafio", "palavra", "inteligencia"] },
+  { nome: "Conteúdo do dia", ids: ["saudacao", "sabia", "frase", "inspira", "desafio", "palavra", "inteligencia"] },
   { nome: "Automáticos", ids: ["aniversariantes", "evento", "promo", "qr", "formatura", "fim", "tempo", "contagem"] },
 ];
 

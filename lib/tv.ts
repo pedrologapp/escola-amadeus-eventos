@@ -4,7 +4,7 @@ import { unstable_cache } from "next/cache";
 import QRCode from "qrcode";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { videoTv } from "@/lib/tv-videos";
-import { DESAFIOS, INTELIGENCIAS_TV, PALAVRAS, dicaDoTempo, tempoEmPalavras } from "@/lib/tv-conteudo";
+import { DESAFIOS, INTELIGENCIAS_TV, PALAVRAS, PESSOAS_TV, dicaDoTempo, tempoEmPalavras } from "@/lib/tv-conteudo";
 
 /**
  * TV Amadeus (29/09/2026): a TV da recepção roda um roteiro em loop que se
@@ -54,6 +54,8 @@ export const BLOCOS: Record<string, { nome: string; origem: string; equipe?: Tip
   fotos: { nome: "Fotos dos eventos", origem: "Cada evento é uma tela que passa as fotos dele, uma depois da outra", equipe: "foto" },
   conquistas: { nome: "Conquistas", origem: "Alunos e turmas que ganharam algo", equipe: "conquista" },
   equipe: { nome: "Nossa equipe", origem: "Uma pessoa da equipe por dia, com foto", equipe: "pessoa" },
+  // Pedro, 17/11/2026
+  inspira: { nome: "Quem mudou o mundo", origem: "Automático: foto, nome e uma frase de alguém que mudou o mundo, uma pessoa sorteada a cada volta" },
 };
 
 /**
@@ -69,6 +71,7 @@ export const NOVOS: BlocoTv[] = [
   { id: "palavra", ativo: true, ordem: 8.3, segundos: 11 },
   { id: "equipe", ativo: true, ordem: 8.5, segundos: 11 },
   { id: "inteligencia", ativo: true, ordem: 8.7, segundos: 13 },
+  { id: "inspira", ativo: true, ordem: 6.5, segundos: 12 },
 ];
 const comNovos = (blocos: BlocoTv[]) => [...blocos, ...NOVOS.filter((n) => !blocos.some((b) => b.id === n.id))].sort((a, b) => a.ordem - b.ordem);
 
@@ -136,6 +139,8 @@ export interface RoteiroTv {
    * aleatórias"). As cenas "pergunta:*" são lugares na volta; a TV tira uma pergunta diferente do monte a cada volta.
    */
   perguntas?: PerguntaTv[];
+  /** quem mudou o mundo (17/11/2026): a cena "inspira" é o lugar; a TV mostra uma pessoa sorteada a cada volta */
+  pessoas?: { nome: string; frase: string; imagem: string }[];
 }
 
 export type PerguntaTv = { tipo: "sabia"; texto: string; s: number } | { tipo: "desafio"; pergunta: string; resposta: string; s: number };
@@ -309,7 +314,7 @@ export async function roteiroDoDia(): Promise<RoteiroTv> {
     // o modo evento muda com o horário: a chave do roteiro guardado diz se ele vale agora (consulta pequena, a cada volta)
     const evento = modoEventoAgora(await lerModoEvento().catch(() => null), hoje);
     const [r, tempo] = await Promise.all([
-      unstable_cache(() => montarRoteiro(hoje, evento), ["tv-roteiro", "v18", hoje, turno, evento ? "evento" : "normal"], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })(),
+      unstable_cache(() => montarRoteiro(hoje, evento), ["tv-roteiro", "v19", hoje, turno, evento ? "evento" : "normal"], { tags: [ETIQUETA_TV], revalidate: 60 * 60 * 24 })(),
       unstable_cache(tempoEmNatal, ["tv-tempo", hoje], { revalidate: 60 * 60 })().catch((e) => { console.error("TV: o tempo não veio", e); return null; }),
     ]);
     // a tela do tempo recebe a previsão; sem previsão, ela sai desta volta
@@ -413,6 +418,7 @@ async function montarRoteiro(hoje: string, eventoAgora = false): Promise<Roteiro
     diaDoAno(hoje) + 1,
   );
   let nPerg = 0;
+  let comPessoas = false;
 
   const cenas: Cena[] = [];
   for (const f of fila) {
@@ -517,6 +523,9 @@ async function montarRoteiro(hoje: string, eventoAgora = false): Promise<Roteiro
       case "conquistas":
         for (const q of de("conquista").slice(0, 4)) c({ titulo: q.titulo, texto: q.texto, imagem: q.imagem ?? null }, `conquista:${q.id}`);
         break;
+      case "inspira":
+        if (PESSOAS_TV.length) { c({}, "inspira"); comPessoas = true; }
+        break;
       case "equipe": {
         // uma pessoa por dia
         const p = gira(de("pessoa").filter((i) => i.imagem));
@@ -578,5 +587,5 @@ async function montarRoteiro(hoje: string, eventoAgora = false): Promise<Roteiro
     cenas.push(...corpo, ...(fimIdx >= 0 ? resto.slice(fimIdx) : []));
   }
   const rodape = valem.filter((i) => i.tipo === "rodape").map((i) => i.titulo.split("*").join("")).filter(Boolean);
-  return { hoje, cenas, atualizado: new Date().toISOString(), rodape, modoEvento, ...(nPerg ? { perguntas } : {}) };
+  return { hoje, cenas, atualizado: new Date().toISOString(), rodape, modoEvento, ...(nPerg ? { perguntas } : {}), ...(comPessoas ? { pessoas: embaralha(PESSOAS_TV.map((p) => ({ nome: p.nome, frase: p.frase, imagem: `/tv/pessoas/${p.id}.jpg` })), diaDoAno(hoje) + 7) } : {}) };
 }
