@@ -82,7 +82,7 @@ async function votosJuri(turmaId: string, juriId: number) {
 type Estado = {
   n: number; fase: "livre" | "tema" | "funcao"; faseId: number; temas: string[]; tema: string | null; funcao: string | null;
   postos: Record<string, string>; sorteio: { funcao: string; candidatos: string[]; vencedores: string[]; em: string } | null; v: number;
-  slide: number; levados: boolean; sorteando: unknown; extra: Record<string, number>; modo?: string; ideia?: { id: number; texto: string } | null; liberados?: string[]; votoPers?: { id: number; opcoes: { aluno: string; autor: string; texto: string }[]; fim?: { aluno: string; moedas: number }[] } | null; parte2?: boolean; cerimonia?: boolean; ajeitar?: number; destravar?: { aluno: string; id: number } | null;
+  slide: number; levados: boolean; sorteando: unknown; extra: Record<string, number>; modo?: string; ideia?: { id: number; texto: string } | null; liberados?: string[]; votoPers?: { id: number; opcoes: { aluno: string; autor: string; texto: string }[]; fim?: { aluno: string; moedas: number }[]; premiados?: Record<string, number> } | null; parte2?: boolean; cerimonia?: boolean; ajeitar?: number; destravar?: { aluno: string; id: number } | null;
   desistencias: { aluno: string; funcao: string; pedido: string; aprovado: boolean; em: string }[];
   log: { em: string; op: string; info: string }[];
   debate: Debate;   // (27/10, Pedro) o registro do que o professor fez (temas, postos, sorteio...); fica só no banco
@@ -299,6 +299,13 @@ export async function acaoDoProfessor(turmaId: string, b: Record<string, unknown
     if (base + novo > MAX[f]) throw new Erro(409, "Não cabe mais na sala: no máximo " + MAX[f] + " nesta função.");
     e.extra = { ...e.extra, [f]: novo };
     const ok = new Set(funcoes(e.n, e.extra).flatMap((x) => x.assentos)); for (const s of Object.keys(e.postos)) if (!ok.has(s)) delete e.postos[s]; }   // quem estava na vaga que saiu volta à plateia
+  else if (op === "premioPers") {   // (17/11, Pedro) o prêmio em moedas da loja para quem criou o personagem (chega no tablet em até 10 s, com a festa das moedas)
+    const al = String(b.aluno || ""), n = Math.max(1, Math.min(100, Math.round(Number(b.moedas) || 0))); if (!al || !e.votoPers) throw new Erro(400, "Falta o aluno.");
+    const { data: pg } = await db().from("mundo_progresso").select("dados").eq("aluno_id", al).maybeSingle();
+    const dados = { ...((pg?.dados as Record<string, unknown>) || {}), "arboria-presente": { id: "pers-" + e.votoPers.id + "-" + al + "-" + Date.now(), moedas: n, titulo: "O seu personagem foi um dos mais votados!" } };
+    await db().from("mundo_progresso").upsert({ aluno_id: al, dados, atualizado_em: new Date().toISOString() }, { onConflict: "aluno_id" });
+    e.votoPers.premiados = { ...(e.votoPers.premiados || {}), [al]: ((e.votoPers.premiados || {})[al] || 0) + n };
+  }
   else if (op === "votoPers") {   // (17/11, Pedro) abrir (com todas as fichas de hoje, a última de cada aluno), mostrar o resultado ou fechar
     if (b.ligar === false) e.votoPers = null;
     else if (b.resultado) { if (e.votoPers) { const m = await moedasDe(turmaId, e.votoPers.id); e.votoPers.fim = e.votoPers.opcoes.map((o) => ({ aluno: o.aluno, moedas: m.total[o.aluno] || 0 })).filter((x) => x.moedas > 0).sort((x, y) => y.moedas - x.moedas).slice(0, 5); } }
