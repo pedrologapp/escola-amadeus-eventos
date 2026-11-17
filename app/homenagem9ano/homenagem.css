@@ -1,5 +1,12 @@
 /* Homenagem do 9º ano: "Noite de Gala" (o mesmo espírito da placa de formatura): marinho profundo, dourado, letra cursiva. */
 
+/* O fundo "de trás" (o que aparece quando o celular estica a tela no topo/fim) também azul-marinho,
+   só nesta página: o layout geral do sistema é branco. */
+html:has(.hom-fundo),
+body:has(.hom-fundo) {
+  background-color: #0a1630;
+}
+
 .hom-fundo {
   background-color: #0a1630;
   background-image:
