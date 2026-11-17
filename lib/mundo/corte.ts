@@ -234,7 +234,7 @@ export async function acaoDoAluno(alunoId: string, tipo: string, valor: string) 
     await gravar(a.turma_id, e); return { ok: true };
   }
   if (tipo === "ideia") {   // (17/11, Pedro) a resposta escrita à pergunta aberta do professor (fica nas ações; o Comando lista)
-    if (!e.ideia) throw new Erro(409, "A pergunta não está aberta agora."); const v = String(valor || "").trim().slice(0, 600); if (!v) throw new Erro(400, "Escreva a sua ideia primeiro.");
+    if (!e.ideia) throw new Erro(409, "A pergunta não está aberta agora."); const v = String(valor || "").trim().slice(0, 2500); if (!v) throw new Erro(400, "Escreva a sua ideia primeiro.");
     await db().from("mundo_corte_acoes").insert({ turma_id: a.turma_id, fase: 0, aluno_id: alunoId, tipo: "ideia", valor: e.ideia.id + "|" + v }); return { ok: true };
   }
   if (tipo === "desistir") { const s = Object.keys(e.postos).find((k) => e.postos[k] === alunoId); if (!s) throw new Erro(409, "Você não tem uma função."); valor = s; }
@@ -285,7 +285,7 @@ export async function acaoDoProfessor(turmaId: string, b: Record<string, unknown
     if (base + novo > MAX[f]) throw new Erro(409, "Não cabe mais na sala: no máximo " + MAX[f] + " nesta função.");
     e.extra = { ...e.extra, [f]: novo };
     const ok = new Set(funcoes(e.n, e.extra).flatMap((x) => x.assentos)); for (const s of Object.keys(e.postos)) if (!ok.has(s)) delete e.postos[s]; }   // quem estava na vaga que saiu volta à plateia
-  else if (op === "ideia") e.ideia = b.ligar === false ? null : { id: Date.now(), texto: String(b.texto || "Qual deveria ser o próximo personagem da Corte?").slice(0, 200) };   // (17/11, Pedro) a pergunta aberta para todos escreverem
+  else if (op === "ideia") e.ideia = b.ligar === false ? null : { id: Date.now(), texto: String(b.texto || "Qual deveria ser o próximo personagem da Corte?").slice(0, 900) };   // (17/11, Pedro) a pergunta aberta para todos escreverem
   else if (op === "modo") e.modo = b.modo === "arena" ? "arena" : "corte";   // (06/11) Corte (todas as funções) ou Arena (só A favor x Contra, e os Cronistas)
   else if (op === "arena") {   // (06/11, Pedro: 'só os a favor e contra... e os cronistas') os alunos dados (os que estão na Corte) viram dois times sorteados; os Cronistas ficam
     const q = distribuir(Math.max(30, e.n)) as Record<string, number>, ids = (Array.isArray(b.alunos) ? b.alunos : []).map(String);
