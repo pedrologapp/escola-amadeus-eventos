@@ -1,7 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { acharAluno, alunoDoPasse, listarTurma, passeDe, primeiroNome } from "@/lib/homenagem-9ano";
+import { alunoDoPasse, conferirAluno, listarTurma, passeDe, primeiroNome, sugerirAlunos } from "@/lib/homenagem-9ano";
 import { BUCKET_HOMENAGEM, MAX_FOTOS, QUEM_OPCOES, type StatusParte } from "@/lib/homenagem-9ano-texto";
 
 /**
@@ -51,16 +51,21 @@ async function alunoPeloPasse(passe: string) {
   return turma.find((a) => a.id === id) ?? null;
 }
 
-/** Nome do filho + data de nascimento. */
-export async function entrar(nome: string, nascimento: string): Promise<Entrada> {
-  if (String(nome ?? "").trim().length < 3) return { ok: false, erro: "Digite o nome do seu filho ou da sua filha." };
+/** Nomes da turma enquanto o pai digita (a partir de 3 letras). */
+export async function buscarAluno(termo: string) {
+  return sugerirAlunos(termo).catch(() => []);
+}
+
+/** Aluno escolhido na lista + data de nascimento. */
+export async function entrar(alunoId: number, nascimento: string): Promise<Entrada> {
+  if (!alunoId) return { ok: false, erro: "Digite o nome e toque no seu filho ou na sua filha na lista." };
   let aluno;
   try {
-    aluno = await acharAluno(nome, nascimento);
+    aluno = await conferirAluno(Number(alunoId), nascimento);
   } catch {
     return { ok: false, erro: "Não consegui consultar a lista da turma agora. Tente de novo em alguns minutos." };
   }
-  if (!aluno) return { ok: false, erro: "Não encontramos. Confira o nome completo e a data de nascimento e tente de novo." };
+  if (!aluno) return { ok: false, erro: "A data de nascimento não confere. Confira e tente de novo." };
   return { ok: true, passe: passeDe(aluno.id), nome: aluno.nome, primeiro: primeiroNome(aluno.nome), envios: await enviosDo(aluno.id) };
 }
 
@@ -71,12 +76,15 @@ export async function retomar(passe: string): Promise<Entrada> {
   return { ok: true, passe, nome: aluno.nome, primeiro: primeiroNome(aluno.nome), envios: await enviosDo(aluno.id) };
 }
 
-export async function criarEnvio(passe: string, quem: string, outro?: string) {
+export async function criarEnvio(passe: string, quem: string, outro: string, nome: string) {
   const aluno = await alunoPeloPasse(passe);
   if (!aluno) return { ok: false as const, erro: "Sua entrada expirou. Entre de novo." };
   if (!(QUEM_OPCOES as readonly string[]).includes(quem)) return { ok: false as const, erro: "Escolha quem vai gravar." };
-  const detalhe = String(outro ?? "").replace(/\s+/g, " ").trim().slice(0, 60);
-  const rotulo = quem === "Outra pessoa da família" ? detalhe || "Família" : quem;
+  const limpar = (s: string) => String(s ?? "").replace(/\s+/g, " ").trim().slice(0, 60);
+  const quemGrava = limpar(nome);
+  if (quemGrava.length < 2) return { ok: false as const, erro: "Escreva o seu nome." };
+  const parentesco = quem === "Outra pessoa da família" ? limpar(outro) || "Família" : quem;
+  const rotulo = `${parentesco} · ${quemGrava}`; // "Mãe · Ana Souza"
   const { data: envios } = await createAdminClient().from("homenagem_9ano_envios").select("id").eq("aluno_id", aluno.id);
   if ((envios?.length ?? 0) >= 6) return { ok: false as const, erro: "Esta família já tem muitos envios. Fale com a escola." };
   const { data, error } = await createAdminClient()

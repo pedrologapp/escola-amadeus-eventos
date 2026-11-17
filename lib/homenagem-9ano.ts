@@ -46,13 +46,22 @@ async function listarTurmaReal(): Promise<AlunoNono[]> {
   return [...porId.values()].sort((x, y) => x.nome.localeCompare(y.nome, "pt-BR"));
 }
 
-/** Acha o aluno pelo nome digitado (todas as palavras precisam estar no nome) + a data de nascimento. */
-export async function acharAluno(nome: string, nascimento: string): Promise<AlunoNono | null> {
-  const q = semAcento(String(nome ?? "")).split(" ").filter((p) => p.length >= 2);
-  if (!q.length || !/^\d{4}-\d{2}-\d{2}$/.test(nascimento)) return null;
+/** Sugestões enquanto o pai digita: alunos da turma cujo nome tem todas as palavras digitadas (começo de palavra). */
+export async function sugerirAlunos(termo: string): Promise<{ id: number; nome: string }[]> {
+  const q = semAcento(String(termo ?? "")).split(" ").filter(Boolean);
+  if (q.join("").length < 3) return [];
   const turma = await listarTurma();
-  const achados = turma.filter((a) => a.nascimento === nascimento && q.every((p) => semAcento(a.nome).split(" ").some((w) => w.startsWith(p))));
-  return achados.length === 1 ? achados[0] : null;
+  return turma
+    .filter((a) => q.every((p) => semAcento(a.nome).split(" ").some((w) => w.startsWith(p))))
+    .slice(0, 6)
+    .map((a) => ({ id: a.id, nome: a.nome }));
+}
+
+/** Confere o aluno escolhido na lista + a data de nascimento. */
+export async function conferirAluno(id: number, nascimento: string): Promise<AlunoNono | null> {
+  if (!id || !/^\d{4}-\d{2}-\d{2}$/.test(nascimento)) return null;
+  const a = (await listarTurma()).find((x) => x.id === id);
+  return a && a.nascimento === nascimento ? a : null;
 }
 
 function segredo() {

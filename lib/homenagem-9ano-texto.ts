@@ -55,6 +55,17 @@ export const ESTROFES: { titulo: string; versos: string[] }[] = [
 /** Dito por todas as famílias ao mesmo tempo, olhando para a câmera. */
 export const CORO = ["Saiba que sempre estaremos com você.", "Nós te amamos!"];
 
+/** O poema em texto corrido, para copiar ou mandar para outro celular e ler de lá enquanto grava. */
+export function poemaEmTexto(): string {
+  return [
+    "Homenagem do 9º ano: o poema",
+    "",
+    ...ESTROFES.flatMap((e) => [...e.versos, ""]),
+    "(No final, olhando para a câmera, devagar:)",
+    ...CORO,
+  ].join("\n");
+}
+
 export const QUEM_OPCOES = ["Mãe", "Pai", "Mãe e pai", "Outra pessoa da família"] as const;
 
 export const MAX_FOTOS = 10;

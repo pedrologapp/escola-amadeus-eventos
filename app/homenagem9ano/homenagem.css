@@ -88,6 +88,37 @@
 .hom-botao:disabled,
 .hom-botao-claro:disabled { opacity: 0.4; }
 
+/* Botões de ação secundária: grandes e legíveis (nada de link pequeno sublinhado). */
+.hom-acao,
+.hom-acao-discreta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 52px;
+  border-radius: 999px;
+  padding: 0 18px;
+  font-size: 16px;
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.2;
+  transition: transform 0.15s, background 0.15s;
+}
+.hom-acao {
+  border: 1.5px solid rgba(212, 176, 104, 0.75);
+  background: rgba(212, 176, 104, 0.12);
+  color: #f0dfae;
+}
+.hom-acao-discreta {
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.04);
+  color: #e6ded0;
+}
+.hom-acao:active,
+.hom-acao-discreta:active { transform: scale(0.98); }
+.hom-acao svg,
+.hom-acao-discreta svg { width: 19px; height: 19px; }
+
 .hom-numero,
 .hom-numero-p {
   display: grid;

@@ -17,9 +17,9 @@ import {
   UserPlus,
   VolumeX,
 } from "lucide-react";
-import { CORO, ESTROFES, MAX_FOTOS, PRAZO_HOMENAGEM, QUEM_OPCOES, type StatusParte } from "@/lib/homenagem-9ano-texto";
-import { atualizar, criarEnvio, entrar, prepararArquivo, retomar, salvarArquivo, type EnvioFamilia } from "./actions";
-import { Gravador, type VideoPronto } from "./gravador";
+import { MAX_FOTOS, PRAZO_HOMENAGEM, QUEM_OPCOES, type StatusParte } from "@/lib/homenagem-9ano-texto";
+import { atualizar, buscarAluno, criarEnvio, entrar, prepararArquivo, retomar, salvarArquivo, type EnvioFamilia } from "./actions";
+import { BotoesPoema, Gravador, PoemaInteiro, type VideoPronto } from "./gravador";
 import { subir } from "./subir";
 
 type Tela = "entrada" | "instrucoes" | "quem" | "parte1" | "parte2" | "fotos" | "fim" | "envios";
@@ -57,10 +57,10 @@ function Titulo({ sobre, children }: { sobre: string; children: React.ReactNode 
 }
 
 function Selo({ status, tem }: { status: StatusParte; tem: boolean }) {
-  if (!tem) return <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-bold text-[#C9BFAE]">Falta gravar</span>;
-  if (status === "aprovado") return <span className="rounded-full bg-[#2F5D3A] px-2.5 py-1 text-xs font-bold text-[#D9F2DE]">Aprovado</span>;
-  if (status === "refazer") return <span className="rounded-full bg-[#6B2B23] px-2.5 py-1 text-xs font-bold text-[#FADAD3]">Gravar de novo</span>;
-  return <span className="rounded-full bg-[#D4B068]/20 px-2.5 py-1 text-xs font-bold text-[#EAD7A4]">Recebido</span>;
+  if (!tem) return <span className="rounded-full bg-white/10 px-3 py-1 text-[13px] font-bold text-[#C9BFAE]">Falta gravar</span>;
+  if (status === "aprovado") return <span className="rounded-full bg-[#2F5D3A] px-3 py-1 text-[13px] font-bold text-[#D9F2DE]">Aprovado</span>;
+  if (status === "refazer") return <span className="rounded-full bg-[#6B2B23] px-3 py-1 text-[13px] font-bold text-[#FADAD3]">Gravar de novo</span>;
+  return <span className="rounded-full bg-[#D4B068]/20 px-3 py-1 text-[13px] font-bold text-[#EAD7A4]">Recebido</span>;
 }
 
 export function Homenagem() {
@@ -70,8 +70,13 @@ export function Homenagem() {
   const [soUma, setSoUma] = useState(false); // regravar só uma parte (vem da lista de envios)
   const [nome, setNome] = useState("");
   const [nascimento, setNascimento] = useState("");
+  const [sugestoes, setSugestoes] = useState<{ id: number; nome: string }[]>([]);
+  const [procurando, setProcurando] = useState(false);
+  const [escolhido, setEscolhido] = useState<{ id: number; nome: string } | null>(null);
+  const busca = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [quem, setQuem] = useState<string | null>(null);
   const [outro, setOutro] = useState("");
+  const [quemGrava, setQuemGrava] = useState("");
   const [ocupado, setOcupado] = useState(false);
   const [progresso, setProgresso] = useState<number | null>(null);
   const [erro, setErro] = useState<string | null>(null);
@@ -102,11 +107,24 @@ export function Homenagem() {
     if (envios) setFamilia({ ...familia, envios });
   };
 
+  const digitarNome = (v: string) => {
+    setNome(v);
+    if (busca.current) clearTimeout(busca.current);
+    if (v.trim().length < 3) { setSugestoes([]); setProcurando(false); return; }
+    setProcurando(true);
+    busca.current = setTimeout(async () => {
+      const r = await buscarAluno(v).catch(() => []);
+      setSugestoes(r);
+      setProcurando(false);
+    }, 300);
+  };
+
   const fazerEntrada = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!escolhido) return;
     setOcupado(true);
     setErro(null);
-    const r = await entrar(nome, nascimento).catch(() => ({ ok: false as const, erro: "Sem conexão. Tente de novo." }));
+    const r = await entrar(escolhido.id, nascimento).catch(() => ({ ok: false as const, erro: "Sem conexão. Tente de novo." }));
     setOcupado(false);
     if (!r.ok) return setErro(r.erro);
     guardar(r.passe);
@@ -116,9 +134,10 @@ export function Homenagem() {
 
   const escolherQuem = async () => {
     if (!familia || !quem) return;
-    if (quem === "Outra pessoa da família" && outro.trim().length < 2) return setErro("Escreva quem vai gravar (por exemplo: Avó Maria).");
+    if (quem === "Outra pessoa da família" && outro.trim().length < 2) return setErro("Escreva quem é da família (por exemplo: avó, tio, padrinho).");
+    if (quemGrava.trim().length < 2) return setErro("Escreva o seu nome.");
     setOcupado(true);
-    const r = await criarEnvio(familia.passe, quem, outro);
+    const r = await criarEnvio(familia.passe, quem, outro, quemGrava);
     setOcupado(false);
     if (!r.ok) return setErro(r.erro);
     setEnvioId(r.id);
@@ -199,6 +218,8 @@ export function Homenagem() {
     setFamilia(null);
     setNome("");
     setNascimento("");
+    setEscolhido(null);
+    setSugestoes([]);
     ir("entrada");
   };
 
@@ -208,10 +229,10 @@ export function Homenagem() {
       <div className="h-2 overflow-hidden rounded-full bg-white/10">
         <div className="h-full rounded-full bg-[#D4B068] transition-[width]" style={{ width: `${Math.round(progresso * 100)}%` }} />
       </div>
-      <p className="text-center text-sm text-[#C9BFAE]">Enviando… {Math.round(progresso * 100)}%. Não feche esta página.</p>
+      <p className="text-center text-[15px] text-[#C9BFAE]">Enviando… {Math.round(progresso * 100)}%. Não feche esta página.</p>
     </div>
   );
-  const aviso = erro && <p className="rounded-2xl bg-[#3A1D1D] p-3 text-sm leading-relaxed text-[#F6D5CF]">{erro}</p>;
+  const aviso = erro && <p className="rounded-2xl bg-[#3A1D1D] p-3 text-[15px] leading-relaxed text-[#F6D5CF]">{erro}</p>;
 
   return (
     <div ref={topo} className="mx-auto max-w-md scroll-mt-4">
@@ -230,22 +251,51 @@ export function Homenagem() {
 
           <Moldura>
             <form onSubmit={fazerEntrada} className="space-y-4">
-              <label className="block">
-                <span className="text-sm font-bold text-[#EAD7A4]">Nome do seu filho ou da sua filha</span>
-                <input value={nome} onChange={(e) => setNome(e.target.value)} autoComplete="off" placeholder="Nome e sobrenome" className="hom-campo mt-1.5" />
-              </label>
-              <label className="block">
-                <span className="text-sm font-bold text-[#EAD7A4]">Data de nascimento dele ou dela</span>
-                <input type="date" value={nascimento} onChange={(e) => setNascimento(e.target.value)} max="2014-12-31" min="2008-01-01" className="hom-campo mt-1.5" />
-              </label>
+              {!escolhido ? (
+                <div>
+                  <label className="block">
+                    <span className="text-[15px] font-bold text-[#EAD7A4]">Nome do seu filho ou da sua filha</span>
+                    <input value={nome} onChange={(e) => digitarNome(e.target.value)} autoComplete="off" placeholder="Comece a digitar o nome" className="hom-campo mt-1.5" />
+                  </label>
+                  {procurando && <p className="mt-2 flex items-center gap-2 text-[15px] text-[#C9BFAE]"><Loader2 className="h-4 w-4 animate-spin" /> Procurando…</p>}
+                  {sugestoes.length > 0 && (
+                    <div className="mt-2 space-y-2">
+                      <p className="text-[14px] text-[#C9BFAE]">Toque no nome:</p>
+                      {sugestoes.map((s) => (
+                        <button key={s.id} type="button" onClick={() => { setEscolhido(s); setSugestoes([]); setErro(null); }} className="hom-opcao !py-3.5">
+                          {s.nome}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {!procurando && nome.trim().length >= 3 && sugestoes.length === 0 && (
+                    <p className="mt-2 text-[15px] text-[#C9BFAE]">Nenhum aluno do 9º ano com esse nome. Confira como está escrito.</p>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <span className="text-[15px] font-bold text-[#EAD7A4]">Seu filho ou sua filha</span>
+                    <div className="mt-1.5 flex items-center gap-3 rounded-[14px] border border-[#D4B068] bg-[#D4B068]/10 px-4 py-3">
+                      <Check className="h-5 w-5 shrink-0 text-[#D4B068]" />
+                      <span className="flex-1 text-[17px] font-bold text-[#F3EBDD]">{escolhido.nome}</span>
+                      <button type="button" onClick={() => { setEscolhido(null); setNascimento(""); setErro(null); }} className="rounded-full border border-white/25 px-3 py-1.5 text-[14px] font-bold text-[#E6DED0]">Trocar</button>
+                    </div>
+                  </div>
+                  <label className="block">
+                    <span className="text-[15px] font-bold text-[#EAD7A4]">Data de nascimento de {escolhido.nome.split(" ")[0]}</span>
+                    <input type="date" value={nascimento} onChange={(e) => setNascimento(e.target.value)} max="2014-12-31" min="2008-01-01" className="hom-campo mt-1.5" />
+                  </label>
+                </>
+              )}
               {aviso}
-              <button disabled={ocupado || nome.trim().length < 3 || !nascimento} className="hom-botao w-full">
+              <button disabled={ocupado || !escolhido || !nascimento} className="hom-botao w-full">
                 {ocupado ? <Loader2 className="h-5 w-5 animate-spin" /> : <>Entrar <ArrowRight className="h-5 w-5" /></>}
               </button>
             </form>
           </Moldura>
 
-          <p className="flex items-center justify-center gap-2 text-center text-sm text-[#C9BFAE]">
+          <p className="flex items-center justify-center gap-2 text-center text-[15px] text-[#C9BFAE]">
             <Gift className="h-4 w-4 text-[#D4B068]" /> É surpresa: não conte para o seu filho.
           </p>
         </div>
@@ -280,22 +330,15 @@ export function Homenagem() {
                   <p className="mt-1 text-[15px] leading-relaxed text-[#D9D1C3]">
                     Um poema que <b className="text-[#F3EBDD]">todas as famílias</b> vão ler. No vídeo da formatura, cada verso sai na voz de uma família diferente, e no fim todas falam juntas. O texto aparece na tela enquanto você grava.
                   </p>
-                  <button type="button" onClick={() => setVerPoema((v) => !v)} className="mt-3 text-sm font-bold text-[#D4B068] underline underline-offset-4">
+                  <button type="button" onClick={() => setVerPoema((v) => !v)} className="hom-acao mt-4 w-full">
                     {verPoema ? "Esconder o poema" : "Ler o poema agora"}
                   </button>
                 </div>
               </div>
               {verPoema && (
-                <div className="mt-5 space-y-5 border-t border-[#D4B068]/25 pt-5 text-center">
-                  {ESTROFES.map((e) => (
-                    <div key={e.titulo}>
-                      {e.versos.map((v) => <p key={v} className="font-hom-serif text-[19px] leading-snug text-[#F3EBDD]">{v}</p>)}
-                    </div>
-                  ))}
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#D4B068]">Todos juntos</p>
-                    {CORO.map((v) => <p key={v} className="font-hom-serif text-[20px] font-bold italic leading-snug text-[#EAD7A4]">{v}</p>)}
-                  </div>
+                <div className="mt-5 space-y-5 border-t border-[#D4B068]/25 pt-5">
+                  <PoemaInteiro />
+                  <BotoesPoema />
                 </div>
               )}
             </Moldura>
@@ -332,7 +375,7 @@ export function Homenagem() {
           <button type="button" onClick={() => ir("quem")} className="hom-botao w-full">
             Começar <ArrowRight className="h-5 w-5" />
           </button>
-          <button type="button" onClick={sair} className="block w-full text-center text-sm text-[#9F978A] underline underline-offset-4">
+          <button type="button" onClick={sair} className="hom-acao-discreta w-full">
             Não é {familia.nome}? Sair
           </button>
         </div>
@@ -353,14 +396,21 @@ export function Homenagem() {
             ))}
           </div>
           {quem === "Outra pessoa da família" && (
-            <input value={outro} onChange={(e) => setOutro(e.target.value)} placeholder="Quem? Ex.: Avó Maria, tio João" className="hom-campo" />
+            <label className="block">
+              <span className="text-[15px] font-bold text-[#EAD7A4]">Quem é da família?</span>
+              <input value={outro} onChange={(e) => setOutro(e.target.value)} placeholder="Ex.: avó, tio, padrinho" className="hom-campo mt-1.5" />
+            </label>
           )}
-          <p className="text-center text-sm leading-relaxed text-[#C9BFAE]">Pai e mãe querem gravar separados? Sem problema: depois do primeiro envio, é só tocar em &quot;Outra pessoa da família quer gravar&quot;.</p>
+          <label className="block">
+            <span className="text-[15px] font-bold text-[#EAD7A4]">{quem === "Mãe e pai" ? "Nome de vocês" : "Seu nome"}</span>
+            <input value={quemGrava} onChange={(e) => setQuemGrava(e.target.value)} placeholder={quem === "Mãe e pai" ? "Ex.: Ana e Carlos" : "Nome e sobrenome"} autoComplete="name" className="hom-campo mt-1.5" />
+          </label>
+          <p className="text-center text-[15px] leading-relaxed text-[#C9BFAE]">Pai e mãe querem gravar separados? Sem problema: depois do primeiro envio, é só tocar em &quot;Outra pessoa da família quer gravar&quot;.</p>
           {aviso}
-          <button type="button" disabled={!quem || ocupado} onClick={escolherQuem} className="hom-botao w-full">
+          <button type="button" disabled={!quem || quemGrava.trim().length < 2 || ocupado} onClick={escolherQuem} className="hom-botao w-full">
             {ocupado ? <Loader2 className="h-5 w-5 animate-spin" /> : <>Continuar <ArrowRight className="h-5 w-5" /></>}
           </button>
-          <button type="button" onClick={() => ir(familia.envios.length ? "envios" : "instrucoes")} className="mx-auto flex items-center gap-1 text-sm text-[#9F978A]">
+          <button type="button" onClick={() => ir(familia.envios.length ? "envios" : "instrucoes")} className="hom-acao-discreta w-full">
             <ArrowLeft className="h-4 w-4" /> Voltar
           </button>
         </div>
@@ -373,7 +423,7 @@ export function Homenagem() {
           <p className="text-center text-[15.5px] leading-relaxed text-[#D9D1C3]">
             Fale com {primeiro} como se estivesse na frente. Algumas ideias: <i>uma lembrança que você nunca esqueceu</i>, <i>o que mais admira</i>, <i>o que deseja para o futuro</i>.
           </p>
-          <p className="flex items-center justify-center gap-2 text-sm text-[#C9BFAE]"><Clock className="h-4 w-4 text-[#D4B068]" /> Até 2 minutos</p>
+          <p className="flex items-center justify-center gap-2 text-[15px] text-[#C9BFAE]"><Clock className="h-4 w-4 text-[#D4B068]" /> Até 2 minutos</p>
           <Gravador modo="livre" limite={120} onPronto={(v) => !ocupado && enviarVideo("parte1", v)} />
           {barra}
           {aviso}
@@ -390,6 +440,10 @@ export function Homenagem() {
             <li className="flex gap-3"><span className="hom-numero-p">3</span><span>Leia uma estrofe e toque em <b className="text-[#F3EBDD]">Próxima</b>.</span></li>
             <li className="flex gap-3"><span className="hom-numero-p">4</span><span>No final, <b className="text-[#F3EBDD]">olhe para a câmera</b> e diga devagar: &quot;Saiba que sempre estaremos com você. Nós te amamos!&quot;</span></li>
           </ol>
+          <div className="space-y-2">
+            <p className="text-center text-[15px] text-[#C9BFAE]">Prefere ler em outro celular enquanto grava com este?</p>
+            <BotoesPoema />
+          </div>
           <Gravador modo="poema" limite={150} onPronto={(v) => !ocupado && enviarVideo("parte2", v)} />
           {barra}
           {aviso}
@@ -407,7 +461,7 @@ export function Homenagem() {
                 <div key={f.url} className="relative aspect-square overflow-hidden rounded-xl border border-[#D4B068]/30">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={f.url} alt="" className="h-full w-full object-cover" />
-                  <button type="button" onClick={() => setFotos((a) => a.filter((_, j) => j !== i))} className="absolute right-1 top-1 rounded-full bg-black/60 px-2 text-xs font-bold text-white">Tirar</button>
+                  <button type="button" onClick={() => setFotos((a) => a.filter((_, j) => j !== i))} className="absolute right-1 top-1 rounded-full bg-black/70 px-3 py-1 text-[14px] font-bold text-white">Tirar</button>
                 </div>
               ))}
             </div>
@@ -426,7 +480,7 @@ export function Homenagem() {
             </button>
           )}
           {!ocupado && (
-            <button type="button" onClick={() => ir(soUma ? "envios" : "fim")} className="block w-full text-center text-sm text-[#9F978A] underline underline-offset-4">
+            <button type="button" onClick={() => ir(soUma ? "envios" : "fim")} className="hom-acao-discreta w-full">
               {soUma ? "Voltar" : "Pular, não vou mandar fotos"}
             </button>
           )}
@@ -443,10 +497,10 @@ export function Homenagem() {
           </p>
           <p className="font-hom-serif text-[21px] italic text-[#EAD7A4]">Lembre: é surpresa. Nos vemos na formatura.</p>
           <div className="space-y-3">
-            <button type="button" onClick={() => { setQuem(null); setOutro(""); ir("quem"); }} className="hom-botao-claro w-full">
+            <button type="button" onClick={() => { setQuem(null); setOutro(""); setQuemGrava(""); ir("quem"); }} className="hom-botao-claro w-full">
               <UserPlus className="h-5 w-5" /> Outra pessoa da família quer gravar
             </button>
-            <button type="button" onClick={() => ir("envios")} className="block w-full text-sm text-[#9F978A] underline underline-offset-4">Ver o que já enviamos</button>
+            <button type="button" onClick={() => ir("envios")} className="hom-acao-discreta w-full">Ver o que já enviamos</button>
           </div>
         </div>
       )}
@@ -467,9 +521,9 @@ export function Homenagem() {
                     <p className="text-[15px] font-semibold text-[#E6DED0]">{rotulo}</p>
                     <Selo status={st} tem={tem} />
                   </div>
-                  {st === "refazer" && obs && <p className="mt-2 rounded-xl bg-[#6B2B23]/40 p-2.5 text-sm text-[#FADAD3]">A escola pediu: {obs}</p>}
+                  {st === "refazer" && obs && <p className="mt-2 rounded-xl bg-[#6B2B23]/40 p-3 text-[15px] text-[#FADAD3]">A escola pediu: {obs}</p>}
                   {st !== "aprovado" && (
-                    <button type="button" onClick={() => regravar(e.id, t)} className="mt-3 text-sm font-bold text-[#D4B068] underline underline-offset-4">
+                    <button type="button" onClick={() => regravar(e.id, t)} className="hom-acao mt-3 w-full">
                       {tem ? "Gravar de novo" : "Gravar agora"}
                     </button>
                   )}
@@ -478,17 +532,17 @@ export function Homenagem() {
               <div className="mt-4 flex items-center justify-between border-t border-[#D4B068]/20 pt-4">
                 <p className="text-[15px] text-[#E6DED0]">{e.fotos ? `${e.fotos} ${e.fotos === 1 ? "foto enviada" : "fotos enviadas"}` : "Nenhuma foto"}</p>
                 {e.fotos < MAX_FOTOS && (
-                  <button type="button" onClick={() => regravar(e.id, "fotos")} className="text-sm font-bold text-[#D4B068] underline underline-offset-4">Mandar fotos</button>
+                  <button type="button" onClick={() => regravar(e.id, "fotos")} className="hom-acao w-auto px-5">Mandar fotos</button>
                 )}
               </div>
             </Moldura>
           ))}
-          <button type="button" onClick={() => { setQuem(null); setOutro(""); ir("quem"); }} className="hom-botao-claro w-full">
+          <button type="button" onClick={() => { setQuem(null); setOutro(""); setQuemGrava(""); ir("quem"); }} className="hom-botao-claro w-full">
             <UserPlus className="h-5 w-5" /> Outra pessoa da família quer gravar
           </button>
-          <div className="flex justify-center gap-6 text-sm text-[#9F978A]">
-            <button type="button" onClick={() => ir("instrucoes")} className="underline underline-offset-4">Ver as instruções</button>
-            <button type="button" onClick={sair} className="underline underline-offset-4">Sair</button>
+          <div className="grid grid-cols-2 gap-3">
+            <button type="button" onClick={() => ir("instrucoes")} className="hom-acao-discreta">Instruções</button>
+            <button type="button" onClick={sair} className="hom-acao-discreta">Sair</button>
           </div>
         </div>
       )}

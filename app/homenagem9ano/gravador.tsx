@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Camera, ChevronLeft, ChevronRight, ImageUp, RotateCcw, Square, Check } from "lucide-react";
-import { CORO, ESTROFES, MAX_VIDEO_MB } from "@/lib/homenagem-9ano-texto";
+import { Camera, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Copy, ImageUp, RotateCcw, Send, Square, Check } from "lucide-react";
+import { CORO, ESTROFES, MAX_VIDEO_MB, poemaEmTexto } from "@/lib/homenagem-9ano-texto";
 import { extensaoDe } from "./subir";
 
 export interface VideoPronto {
@@ -22,7 +22,63 @@ function formatoDeGravacao(): string {
   return "";
 }
 
-const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+/**
+ * Copiar o poema ou mandar para outro celular (WhatsApp, por exemplo): quem prefere grava com um
+ * celular e lê o texto no outro, sem tirar o olho da câmera.
+ */
+export function BotoesPoema() {
+  const [copiado, setCopiado] = useState(false);
+  const copiar = async () => {
+    try {
+      await navigator.clipboard.writeText(poemaEmTexto());
+    } catch {
+      const t = document.createElement("textarea");
+      t.value = poemaEmTexto();
+      document.body.appendChild(t);
+      t.select();
+      document.execCommand("copy");
+      t.remove();
+    }
+    setCopiado(true);
+    setTimeout(() => setCopiado(false), 2500);
+  };
+  const mandar = async () => {
+    const texto = poemaEmTexto();
+    if (navigator.share) {
+      try { await navigator.share({ text: texto }); return; } catch { /* cancelou: tenta o WhatsApp */ }
+    }
+    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
+  };
+  return (
+    <div className="grid gap-3">
+      <button type="button" onClick={copiar} className="hom-acao w-full">
+        {copiado ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />} {copiado ? "Copiado" : "Copiar o poema"}
+      </button>
+      <button type="button" onClick={mandar} className="hom-acao w-full">
+        <Send className="h-4 w-4" /> Mandar para outro celular
+      </button>
+    </div>
+  );
+}
+
+/** O poema inteiro de uma vez (para quem prefere ver tudo antes de gravar). */
+export function PoemaInteiro() {
+  return (
+    <div className="space-y-4 text-center">
+      {ESTROFES.map((e) => (
+        <div key={e.titulo}>
+          {e.versos.map((v) => <p key={v} className="font-hom-serif text-[19px] leading-snug text-[#F3EBDD]">{v}</p>)}
+        </div>
+      ))}
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#D4B068]">No final, olhando para a câmera</p>
+        {CORO.map((v) => <p key={v} className="font-hom-serif text-[20px] font-bold italic leading-snug text-[#EAD7A4]">{v}</p>)}
+      </div>
+    </div>
+  );
+}
+
+const mmss =(s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
 /**
  * Gravador da página da homenagem. Câmera da frente, contagem 3-2-1 e, no modo "poema", o texto embaixo
@@ -35,6 +91,7 @@ export function Gravador({ modo, limite, onPronto }: { modo: "livre" | "poema"; 
   const [contagem, setContagem] = useState(3);
   const [segundos, setSegundos] = useState(0);
   const [estrofe, setEstrofe] = useState(0);
+  const [inteiro, setInteiro] = useState(false);
   const [gravado, setGravado] = useState<VideoPronto | null>(null);
   const [previa, setPrevia] = useState<string | null>(null);
   const ao = useRef<HTMLVideoElement>(null);
@@ -204,7 +261,7 @@ export function Gravador({ modo, limite, onPronto }: { modo: "livre" | "poema"; 
               type="button"
               onClick={() => setEstrofe((e) => Math.max(0, e - 1))}
               disabled={estrofe === 0}
-              className="inline-flex items-center gap-1 rounded-full border border-[#D4B068]/40 px-4 py-2.5 text-sm font-bold text-[#EAD7A4] disabled:opacity-30"
+              className="inline-flex items-center gap-1 rounded-full border border-[#D4B068]/40 min-h-[50px] px-5 text-[16px] font-bold text-[#EAD7A4] disabled:opacity-30"
             >
               <ChevronLeft className="h-4 w-4" /> Voltar
             </button>
@@ -217,7 +274,7 @@ export function Gravador({ modo, limite, onPronto }: { modo: "livre" | "poema"; 
               type="button"
               onClick={() => setEstrofe((e) => Math.min(ultima, e + 1))}
               disabled={estrofe === ultima}
-              className="inline-flex items-center gap-1 rounded-full bg-[#D4B068] px-5 py-2.5 text-sm font-bold text-[#0A1630] disabled:opacity-30"
+              className="inline-flex items-center gap-1 rounded-full bg-[#D4B068] min-h-[50px] px-6 text-[17px] font-extrabold text-[#0A1630] disabled:opacity-30"
             >
               Próxima <ChevronRight className="h-4 w-4" />
             </button>
@@ -225,7 +282,7 @@ export function Gravador({ modo, limite, onPronto }: { modo: "livre" | "poema"; 
         </div>
       )}
 
-      {erro && <p className="rounded-2xl bg-[#3A1D1D] p-3 text-sm text-[#F6D5CF]">{erro}</p>}
+      {erro && <p className="rounded-2xl bg-[#3A1D1D] p-3 text-[15px] text-[#F6D5CF]">{erro}</p>}
 
       {/* Botões */}
       {fase === "inicio" && (
@@ -237,6 +294,25 @@ export function Gravador({ modo, limite, onPronto }: { modo: "livre" | "poema"; 
         <button type="button" onClick={comecar} className="hom-botao w-full">
           <span className="h-3.5 w-3.5 rounded-full bg-red-600" /> Começar a gravar
         </button>
+      )}
+      {poema && fase === "camera" && (
+        <div className="space-y-4 rounded-[18px] border border-white/10 bg-white/[0.03] p-4">
+          <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#D4B068]">Como gravar</p>
+          <ol className="space-y-1.5 text-[14px] leading-snug text-[#D9D1C3]">
+            <li>1. Leia o poema em voz alta uma vez, para ensaiar.</li>
+            <li>2. Toque em <b className="text-[#F3EBDD]">Começar a gravar</b>: o poema volta para o início.</li>
+            <li>3. Leia uma estrofe e toque em <b className="text-[#F3EBDD]">Próxima</b>.</li>
+            <li>4. No final, <b className="text-[#F3EBDD]">olhe para a câmera</b> e diga o coro devagar.</li>
+          </ol>
+          <p className="text-[14px] leading-snug text-[#D9D1C3]">
+            Prefere ler em outro celular enquanto grava com este? Copie ou mande o poema:
+          </p>
+          <BotoesPoema />
+          <button type="button" onClick={() => setInteiro((v) => !v)} className="hom-acao w-full">
+            {inteiro ? <>Esconder o poema inteiro <ChevronUp className="h-4 w-4" /></> : <>Ver o poema inteiro <ChevronDown className="h-4 w-4" /></>}
+          </button>
+          {inteiro && <div className="border-t border-[#D4B068]/20 pt-4"><PoemaInteiro /></div>}
+        </div>
       )}
       {fase === "gravando" && (
         <button type="button" onClick={parar} className="hom-botao w-full !bg-[#F3EBDD]">
@@ -255,8 +331,8 @@ export function Gravador({ modo, limite, onPronto }: { modo: "livre" | "poema"; 
       )}
 
       {(fase === "inicio" || fase === "camera" || fase === "revisao") && (
-        <div className="text-center">
-          <button type="button" onClick={() => galeria.current?.click()} className="inline-flex items-center gap-2 text-sm font-semibold text-[#C9BFAE] underline decoration-[#D4B068]/50 underline-offset-4">
+        <div>
+          <button type="button" onClick={() => galeria.current?.click()} className="hom-acao w-full">
             <ImageUp className="h-4 w-4" /> Prefiro escolher um vídeo da galeria
           </button>
           <input ref={galeria} type="file" accept="video/*" className="hidden" onChange={(e) => { daGaleria(e.target.files?.[0]); e.target.value = ""; }} />
