@@ -61,7 +61,6 @@ export function poemaEmTexto(): string {
     "Homenagem do 9º ano: o poema",
     "",
     ...ESTROFES.flatMap((e) => [...e.versos, ""]),
-    "(No final, olhando para a câmera, devagar:)",
     ...CORO,
   ].join("\n");
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { Eye } from "lucide-react";
 import { CORO, ESTROFES } from "@/lib/homenagem-9ano-texto";
 
 /**
@@ -45,7 +46,12 @@ export function Teleprompter({ tocando, velocidade, onToque }: { tocando: boolea
             ))}
           </div>
         ))}
-        <p className="mb-1 text-[13px] font-extrabold uppercase tracking-[0.2em] text-[#EAD7A4]">Agora olhe para a câmera</p>
+        {/* sinal sem palavras (palavra aqui seria lida em voz alta): um olho dourado = hora de olhar para a câmera */}
+        <div aria-hidden className="mb-2 flex items-center justify-center gap-3 text-[#EAD7A4]">
+          <span className="h-px w-10 bg-[#D4B068]/70" />
+          <Eye className="h-6 w-6" />
+          <span className="h-px w-10 bg-[#D4B068]/70" />
+        </div>
         {CORO.map((v) => (
           <p key={v} className="font-hom-serif text-[clamp(19px,5.3vw,32px)] font-bold leading-[1.25] text-[#F2DC9B]">{v}</p>
         ))}

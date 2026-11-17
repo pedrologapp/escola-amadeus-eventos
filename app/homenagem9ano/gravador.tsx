@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Camera, ChevronDown, ChevronUp, Copy, ImageUp, Minus, Pause, Play, Plus, RotateCcw, Send, Square, Check } from "lucide-react";
+import { Camera, ChevronDown, ChevronUp, Copy, Eye, ImageUp, Minus, Pause, Play, Plus, RotateCcw, Send, Square, Check } from "lucide-react";
 import { Teleprompter } from "./teleprompter";
 import { CORO, ESTROFES, MAX_VIDEO_MB, poemaEmTexto } from "@/lib/homenagem-9ano-texto";
 import { extensaoDe } from "./subir";
@@ -72,7 +72,7 @@ export function PoemaInteiro() {
         </div>
       ))}
       <div>
-        <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#D4B068]">No final, olhando para a câmera</p>
+        <div aria-hidden className="mb-1 flex items-center justify-center gap-3 text-[#D4B068]"><span className="h-px w-8 bg-[#D4B068]/60" /><Eye className="h-5 w-5" /><span className="h-px w-8 bg-[#D4B068]/60" /></div>
         {CORO.map((v) => <p key={v} className="font-hom-serif text-[20px] font-bold italic leading-snug text-[#EAD7A4]">{v}</p>)}
       </div>
     </div>
@@ -216,6 +216,12 @@ export function Gravador({ modo, limite, onPronto }: { modo: "livre" | "poema"; 
   const aoVivo = fase === "camera" || fase === "contagem" || fase === "gravando";
   const poema = modo === "poema";
   const tocando = poema && !pausado && (fase === "gravando" || (fase === "camera" && ensaio));
+  /** Volta o texto para o começo e já sobe de novo (no ensaio ou durante a gravação, que continua). */
+  const recomecarTexto = () => {
+    setRodada((r) => r + 1);
+    setPausado(false);
+    if (fase === "camera") setEnsaio(true);
+  };
   const tocarTexto = () => (fase === "camera" && !ensaio ? (setEnsaio(true), setPausado(false)) : setPausado((p) => !p));
 
   return (
@@ -247,12 +253,15 @@ export function Gravador({ modo, limite, onPronto }: { modo: "livre" | "poema"; 
 
       {/* Controles do teleprompter: velocidade e pausa (botões grandes, dá para tocar gravando) */}
       {poema && aoVivo && fase !== "contagem" && (
-        <div className="grid grid-cols-3 gap-2">
-          <button type="button" onClick={() => setVelocidade((v) => Math.max(10, v - 5))} className="hom-acao-discreta !min-h-[56px] !px-2 !text-[15px]">
-            <Minus className="h-5 w-5" /> Devagar
-          </button>
+        <div className="grid grid-cols-2 gap-2">
           <button type="button" onClick={tocarTexto} className="hom-acao !min-h-[56px] !px-2 !text-[15px]">
             {tocando ? <><Pause className="h-5 w-5" /> Pausar</> : <><Play className="h-5 w-5" /> {fase === "camera" && !ensaio ? "Ensaiar" : "Continuar"}</>}
+          </button>
+          <button type="button" onClick={recomecarTexto} className="hom-acao !min-h-[56px] !px-2 !text-[15px]">
+            <RotateCcw className="h-5 w-5" /> Recomeçar
+          </button>
+          <button type="button" onClick={() => setVelocidade((v) => Math.max(10, v - 5))} className="hom-acao-discreta !min-h-[56px] !px-2 !text-[15px]">
+            <Minus className="h-5 w-5" /> Devagar
           </button>
           <button type="button" onClick={() => setVelocidade((v) => Math.min(60, v + 5))} className="hom-acao-discreta !min-h-[56px] !px-2 !text-[15px]">
             <Plus className="h-5 w-5" /> Rápido
@@ -280,7 +289,7 @@ export function Gravador({ modo, limite, onPronto }: { modo: "livre" | "poema"; 
             <li>1. O poema aparece por cima da câmera e sobe sozinho, como um teleprompter. Ele não sai no vídeo.</li>
             <li>2. Toque em <b className="text-[#F3EBDD]">Ensaiar</b> e leia uma vez em voz alta. Ajuste com <b className="text-[#F3EBDD]">Devagar</b> e <b className="text-[#F3EBDD]">Rápido</b>.</li>
             <li>3. Toque em <b className="text-[#F3EBDD]">Começar a gravar</b>: o texto volta para o início e sobe de novo.</li>
-            <li>4. No final, <b className="text-[#F3EBDD]">olhe para a câmera</b> e diga o coro devagar.</li>
+            <li>4. Quando aparecer o <b className="text-[#F3EBDD]">olho dourado</b>, olhe para a câmera e diga a última frase devagar.</li>
           </ol>
           <p className="text-[14px] leading-snug text-[#D9D1C3]">
             Prefere ler em outro celular enquanto grava com este? Copie ou mande o poema:
