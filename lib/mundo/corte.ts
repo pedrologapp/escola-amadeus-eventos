@@ -285,7 +285,7 @@ export async function acaoDoProfessor(turmaId: string, b: Record<string, unknown
     if (base + novo > MAX[f]) throw new Erro(409, "Não cabe mais na sala: no máximo " + MAX[f] + " nesta função.");
     e.extra = { ...e.extra, [f]: novo };
     const ok = new Set(funcoes(e.n, e.extra).flatMap((x) => x.assentos)); for (const s of Object.keys(e.postos)) if (!ok.has(s)) delete e.postos[s]; }   // quem estava na vaga que saiu volta à plateia
-  else if (op === "ideia") e.ideia = b.ligar === false ? null : { id: Date.now(), texto: String(b.texto || "Qual deveria ser o próximo personagem da Corte?").slice(0, 900) };   // (17/11, Pedro) a pergunta aberta para todos escreverem
+  else if (op === "ideia") e.ideia = b.ligar === false ? null : { id: Date.now(), texto: String(b.texto || "Qual deveria ser o próximo personagem da Corte?").slice(0, 3000) };   // (17/11, Pedro) a pergunta aberta para todos escreverem
   else if (op === "modo") e.modo = b.modo === "arena" ? "arena" : "corte";   // (06/11) Corte (todas as funções) ou Arena (só A favor x Contra, e os Cronistas)
   else if (op === "arena") {   // (06/11, Pedro: 'só os a favor e contra... e os cronistas') os alunos dados (os que estão na Corte) viram dois times sorteados; os Cronistas ficam
     const q = distribuir(Math.max(30, e.n)) as Record<string, number>, ids = (Array.isArray(b.alunos) ? b.alunos : []).map(String);
