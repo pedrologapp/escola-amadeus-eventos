@@ -435,9 +435,9 @@ export function Homenagem() {
         <div className="hom-entra space-y-5">
           <Titulo sobre="Parte 2 de 2">O poema</Titulo>
           <ol className="space-y-2 text-[15px] leading-relaxed text-[#D9D1C3]">
-            <li className="flex gap-3"><span className="hom-numero-p">1</span><span>Abra a câmera e leia o poema uma vez em voz alta, para ensaiar.</span></li>
-            <li className="flex gap-3"><span className="hom-numero-p">2</span><span>Toque em <b className="text-[#F3EBDD]">Começar a gravar</b>. O poema volta para o início.</span></li>
-            <li className="flex gap-3"><span className="hom-numero-p">3</span><span>Leia uma estrofe e toque em <b className="text-[#F3EBDD]">Próxima</b>.</span></li>
+            <li className="flex gap-3"><span className="hom-numero-p">1</span><span>Abra a câmera. O poema aparece <b className="text-[#F3EBDD]">por cima da imagem</b> e sobe sozinho, como um teleprompter. Ele não sai no vídeo.</span></li>
+            <li className="flex gap-3"><span className="hom-numero-p">2</span><span>Toque em <b className="text-[#F3EBDD]">Ensaiar</b> e leia uma vez em voz alta. Use <b className="text-[#F3EBDD]">Devagar</b> e <b className="text-[#F3EBDD]">Rápido</b> até ficar no seu ritmo.</span></li>
+            <li className="flex gap-3"><span className="hom-numero-p">3</span><span>Toque em <b className="text-[#F3EBDD]">Começar a gravar</b>. O texto volta para o início e sobe de novo. Tocar no texto pausa.</span></li>
             <li className="flex gap-3"><span className="hom-numero-p">4</span><span>No final, <b className="text-[#F3EBDD]">olhe para a câmera</b> e diga devagar: &quot;Saiba que sempre estaremos com você. Nós te amamos!&quot;</span></li>
           </ol>
           <div className="space-y-2">

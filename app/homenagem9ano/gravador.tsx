@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Camera, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Copy, ImageUp, RotateCcw, Send, Square, Check } from "lucide-react";
+import { Camera, ChevronDown, ChevronUp, Copy, ImageUp, Minus, Pause, Play, Plus, RotateCcw, Send, Square, Check } from "lucide-react";
+import { Teleprompter } from "./teleprompter";
 import { CORO, ESTROFES, MAX_VIDEO_MB, poemaEmTexto } from "@/lib/homenagem-9ano-texto";
 import { extensaoDe } from "./subir";
 
@@ -90,7 +91,10 @@ export function Gravador({ modo, limite, onPronto }: { modo: "livre" | "poema"; 
   const [erro, setErro] = useState<string | null>(null);
   const [contagem, setContagem] = useState(3);
   const [segundos, setSegundos] = useState(0);
-  const [estrofe, setEstrofe] = useState(0);
+  const [velocidade, setVelocidade] = useState(26); // px por segundo do teleprompter
+  const [pausado, setPausado] = useState(false);
+  const [ensaio, setEnsaio] = useState(false);
+  const [rodada, setRodada] = useState(0); // muda a cada gravação: o texto volta para o início
   const [inteiro, setInteiro] = useState(false);
   const [gravado, setGravado] = useState<VideoPronto | null>(null);
   const [previa, setPrevia] = useState<string | null>(null);
@@ -171,7 +175,9 @@ export function Gravador({ modo, limite, onPronto }: { modo: "livre" | "poema"; 
   };
 
   const comecar = () => {
-    setEstrofe(0);
+    setRodada((r) => r + 1);
+    setEnsaio(false);
+    setPausado(false);
     setContagem(3);
     setFase("contagem");
     let n = 3;
@@ -209,22 +215,29 @@ export function Gravador({ modo, limite, onPronto }: { modo: "livre" | "poema"; 
 
   const aoVivo = fase === "camera" || fase === "contagem" || fase === "gravando";
   const poema = modo === "poema";
-  const ultima = ESTROFES.length; // índice do coro
+  const tocando = poema && !pausado && (fase === "gravando" || (fase === "camera" && ensaio));
+  const tocarTexto = () => (fase === "camera" && !ensaio ? (setEnsaio(true), setPausado(false)) : setPausado((p) => !p));
 
   return (
     <div ref={caixa} className="scroll-mt-3 space-y-4">
       {/* Câmera / vídeo gravado */}
       {(aoVivo || fase === "revisao") && (
-        <div className={`relative mx-auto overflow-hidden rounded-[18px] border border-[#D4B068]/40 bg-black ${poema ? (fase === "revisao" ? "aspect-[3/4]" : "aspect-[16/10]") : "aspect-[3/4]"} w-full`}>
+        <div className={`relative mx-auto overflow-hidden rounded-[18px] border border-[#D4B068]/40 bg-black aspect-[3/4] w-full`}>
           {aoVivo && <video ref={prender} muted playsInline autoPlay className="h-full w-full -scale-x-100 object-cover" />}
           {fase === "revisao" && previa && <video src={previa} controls playsInline className="h-full w-full bg-black object-contain" />}
+          {poema && aoVivo && <Teleprompter key={rodada} tocando={tocando} velocidade={velocidade} onToque={tocarTexto} />}
+          {poema && aoVivo && !tocando && fase !== "contagem" && (
+            <span className="pointer-events-none absolute left-1/2 top-[58%] -translate-x-1/2 whitespace-nowrap rounded-full bg-black/65 px-3.5 py-1.5 text-[14px] font-bold text-white">
+              {fase === "camera" && !ensaio ? "Toque no texto para ensaiar" : "Pausado: toque no texto para continuar"}
+            </span>
+          )}
           {fase === "contagem" && (
             <div className="absolute inset-0 grid place-items-center bg-black/35">
               <span key={contagem} className="hom-conta font-hom-serif text-[110px] font-semibold text-[#F3EBDD]">{contagem}</span>
             </div>
           )}
           {fase === "gravando" && (
-            <div className="absolute left-3 top-3 flex items-center gap-2 rounded-full bg-black/55 px-3 py-1 text-sm font-bold text-white">
+            <div className={`absolute left-3 ${poema ? "bottom-3" : "top-3"} flex items-center gap-2 rounded-full bg-black/55 px-3 py-1 text-sm font-bold text-white`}>
               <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" /> {mmss(segundos)}
               <span className="font-normal opacity-70">/ {mmss(limite)}</span>
             </div>
@@ -232,53 +245,18 @@ export function Gravador({ modo, limite, onPronto }: { modo: "livre" | "poema"; 
         </div>
       )}
 
-      {/* Teleprompter do poema: aparece já com a câmera aberta, para ensaiar */}
-      {poema && aoVivo && (
-        <div className="rounded-[18px] border border-[#D4B068]/30 bg-[#0E1E3D] px-5 py-5 text-center">
-          {estrofe < ultima ? (
-            <>
-              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#D4B068]">
-                {estrofe + 1} de {ESTROFES.length} · {ESTROFES[estrofe].titulo}
-              </p>
-              <div className="mt-3 space-y-1">
-                {ESTROFES[estrofe].versos.map((v) => (
-                  <p key={v} className="font-hom-serif text-[clamp(18px,5.6vw,26px)] font-semibold leading-snug text-[#F3EBDD]">{v}</p>
-                ))}
-              </div>
-            </>
-          ) : (
-            <>
-              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#D4B068]">Para terminar · olhe para a câmera e fale devagar</p>
-              <div className="mt-3 space-y-1">
-                {CORO.map((v) => (
-                  <p key={v} className="font-hom-serif text-[clamp(18px,5.4vw,28px)] font-bold leading-snug text-[#EAD7A4]">{v}</p>
-                ))}
-              </div>
-            </>
-          )}
-          <div className="mt-5 flex items-center justify-between gap-3">
-            <button
-              type="button"
-              onClick={() => setEstrofe((e) => Math.max(0, e - 1))}
-              disabled={estrofe === 0}
-              className="inline-flex items-center gap-1 rounded-full border border-[#D4B068]/40 min-h-[50px] px-5 text-[16px] font-bold text-[#EAD7A4] disabled:opacity-30"
-            >
-              <ChevronLeft className="h-4 w-4" /> Voltar
-            </button>
-            <div className="flex gap-1.5">
-              {Array.from({ length: ultima + 1 }, (_, i) => (
-                <span key={i} className={`h-1.5 w-1.5 rounded-full ${i === estrofe ? "bg-[#D4B068]" : "bg-white/20"}`} />
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={() => setEstrofe((e) => Math.min(ultima, e + 1))}
-              disabled={estrofe === ultima}
-              className="inline-flex items-center gap-1 rounded-full bg-[#D4B068] min-h-[50px] px-6 text-[17px] font-extrabold text-[#0A1630] disabled:opacity-30"
-            >
-              Próxima <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
+      {/* Controles do teleprompter: velocidade e pausa (botões grandes, dá para tocar gravando) */}
+      {poema && aoVivo && fase !== "contagem" && (
+        <div className="grid grid-cols-3 gap-2">
+          <button type="button" onClick={() => setVelocidade((v) => Math.max(10, v - 5))} className="hom-acao-discreta !min-h-[56px] !px-2 !text-[15px]">
+            <Minus className="h-5 w-5" /> Devagar
+          </button>
+          <button type="button" onClick={tocarTexto} className="hom-acao !min-h-[56px] !px-2 !text-[15px]">
+            {tocando ? <><Pause className="h-5 w-5" /> Pausar</> : <><Play className="h-5 w-5" /> {fase === "camera" && !ensaio ? "Ensaiar" : "Continuar"}</>}
+          </button>
+          <button type="button" onClick={() => setVelocidade((v) => Math.min(60, v + 5))} className="hom-acao-discreta !min-h-[56px] !px-2 !text-[15px]">
+            <Plus className="h-5 w-5" /> Rápido
+          </button>
         </div>
       )}
 
@@ -299,9 +277,9 @@ export function Gravador({ modo, limite, onPronto }: { modo: "livre" | "poema"; 
         <div className="space-y-4 rounded-[18px] border border-white/10 bg-white/[0.03] p-4">
           <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#D4B068]">Como gravar</p>
           <ol className="space-y-1.5 text-[14px] leading-snug text-[#D9D1C3]">
-            <li>1. Leia o poema em voz alta uma vez, para ensaiar.</li>
-            <li>2. Toque em <b className="text-[#F3EBDD]">Começar a gravar</b>: o poema volta para o início.</li>
-            <li>3. Leia uma estrofe e toque em <b className="text-[#F3EBDD]">Próxima</b>.</li>
+            <li>1. O poema aparece por cima da câmera e sobe sozinho, como um teleprompter. Ele não sai no vídeo.</li>
+            <li>2. Toque em <b className="text-[#F3EBDD]">Ensaiar</b> e leia uma vez em voz alta. Ajuste com <b className="text-[#F3EBDD]">Devagar</b> e <b className="text-[#F3EBDD]">Rápido</b>.</li>
+            <li>3. Toque em <b className="text-[#F3EBDD]">Começar a gravar</b>: o texto volta para o início e sobe de novo.</li>
             <li>4. No final, <b className="text-[#F3EBDD]">olhe para a câmera</b> e diga o coro devagar.</li>
           </ol>
           <p className="text-[14px] leading-snug text-[#D9D1C3]">
