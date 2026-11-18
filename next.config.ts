@@ -13,6 +13,12 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "4mb",
     },
   },
+  // O kit da formatura do Grupo V (/amigomagico) fica atrás do login das professoras: o menu e o caderno são servidos pelas
+  // rotas app/amigomagico (route.ts), que leem estes HTML com fs; por isso entram no pacote da função.
+  outputFileTracingIncludes: {
+    "/amigomagico": ["lib/amigomagico/*.html"],
+    "/amigomagico/caderno": ["lib/amigomagico/*.html"],
+  },
   // Funções que leem arquivos de public/ com process.cwd() (o quadro do Arboria) faziam a Vercel empacotar a pasta public
   // inteira na função: com o Mundo do Arboria (public/mundo, ~58 MB) passou do limite de 250 MB e o deploy falhava.
   // Nenhuma função do servidor precisa do jogo; o quadro só precisa de public/arboria/quadros.
@@ -24,9 +30,6 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       { source: "/semanadacrianca", destination: "/semanadacrianca/index.html" },
-      // formatura do Grupo V: menu da atividade em /amigomagico e caderno da professora em /amigomagico/caderno (18/12/2026, "Meu Mundo da Imaginação"), sem login
-      { source: "/amigomagico", destination: "/amigomagico/index.html" },
-      { source: "/amigomagico/caderno", destination: "/amigomagico/caderno/index.html" },
       // a Feira de Ciências / Culminância do Arboria (13/11/2026): teste das 8 inteligências com envio pelo WhatsApp (n8n)
       { source: "/feira", destination: "/feira/index.html" },
       // Casa Interpessoal (Arbória, prof. Francinildo): telas do projeto em loop na TV, sem senha (12/11)

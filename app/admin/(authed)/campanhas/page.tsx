@@ -3,6 +3,7 @@ import {
   ClipboardList,
   GraduationCap,
   Heart,
+  MessageCircle,
   Palette,
   Sparkles,
   Video,
@@ -22,6 +23,13 @@ export const metadata = { title: "Campanhas · Admin Amadeus" };
 
 // A Rematrícula 2027 tem aba própria no menu (/admin/rematricula-2027).
 const EM_ANDAMENTO: Modulo[] = [
+  {
+    href: "/admin/formatura-diario",
+    icone: MessageCircle,
+    titulo: "Diário da formatura do Grupo V",
+    descricao: "O que as professoras registram de cada criança (texto, foto e voz) na atividade Meu amigo mágico, para ler, ouvir e baixar para o telão.",
+    selo: "Novo",
+  },
   {
     href: "/admin/homenagem-9ano",
     icone: Video,

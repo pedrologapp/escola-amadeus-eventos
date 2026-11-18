@@ -1,0 +1,105 @@
+/* Diário da formatura do Grupo V: o mesmo papel, letras e cores do caderno da professora e do menu
+   (capa azul de caderno, folha pautada com margem rosa, tinta azul, laranja do gato). Tudo cabe na tela do celular:
+   a página não rola; só a lista de balões rola por dentro. */
+.dd-mesa {
+  --papel: #FFFDF7; --pauta: #DCE6F1; --margem: #F2B2AC; --mesa: #ECE4D6;
+  --tinta: #22338A; --tinta-2: #4A5A9E; --tinta-3: #8E98C6;
+  --laranja: #E9832A; --rosa: #E5747D; --bilhete: #FFF2B5;
+  --capa: #1E2C78; --capa-escura: #16205A;
+  --t: var(--dd-titulo), Caveat, "Segoe Print", cursive;
+  --m: var(--dd-mao), "Patrick Hand", "Segoe Print", cursive;
+  background: var(--mesa); color: var(--tinta); font-family: var(--m); -webkit-tap-highlight-color: transparent;
+  height: 100dvh; overflow: hidden;
+}
+.dd-mesa button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+.dd-livro { height: 100%; max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; background: var(--papel); box-shadow: 0 0 40px rgba(80, 60, 20, .16); }
+
+/* faixa azul do topo (a capa do caderno, curta) */
+.dd-faixa { position: relative; flex: none; display: flex; align-items: center; gap: 10px; color: #fff;
+  padding: calc(12px + env(safe-area-inset-top)) 44px 12px 14px;
+  background: repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 3px), linear-gradient(160deg, var(--capa), var(--capa-escura)); }
+.dd-elastico { position: absolute; top: 0; bottom: 0; right: 18px; width: 10px; background: linear-gradient(90deg, #C9661A, var(--laranja) 40%, #F5A35A 60%, #C9661A); }
+.dd-logo { height: 30px; width: auto; flex: none; }
+.dd-faixa-t { font: 700 26px/1 var(--t); margin-left: auto; text-align: right; }
+.dd-voltar { flex: none; width: 34px; height: 40px; display: grid; place-items: center; font: 700 38px/1 var(--t) !important; color: #fff !important; text-decoration: none; }
+
+/* a folha pautada */
+.dd-folha { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 16px; padding: 20px 16px calc(18px + env(safe-area-inset-bottom)) 52px;
+  background-image: linear-gradient(90deg, transparent 38px, var(--margem) 38px, var(--margem) 39.5px, transparent 39.5px),
+    repeating-linear-gradient(180deg, transparent 0 31px, var(--pauta) 31px 32px); }
+.dd-intro { margin: 0; font: 700 22px/28px var(--t); color: var(--tinta-2); }
+
+/* passo 1: as turmas */
+.dd-turmas-grade { flex: 1; min-height: 0; display: grid; grid-template-rows: 1fr 1fr; gap: 16px; }
+.dd-quadro { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: #fff !important;
+  border-radius: 6px; box-shadow: 0 6px 14px rgba(34, 51, 138, .12); padding: 12px; min-height: 0; overflow: hidden; }
+.dd-quadro:active { transform: scale(.98); }
+.dd-quadro img { flex: 1; min-height: 0; max-height: 150px; width: auto; max-width: 70%; object-fit: contain; }
+.dd-quadro b { font: 700 40px/1 var(--t); }
+.dd-ir { font: 700 22px/1 var(--t); color: var(--laranja); }
+
+/* passo 2: os alunos (4 por linha, a grade inteira cabe na folha) */
+.dd-grade { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(var(--linhas), minmax(0, 1fr)); gap: 8px; }
+.dd-aluno { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 0; padding: 4px 2px;
+  background: #fff !important; border-radius: 6px; box-shadow: 0 3px 8px rgba(34, 51, 138, .12); }
+.dd-aluno:active { transform: scale(.96); }
+.dd-inicial { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font: 700 20px/1 var(--t); color: #fff; background: var(--tinta-3); flex: none; }
+.dd-aluno.tem .dd-inicial { background: var(--laranja); }
+.dd-aluno b { font: 400 15px/1.05 var(--m); text-align: center; overflow-wrap: anywhere; }
+.dd-aluno small { position: absolute; top: 3px; right: 4px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: var(--rosa); color: #fff; font: 700 12px/18px var(--m); }
+@media (max-height: 700px) {
+  .dd-inicial { width: 22px; height: 22px; font-size: 16px; }
+  .dd-aluno b { font-size: 14px; }
+  .dd-folha { padding-top: 14px; gap: 10px; }
+}
+
+/* passo 3: a conversa */
+.dd-topo { flex: none; display: flex; align-items: center; gap: 10px; color: #fff; padding: calc(8px + env(safe-area-inset-top)) 16px 10px 6px;
+  background: linear-gradient(160deg, var(--capa), var(--capa-escura)); }
+.dd-foto { flex: none; width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: var(--laranja); font: 700 26px/1 var(--t); border: 2px solid #fff; }
+.dd-quem { min-width: 0; }
+.dd-quem b { display: block; font: 700 26px/1 var(--t); }
+.dd-quem small { display: block; font-size: 14px; color: #C9D0F0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.dd-falas { flex: 1; min-height: 0; overflow-y: auto; padding: 8px 14px 10px 48px; scrollbar-width: none; overscroll-behavior: contain;
+  background-image: linear-gradient(90deg, transparent 34px, var(--margem) 34px, var(--margem) 35.5px, transparent 35.5px),
+    repeating-linear-gradient(180deg, transparent 0 31px, var(--pauta) 31px 32px); background-attachment: local; }
+.dd-falas::-webkit-scrollbar { display: none; }
+.dd-vazio { margin: 40px 0; text-align: center; font: 700 24px/30px var(--t); color: var(--tinta-2); }
+.dd-dia { display: flex; align-items: center; gap: 10px; margin: 10px 0 6px; font: 700 18px/1 var(--t); color: var(--tinta-3); }
+.dd-dia::before, .dd-dia::after { content: ""; flex: 1; height: 1px; background: var(--tinta-3); opacity: .4; }
+.dd-balao { position: relative; width: fit-content; max-width: 86%; margin: 8px 0 0 auto; padding: 7px 10px 5px; border-radius: 14px 2px 14px 14px;
+  background: var(--bilhete); box-shadow: 0 2px 5px rgba(34, 51, 138, .14); font-size: 18px; line-height: 1.35; }
+.dd-balao::before { content: ""; position: absolute; top: 0; right: -7px; width: 8px; height: 12px; background: inherit; clip-path: polygon(0 0, 100% 0, 0 100%); }
+.dd-balao p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.dd-balao.foto { padding: 4px 4px 4px; background: #fff; }
+.dd-balao.foto img { display: block; max-width: 100%; max-height: 300px; border-radius: 10px; }
+.dd-balao.audio { background: #fff; }
+.dd-balao audio { display: block; width: 240px; max-width: 100%; height: 40px; }
+.dd-balao small { display: block; text-align: right; font-size: 13px; color: var(--tinta-2); margin-top: 2px; padding: 0 4px; }
+.dd-balao.falhou { outline: 2px solid var(--rosa); }
+.dd-balao em { display: block; font-style: normal; font-size: 14px; color: #B33A45; padding: 0 4px; }
+.dd-barra { display: block; height: 4px; margin: 4px; border-radius: 2px; background: var(--pauta); overflow: hidden; }
+.dd-barra i { display: block; height: 100%; background: var(--laranja); transition: width .2s; }
+.dd-erro { flex: none; margin: 0; padding: 6px 14px; font-size: 15px; color: #B33A45; background: #FDECEC; }
+
+.dd-baixo { flex: none; padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); background: var(--mesa); border-top: 1px solid rgba(34, 51, 138, .1); }
+.dd-escrever { display: flex; align-items: flex-end; gap: 8px; margin: 0; }
+.dd-campo { flex: 1; min-width: 0; display: flex; align-items: flex-end; background: #fff; border-radius: 24px; border: 1px solid rgba(34, 51, 138, .16); padding: 0 4px; }
+.dd-campo textarea { flex: 1; min-width: 0; resize: none; border: 0; outline: none; background: none; padding: 12px 4px; max-height: 120px; field-sizing: content;
+  font: 400 17px/22px var(--m); color: var(--tinta); }
+.dd-campo textarea::placeholder { color: var(--tinta-3); }
+.dd-icone { flex: none; width: 40px; height: 46px; display: grid; place-items: center; }
+.dd-icone svg { width: 23px; height: 23px; fill: none; stroke: var(--tinta-2); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.dd-enviar { flex: none; width: 48px; height: 48px; border-radius: 50% !important; display: grid; place-items: center; background: var(--tinta) !important; }
+.dd-enviar.pronto { background: var(--laranja) !important; }
+.dd-enviar:disabled { opacity: .5; }
+.dd-enviar svg { width: 23px; height: 23px; fill: #fff; }
+.dd-enviar.mic svg { fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; }
+.dd-enviar.mic svg rect { fill: #fff; }
+.dd-gravando { display: flex; align-items: center; gap: 10px; }
+.dd-cancelar { flex: none; padding: 0 10px; height: 48px; font: 700 22px/1 var(--t) !important; color: #B33A45 !important; }
+.dd-rec { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; font: 700 24px/1 var(--t); }
+.dd-rec i { width: 12px; height: 12px; border-radius: 50%; background: #E0303F; animation: dd-pisca 1s infinite; }
+@keyframes dd-pisca { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .dd-rec i { animation: none; } }
