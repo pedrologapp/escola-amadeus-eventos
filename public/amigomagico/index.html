@@ -4,479 +4,129 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
-<title>Meu Amigo Mágico</title>
-<meta property="og:title" content="Meu Mundo da Imaginação · Caderno da professora">
-<meta property="og:description" content="Formatura do Grupo V · Escola Amadeus">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://www.escolaamadeus.com/amigomagico">
+<title>Meu Mundo da Imaginação · Grupo V</title>
+<meta property="og:title" content="Meu Mundo da Imaginação · Formatura do Grupo V">
+<meta property="og:description" content="O caderno da professora, o vídeo para as crianças e o caderno da criança.">
 <meta property="og:image" content="https://www.escolaamadeus.com/amigomagico/img/capa.jpg">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
 <meta name="theme-color" content="#1E2C78">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Patrick+Hand&display=swap" rel="stylesheet">
-<style>:root{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}body{margin:0}</style>
-</head>
-<body>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
 <style>
-/* Layout: o caderno da professora. A capa é um caderno de capa dura; as páginas são folhas pautadas (32 px por linha),
-   e cada linha de texto é encaixada em cima da pauta pelo script. Topo e rodapé ficam fora da folha.
-   Cores tiradas dos desenhos: tinta de caneta azul, laranja do gato, rosa das bochechas, amarelo de marca-texto. */
+/* O menu da atividade "Meu amigo mágico": capa azul de caderno em cima e, embaixo, a folha pautada com as três partes do kit,
+   na ordem em que a professora usa. Mesmo papel, letras e cores do caderno da professora. */
 :root {
-  --papel: #FFFDF7;
-  --pauta: #D6E2F0;
-  --margem: #F2B2AC;
-  --tinta: #22338A;
-  --tinta-2: #4A5A9E;
-  --tinta-3: #8E98C6;
-  --laranja: #E9832A;
-  --rosa: #E5747D;
-  --marca: rgba(248, 204, 58, .5);
-  --bilhete: #FFF2B5;
-  --capa: #1E2C78;
-  --capa-escura: #16205A;
-  --mesa: #ECE4D6;
-  --linha: 32px;
-  --titulo: Caveat, "Segoe Print", cursive;
-  --mao: "Patrick Hand", "Segoe Print", cursive;
-  color-scheme: light;
+  --papel: #FFFDF7; --pauta: #DCE6F1; --margem: #F2B2AC; --mesa: #ECE4D6;
+  --tinta: #22338A; --tinta-2: #4A5A9E; --tinta-3: #8E98C6;
+  --laranja: #E9832A; --rosa: #E5747D; --marca: rgba(248, 204, 58, .5);
+  --capa: #1E2C78; --capa-escura: #16205A;
+  --titulo: Caveat, "Segoe Print", cursive; --mao: "Patrick Hand", "Segoe Print", cursive;
 }
 * { box-sizing: border-box; }
-html, body { height: 100%; }
-body { margin: 0; background: var(--mesa); color: var(--tinta); font-family: var(--mao); font-size: 21px; line-height: var(--linha); -webkit-tap-highlight-color: transparent; }
+html { background: var(--mesa); }
+body { margin: 0; color: var(--tinta); font-family: var(--mao); font-size: 19px; line-height: 1.5; -webkit-tap-highlight-color: transparent; }
+.livro { max-width: 520px; margin: 0 auto; background: var(--papel); min-height: 100vh; box-shadow: 0 0 40px rgba(80, 60, 20, .16); }
 
-.livro { height: 100%; max-width: 460px; margin: 0 auto; display: grid; grid-template-rows: auto 1fr auto; background: var(--papel); overflow: hidden;
-  box-shadow: 0 0 0 1px rgba(34, 51, 138, .06), 0 20px 50px rgba(80, 60, 20, .16); }
-@media (min-width: 520px) { body { display: grid; place-items: center; padding: 24px; } .livro { height: min(860px, 100%); width: 100%; border-radius: 14px; } }
-
-/* topo e rodapé */
-.topo { display: flex; gap: 4px; padding: calc(12px + env(safe-area-inset-top, 0px)) max(18px, env(safe-area-inset-right, 0px)) 8px max(18px, env(safe-area-inset-left, 0px)); }
-.topo i { flex: 1; height: 3px; border-radius: 2px; background: var(--pauta); overflow: hidden; }
-.topo i b { display: block; height: 100%; width: 0; background: var(--tinta); }
-.topo i.lida b { width: 100%; }
-.pe { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 4px max(12px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px)); border-top: 1px solid var(--pauta); }
-.pe button { border: 0; background: none; font: 700 26px/1 var(--titulo); color: var(--tinta); padding: 8px 10px; cursor: pointer; border-radius: 8px; }
-.pe button:disabled { color: var(--tinta-3); cursor: default; }
-.pe button:focus-visible { outline: 2px solid var(--laranja); outline-offset: 2px; }
-.pe .vai { color: var(--laranja); }
-.pe span { font: 700 21px/1 var(--titulo); color: var(--tinta-3); }
-
-/* a folha pautada: a pauta anda junto com o texto */
-.pagina { position: relative; overflow: hidden; }
-.tela { position: absolute; inset: 0; display: none; overflow-y: auto; scrollbar-width: none;
-  padding: calc(var(--linha) * 2) max(20px, env(safe-area-inset-right, 0px)) calc(var(--linha) * 2) calc(62px + env(safe-area-inset-left, 0px));
-  background-color: var(--papel);
-  background-image:
-    linear-gradient(90deg, transparent 46px, var(--margem) 46px, var(--margem) 47.5px, transparent 47.5px),
-    repeating-linear-gradient(180deg, transparent 0 calc(var(--linha) - 1px), var(--pauta) calc(var(--linha) - 1px) var(--linha));
-  background-attachment: local; }
-.tela::-webkit-scrollbar { display: none; }
-.tela.on { display: block; }
-
-/* o texto mora na pauta: toda altura é múltipla de uma linha */
-p, h1, h2, h3, ul, ol, li { margin: 0; padding: 0; }
-.tela > * + * { margin-top: var(--linha); }
-.junto { margin-top: 0 !important; }
-h1, h2, h3 { font-family: var(--titulo); font-weight: 700; color: var(--tinta); text-wrap: balance; }
-h2 { font-size: 46px; line-height: calc(var(--linha) * 2); }
-h3 { font-size: 29px; line-height: var(--linha); }
-.sobre { font-family: var(--titulo); font-weight: 700; font-size: 27px; line-height: var(--linha); color: var(--rosa); }
-.nota { color: var(--tinta-2); font-size: 18px; }
-.marca { background: linear-gradient(transparent 50%, var(--marca) 50%, var(--marca) 88%, transparent 88%); padding: 0 3px; margin: 0 -3px; }
-.laranja { color: var(--laranja); }
-li { position: relative; }
-
-/* desenhos: um leve flutuar, tudo já está na tela ao abrir */
-.desenho { display: block; margin-inline: auto; max-width: 100%; height: 100%; width: auto; object-fit: contain; }
-.tela.on .desenho { animation: flutua 5s ease-in-out infinite; }
-@keyframes flutua { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-.quadro { height: calc(var(--linha) * 6); }
-
-/* bilhete amarelo e papel branco colados com fita */
-.bilhete, .recorte { position: relative; padding: 16px; box-shadow: 0 5px 12px rgba(110, 85, 20, .14); }
-.bilhete { background: var(--bilhete); transform: rotate(-1.2deg); }
-.bilhete h2 { font-size: 40px; line-height: 44px; }
-.recorte { background: #fff; transform: rotate(.6deg); }
-.fita::before { content: ""; position: absolute; top: -11px; left: 50%; width: 84px; height: 22px; margin-left: -42px; transform: rotate(-3deg);
-  background: repeating-linear-gradient(90deg, rgba(229, 116, 125, .55) 0 8px, rgba(229, 116, 125, .38) 8px 16px); }
-.fita.agua::before { background: repeating-linear-gradient(90deg, rgba(120, 200, 212, .62) 0 8px, rgba(120, 200, 212, .42) 8px 16px); }
-
-/* listas escritas */
-.lista { list-style: none; }
-.lista li { padding-left: 30px; }
-.lista li::before { content: ""; position: absolute; left: 2px; top: 6px; width: 15px; height: 15px; border: 1.8px solid var(--tinta); border-radius: 2px; transform: rotate(-3deg); }
-.lista.nao li::before, .lista.sim li::before { display: none; }
-.lista.nao li::after { content: "×"; position: absolute; left: 3px; top: -3px; font: 700 26px/32px var(--titulo); color: var(--rosa); }
-.lista.sim li::after { content: "✓"; position: absolute; left: 2px; top: -3px; font: 700 22px/32px var(--mao); color: var(--tinta); }
-
-/* número do passo dentro de um círculo à mão */
-.passo { display: flex; align-items: flex-end; gap: 10px; height: calc(var(--linha) * 2); }
-.passo .n { position: relative; width: 54px; height: 54px; flex: none; display: grid; place-items: center; font: 700 38px/1 var(--titulo); color: var(--laranja); margin-bottom: 4px; }
-.passo .n svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-
-.momentos { list-style: none; }
-.momentos li { padding-left: 32px; }
-.momentos li b { position: absolute; left: 0; top: 0; font: 700 29px/32px var(--titulo); color: var(--laranja); }
-
-.perguntas { list-style: none; }
-.resposta { font-family: var(--titulo); font-weight: 700; font-size: 25px; color: var(--rosa); }
-
-.historia em { font-style: normal; color: var(--laranja); }
-.amigos { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.amigo { text-align: center; padding: 16px 8px 12px; }
-.amigo .quadro { height: calc(var(--linha) * 4); }
-.amigo h3 { color: var(--laranja); }
-.amigo p { font-size: 17px; line-height: 22px; color: var(--tinta-2); }
-.amigos .amigo:nth-child(2) { transform: rotate(-1.4deg); }
-
-.folhinha { display: grid; grid-template-columns: 90px 1fr; gap: 14px; align-items: start; }
-.folhinha .a4 { width: 90px; height: calc(var(--linha) * 4); background: #fff; outline: 2px dashed var(--tinta-3); outline-offset: -2px; display: grid; place-items: center; padding: 6px; overflow: hidden; }
-.folhinha .a4 img { width: 100%; height: 100%; object-fit: contain; }
-.duas { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 18px; }
-.duas .lista li { padding-left: 24px; }
-.duas .nao-t { color: var(--rosa); }
-
-.onda { display: flex; align-items: center; gap: 5px; height: var(--linha); }
-.onda i { width: 5px; height: 26px; border-radius: 3px; background: var(--laranja); }
-.tela.on .onda i { animation: fala 1.3s ease-in-out infinite; }
-@keyframes fala { 0%, 100% { transform: scaleY(.35); } 50% { transform: scaleY(1); } }
-
-.tv { display: grid; place-items: center; height: calc(var(--linha) * 5); }
-.tv svg { height: 100%; width: auto; }
-
-.centro { text-align: center; }
-.par { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; height: calc(var(--linha) * 6); }
-.par .desenho { height: 100%; }
-
-/* ---------- a capa: um caderno de capa dura ---------- */
-.tela.capa { padding: 0; background: var(--capa); overflow: hidden; }
-.capa-dura { position: absolute; inset: 0; overflow: hidden;
+/* capa */
+.capa { position: relative; overflow: hidden; color: #fff; text-align: center;
+  padding: calc(26px + env(safe-area-inset-top)) max(70px, env(safe-area-inset-right)) 30px max(44px, env(safe-area-inset-left));
   background:
     radial-gradient(120% 80% at 30% 20%, rgba(255, 255, 255, .08), transparent 60%),
     repeating-linear-gradient(0deg, rgba(255, 255, 255, .025) 0 1px, transparent 1px 3px),
     repeating-linear-gradient(90deg, rgba(0, 0, 0, .05) 0 1px, transparent 1px 3px),
     linear-gradient(160deg, var(--capa) 0%, var(--capa-escura) 100%); }
-/* a lombada à esquerda */
-.capa-dura::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 26px;
-  background: linear-gradient(90deg, rgba(0, 0, 0, .28), rgba(0, 0, 0, .08) 70%, rgba(255, 255, 255, .06)); }
-/* o elástico laranja */
-.elastico { position: absolute; top: 0; bottom: 0; right: 34px; width: 14px; background: linear-gradient(90deg, #C9661A, var(--laranja) 40%, #F5A35A 60%, #C9661A);
-  box-shadow: 0 0 10px rgba(0, 0, 0, .35); }
-.capa-miolo { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: 24px 70px 24px 44px; }
-.adesivo { display: block; width: 100%; max-width: 250px; height: auto; transform: rotate(-6deg);
-  filter: drop-shadow(0 0 0 #fff) drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 3px 0 #fff) drop-shadow(0 -3px 0 #fff) drop-shadow(0 8px 10px rgba(0, 0, 0, .35)); }
-.adesivo.n { position: absolute; width: 82px; left: 40px; top: 34px; transform: rotate(8deg); }
-.etiqueta { position: relative; width: 100%; max-width: 270px; margin-top: 18px; background: var(--papel); border-radius: 10px; padding: 18px 18px 16px; text-align: center;
-  box-shadow: 0 10px 22px rgba(0, 0, 0, .35); }
-.etiqueta::after { content: ""; position: absolute; inset: 6px; border: 1.5px solid var(--tinta); border-radius: 6px; opacity: .55; pointer-events: none; }
-.capa-miolo { justify-content: space-between; padding-top: 34px; padding-bottom: 40px; }
-.logo-escola { display: block; width: 100%; max-width: 230px; height: auto; flex: none; }
-.capa-centro { display: flex; flex-direction: column; align-items: center; width: 100%; margin-block: auto; }
-.etiqueta .de { font: 18px/22px var(--mao); color: var(--tinta-2); }
-.etiqueta .escola { font: 15px/20px var(--mao); color: var(--tinta-3); margin-top: 8px; letter-spacing: .02em; }
-.etiqueta .nome { font: 700 44px/40px var(--titulo); color: var(--tinta); margin: 6px 0 8px; text-wrap: balance; }
-.etiqueta .grupo { font: 700 23px/26px var(--titulo); color: var(--rosa); }
-.etiqueta .grupo span { color: var(--tinta-2); }
-.estrela { position: absolute; width: 18px; height: 18px; }
+.capa::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 22px; background: linear-gradient(90deg, rgba(0,0,0,.28), rgba(0,0,0,.06) 70%, rgba(255,255,255,.06)); }
+.capa .elastico { position: absolute; top: 0; bottom: 0; right: 30px; width: 13px; background: linear-gradient(90deg, #C9661A, var(--laranja) 40%, #F5A35A 60%, #C9661A); box-shadow: 0 0 10px rgba(0,0,0,.35); }
+.capa .logo { display: block; width: 210px; max-width: 100%; height: auto; margin: 0 auto 10px; }
+.capa .gato { display: block; width: 190px; max-width: 70%; height: auto; margin: 4px auto 0; transform: rotate(-6deg);
+  filter: drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 3px 0 #fff) drop-shadow(0 -3px 0 #fff) drop-shadow(0 8px 10px rgba(0,0,0,.35)); }
+.etiqueta { position: relative; margin: 12px auto 0; max-width: 300px; background: var(--papel); color: var(--tinta); border-radius: 10px; padding: 14px 16px 12px; box-shadow: 0 10px 22px rgba(0,0,0,.35); }
+.etiqueta::after { content: ""; position: absolute; inset: 6px; border: 1.5px solid var(--tinta); border-radius: 6px; opacity: .5; pointer-events: none; }
+.etiqueta h1 { margin: 0; font: 700 40px/38px var(--titulo); text-wrap: balance; }
+.etiqueta p { margin: 6px 0 0; font: 700 22px/24px var(--titulo); color: var(--rosa); }
+.etiqueta p span { color: var(--tinta-2); }
 
-@media (max-height: 720px) { .adesivo.n { display: none; } .adesivo { max-width: 210px; } }
-@media (max-width: 360px) { body { font-size: 19px; } h2 { font-size: 40px; } .tela { padding-right: 16px; } }
-@media (prefers-reduced-motion: reduce) { .tela.on .desenho, .tela.on .onda i { animation: none !important; } }
+/* a folha pautada */
+.folha { padding: 28px max(18px, env(safe-area-inset-right)) calc(40px + env(safe-area-inset-bottom)) max(56px, env(safe-area-inset-left));
+  background-image: linear-gradient(90deg, transparent 40px, var(--margem) 40px, var(--margem) 41.5px, transparent 41.5px),
+    repeating-linear-gradient(180deg, transparent 0 31px, var(--pauta) 31px 32px);
+  display: grid; gap: 30px; }
+.intro { font: 700 25px/30px var(--titulo); color: var(--tinta-2); }
+.parte { display: grid; gap: 10px; }
+.parte .cab { display: flex; align-items: baseline; gap: 10px; }
+.parte .n { font: 700 46px/1 var(--titulo); color: var(--laranja); }
+.parte h2 { margin: 0; font: 700 36px/1.05 var(--titulo); }
+.parte p { margin: 0; }
+.leve { color: var(--tinta-2); font-size: 17px; }
+.marca { background: linear-gradient(transparent 52%, var(--marca) 52%, var(--marca) 90%, transparent 90%); padding: 0 2px; }
+
+/* cartões */
+.cartao { display: grid; grid-template-columns: 96px 1fr; gap: 14px; align-items: center; background: #fff; padding: 12px; border-radius: 4px; box-shadow: 0 5px 12px rgba(34, 51, 138, .1); text-decoration: none; color: inherit; }
+.cartao:focus-visible, .botao:focus-visible { outline: 3px solid var(--laranja); outline-offset: 3px; }
+.cartao img { width: 96px; height: auto; border-radius: 10px; box-shadow: 0 4px 10px rgba(20, 25, 40, .25); display: block; }
+.cartao b { font: 700 26px/1.1 var(--titulo); color: var(--tinta); display: block; }
+.cartao span { font-size: 16px; color: var(--tinta-2); display: block; }
+.cartao .ir { font: 700 24px/1 var(--titulo); color: var(--laranja); margin-top: 6px; }
+
+.tv { background: #1d2433; border-radius: 14px; padding: 8px; box-shadow: 0 10px 22px rgba(20, 25, 40, .25); }
+.tv video { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; background: #000; }
+.botoes { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.botao { font: 700 24px/1 var(--titulo); color: var(--laranja); text-decoration: none; border-bottom: 2px solid var(--laranja); padding-bottom: 2px; }
+
+.folhinhas { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.folhinhas img { width: 100%; height: auto; display: block; background: #fff; box-shadow: 0 6px 14px rgba(34, 51, 138, .14); }
+.folhinhas img:nth-child(1) { transform: rotate(-1.2deg); }
+.folhinhas img:nth-child(2) { transform: rotate(1deg); }
+
+.fim { text-align: center; font: 700 26px/1.2 var(--titulo); color: var(--tinta); }
 </style>
+</head>
+<body>
+<div class="livro">
+  <header class="capa">
+    <span class="elastico" aria-hidden="true"></span>
+    <img class="logo" src="/amigomagico/img/amadeus-horizontal.webp" alt="Centro Educacional Amadeus" width="560" height="139">
+    <img class="gato" src="/amigomagico/img/gato-caderno.webp" alt="Bigode, o gato de asinhas" width="720" height="565">
+    <div class="etiqueta">
+      <h1>Meu Mundo da Imaginação</h1>
+      <p>Formatura do Grupo V <span>· 18/12</span></p>
+    </div>
+  </header>
 
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <defs>
-    <path id="circulo" d="M30 4 C46 3 56 14 55 29 C54 45 42 55 28 54 C13 53 3 42 4 28 C5 15 15 6 33 6" fill="none" stroke="#E9832A" stroke-width="2.5" stroke-linecap="round"/>
-    <path id="brilho" d="M9 0 C10 6 12 8 18 9 C12 10 10 12 9 18 C8 12 6 10 0 9 C6 8 8 6 9 0Z" fill="#F8CC3A"/>
-  </defs>
-</svg>
+  <main class="folha">
+    <p class="intro">Tudo da atividade "Meu amigo mágico", na ordem em que você vai usar.</p>
 
-<div class="livro" id="livro">
-  <div class="topo" id="topo" aria-hidden="true"></div>
-
-  <div class="pagina" id="pagina">
-
-    <!-- 1 capa: o caderno -->
-    <section class="tela capa on" aria-label="Capa: caderno Meu Mundo da Imaginação">
-      <div class="capa-dura">
-        <span class="elastico" aria-hidden="true"></span>
-        <svg class="estrela" style="left:60px;bottom:70px" viewBox="0 0 18 18" aria-hidden="true"><use href="#brilho"/></svg>
-        <svg class="estrela" style="right:70px;top:120px;width:12px;height:12px" viewBox="0 0 18 18" aria-hidden="true"><use href="#brilho"/></svg>
-        <svg class="estrela" style="right:84px;bottom:90px;width:14px;height:14px" viewBox="0 0 18 18" aria-hidden="true"><use href="#brilho"/></svg>
-        <div class="capa-miolo">
-          <img class="logo-escola" src="/amigomagico/img/amadeus-horizontal.webp" alt="Centro Educacional Amadeus" width="640" height="159">
-          <div class="capa-centro">
-          <img class="adesivo" src="/amigomagico/img/gato-caderno.webp" alt="Adesivo do Bigode, o gato que voa" width="720" height="565">
-          <div class="etiqueta">
-            <p class="de">Caderno da professora</p>
-            <p class="nome">Meu Mundo da Imaginação</p>
-            <p class="grupo">Formatura do Grupo V</p>
-            <p class="grupo"><span>18 de dezembro</span></p>
-          </div>
-          </div>
-        </div>
-      </div>
+    <section class="parte" aria-labelledby="p1">
+      <div class="cab"><span class="n">1</span><h2 id="p1">O caderno da professora</h2></div>
+      <p class="leve">Comece por aqui. Leia com calma, antes de fazer com as crianças.</p>
+      <a class="cartao" href="/amigomagico/caderno">
+        <img src="/amigomagico/img/capa-caderno.webp" alt="" width="520" height="1125">
+        <div><b>Abrir o caderno</b><span>16 páginas: a formatura, a sua vez de imaginar e os quatro momentos.</span><span class="ir">abrir ›</span></div>
+      </a>
     </section>
 
-    <!-- 2 este caderno é seu -->
-    <section class="tela" aria-label="Este caderno é seu">
-      <p class="sobre">Para a professora do Grupo V</p>
-      <h2 class="junto">Este caderno é seu.</h2>
-      <p>Aqui está a atividade que vai dar vida à formatura deste ano.</p>
-      <p>Leia com calma, uma página de cada vez. Quando terminar, você vai saber tudo o que precisa para viver isso com as crianças.</p>
-    </section>
-
-    <!-- 3 a formatura -->
-    <section class="tela" aria-label="A formatura">
-      <p class="sobre">A formatura</p>
-      <h2 class="junto">O palco ganha um telão.</h2>
-      <p>No dia <span class="marca">18 de dezembro</span>, atrás das crianças, vai ter um telão de LED de 8 metros por 4.</p>
-      <p>O tema é <span class="laranja">Meu Mundo da Imaginação</span>: uma ilha enorme onde o mundo de cada criança ganha vida.</p>
-    </section>
-
-    <!-- 4 a ideia -->
-    <section class="tela" aria-label="A ideia">
-      <p class="sobre">A ideia</p>
-      <h2 class="junto">Um amigo mágico.</h2>
-      <p>Cada criança cria um companheiro que só existe na imaginação dela: um bicho, um herói, um objeto com carinha ou tudo misturado.</p>
-      <p>No dia da formatura, o desenho dela <span class="marca">ganha movimento no telão</span> e apresenta a criança para as famílias, com a voz dela.</p>
-    </section>
-
-    <!-- 5 sua vez -->
-    <section class="tela" aria-label="A sua vez de imaginar">
-      <div class="bilhete fita">
-        <p class="sobre" style="line-height:28px">Professora,</p>
-        <h2>antes das crianças, é a sua vez de imaginar.</h2>
-      </div>
-      <p>Feche os olhos um instante e volte aos seus 5 anos.</p>
-      <h3><span class="marca">Se você tivesse um amigo mágico, como ele seria?</span></h3>
-    </section>
-
-    <!-- 6 amigos -->
-    <section class="tela" aria-label="Amigos de exemplo">
-      <p class="sobre">Por exemplo</p>
-      <h2 class="junto">Tudo o que ela ama.</h2>
-      <div class="amigos">
-        <div class="amigo recorte fita">
-          <div class="quadro"><img class="desenho" src="/amigomagico/img/gato-caderno.webp" alt="Bigode, o gato que voa" width="720" height="565"></div>
-          <h3>Bigode</h3><p>o gato que voa</p>
-        </div>
-        <div class="amigo recorte fita agua">
-          <div class="quadro"><img class="desenho" src="/amigomagico/img/nuvem-caderno.webp" alt="Nimbo, a nuvem que chove arco-íris" width="588" height="720"></div>
-          <h3>Nimbo</h3><p>a nuvem que chove arco-íris</p>
-        </div>
-      </div>
-      <p class="nota">São exemplos para você. Com as crianças, a ideia vem delas.</p>
-    </section>
-
-    <!-- 7 como vai ser -->
-    <section class="tela" aria-label="Como vai ser">
-      <p class="sobre">Na sua sala</p>
-      <h2 class="junto">Quatro momentos.</h2>
-      <ol class="momentos">
-        <li><b>1</b>O vídeo: a ilha do Mundo da Imaginação, na TV.</li>
-        <li><b>2</b>A conversa: cada criança imagina o seu amigo.</li>
-        <li><b>3</b>O desenho: o amigo no papel.</li>
-        <li><b>4</b>A voz: um áudio curtinho da criança.</li>
-      </ol>
-    </section>
-
-    <!-- 8 o que separar -->
-    <section class="tela" aria-label="O que separar">
-      <p class="sobre">Antes de começar</p>
-      <h2 class="junto">O que separar.</h2>
-      <ul class="lista">
-        <li>A TV da sala, com o vídeo</li>
-        <li>Folha A4 branca, uma por criança</li>
-        <li>Canetinha grossa ou giz de cera forte</li>
-        <li>Um celular para gravar a voz</li>
-        <li>Um cantinho quieto</li>
-      </ul>
-    </section>
-
-    <!-- 9 passo 1: o vídeo -->
-    <section class="tela" aria-label="Passo 1: o vídeo">
-      <div class="passo"><span class="n"><svg viewBox="0 0 60 60" aria-hidden="true"><use href="#circulo"/></svg>1</span><h2>O vídeo</h2></div>
+    <section class="parte" aria-labelledby="p2">
+      <div class="cab"><span class="n">2</span><h2 id="p2">O vídeo para as crianças</h2></div>
+      <p class="leve">Passe na TV da sala, com as crianças em roda. No fim ele pergunta: <span class="marca">"e o seu amigo, como ele é?"</span></p>
       <div class="tv">
-        <svg viewBox="0 0 220 160" aria-hidden="true">
-          <path d="M40 8 L78 34 M180 8 L142 34" stroke="#22338A" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-          <rect x="10" y="34" width="200" height="112" rx="10" fill="#fff" stroke="#22338A" stroke-width="2.5"/>
-          <rect x="22" y="46" width="176" height="88" rx="4" fill="#E8F3FB" stroke="#22338A" stroke-width="1.5"/>
-          <path d="M52 104 C70 94 150 94 168 104 C160 114 140 118 132 128 C122 136 98 136 88 128 C80 118 60 114 52 104 Z" fill="#9BD08A" stroke="#22338A" stroke-width="1.8" stroke-linejoin="round"/>
-          <path d="M90 100 l4 -14 l4 14 M118 98 l6 -18 l6 18" stroke="#22338A" stroke-width="1.8" fill="#E9832A" stroke-linejoin="round"/>
-          <path d="M150 64 l2 5 l5 1 l-4 3 l1 5 l-4 -2 l-4 2 l1 -5 l-4 -3 l5 -1 z" fill="#F8CC3A"/>
-          <path d="M60 152 L60 146 M160 152 L160 146" stroke="#22338A" stroke-width="2.5" stroke-linecap="round"/>
-        </svg>
+        <video controls playsinline preload="metadata" poster="/amigomagico/img/capa-video.webp">
+          <source src="/amigomagico/ilha-da-imaginacao.mp4" type="video/mp4">
+        </video>
       </div>
-      <p>Com as crianças em roda, coloque o vídeo na TV. Ele mostra uma ilha enorme, o Mundo da Imaginação, onde várias crianças vivem com os seus amigos mágicos.</p>
-      <p>No fim, o vídeo pergunta: <span class="marca">"e o seu amigo, como ele é?"</span> É a sua deixa.</p>
+      <div class="botoes"><a class="botao" href="/amigomagico/ilha-da-imaginacao.mp4" download>baixar o vídeo para a TV ›</a></div>
     </section>
 
-    <!-- 10 a história, se quiser contar -->
-    <section class="tela" aria-label="A história do vídeo">
-      <p class="sobre">A história do vídeo</p>
-      <h3 class="junto">Para contar de novo, com a sua voz:</h3>
-      <div class="recorte fita agua historia">
-        <p>Longe, longe, depois das nuvens, existe uma ilha enorme: o <em>Mundo da Imaginação</em>. Lá, cada criança tem um amigo mágico. Tem menina que voa com um gato, tem menino que dorme abraçado num dinossauro. Mas o amigo só aparece para quem consegue imaginar como ele é. Fechem os olhos… <em>Como é o seu?</em></p>
+    <section class="parte" aria-labelledby="p3">
+      <div class="cab"><span class="n">3</span><h2 id="p3">O caderno da criança</h2></div>
+      <p class="leve">Duas folhas por criança. Imprima em A4, no tamanho real (100%). A criança responde desenhando.</p>
+      <div class="folhinhas">
+        <img src="/amigomagico/img/folha-1.webp" alt="Folha 1: quatro perguntas com um quadro para desenhar cada resposta" width="900" height="1273">
+        <img src="/amigomagico/img/folha-2.webp" alt="Folha 2: um espaço grande para desenhar o amigo mágico" width="900" height="1273">
       </div>
+      <div class="botoes"><a class="botao" href="/amigomagico/caderno-da-crianca.pdf" download>baixar o PDF para imprimir ›</a></div>
     </section>
 
-    <!-- 11 passo 2 -->
-    <section class="tela" aria-label="Passo 2: a conversa">
-      <div class="passo"><span class="n"><svg viewBox="0 0 60 60" aria-hidden="true"><use href="#circulo"/></svg>2</span><h2>A conversa</h2></div>
-      <p class="nota">Uma criança de cada vez, ou em grupinhos.</p>
-      <ul class="perguntas">
-        <li>Qual é o nome dele?</li>
-        <li class="resposta">"Trovão"</li>
-        <li>Ele parece com o quê?</li>
-        <li class="resposta">"um cachorro de capa"</li>
-        <li>Qual é o poder mágico dele?</li>
-        <li class="resposta">"solta raio de chocolate"</li>
-        <li>O que vocês fazem juntos?</li>
-        <li class="resposta">"a gente voa até a lua"</li>
-      </ul>
-      <p class="nota">As respostas em rosa são só exemplos.</p>
-    </section>
-
-    <!-- 12 o segredo -->
-    <section class="tela" aria-label="O segredo">
-      <div class="bilhete fita agua">
-        <p class="sobre" style="line-height:28px">O segredo</p>
-        <h2>Não dar ideia. Não corrigir.</h2>
-      </div>
-      <p>Se o amigo for um sorvete que late, está perfeito.</p>
-      <h3><span class="marca">O amigo é da criança.</span></h3>
-    </section>
-
-    <!-- 13 passo 3 -->
-    <section class="tela" aria-label="Passo 3: o desenho">
-      <div class="passo"><span class="n"><svg viewBox="0 0 60 60" aria-hidden="true"><use href="#circulo"/></svg>3</span><h2>O desenho</h2></div>
-      <div class="folhinha">
-        <div class="a4"><img src="/amigomagico/img/nuvem-caderno.webp" alt="Folha A4 em pé com um amigo grande no meio e sem fundo" width="588" height="720"></div>
-        <p>Um amigo só, <span class="marca">grande, no meio da folha, sem fundo.</span> Assim ele ganha movimento no telão.</p>
-      </div>
-      <div class="duas">
-        <div>
-          <h3>Faça assim</h3>
-          <ul class="lista sim"><li>Contorno forte</li><li>Cores fortes</li><li>Nome no verso</li></ul>
-        </div>
-        <div>
-          <h3 class="nao-t">Evite</h3>
-          <ul class="lista nao"><li>Céu ou chão</li><li>Lápis fraco</li><li>Dobrar a folha</li></ul>
-        </div>
-      </div>
-    </section>
-
-    <!-- 14 passo 4 -->
-    <section class="tela" aria-label="Passo 4: a voz">
-      <div class="passo"><span class="n"><svg viewBox="0 0 60 60" aria-hidden="true"><use href="#circulo"/></svg>4</span><h2>A voz</h2></div>
-      <p>Logo depois do desenho, com ele na mão, a criança conta quem é o amigo dela. De 20 a 30 segundos.</p>
-      <div class="recorte fita">
-        <h3 style="font-size:28px">"O nome dele é Trovão. Ele solta raio de chocolate!"</h3>
-        <p class="nota">exemplo</p>
-      </div>
-      <div class="onda" aria-hidden="true">
-        <i></i><i style="animation-delay:-.2s"></i><i style="animation-delay:-.5s"></i><i style="animation-delay:-.8s"></i><i style="animation-delay:-.3s"></i><i style="animation-delay:-.9s"></i><i style="animation-delay:-.6s"></i><i style="animation-delay:-.1s"></i><i style="animation-delay:-.7s"></i>
-      </div>
-      <p class="nota junto">Salve o áudio com o nome da criança.</p>
-    </section>
-
-    <!-- 15 entrega -->
-    <section class="tela" aria-label="O que entregar">
-      <p class="sobre">Para fechar</p>
-      <h2 class="junto">O que entregar.</h2>
-      <ul class="lista">
-        <li>Os desenhos originais, sem dobrar</li>
-        <li>Os áudios, com o nome de cada criança</li>
-      </ul>
-      <h3>até <span class="marca">28 de novembro</span></h3>
-      <p class="nota junto">data sugerida, a combinar com a coordenação</p>
-    </section>
-
-    <!-- 16 final -->
-    <section class="tela centro" aria-label="Final">
-      <div class="par">
-        <img class="desenho" src="/amigomagico/img/nuvem-caderno.webp" alt="Nimbo, a nuvem" width="588" height="720">
-        <img class="desenho" src="/amigomagico/img/gato-caderno.webp" alt="Bigode, o gato" width="720" height="565">
-      </div>
-      <h2>Obrigado por dar vida ao mundo deles.</h2>
-      <p class="sobre">Nos vemos no dia 18!</p>
-    </section>
-  </div>
-
-  <nav class="pe" aria-label="Passar as páginas">
-    <button type="button" id="volta" aria-label="Página anterior">‹ voltar</button>
-    <span id="conta"></span>
-    <button type="button" class="vai" id="vai" aria-label="Próxima página">abrir ›</button>
-  </nav>
+    <p class="fim">Obrigado por dar vida ao mundo deles!</p>
+  </main>
 </div>
-
-<script>
-(function () {
-  var LINHA = 32, BASE = 28; /* a linha da pauta fica em 32k+31; a base das letras em 32k+28 */
-  var telas = Array.prototype.slice.call(document.querySelectorAll('.tela'));
-  var topo = document.getElementById('topo'), conta = document.getElementById('conta');
-  var volta = document.getElementById('volta'), vai = document.getElementById('vai'), pg = document.getElementById('pagina');
-  telas.forEach(function () { var i = document.createElement('i'); i.appendChild(document.createElement('b')); topo.appendChild(i); });
-  var barras = topo.querySelectorAll('i'), atual = 0;
-
-  /* 1) cada bloco termina numa linha inteira; 2) cada texto desce ou sobe até a letra pousar na linha */
-  function encaixa(t) {
-    if (t.classList.contains('capa')) return;
-    Array.prototype.forEach.call(t.children, function (el) {
-      el.style.marginBottom = '0px';
-      var h = el.getBoundingClientRect().height, resto = h % LINHA;
-      if (resto > 0.5 && LINHA - resto > 0.5) el.style.marginBottom = (LINHA - resto) + 'px';
-    });
-    var textos = t.querySelectorAll(':scope > p, :scope > h2, :scope > h3, :scope > ul > li, :scope > ol > li, :scope > .passo h2, :scope > .folhinha > p, :scope > .duas li, :scope > .duas h3');
-    var topoTela = t.getBoundingClientRect().top - t.scrollTop;
-    Array.prototype.forEach.call(textos, function (el) {
-      el.style.top = '0px';
-      var marca = document.createElement('span');
-      marca.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline';
-      el.insertBefore(marca, el.firstChild);
-      var y = marca.getBoundingClientRect().top - topoTela;
-      el.removeChild(marca);
-      var d = ((BASE - y) % LINHA + LINHA) % LINHA;
-      if (d > LINHA / 2) d -= LINHA;
-      el.style.position = 'relative';
-      el.style.top = d + 'px';
-    });
-  }
-
-  function ir(n) {
-    n = Math.max(0, Math.min(telas.length - 1, n));
-    telas[atual].classList.remove('on');
-    atual = n;
-    var t = telas[atual]; t.classList.add('on'); t.scrollTop = 0;
-    encaixa(t);
-    barras.forEach(function (b, i) { b.classList.toggle('lida', i <= atual); });
-    conta.textContent = atual === 0 ? '' : (atual + 1) + ' de ' + telas.length;
-    volta.disabled = atual === 0;
-    vai.textContent = atual === 0 ? 'abrir ›' : (atual === telas.length - 1 ? 'início ›' : 'seguir ›');
-  }
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { encaixa(telas[atual]); });
-  window.addEventListener('resize', function () { encaixa(telas[atual]); });
-  vai.addEventListener('click', function () { ir(atual === telas.length - 1 ? 0 : atual + 1); });
-  volta.addEventListener('click', function () { ir(atual - 1); });
-  pg.addEventListener('click', function (e) {
-    var r = this.getBoundingClientRect();
-    if (e.clientX - r.left < r.width * 0.3) ir(atual - 1); else if (atual < telas.length - 1) ir(atual + 1);
-  });
-  document.addEventListener('keydown', function (e) {
-    if (['ArrowRight', 'PageDown', ' '].indexOf(e.key) >= 0) { e.preventDefault(); ir(atual + 1); }
-    if (['ArrowLeft', 'PageUp'].indexOf(e.key) >= 0) { e.preventDefault(); ir(atual - 1); }
-  });
-  var x0 = null;
-  pg.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; }, { passive: true });
-  pg.addEventListener('touchend', function (e) {
-    if (x0 === null) return; var dx = e.changedTouches[0].clientX - x0; x0 = null;
-    if (Math.abs(dx) > 50) { e.preventDefault(); ir(atual + (dx < 0 ? 1 : -1)); }
-  });
-  var m = /^#t(\d+)$/.exec(location.hash);
-  ir(m ? parseInt(m[1], 10) - 1 : 0);
-})();
-</script>
-
 </body>
 </html>
