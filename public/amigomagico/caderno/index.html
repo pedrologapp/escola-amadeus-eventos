@@ -456,10 +456,19 @@ li { position: relative; }
     vai.textContent = atual === 0 ? 'abrir ›' : (atual === telas.length - 1 ? 'início ›' : 'seguir ›');
   }
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { encaixa(telas[atual]); });
-  window.addEventListener('resize', function () { encaixa(telas[atual]); });
+  /* zoom com os dedos e a barra do navegador não mexem no texto: só reencaixa quando a largura muda de verdade */
+  var largura = document.documentElement.clientWidth, espera = null;
+  window.addEventListener('resize', function () {
+    var w = document.documentElement.clientWidth;
+    if (w === largura) return;
+    largura = w;
+    clearTimeout(espera);
+    espera = setTimeout(function () { encaixa(telas[atual]); }, 250);
+  });
   vai.addEventListener('click', function () { ir(atual === telas.length - 1 ? 0 : atual + 1); });
   volta.addEventListener('click', function () { ir(atual - 1); });
   pg.addEventListener('click', function (e) {
+    if (comZoom()) return; /* com zoom, tocar serve para mover a tela, não para passar a página */
     var r = this.getBoundingClientRect();
     if (e.clientX - r.left < r.width * 0.3) ir(atual - 1); else if (atual < telas.length - 1) ir(atual + 1);
   });
@@ -468,7 +477,10 @@ li { position: relative; }
     if (['ArrowLeft', 'PageUp'].indexOf(e.key) >= 0) { e.preventDefault(); ir(atual - 1); }
   });
   var x0 = null;
-  pg.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; }, { passive: true });
+  /* arrastar para o lado passa a página só com um dedo e sem zoom; com dois dedos é zoom, não troca de página */
+  var comZoom = function () { return window.visualViewport && window.visualViewport.scale > 1.05; };
+  pg.addEventListener('touchstart', function (e) { x0 = (e.touches.length === 1 && !comZoom()) ? e.touches[0].clientX : null; }, { passive: true });
+  pg.addEventListener('touchmove', function (e) { if (e.touches.length > 1) x0 = null; }, { passive: true });
   pg.addEventListener('touchend', function (e) {
     if (x0 === null) return; var dx = e.changedTouches[0].clientX - x0; x0 = null;
     if (Math.abs(dx) > 50) { e.preventDefault(); ir(atual + (dx < 0 ? 1 : -1)); }
