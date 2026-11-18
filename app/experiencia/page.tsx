@@ -9,10 +9,10 @@ const letra = localFont({ src: [{ path: "../../lib/fontes/arquivos/caveat-600-70
 const serifa = localFont({ src: [{ path: "../../lib/fontes/arquivos/fraunces-600-700-italic.woff2", weight: "600 700", style: "italic" }, { path: "../../lib/fontes/arquivos/fraunces-600-700.woff2", weight: "600 700", style: "normal" }] }); // Fraunces, guardada aqui (antes vinha do Google na publicação)
 
 export const metadata: Metadata = {
-  title: "Experiência Amadeus · sábado, 14 de novembro, 14h",
+  title: "Experiência Amadeus · sábado, 28 de novembro, 14h",
   description: "Venha viver um dia dentro da nossa escola junto com seu filho ou sua filha. Gratuito. Inscreva-se.",
   openGraph: {
-    title: "Experiência Amadeus · sábado, 14/11, às 14h",
+    title: "Experiência Amadeus · sábado, 28/11, às 14h",
     description: "Venha viver um dia dentro da nossa escola junto com seu filho ou sua filha. É gratuito: inscreva-se.",
     images: [{ url: "https://eventos.escolaamadeus.com/materiais/experiencia-convite.png", width: 1100, height: 1556 }],
     type: "website",
@@ -37,7 +37,7 @@ export default function ExperienciaPage() {
           </div>
         </div>
         <p className={`${letra.className} mt-2 text-[24px] font-bold leading-tight text-[#1B3B7C]`}>
-          Sábado, <span className="bg-[linear-gradient(transparent_55%,#FFD66B_55%)]">14 de novembro, às 14h</span> · gratuito
+          Sábado, <span className="bg-[linear-gradient(transparent_55%,#FFD66B_55%)]">28 de novembro, às 14h</span> · gratuito
         </p>
 
         <Inscricao />
