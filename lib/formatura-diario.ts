@@ -37,14 +37,29 @@ export function nomesCurtos(nomes: string[]): string[] {
   });
 }
 
+/** Nome comparável: sem acento, minúsculo, espaços simples ("Benicio ... De Araújo" = "Benício ... de Araujo"). */
+const chaveNome = (n: string) => String(n ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+
+/**
+ * (18/11, Pedro) o diário mostra SÓ quem vai para a formatura: os formandos são as linhas de formatura_placa_aluno
+ * (regra do Pedro de 08/11: vai quem tem pasta de fotos no Drive; turma "Grupo V · A" ou "Grupo V · B"). Se alguém
+ * entrar ou sair dessa tabela, o diário acompanha sozinho. Cruza com `alunos` pelo nome normalizado e pela turma.
+ */
+async function formandos(): Promise<Set<string>> {
+  const { data, error } = await createAdminClient().from("formatura_placa_aluno").select("nome, turma");
+  if (error) throw new Error(error.message);
+  return new Set((data ?? []).map((f) => `${String(f.turma ?? "").slice(-1)}|${chaveNome(f.nome)}`));
+}
+
 export async function listarAlunos(turma?: Turma): Promise<AlunoDiario[]> {
   let q = createAdminClient().from("alunos").select("id, nome_completo, turma").eq("serie", SERIE_DIARIO);
   if (turma) q = q.eq("turma", turma);
-  const { data, error } = await q;
+  const [{ data, error }, vao] = await Promise.all([q, formandos()]);
   if (error) throw new Error(error.message);
   const porTurma = new Map<Turma, { id: string; nome: string }[]>();
   for (const a of data ?? []) {
     if (!ehTurma(a.turma)) continue;
+    if (!vao.has(`${a.turma}|${chaveNome(String(a.nome_completo ?? ""))}`)) continue;
     const l = porTurma.get(a.turma) ?? [];
     l.push({ id: a.id as string, nome: nomeBonito(String(a.nome_completo ?? "")) });
     porTurma.set(a.turma, l);
@@ -58,7 +73,7 @@ export async function listarAlunos(turma?: Turma): Promise<AlunoDiario[]> {
   return todos.sort((x, y) => x.turma.localeCompare(y.turma) || x.nome.localeCompare(y.nome, "pt-BR"));
 }
 
-/** O aluno, se for mesmo do Grupo V (toda ação da página aberta confere isso). */
+/** O aluno, se for mesmo um formando do Grupo V (toda ação do diário confere isso). */
 export async function alunoDoDiario(id: string): Promise<AlunoDiario | null> {
   if (!/^[0-9a-f-]{36}$/i.test(String(id ?? ""))) return null;
   const { data } = await createAdminClient().from("alunos").select("id, turma, serie").eq("id", id).maybeSingle();
