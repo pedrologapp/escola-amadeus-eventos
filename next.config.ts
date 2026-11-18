@@ -24,6 +24,8 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       { source: "/semanadacrianca", destination: "/semanadacrianca/index.html" },
+      // caderno da professora da formatura do Grupo V (18/12/2026, "Meu Mundo da Imaginação"), aberto para as professoras no celular
+      { source: "/amigomagico", destination: "/amigomagico/index.html" },
       // a Feira de Ciências / Culminância do Arboria (13/11/2026): teste das 8 inteligências com envio pelo WhatsApp (n8n)
       { source: "/feira", destination: "/feira/index.html" },
       // Casa Interpessoal (Arbória, prof. Francinildo): telas do projeto em loop na TV, sem senha (12/11)
