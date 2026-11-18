@@ -40,9 +40,11 @@ export function paginaLogin({ erro, para, usuario }: { erro?: string; para?: Des
 :root { --papel: #FFFDF7; --pauta: #DCE6F1; --tinta: #22338A; --tinta-2: #4A5A9E; --tinta-3: #8E98C6; --laranja: #E9832A; --rosa: #E5747D; --capa: #1E2C78; --capa-escura: #16205A; --mesa: #ECE4D6;
   --titulo: Caveat, "Segoe Print", cursive; --mao: "Patrick Hand", "Segoe Print", cursive; }
 * { box-sizing: border-box; }
-html, body { height: 100%; margin: 0; }
-body { background: var(--mesa); font-family: var(--mao); color: var(--tinta); -webkit-tap-highlight-color: transparent; }
-.capa { position: relative; min-height: 100dvh; max-width: 520px; margin: 0 auto; overflow: hidden; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+/* o azul da capa vai até as bordas da tela (atrás da barra de status e embaixo); no computador, a mesa em volta */
+html { min-height: 100%; background: var(--capa); }
+body { margin: 0; min-height: 100vh; min-height: 100dvh; background: var(--capa); font-family: var(--mao); color: var(--tinta); -webkit-tap-highlight-color: transparent; }
+@media (min-width: 560px) { html, body { background: var(--mesa); } }
+.capa { position: relative; min-height: 100vh; min-height: 100dvh; max-width: 520px; margin: 0 auto; overflow: hidden; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
   padding: calc(24px + env(safe-area-inset-top)) 58px calc(24px + env(safe-area-inset-bottom)) 40px;
   background: radial-gradient(120% 80% at 30% 20%, rgba(255,255,255,.08), transparent 60%), repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 3px), linear-gradient(160deg, var(--capa), var(--capa-escura)); }
 .capa::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 20px; background: linear-gradient(90deg, rgba(0,0,0,.28), rgba(0,0,0,.06) 70%, rgba(255,255,255,.06)); }

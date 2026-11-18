@@ -12,62 +12,58 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
 <style>
-/* O menu da atividade "Meu amigo mágico" numa tela só, sem rolar: a capa azul do caderno vira uma faixa curta no topo
-   e, embaixo, a folha pautada com quatro quadros grandes (2x2), um por função. Mesmo papel, letras e cores do caderno. */
+/* (18/11, Pedro: a prévia aprovada) o menu inteiro é a capa azul do caderno: tecido, lombada à esquerda e elástico à direita,
+   ocupando a tela toda. Em cima a logo, a etiqueta e o gato adesivo; embaixo, quatro etiquetas creme quadradas coladas na capa
+   com fita, levemente tortas, cada uma com um ícone desenhado. Tudo cabe numa tela, sem rolar: a grade diminui pela altura. */
 :root {
-  --papel: #FFFDF7; --pauta: #DCE6F1; --margem: #F2B2AC; --mesa: #ECE4D6;
-  --tinta: #22338A; --tinta-2: #4A5A9E; --tinta-3: #8E98C6;
-  --laranja: #E9832A; --rosa: #E5747D;
+  --papel: #FFFDF7; --tinta: #22338A; --tinta-2: #4A5A9E; --laranja: #E9832A; --rosa: #E5747D;
   --capa: #1E2C78; --capa-escura: #16205A;
   --titulo: Caveat, "Segoe Print", cursive; --mao: "Patrick Hand", "Segoe Print", cursive;
 }
 * { box-sizing: border-box; }
-html, body { height: 100%; }
-html { background: var(--mesa); }
-body { margin: 0; color: var(--tinta); font-family: var(--mao); font-size: 17px; line-height: 1.3; -webkit-tap-highlight-color: transparent; overflow: hidden; }
-.livro { height: 100dvh; max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; background: var(--papel); box-shadow: 0 0 40px rgba(80, 60, 20, .16); }
-
-/* a faixa da capa */
-.capa { position: relative; flex: none; overflow: hidden; color: #fff; display: flex; align-items: center; gap: 12px;
-  padding: calc(14px + env(safe-area-inset-top)) 46px 14px 30px;
+/* o azul vai até as bordas (atrás da barra de status e embaixo); nunca branco */
+html { min-height: 100%; background: var(--capa-escura); }
+body { margin: 0; height: 100vh; height: 100dvh; overflow: hidden; position: relative; font-family: var(--mao); color: var(--tinta); -webkit-tap-highlight-color: transparent;
   background:
-    radial-gradient(120% 120% at 20% 0%, rgba(255, 255, 255, .08), transparent 60%),
+    radial-gradient(120% 70% at 25% 0%, rgba(255, 255, 255, .09), transparent 60%),
     repeating-linear-gradient(0deg, rgba(255, 255, 255, .025) 0 1px, transparent 1px 3px),
-    linear-gradient(160deg, var(--capa) 0%, var(--capa-escura) 100%); }
-.capa::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 16px; background: linear-gradient(90deg, rgba(0,0,0,.28), rgba(0,0,0,.06) 70%, rgba(255,255,255,.06)); }
-.capa .elastico { position: absolute; top: 0; bottom: 0; right: 20px; width: 11px; background: linear-gradient(90deg, #C9661A, var(--laranja) 40%, #F5A35A 60%, #C9661A); box-shadow: 0 0 10px rgba(0,0,0,.35); }
-.capa .logo { width: 132px; height: auto; flex: none; }
-.capa h1 { margin: 0 0 0 auto; text-align: right; font: 700 25px/24px var(--titulo); }
-.capa h1 span { display: block; font-size: 21px; color: #F7B7BC; }
-.sair { position: absolute; z-index: 1; left: 30px; bottom: 3px; font: 400 13px/1 var(--mao); color: #AEB6E0; text-decoration: none; }
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, .05) 0 1px, transparent 1px 3px),
+    linear-gradient(170deg, var(--capa), var(--capa-escura));
+  display: flex; flex-direction: column;
+  padding: calc(12px + env(safe-area-inset-top)) 40px calc(16px + env(safe-area-inset-bottom)) 30px; }
+body::before { content: ""; position: fixed; left: 0; top: 0; bottom: 0; width: 16px; background: linear-gradient(90deg, rgba(0,0,0,.3), rgba(0,0,0,.06) 70%, rgba(255,255,255,.06)); pointer-events: none; }
+.elastico { position: fixed; top: 0; bottom: 0; right: 16px; width: 11px; background: linear-gradient(90deg, #C9661A, var(--laranja) 40%, #F5A35A 60%, #C9661A); box-shadow: 0 0 8px rgba(0,0,0,.35); pointer-events: none; }
 
-/* a folha pautada com os quatro quadros */
-.folha { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px;
-  padding: 14px 14px calc(14px + env(safe-area-inset-bottom)) 50px;
-  background-image: linear-gradient(90deg, transparent 36px, var(--margem) 36px, var(--margem) 37.5px, transparent 37.5px),
-    repeating-linear-gradient(180deg, transparent 0 31px, var(--pauta) 31px 32px); }
-.intro { margin: 0; font: 700 22px/26px var(--titulo); color: var(--tinta-2); }
-.grade { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 12px; }
-.quadro { position: relative; min-height: 0; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 4px;
-  padding: 10px 8px; background: #fff; border: 0; border-radius: 6px; box-shadow: 0 6px 14px rgba(34, 51, 138, .12);
-  color: inherit; font: inherit; text-decoration: none; cursor: pointer; }
-.quadro:active { transform: scale(.98); }
+/* o alto da capa */
+.topo { position: relative; flex: none; height: 150px; max-width: 460px; width: 100%; margin: 0 auto; }
+.logo { display: block; width: 148px; height: auto; }
+.sair { position: absolute; z-index: 1; right: 0; top: 0; padding: 2px 4px; font: 700 16px/1 var(--titulo); color: rgba(255, 255, 255, .75); text-decoration: none; }
+.etiqueta { position: absolute; z-index: 1; left: 0; bottom: 6px; margin: 0; white-space: nowrap; background: var(--papel); color: var(--tinta); border-radius: 8px; padding: 9px 12px 8px; box-shadow: 0 8px 18px rgba(0,0,0,.35); font-weight: 400; }
+.etiqueta::after { content: ""; position: absolute; inset: 4px; border: 1.3px solid var(--tinta); border-radius: 5px; opacity: .5; pointer-events: none; }
+.etiqueta b { display: block; font: 700 23px/23px var(--titulo); }
+.etiqueta span { display: block; margin-top: 2px; font: 700 16px/17px var(--titulo); color: var(--rosa); }
+.gato { position: absolute; right: 2px; top: 22px; width: 128px; height: auto; transform: rotate(-7deg);
+  filter: drop-shadow(2.5px 0 0 #fff) drop-shadow(-2.5px 0 0 #fff) drop-shadow(0 2.5px 0 #fff) drop-shadow(0 -2.5px 0 #fff) drop-shadow(0 6px 8px rgba(0,0,0,.35)); }
+.estrela { position: absolute; width: 12px; height: 12px; }
+@media (max-width: 370px) { .gato { width: 104px; top: 30px; } }
+
+/* as quatro etiquetas quadradas: a grade encolhe para caber na altura que sobra */
+.grade { flex: 1; min-height: 0; display: grid; place-content: center; padding-top: 14px; }
+.grade-in { display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+  width: min(calc(100vw - 70px), 420px, calc((100vh - 210px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) + 14px));
+  width: min(calc(100vw - 70px), 420px, calc((100dvh - 210px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) + 14px)); }
+.quadro { aspect-ratio: 1 / 1; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 10px 8px;
+  text-align: center; text-decoration: none; color: inherit; font: inherit; border: 0; cursor: pointer;
+  background: var(--papel) repeating-linear-gradient(180deg, transparent 0 21px, #E3EBF4 21px 22px); border-radius: 10px; box-shadow: 0 8px 16px rgba(0,0,0,.3); }
+.quadro:nth-child(1) { transform: rotate(-1.5deg); } .quadro:nth-child(2) { transform: rotate(1.2deg); }
+.quadro:nth-child(3) { transform: rotate(1deg); } .quadro:nth-child(4) { transform: rotate(-1.2deg); }
+.quadro:active { scale: .97; }
 .quadro:focus-visible { outline: 3px solid var(--laranja); outline-offset: 3px; }
-.quadro .n { position: absolute; top: 4px; left: 9px; font: 700 26px/1 var(--titulo); color: var(--laranja); }
-.quadro .des { position: relative; flex: 1 1 0; min-height: 0; width: 100%; margin-top: 8px; }
-.quadro .des img, .quadro .des svg { position: absolute; inset: 0; margin: auto; max-width: 84%; max-height: 100%; width: auto; height: auto; display: block; }
-.quadro .des svg { width: 84%; height: 100%; }
-.quadro .des img.foto { border-radius: 8px; box-shadow: 0 3px 8px rgba(20, 25, 40, .25); }
-.quadro b { flex: none; font: 700 25px/24px var(--titulo); }
-.quadro small { flex: none; font-size: 14px; line-height: 17px; color: var(--tinta-2); }
-.quadro .ir { flex: none; font: 700 19px/1 var(--titulo); color: var(--laranja); }
-@media (max-height: 700px) {
-  .quadro b { font-size: 22px; line-height: 21px; }
-  .quadro small { font-size: 13px; line-height: 15px; }
-  .intro { font-size: 20px; line-height: 22px; }
-  .capa { padding-top: calc(10px + env(safe-area-inset-top)); padding-bottom: 10px; }
-}
-@media (max-width: 360px) { .quadro small { display: none; } }
+.quadro::before { content: ""; position: absolute; top: -8px; left: 50%; width: 48px; height: 16px; margin-left: -24px; transform: rotate(-3deg); background: repeating-linear-gradient(90deg, rgba(229,116,125,.6) 0 7px, rgba(229,116,125,.42) 7px 14px); }
+.quadro:nth-child(even)::before { background: repeating-linear-gradient(90deg, rgba(120,200,212,.65) 0 7px, rgba(120,200,212,.45) 7px 14px); }
+.quadro svg { width: 46%; height: auto; max-height: 52%; flex: none; }
+.quadro b { font: 700 clamp(17px, 5vw, 21px)/1.02 var(--titulo); }
+.quadro small { font-size: 13px; line-height: 1.1; color: var(--tinta-2); }
 
 /* o vídeo em tela cheia */
 .cinema { position: fixed; inset: 0; z-index: 10; display: none; flex-direction: column; background: #0b0f1d; color: #fff;
@@ -80,58 +76,22 @@ body { margin: 0; color: var(--tinta); font-family: var(--mao); font-size: 17px;
 </style>
 </head>
 <body>
-<div class="livro">
-  <header class="capa">
-    <span class="elastico" aria-hidden="true"></span>
+  <span class="elastico" aria-hidden="true"></span>
+  <header class="topo">
     <img class="logo" src="/amigomagico/img/amadeus-horizontal.webp" alt="Centro Educacional Amadeus" width="560" height="139">
-    <h1>Meu Mundo da Imaginação<span>Grupo V · 18/12</span></h1>
     <a class="sair" href="/amigomagico/sair">sair</a>
+    <svg class="estrela" style="left:170px;top:52px" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 0 C10 6 12 8 18 9 C12 10 10 12 9 18 C8 12 6 10 0 9 C6 8 8 6 9 0Z" fill="#F8CC3A"/></svg>
+    <h1 class="etiqueta"><b>Formatura Grupo V</b><span>Meu Mundo da Imaginação</span></h1>
+    <img class="gato" src="/amigomagico/img/gato-caderno.webp" alt="" width="720" height="565">
   </header>
-
-  <main class="folha">
-    <p class="intro">Tudo da atividade "Meu amigo mágico", na ordem em que você vai usar.</p>
-    <nav class="grade" aria-label="Partes da atividade">
-      <a class="quadro" href="/amigomagico/caderno">
-        <span class="n">1</span>
-        <span class="des"><img class="foto" src="/amigomagico/img/capa-caderno.webp" alt="" width="520" height="1125"></span>
-        <b>Caderno da professora</b>
-        <small>Comece por aqui</small>
-        <span class="ir">abrir ›</span>
-      </a>
-      <button class="quadro" type="button" id="abrir-video">
-        <span class="n">2</span>
-        <span class="des"><img class="foto" src="/amigomagico/img/capa-video.webp" alt=""></span>
-        <b>Vídeo para as crianças</b>
-        <small>Passe na TV, em roda</small>
-        <span class="ir">assistir ›</span>
-      </button>
-      <a class="quadro" href="/amigomagico/caderno-da-crianca.pdf" download>
-        <span class="n">3</span>
-        <span class="des"><img class="foto" src="/amigomagico/img/folha-1.webp" alt="" width="900" height="1273"></span>
-        <b>Caderno da criança</b>
-        <small>A4, tamanho real</small>
-        <span class="ir">baixar o PDF ›</span>
-      </a>
-      <a class="quadro" href="/amigomagico/diario">
-        <span class="n">4</span>
-        <span class="des">
-          <svg viewBox="0 0 120 100" width="120" height="100" aria-hidden="true">
-            <path d="M14 18c0-6 4-10 10-10h52c6 0 10 4 10 10v30c0 6-4 10-10 10H42L26 72V58h-2c-6 0-10-4-10-10z" fill="#FFF2B5" stroke="#22338A" stroke-width="3" stroke-linejoin="round"/>
-            <path d="M28 26h44M28 38h30" stroke="#4A5A9E" stroke-width="3" stroke-linecap="round"/>
-            <rect x="62" y="44" width="44" height="34" rx="6" fill="#fff" stroke="#22338A" stroke-width="3"/>
-            <circle cx="84" cy="61" r="9" fill="none" stroke="#E9832A" stroke-width="3"/>
-            <path d="M70 44l4-6h20l4 6" fill="none" stroke="#22338A" stroke-width="3" stroke-linejoin="round"/>
-            <rect x="20" y="78" width="10" height="16" rx="5" fill="#E5747D"/>
-            <path d="M14 86a11 11 0 0 0 22 0" fill="none" stroke="#E5747D" stroke-width="3" stroke-linecap="round"/>
-          </svg>
-        </span>
-        <b>Diário da formatura</b>
-        <small>Texto, foto e áudio por aluno</small>
-        <span class="ir">registrar ›</span>
-      </a>
+  <main class="grade">
+    <nav class="grade-in" aria-label="Partes da atividade">
+      <a class="quadro" href="/amigomagico/caderno"><svg viewBox="0 0 64 64" aria-hidden="true"><rect x="12" y="6" width="40" height="52" rx="4" fill="#1E2C78" stroke="#22338A" stroke-width="2.5"/><rect x="44" y="6" width="4" height="52" fill="#E9832A"/><rect x="18" y="30" width="22" height="14" rx="2" fill="#FFFDF7"/><path d="M22 35 H36 M22 39 H32" stroke="#22338A" stroke-width="1.8" stroke-linecap="round"/></svg><b>Caderno da professora</b><small>comece por aqui</small></a>
+      <button class="quadro" type="button" id="abrir-video"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M20 6 L30 16 M44 6 L34 16" stroke="#22338A" stroke-width="2.5" stroke-linecap="round"/><rect x="6" y="16" width="52" height="36" rx="6" fill="#fff" stroke="#22338A" stroke-width="2.5"/><rect x="12" y="22" width="40" height="24" rx="3" fill="#E8F3FB"/><path d="M28 28 L38 34 L28 40 Z" fill="#E9832A"/></svg><b>Vídeo para as crianças</b><small>passe na TV</small></button>
+      <a class="quadro" href="/amigomagico/caderno-da-crianca.pdf" download><svg viewBox="0 0 64 64" aria-hidden="true"><rect x="14" y="6" width="36" height="50" rx="3" fill="#fff" stroke="#22338A" stroke-width="2.5"/><rect x="19" y="14" width="12" height="12" rx="2" fill="none" stroke="#E9832A" stroke-width="2"/><rect x="33" y="14" width="12" height="12" rx="2" fill="none" stroke="#E9832A" stroke-width="2"/><rect x="19" y="30" width="12" height="12" rx="2" fill="none" stroke="#E9832A" stroke-width="2"/><rect x="33" y="30" width="12" height="12" rx="2" fill="none" stroke="#E9832A" stroke-width="2"/><path d="M44 44 L56 56" stroke="#22338A" stroke-width="3" stroke-linecap="round"/><path d="M53 53 L58 58" stroke="#F8CC3A" stroke-width="5" stroke-linecap="round"/></svg><b>Caderno da criança</b><small>PDF para imprimir</small></a>
+      <a class="quadro" href="/amigomagico/diario"><svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="8" width="44" height="32" rx="10" fill="#FFF2B5" stroke="#22338A" stroke-width="2.5"/><path d="M16 40 L13 50 L26 40" fill="#FFF2B5" stroke="#22338A" stroke-width="2.5" stroke-linejoin="round"/><path d="M16 20 H40 M16 28 H32" stroke="#22338A" stroke-width="2.5" stroke-linecap="round"/><circle cx="50" cy="44" r="10" fill="#E9832A"/><path d="M46 44 L49 47 L55 40" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg><b>Diário da formatura</b><small>registre cada criança</small></a>
     </nav>
   </main>
-</div>
 
 <div class="cinema" id="cinema" role="dialog" aria-modal="true" aria-label="Vídeo para as crianças">
   <div class="barra">
