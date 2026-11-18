@@ -7,12 +7,14 @@ import { cookies } from "next/headers";
  * Acesso das professoras ao kit da formatura do Grupo V (/amigomagico): um login único e compartilhado, escolhido pelo
  * Pedro (18/11/2026). O usuário não diferencia maiúsculas; a senha NÃO está no código: só o hash scrypt em
  * AMIGOMAGICO_SENHA_HASH ("scrypt:<sal hex>:<hash hex>"; dois-pontos e não cifrão, que o .env do Next expande). Quem acerta recebe um cookie httpOnly assinado com
- * AMIGOMAGICO_SEGREDO, que vale 30 dias. As rotas do kit (menu, caderno, diário e as ações do diário) conferem no servidor.
+ * AMIGOMAGICO_SEGREDO. As rotas do kit (menu, caderno, diário e as ações do diário) conferem no servidor.
+ * (18/11, Pedro: "se elas entrarem com o login uma vez, não precisa pedir mais") o cookie vale 400 dias, o máximo que o
+ * navegador guarda, e se renova sempre que a professora abre o menu ou o caderno: quem entrou uma vez não digita de novo.
  */
 
 export const USUARIO_KIT = "grupov";
 export const COOKIE_KIT = "amigomagico";
-const DIAS = 30;
+const DIAS = 400;
 
 function segredo() {
   const s = process.env.AMIGOMAGICO_SEGREDO;
