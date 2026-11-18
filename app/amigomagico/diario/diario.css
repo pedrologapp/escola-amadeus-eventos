@@ -26,6 +26,11 @@ body:has(.dd-mesa) { background: transparent; }
 .dd-elastico { position: absolute; top: 0; bottom: 0; right: 18px; width: 10px; background: linear-gradient(90deg, #C9661A, var(--laranja) 40%, #F5A35A 60%, #C9661A); }
 .dd-logo { height: 30px; width: auto; flex: none; }
 .dd-faixa-t { font: 700 26px/1 var(--t); margin-left: auto; text-align: right; }
+/* (18/11, Pedro: "conseguir voltar ao menu") nas telas de dentro do diário, o "menu" pequeno no canto leva ao menu do kit */
+.dd-menu { position: absolute; z-index: 1; right: 34px; top: calc(4px + env(safe-area-inset-top)); padding: 2px 6px; font: 700 17px/1 var(--t); color: rgba(255, 255, 255, .8); text-decoration: none; }
+.dd-faixa:has(.dd-menu) { padding-top: calc(22px + env(safe-area-inset-top)); }
+.dd-topo { position: relative; }
+.dd-topo .dd-menu { right: 14px; top: auto; bottom: 8px; }
 .dd-voltar { flex: none; width: 34px; height: 40px; display: grid; place-items: center; font: 700 38px/1 var(--t) !important; color: #fff !important; text-decoration: none; }
 
 /* a folha pautada */

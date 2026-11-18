@@ -50,7 +50,11 @@ body { margin: 0; background: var(--mesa); color: var(--tinta); font-family: var
 @media (min-width: 520px) { body { display: grid; place-items: center; padding: 24px; } .livro { height: min(860px, 100%); width: 100%; border-radius: 14px; } }
 
 /* topo e rodapé */
-.topo { display: flex; gap: 4px; padding: calc(12px + env(safe-area-inset-top, 0px)) max(18px, env(safe-area-inset-right, 0px)) 8px max(18px, env(safe-area-inset-left, 0px)); }
+/* (18/11, Pedro: "conseguir voltar ao menu") o "‹ menu" fica à esquerda da barrinha das páginas, em todas as telas */
+.cabeca { display: flex; align-items: center; gap: 12px; padding: calc(6px + env(safe-area-inset-top, 0px)) max(18px, env(safe-area-inset-right, 0px)) 2px max(10px, env(safe-area-inset-left, 0px)); }
+.cabeca .menu { flex: none; padding: 6px 4px; font: 700 20px/1 var(--titulo); color: var(--tinta-2); text-decoration: none; border-radius: 6px; }
+.cabeca .menu:focus-visible { outline: 2px solid var(--laranja); outline-offset: 2px; }
+.topo { flex: 1; display: flex; gap: 4px; }
 .topo i { flex: 1; height: 3px; border-radius: 2px; background: var(--pauta); overflow: hidden; }
 .topo i b { display: block; height: 100%; width: 0; background: var(--tinta); }
 .topo i.lida b { width: 100%; }
@@ -192,7 +196,10 @@ li { position: relative; }
 </svg>
 
 <div class="livro" id="livro">
-  <div class="topo" id="topo" aria-hidden="true"></div>
+  <div class="cabeca">
+    <a class="menu" href="/amigomagico" aria-label="Voltar ao menu">‹ menu</a>
+    <div class="topo" id="topo" aria-hidden="true"></div>
+  </div>
 
   <div class="pagina" id="pagina">
 
@@ -452,7 +459,8 @@ li { position: relative; }
     encaixa(t);
     barras.forEach(function (b, i) { b.classList.toggle('lida', i <= atual); });
     conta.textContent = atual === 0 ? '' : (atual + 1) + ' de ' + telas.length;
-    volta.disabled = atual === 0;
+    volta.textContent = atual === 0 ? "‹ menu" : "‹ voltar"; /* na capa, o voltar leva ao menu do kit */
+    volta.setAttribute("aria-label", atual === 0 ? "Voltar ao menu" : "Página anterior");
     vai.textContent = atual === 0 ? 'abrir ›' : (atual === telas.length - 1 ? 'início ›' : 'seguir ›');
   }
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { encaixa(telas[atual]); });
@@ -466,7 +474,7 @@ li { position: relative; }
     espera = setTimeout(function () { encaixa(telas[atual]); }, 250);
   });
   vai.addEventListener('click', function () { ir(atual === telas.length - 1 ? 0 : atual + 1); });
-  volta.addEventListener('click', function () { ir(atual - 1); });
+  volta.addEventListener('click', function () { if (atual === 0) location.href = "/amigomagico"; else ir(atual - 1); });
   pg.addEventListener('click', function (e) {
     if (comZoom()) return; /* com zoom, tocar serve para mover a tela, não para passar a página */
     var r = this.getBoundingClientRect();

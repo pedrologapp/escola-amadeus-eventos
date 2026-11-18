@@ -73,6 +73,7 @@ function Faixa({ titulo, voltar, menu }: { titulo: string; voltar?: () => void; 
       ) : null}
       <img className="dd-logo" src="/amigomagico/img/amadeus-horizontal.webp" alt="Centro Educacional Amadeus" width={560} height={139} />
       <span className="dd-faixa-t">{titulo}</span>
+      {voltar && <a className="dd-menu" href="/amigomagico">menu</a>}
       <span className="dd-elastico" aria-hidden="true" />
     </header>
   );
@@ -260,6 +261,7 @@ function Conversa({ turma, alunoId, voltar }: { turma: Turma; alunoId: string; v
           <b>{nome || "…"}</b>
           <small>Grupo V {turma} · diário da formatura</small>
         </span>
+        <a className="dd-menu" href="/amigomagico">menu</a>
       </header>
       <div className="dd-falas">
         {msgs === null && !erro && <p className="dd-vazio">abrindo…</p>}
