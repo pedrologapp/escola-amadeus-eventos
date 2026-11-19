@@ -380,6 +380,15 @@
       if (k === 'turma') { assenta(tn, 376); assenta(tr, 392); }
       mv.forEach((el) => { el.style.translate = `${dx}px ${dy}px`; });
     }
+    // grossura da letra (g): contorno da mesma cor do texto, por trás do preenchimento (não muda o tamanho nem o lugar)
+    for (const k in BLOCOS) {
+      const g = ((D.ajustes || {})[k] || {}).g || 0; if (!g) continue;
+      for (const el of BLOCOS[k].els()) {
+        if (k === 'nome') { el.style.webkitTextStrokeWidth = Math.max(0, 1.3 + .3 * g).toFixed(2) + 'px'; continue; }
+        if (g <= 0) continue;
+        el.style.webkitTextStroke = (.22 * g).toFixed(2) + 'px currentColor'; el.style.paintOrder = 'stroke fill';
+      }
+    }
     const limitado = [];
     for (const k in BLOCOS) {
       const a = (D.ajustes || {})[k]; if (!a || (!a.t && !a.x && !a.y)) continue;

@@ -102,9 +102,9 @@ const desaprovar = (nome: string) =>
 export async function salvarAjuste(chave: string, nome: string | null, bloco: string, ajuste: Ajuste) {
   if (!chavePlacaValida(chave) || !blocoValido(bloco)) return negado;
   const inteiro = (v: unknown, lim: number) => Number.isInteger(v) && Math.abs(v as number) <= lim;
-  if (!inteiro(ajuste?.t, 12) || !inteiro(ajuste?.x, 600) || !inteiro(ajuste?.y, 600)) return { ok: false as const, erro: "Ajuste inválido." };
-  const a: Ajuste = { t: ajuste.t, x: ajuste.x, y: ajuste.y };
-  const vazio = !a.t && !a.x && !a.y;
+  if (!inteiro(ajuste?.t, 12) || !inteiro(ajuste?.x, 600) || !inteiro(ajuste?.y, 600) || !inteiro(ajuste?.g ?? 0, 10)) return { ok: false as const, erro: "Ajuste inválido." };
+  const a: Ajuste = { t: ajuste.t, x: ajuste.x, y: ajuste.y, ...(ajuste.g ? { g: ajuste.g } : {}) };
+  const vazio = !a.t && !a.x && !a.y && !a.g;
   const dados = await lerDados();
   if (nome === null) {
     const g: Ajustes = { ...(dados.ajustes ?? {}) };

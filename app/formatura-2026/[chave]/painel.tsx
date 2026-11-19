@@ -25,7 +25,7 @@ const PADRAO = {
   diretora: "Maria das Graças de O. Gomes",
   coordenadora: "Maria Gislene Flor Sátiro do Nascimento",
 };
-type Ajuste = { t: number; x: number; y: number };
+type Ajuste = { t: number; x: number; y: number; g?: number }; // g = grossura da letra (0 = normal)
 type Ajustes = Partial<Record<string, Ajuste>>;
 const BLOCOS: [string, string][] = [
   ["nome", "Nome da criança"], ["prof", "Professoras e auxiliar"], ["lista", "Nomes da turma"],
@@ -35,7 +35,9 @@ type Corte = { x: number; y: number; w: number; h: number; b?: number }; // b = 
 type Cortes = Partial<Record<"beca" | "familia", Corte>>;
 // proporção (largura / altura) de cada moldura de foto na placa (public/formatura-placa/molde.html)
 const ASPECTO = { turma: 1024 / 466, familia: 404 / 676, beca: 334 / 490 } as const;
-const somar = (a?: Ajuste, b?: Ajuste): Ajuste => ({ t: (a?.t ?? 0) + (b?.t ?? 0), x: (a?.x ?? 0) + (b?.x ?? 0), y: (a?.y ?? 0) + (b?.y ?? 0) });
+const somar = (a?: Ajuste, b?: Ajuste): Ajuste => ({ t: (a?.t ?? 0) + (b?.t ?? 0), x: (a?.x ?? 0) + (b?.x ?? 0), y: (a?.y ?? 0) + (b?.y ?? 0), g: (a?.g ?? 0) + (b?.g ?? 0) });
+// grossura: o nome da criança já tem um contorno e pode afinar um pouco; os outros textos só engrossam
+const G_MIN = (k: string) => (k === "nome" ? -4 : 0), G_MAX = 10;
 
 const C = {
   fundo: "#071430", painel: "#0B1E45", borda: "rgba(227,194,122,.28)", ouro: "#E3C27A", ouroClaro: "#F3DFA6",
@@ -498,7 +500,7 @@ function AjustarTexto({ chave, nome, global, meu, mudar, limitado, aoDesaprovar 
     if (espera.current) return;
     const antes = (escopo === "todas" ? global : meu)[k] ?? { t: 0, x: 0, y: 0 };
     const lim = (v: number) => Math.max(-600, Math.min(600, Math.round(v)));
-    const depois = { t: Math.max(-12, Math.min(12, antes.t + (d.t ?? 0))), x: lim(antes.x + (d.x ?? 0)), y: lim(antes.y + (d.y ?? 0)) };
+    const depois = { t: Math.max(-12, Math.min(12, antes.t + (d.t ?? 0))), x: lim(antes.x + (d.x ?? 0)), y: lim(antes.y + (d.y ?? 0)), g: Math.max(-10, Math.min(10, (antes.g ?? 0) + (d.g ?? 0))) };
     espera.current = { escopo, bloco: k, antes, depois, crescer };
     setEstado("ajustando…"); mudar(escopo, k, depois);
     // se a placa não responder (rede lenta), salva assim mesmo
@@ -517,7 +519,8 @@ function AjustarTexto({ chave, nome, global, meu, mudar, limitado, aoDesaprovar 
   );
   const chip = (ativo: boolean) => ({ minHeight: 40, padding: "0 14px", borderRadius: 999, cursor: "pointer", fontSize: 14, fontWeight: 600,
     border: `1px solid ${ativo ? C.ouro : C.borda}`, background: ativo ? C.ouro : "transparent", color: ativo ? "#14213D" : C.texto } as const);
-  const mexido = atual.t || atual.x || atual.y;
+  const gAtual = (atual.g ?? 0) + (escopo === "esta" ? (global[bloco]?.g ?? 0) : 0); // grossura que aparece nesta placa
+  const mexido = atual.t || atual.x || atual.y || atual.g;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
@@ -534,12 +537,19 @@ function AjustarTexto({ chave, nome, global, meu, mudar, limitado, aoDesaprovar 
           {b("A+", "Aumentar", () => passo({ t: 1 }, true))}
         </div>
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          <button type="button" aria-label="Letra mais fina" disabled={gAtual <= G_MIN(bloco)} onClick={() => passo({ g: -1 }, false)}
+            style={{ ...botaoSec, minHeight: 48, padding: "0 12px", fontSize: 15, opacity: gAtual <= G_MIN(bloco) ? 0.4 : 1 }}>Mais fina</button>
+          <span style={{ minWidth: 34, textAlign: "center", fontSize: 14, color: C.suave }} aria-label="Grossura da letra">{gAtual > 0 ? "+" + gAtual : gAtual}</span>
+          <button type="button" aria-label="Letra mais grossa" disabled={gAtual >= G_MAX} onClick={() => passo({ g: 1 }, false)}
+            style={{ ...botaoSec, minHeight: 48, padding: "0 12px", fontSize: 15, fontWeight: 800, opacity: gAtual >= G_MAX ? 0.4 : 1 }}>Mais grossa</button>
+        </div>
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
           {b("←", "Mover para a esquerda", () => passo({ x: -P }, true))}
           {b("↑", "Mover para cima", () => passo({ y: -P }, true))}
           {b("↓", "Mover para baixo", () => passo({ y: P }, true))}
           {b("→", "Mover para a direita", () => passo({ x: P }, true))}
         </div>
-        {mexido ? <button type="button" onClick={() => passo({ t: -atual.t, x: -atual.x, y: -atual.y }, false)} style={{ ...botaoSec, minHeight: 48, padding: "0 14px" }}>Voltar ao normal</button> : null}
+        {mexido ? <button type="button" onClick={() => passo({ t: -atual.t, x: -atual.x, y: -atual.y, g: -(atual.g ?? 0) }, false)} style={{ ...botaoSec, minHeight: 48, padding: "0 14px" }}>Voltar ao normal</button> : null}
       </div>
       {estado && <span style={{ fontSize: 14, color: estado.includes("✓") ? C.verde : estado.startsWith("Não cabe") ? "#FFC98A" : C.suave }}>{estado}</span>}
     </div>
