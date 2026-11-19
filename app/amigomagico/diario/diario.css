@@ -113,3 +113,50 @@ body:has(.dd-mesa) { background: transparent; }
 .dd-rec i { width: 12px; height: 12px; border-radius: 50%; background: #E0303F; animation: dd-pisca 1s infinite; }
 @keyframes dd-pisca { 50% { opacity: .25; } }
 @media (prefers-reduced-motion: reduce) { .dd-rec i { animation: none; } }
+
+/* (19/11, Pedro: "esse grid mais bonito nos alunos e deixa o fundo de caderno também", no diário) a escolha da turma e a
+   lista de alunos ganham a cara do menu do kit: o fundo é a capa azul do caderno (tecido, lombada à esquerda, elástico à
+   direita) e os quadros são etiquetas creme pautadas, coladas com fita e levemente tortas. A conversa segue no papel pautado. */
+.dd-turmas, .dd-alunos { position: relative; padding: 18px 40px calc(18px + env(safe-area-inset-bottom)) 30px;
+  background:
+    radial-gradient(120% 70% at 25% 0%, rgba(255, 255, 255, .07), transparent 60%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, .025) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, .05) 0 1px, transparent 1px 3px),
+    linear-gradient(170deg, var(--capa), var(--capa-escura)); }
+.dd-turmas::before, .dd-alunos::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 16px; background: linear-gradient(90deg, rgba(0,0,0,.3), rgba(0,0,0,.06) 70%, rgba(255,255,255,.06)); pointer-events: none; }
+.dd-turmas::after, .dd-alunos::after { content: ""; position: absolute; top: 0; bottom: 0; right: 18px; width: 10px; background: linear-gradient(90deg, #C9661A, var(--laranja) 40%, #F5A35A 60%, #C9661A); pointer-events: none; }
+.dd-turmas .dd-intro, .dd-alunos .dd-intro { color: #DCE2F7; font-size: 21px; line-height: 25px; }
+html:has(.dd-turmas), html:has(.dd-alunos) { background: var(--capa-escura, #16205A); }
+
+/* a etiqueta creme (turmas e alunos) */
+.dd-quadro, .dd-aluno { overflow: visible !important; border-radius: 10px !important; box-shadow: 0 8px 16px rgba(0, 0, 0, .3) !important;
+  background: var(--papel) repeating-linear-gradient(180deg, transparent 0 21px, #E3EBF4 21px 22px) !important; }
+.dd-quadro::before, .dd-aluno::before { content: ""; position: absolute; top: -8px; left: 50%; width: 46px; height: 15px; margin-left: -23px; transform: rotate(-3deg);
+  background: repeating-linear-gradient(90deg, rgba(229,116,125,.62) 0 7px, rgba(229,116,125,.42) 7px 14px); }
+.dd-quadro:nth-child(even)::before, .dd-aluno:nth-child(even)::before { background: repeating-linear-gradient(90deg, rgba(120,200,212,.68) 0 7px, rgba(120,200,212,.46) 7px 14px); }
+.dd-quadro:nth-child(1) { rotate: -1.2deg; } .dd-quadro:nth-child(2) { rotate: 1deg; }
+.dd-turmas-grade { gap: 22px; padding-top: 6px; }
+.dd-quadro b { font-size: 38px; }
+
+/* os alunos: 3 por linha, cada um com a inicial num círculo colorido */
+.dd-grade { grid-template-columns: repeat(var(--colunas, 3), 1fr); gap: 16px 12px; padding-top: 8px; }
+.dd-aluno { gap: 6px; padding: 10px 4px 8px; }
+.dd-aluno:nth-child(4n+1) { rotate: -1.6deg; } .dd-aluno:nth-child(4n+2) { rotate: 1.2deg; }
+.dd-aluno:nth-child(4n+3) { rotate: -.8deg; } .dd-aluno:nth-child(4n) { rotate: 1.6deg; }
+.dd-aluno::before { width: 34px; height: 12px; margin-left: -17px; top: -6px; }
+.dd-inicial { width: 40px; height: 40px; font-size: 27px; box-shadow: 0 2px 0 rgba(34, 51, 138, .18); }
+.dd-aluno:nth-child(4n+1) .dd-inicial { background: #E9832A; } .dd-aluno:nth-child(4n+2) .dd-inicial { background: #4C9FB0; }
+.dd-aluno:nth-child(4n+3) .dd-inicial { background: #E5747D; } .dd-aluno:nth-child(4n) .dd-inicial { background: #5B6BC0; }
+.dd-aluno b { font: 700 21px/1.02 var(--t); color: var(--tinta); }
+.dd-aluno small { top: -7px; right: -6px; min-width: 22px; height: 22px; border-radius: 11px; font-size: 13px; line-height: 22px; background: var(--laranja); box-shadow: 0 2px 4px rgba(0,0,0,.25); }
+.dd-aluno.tem b::after { content: ""; display: block; width: 60%; height: 3px; margin: 3px auto 0; border-radius: 2px; background: rgba(233, 131, 42, .55); }
+@media (max-height: 700px) {
+  .dd-inicial { width: 32px; height: 32px; font-size: 22px; }
+  .dd-aluno b { font-size: 19px; }
+  .dd-grade { gap: 12px 10px; }
+  .dd-turmas, .dd-alunos { padding-top: 12px; }
+}
+
+/* (19/11, Pedro) na conversa, o nome inteiro da criança (pode ocupar duas linhas) */
+.dd-quem b { font-size: 22px; line-height: 22px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.dd-topo { padding-right: 58px; }

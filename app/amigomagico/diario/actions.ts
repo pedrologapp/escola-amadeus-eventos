@@ -12,7 +12,7 @@ const SEM_LOGIN = "Sua entrada expirou. Volte ao menu e entre de novo.";
 
 /**
  * Ações do diário (/amigomagico/diario). Só para quem entrou no kit, e ainda:
- * - só o nome curto sai daqui (nunca o completo nem o id do ERP);
+ * - na lista sai o nome e o sobrenome; o nome inteiro só na conversa do aluno (19/11, Pedro); nunca o id do ERP;
  * - todo pedido confere que o aluno é do Grupo V;
  * - o arquivo não passa por aqui: a ação cria uma URL assinada e o navegador sobe a foto/o áudio direto no
  *   bucket privado; para ouvir/ver, URLs assinadas de 2 horas.
@@ -47,11 +47,11 @@ export async function alunosDaTurma(turma: string): Promise<{ ok: true; alunos: 
 type Publica = Omit<MensagemDiario, "baixar" | "arquivo">;
 const publica = (m: MensagemDiario): Publica => ({ id: m.id, tipo: m.tipo, texto: m.texto, url: m.url, duracao: m.duracao, criadoEm: m.criadoEm });
 
-export async function conversa(alunoId: string): Promise<{ ok: true; curto: string; mensagens: Publica[] } | { ok: false; erro: string }> {
+export async function conversa(alunoId: string): Promise<{ ok: true; curto: string; nome: string; mensagens: Publica[] } | { ok: false; erro: string }> {
   const aluno = await alunoDoDiario(alunoId);
   if (!aluno) return { ok: false, erro: (await professoraLogada()) ? "Aluno não encontrado." : SEM_LOGIN };
   const m = await mensagensDe([aluno.id]);
-  return { ok: true, curto: aluno.curto, mensagens: (m.get(aluno.id) ?? []).map(publica) };
+  return { ok: true, curto: aluno.curto, nome: aluno.nome, mensagens: (m.get(aluno.id) ?? []).map(publica) };
 }
 
 async function cabeMais(alunoId: string) {

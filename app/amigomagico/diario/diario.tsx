@@ -122,12 +122,15 @@ function EscolherAluno({ turma, ir, voltar }: { turma: Turma; ir: (t: Tela) => v
           {alunos ? `${alunos.length} crianças · ${feitos} já com registro` : erro ?? "abrindo a turma…"}
         </p>
         {alunos && (
-          <div className="dd-grade" style={{ ["--linhas" as string]: Math.ceil(alunos.length / 4) }}>
+          <div
+            className="dd-grade"
+            style={{ ["--colunas" as string]: alunos.length > 15 ? 4 : 3, ["--linhas" as string]: Math.ceil(alunos.length / (alunos.length > 15 ? 4 : 3)) }}
+          >
             {alunos.map((a) => (
               <button key={a.id} className={`dd-aluno ${a.registros ? "tem" : ""}`} onClick={() => ir({ qual: "conversa", turma, aluno: a.id })}>
                 <span className="dd-inicial" aria-hidden="true">{a.curto[0]}</span>
                 <b>{a.curto}</b>
-                {a.registros > 0 && <small>{a.registros}</small>}
+                {a.registros > 0 && <small aria-label={`${a.registros} registros`}>{a.registros}</small>}
               </button>
             ))}
           </div>
@@ -139,6 +142,7 @@ function EscolherAluno({ turma, ir, voltar }: { turma: Turma; ir: (t: Tela) => v
 
 function Conversa({ turma, alunoId, voltar }: { turma: Turma; alunoId: string; voltar: () => void }) {
   const [nome, setNome] = useState("");
+  const [completo, setCompleto] = useState("");
   const [msgs, setMsgs] = useState<Mensagem[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [texto, setTexto] = useState("");
@@ -155,6 +159,7 @@ function Conversa({ turma, alunoId, voltar }: { turma: Turma; alunoId: string; v
       if (!vivo) return;
       if (r.ok) {
         setNome(r.curto);
+        setCompleto(r.nome);
         setMsgs(r.mensagens);
       } else setErro(r.erro);
     });
@@ -258,7 +263,7 @@ function Conversa({ turma, alunoId, voltar }: { turma: Turma; alunoId: string; v
         <button className="dd-voltar" onClick={voltar} aria-label="Voltar para a turma">‹</button>
         <span className="dd-foto" aria-hidden="true">{nome[0] ?? ""}</span>
         <span className="dd-quem">
-          <b>{nome || "…"}</b>
+          <b>{completo || nome || "…"}</b>
           <small>Grupo V {turma} · diário da formatura</small>
         </span>
         <a className="dd-menu" href="/amigomagico">menu</a>
@@ -329,7 +334,7 @@ function Conversa({ turma, alunoId, voltar }: { turma: Turma; alunoId: string; v
                 rows={1}
                 value={texto}
                 onChange={(e) => setTexto(e.target.value)}
-                placeholder={nome ? `Escreva sobre ${nome}` : "Escreva"}
+                placeholder={nome ? `Escreva sobre ${nome.split(" ")[0]}` : "Escreva"}
                 aria-label="Escreva o registro"
                 enterKeyHint="send"
                 onKeyDown={(e) => {

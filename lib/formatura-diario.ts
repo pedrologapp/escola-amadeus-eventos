@@ -25,15 +25,17 @@ export interface AlunoDiario {
 
 const LIGA = new Set(["de", "da", "do", "das", "dos", "e"]);
 
-/** Primeiro nome; quando repete na turma (sem contar acento: Benicio e Benício), primeiro + segundo nome; se ainda repetir, + a inicial do último. */
+/**
+ * (19/11, Pedro: "sempre coloque o nome e o sobrenome") o nome e o último sobrenome ("Davi Alexandria"); se repetir na
+ * turma (sem contar acento), entra o segundo nome também ("Arthur Gabriel Rufino"). O nome inteiro aparece na conversa.
+ */
 export function nomesCurtos(nomes: string[]): string[] {
   const igual = (x: string) => x.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
   const palavras = nomes.map((n) => nomeBonito(n).split(" ").filter((p) => p && !LIGA.has(p.toLowerCase())));
-  const um = palavras.map((p) => p[0] ?? "");
-  const dois = palavras.map((p, i) => (um.filter((x) => igual(x) === igual(um[i])).length > 1 && p[1] ? `${p[0]} ${p[1]}` : um[i]));
-  return dois.map((d, i) => {
+  const curto = palavras.map((p) => (p.length > 1 ? `${p[0]} ${p[p.length - 1]}` : p[0] ?? ""));
+  return curto.map((c, i) => {
     const p = palavras[i];
-    return dois.filter((x) => igual(x) === igual(d)).length > 1 && p.length > 2 ? `${d} ${p[p.length - 1][0]}.` : d;
+    return curto.filter((x) => igual(x) === igual(c)).length > 1 && p.length > 2 ? `${p[0]} ${p[1]} ${p[p.length - 1]}` : c;
   });
 }
 
