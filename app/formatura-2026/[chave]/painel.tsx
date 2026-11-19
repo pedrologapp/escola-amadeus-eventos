@@ -27,10 +27,16 @@ const PADRAO = {
 };
 type Ajuste = { t: number; x: number; y: number; g?: number }; // g = grossura da letra (0 = normal)
 type Ajustes = Partial<Record<string, Ajuste>>;
-const BLOCOS: [string, string][] = [
-  ["nome", "Nome da criança"], ["prof", "Professoras e auxiliar"], ["lista", "Nomes da turma"],
-  ["mensagem", "Mensagem aos familiares"], ["equipe", "Direção, oradora e juramentista"], ["turma", "Título da turma"],
+// cada bloco de texto da placa e as partes dele (uma parte mexe num texto só; o bloco, em todos de uma vez)
+const GRUPOS: [string, string, [string, string][]][] = [
+  ["nome", "Nome da criança", []],
+  ["lista", "Nomes da turma", []],
+  ["turma", "Título da turma (os dois)", [["turma_rot", "\u201CTurma\u201D"], ["turma_nome", "\u201CGrupo V\u201D"]]],
+  ["mensagem", "Mensagem (toda)", [["titulo_msg", "Aos Familiares"], ["dedicatoria", "Texto da mensagem"]]],
+  ["equipe", "Direção (toda)", [["diretora", "Diretora"], ["coordenadora", "Coordenadora"], ["oradora", "Oradora"], ["juramentista", "Juramentista"]]],
+  ["prof", "Professoras (todas)", [["professora", "Professora"], ["auxiliar", "Auxiliar"], ["demais", "Demais professores"]]],
 ];
+const BLOCOS: [string, string][] = GRUPOS.flatMap(([k, r, partes]) => [[k, r] as [string, string], ...partes]);
 type Corte = { x: number; y: number; w: number; h: number; b?: number }; // b = brilho (1 = normal)
 type Cortes = Partial<Record<"beca" | "familia", Corte>>;
 // proporção (largura / altura) de cada moldura de foto na placa (public/formatura-placa/molde.html)
@@ -473,11 +479,12 @@ function NomePlaca({ chave, nome, valor, aoSalvar }: { chave: string; nome: stri
  * A placa confere a REGRA (não sai da placa, não encosta nas fotos, não bate em outro texto):
  * se a mudança não couber, ela é desfeita e aparece o aviso.
  */
-function AjustarTexto({ chave, nome, global, meu, mudar, limitado, aoDesaprovar }: {
+function AjustarTexto({ chave, nome, global, meu, mudar, limitado, aoDesaprovar, geral }: {
   chave: string; nome: string; global: Ajustes; meu: Ajustes; aoDesaprovar: () => void;
   mudar: (escopo: "todas" | "esta", bloco: string, a: Ajuste) => void; limitado: { blocos: string[]; vez: number } | null;
+  geral?: boolean; // layout geral: tudo vale para todas as placas
 }) {
-  const [escopo, setEscopo] = useState<"esta" | "todas">("esta");
+  const [escopo, setEscopo] = useState<"esta" | "todas">(geral ? "todas" : "esta");
   const [bloco, setBloco] = useState("nome");
   const [estado, setEstado] = useState("");
   const espera = useRef<{ escopo: "todas" | "esta"; bloco: string; antes: Ajuste; depois: Ajuste; crescer: boolean } | null>(null);
@@ -523,13 +530,21 @@ function AjustarTexto({ chave, nome, global, meu, mudar, limitado, aoDesaprovar 
   const mexido = atual.t || atual.x || atual.y || atual.g;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-        <span style={{ fontSize: 13, letterSpacing: ".12em", textTransform: "uppercase", color: C.ouro, marginRight: 4 }}>Mudar</span>
-        <button type="button" onClick={() => setEscopo("esta")} style={chip(escopo === "esta")}>Só nesta placa</button>
-        <button type="button" onClick={() => setEscopo("todas")} style={chip(escopo === "todas")}>Em todas as placas</button>
-      </div>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        {BLOCOS.map(([k, r]) => <button key={k} type="button" onClick={() => { setBloco(k); setEstado(""); }} style={chip(bloco === k)}>{r}</button>)}
+      {!geral && (
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <span style={{ fontSize: 13, letterSpacing: ".12em", textTransform: "uppercase", color: C.ouro, marginRight: 4 }}>Mudar</span>
+          <button type="button" onClick={() => setEscopo("esta")} style={chip(escopo === "esta")}>Só nesta placa</button>
+          <button type="button" onClick={() => setEscopo("todas")} style={chip(escopo === "todas")}>Em todas as placas</button>
+        </div>
+      )}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <span style={{ fontSize: 13, letterSpacing: ".12em", textTransform: "uppercase", color: C.ouro }}>Qual texto</span>
+        {GRUPOS.map(([k, r, partes]) => (
+          <div key={k} style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            <button type="button" onClick={() => { setBloco(k); setEstado(""); }} style={chip(bloco === k)}>{r}</button>
+            {partes.map(([p, rp]) => <button key={p} type="button" onClick={() => { setBloco(p); setEstado(""); }} style={{ ...chip(bloco === p), fontWeight: 500 }}>{rp}</button>)}
+          </div>
+        ))}
       </div>
       <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center" }}>
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
@@ -590,6 +605,27 @@ function CortarFoto({ chave, nome, fotos, cortes, mudar, aoDesaprovar }: {
   );
 }
 
+/** "Alterar layout da placa (geral)": mexer nos textos uma vez e valer para todas as placas. */
+function LayoutGeral({ aberto, aoAbrir, children }: { aberto: boolean; aoAbrir: () => void; children: import("react").ReactNode }) {
+  return (
+    <section style={{ display: "flex", flexDirection: "column", gap: 18, padding: 24, borderRadius: 18, background: C.painel, border: `1px solid ${aberto ? C.ouro : C.borda}` }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+        <div>
+          <h2 style={{ margin: 0, fontFamily: serif, fontSize: 28, fontWeight: 600 }}>Alterar layout da placa (geral)</h2>
+          <p style={{ margin: "4px 0 0", color: C.suave, fontSize: 15, lineHeight: 1.5, maxWidth: 680 }}>
+            Mexa uma vez e vale para todas as placas, das duas turmas. Escolha o texto (ou toque nele na placa e arraste com o dedo) e use as setas para mover, A+ e A− para o tamanho e Mais fina e Mais grossa para a letra.
+          </p>
+        </div>
+        <button type="button" onClick={aoAbrir} aria-expanded={aberto}
+          style={{ ...botaoSec, minHeight: 48, padding: "0 20px", fontSize: 16, ...(aberto && { borderColor: C.ouro, color: C.ouro }) }}>
+          {aberto ? "Fechar" : "Alterar layout"}
+        </button>
+      </div>
+      {aberto && children}
+    </section>
+  );
+}
+
 export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoTurma: ft0, sugestoes, turmaAprovada, listas, ajustes: aj0, cortes: co0 }: { chave: string; foco: string | null; criancas: Crianca[]; textos: Textos; fotoTurma: { a: string; b: string }; sugestoes?: { a: Sugestao[]; b: Sugestao[] }; turmaAprovada?: { a: boolean; b: boolean }; listas?: { a: string[]; b: string[] }; ajustes?: { todas: Ajustes; porCrianca: Record<string, Ajustes>; nomes: Record<string, string> }; cortes?: { porCrianca: Record<string, Cortes>; turma: Partial<Record<"a" | "b", Corte>> } }) {
   const [criancas, setCriancas] = useState(inicial);
   const [textos, setTextos] = useState(t0);
@@ -602,6 +638,8 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
   const [limitado, setLimitado] = useState<{ blocos: string[]; vez: number } | null>(null);
   const [ajustar, setAjustar] = useState(false);
   const [cortando, setCortando] = useState(false);
+  const [layout, setLayout] = useState(false); // "Alterar layout da placa (geral)" aberto
+  const [amostra, setAmostra] = useState(() => (inicial.find((c) => c.beca.length) ?? inicial[0])?.nome ?? "");
   const [coA, setCoA] = useState<Record<string, Cortes>>(co0?.porCrianca ?? {});
   const [coT, setCoT] = useState<Partial<Record<"a" | "b", Corte>>>(co0?.turma ?? {});
   const esquecerCorte = (nome: string, f: "beca" | "familia") => setCoA((m) => { const meu = { ...(m[nome] ?? {}) }; delete meu[f]; return { ...m, [nome]: meu }; });
@@ -763,6 +801,29 @@ export function PainelPlacas({ chave, foco, criancas: inicial, textos: t0, fotoT
             tudo aparece em todas as placas na hora. Onde houver mais de uma foto boa, escolha a preferida e aprove a placa.
           </p>
         </header>
+
+        <LayoutGeral aberto={layout} aoAbrir={() => setLayout((v) => !v)}>
+          {(() => {
+            const c = criancas.find((x) => x.nome === amostra) ?? criancas[0];
+            if (!c) return null;
+            return (
+              <>
+                <label style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", fontSize: 15, color: C.suave }}>
+                  Ver na placa de
+                  <select value={c.nome} onChange={(e) => setAmostra(e.target.value)}
+                    style={{ minHeight: 44, padding: "0 12px", borderRadius: 10, border: `1px solid ${C.borda}`, background: C.fundo, color: C.texto, fontSize: 15, maxWidth: "100%" }}>
+                    {criancas.map((x) => <option key={x.nome} value={x.nome}>{x.nome} ({x.turma})</option>)}
+                  </select>
+                </label>
+                <div style={{ borderRadius: 12, overflow: "hidden", position: "sticky", top: 0, zIndex: 5, boxShadow: "0 12px 30px rgba(0,0,0,.55)",
+                  width: "min(100%, calc(48vh * 2400 / 1782))", margin: "0 auto", background: C.fundo }}>
+                  <Placa key={c.nome} dados={{ ...dadosDe(c), arrastar: true }} interativa titulo={`Placa de ${c.nome}`} aoMontar={(l) => setLimitado({ blocos: l, vez: Date.now() })} />
+                </div>
+                <AjustarTexto geral chave={chave} nome={c.nome} global={ajG} meu={ajA[c.nome] ?? {}} mudar={mudarAjuste(c.nome)} limitado={limitado} aoDesaprovar={() => {}} />
+              </>
+            );
+          })()}
+        </LayoutGeral>
 
         <section style={{ display: "flex", flexDirection: "column", gap: 18, padding: 24, borderRadius: 18, background: C.painel, border: `1px solid ${C.borda}` }}>
           <h2 style={{ margin: 0, fontFamily: serif, fontSize: 28, fontWeight: 600 }}>1. O que falta preencher</h2>

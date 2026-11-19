@@ -367,27 +367,53 @@
       prof: { els: () => [...pr.querySelectorAll('b, span')], mover: () => [pr], folga: 6 },
       nome: { els: () => [C], folga: 8 },
     };
+    // partes de cada bloco, para mexer num texto só (somam com o ajuste do bloco inteiro)
+    const cargo = (i) => document.querySelectorAll('.equipe .cargo')[i];
+    const parProf = (id) => { const s = document.getElementById(id); return [s.previousElementSibling, s]; };
+    Object.assign(BLOCOS, {
+      turma_rot: { els: () => [tr], pai: 'turma', folga: 8 },
+      turma_nome: { els: () => [tn], pai: 'turma', folga: 8 },
+      titulo_msg: { els: () => [document.querySelector('.aos')], pai: 'mensagem', folga: 12 },
+      dedicatoria: { els: () => [ded], pai: 'mensagem', folga: 12 },
+      diretora: { els: () => [...cargo(0).children], mover: () => [cargo(0)], pai: 'equipe', folga: 20 },
+      coordenadora: { els: () => [...cargo(1).children], mover: () => [cargo(1)], pai: 'equipe', folga: 20 },
+      oradora: { els: () => [...cargo(2).children], mover: () => [cargo(2)], pai: 'equipe', folga: 20 },
+      juramentista: { els: () => [...cargo(3).children], mover: () => [cargo(3)], pai: 'equipe', folga: 20 },
+      professora: { els: () => parProf('professora'), pai: 'prof', folga: 6 },
+      auxiliar: { els: () => parProf('auxiliar'), pai: 'prof', folga: 6 },
+      demais: { els: () => parProf('demais'), pai: 'prof', folga: 6 },
+    });
     const orig = new Map();
     for (const k in BLOCOS) for (const el of BLOCOS[k].els()) { const cs = getComputedStyle(el); orig.set(el, [parseFloat(cs.fontSize), cs.lineHeight === 'normal' ? 0 : parseFloat(cs.lineHeight)]); }
     const linhasDe = (k) => BLOCOS[k].els().flatMap((el) => { const r = document.createRange(); r.selectNodeContents(el); return [...r.getClientRects()].filter((q) => q.width > 2); });
     const bate = (a, b) => a.left < b.right + 4 && b.left < a.right + 4 && a.top < b.bottom + 4 && b.top < a.bottom + 4;
+    // um bloco não confere batida com as próprias partes (nem a parte com o bloco dela)
+    const parente = (a, b) => a === b || BLOCOS[a].pai === b || BLOCOS[b].pai === a;
     const okBloco = (k) => BLOCOS[k].els().every((el) => dentro(el, BLOCOS[k].folga))
-      && Object.keys(BLOCOS).every((o) => o === k || !linhasDe(k).some((a) => linhasDe(o).some((b) => bate(a, b))));
+      && Object.keys(BLOCOS).every((o) => parente(k, o) || !linhasDe(k).some((a) => linhasDe(o).some((b) => bate(a, b))));
+    // deslocamento de cada elemento = o do bloco inteiro (g) + o da parte (s); tamanho idem (multiplica)
+    const desl = new Map(), escG = new Map();
+    const pos = (el) => { const d = desl.get(el); const x = d ? d.g[0] + d.s[0] : 0, y = d ? d.g[1] + d.s[1] : 0; el.style.translate = x || y ? `${x}px ${y}px` : ''; };
+    const mexe = (el, nivel, dx, dy) => { const d = desl.get(el) || { g: [0, 0], s: [0, 0] }; d[nivel] = [dx, dy]; desl.set(el, d); pos(el); };
+    const reassenta = (el, chao) => { el.style.translate = ''; assenta(el, chao); pos(el); };
     function aplicar(k, m, dx, dy) {
       const B = BLOCOS[k], mv = (B.mover || B.els)();
-      mv.forEach((el) => { el.style.translate = ''; });
-      for (const el of B.els()) { const [fs, lh] = orig.get(el); el.style.fontSize = (fs * m).toFixed(1) + 'px'; if (lh) el.style.lineHeight = (lh * m).toFixed(1) + 'px'; }
-      if (k === 'turma') { assenta(tn, 376); assenta(tr, 392); }
-      mv.forEach((el) => { el.style.translate = `${dx}px ${dy}px`; });
+      for (const el of B.els()) {
+        const [fs, lh] = orig.get(el), base = B.pai ? (escG.get(el) || 1) : 1;
+        if (!B.pai) escG.set(el, m);
+        el.style.fontSize = (fs * base * m).toFixed(1) + 'px'; if (lh) el.style.lineHeight = (lh * base * m).toFixed(1) + 'px';
+      }
+      mv.forEach((el) => mexe(el, B.pai ? 's' : 'g', dx, dy));
+      if (k === 'turma' || k === 'turma_nome') reassenta(tn, 376);
+      if (k === 'turma' || k === 'turma_rot') reassenta(tr, 392);
     }
     // grossura da letra (g): contorno da mesma cor do texto, por trás do preenchimento (não muda o tamanho nem o lugar)
-    for (const k in BLOCOS) {
-      const g = ((D.ajustes || {})[k] || {}).g || 0; if (!g) continue;
-      for (const el of BLOCOS[k].els()) {
-        if (k === 'nome') { el.style.webkitTextStrokeWidth = Math.max(0, 1.3 + .3 * g).toFixed(2) + 'px'; continue; }
-        if (g <= 0) continue;
-        el.style.webkitTextStroke = (.22 * g).toFixed(2) + 'px currentColor'; el.style.paintOrder = 'stroke fill';
-      }
+    const gEl = new Map(); // grossura de cada elemento = a do bloco inteiro + a da parte
+    for (const k in BLOCOS) { const g = ((D.ajustes || {})[k] || {}).g || 0; if (g) for (const el of BLOCOS[k].els()) gEl.set(el, (gEl.get(el) || 0) + g); }
+    for (const [el, g] of gEl) {
+      if (el === C) { el.style.webkitTextStrokeWidth = Math.max(0, 1.3 + .3 * g).toFixed(2) + 'px'; continue; }
+      if (g <= 0) continue;
+      el.style.webkitTextStroke = (.22 * g).toFixed(2) + 'px currentColor'; el.style.paintOrder = 'stroke fill';
     }
     const limitado = [];
     for (const k in BLOCOS) {
@@ -404,7 +430,8 @@
     // o texto acompanha o dedo; ao soltar, o site grava o novo lugar e a placa remonta conferindo a regra
     if (D.arrastar) {
       document.body.style.touchAction = 'none'; document.querySelector('.p').style.cursor = 'grab';
-      const blocoEm = (x, y) => Object.keys(BLOCOS).find((k) => linhasDe(k).some((q) => x >= q.left - 24 && x <= q.right + 24 && y >= q.top - 24 && y <= q.bottom + 24));
+      const ordem = Object.keys(BLOCOS).sort((a, b) => (BLOCOS[b].pai ? 1 : 0) - (BLOCOS[a].pai ? 1 : 0));
+      const blocoEm = (x, y) => ordem.find((k) => linhasDe(k).some((q) => x >= q.left - 24 && x <= q.right + 24 && y >= q.top - 24 && y <= q.bottom + 24));
       const avisar = (m) => { try { parent.postMessage(m, location.origin); } catch (e) {} };
       let arr = null;
       addEventListener('pointerdown', (e) => {

@@ -75,7 +75,9 @@ export function limparCorte(c: unknown): Corte | null | undefined {
 }
 
 /** Blocos de texto da placa que podem ser ajustados. t = passos de tamanho (6% cada), x/y = deslocamento em px da placa (2400 de largura). */
-export const BLOCOS_PLACA = ["mensagem", "equipe", "turma", "lista", "prof", "nome"] as const;
+export const BLOCOS_PLACA = ["mensagem", "equipe", "turma", "lista", "prof", "nome",
+  // partes de um bloco (um texto só): somam com o ajuste do bloco inteiro
+  "turma_rot", "turma_nome", "titulo_msg", "dedicatoria", "diretora", "coordenadora", "oradora", "juramentista", "professora", "auxiliar", "demais"] as const;
 export type BlocoPlaca = (typeof BLOCOS_PLACA)[number];
 export type Ajuste = { t: number; x: number; y: number; g?: number }; // g = grossura da letra (0 = normal)
 export type Ajustes = Partial<Record<BlocoPlaca, Ajuste>>;
