@@ -39,6 +39,7 @@ export interface ContatoNono {
 }
 
 export interface AlunoContatos {
+  id: number;
   nome: string;
   turma: string;
   contatos: ContatoNono[];
@@ -78,11 +79,11 @@ export async function listarContatosNono(): Promise<AlunoContatos[]> {
     pedir("v1/lista_alunos/"),
     pedir("v1/lista_responsaveis/"),
   ]);
-  const nonos = new Map<number, { nome: string; turma: string }>();
+  const nonos = new Map<number, { id: number; nome: string; turma: string }>();
   for (const a of acesso) {
     if (!/^9/.test(String(a.nome_serie ?? ""))) continue;
     const id = Number(a.id_aluno);
-    if (id && !nonos.has(id)) nonos.set(id, { nome: nomeBonito(String(a.nome ?? "")), turma: String(a.nome_turma ?? "") });
+    if (id && !nonos.has(id)) nonos.set(id, { id, nome: nomeBonito(String(a.nome ?? "")), turma: String(a.nome_turma ?? "") });
   }
   const porId = new Map(responsaveis.map((r) => [Number(r.id), r]));
   const cadPorId = new Map(cadastro.map((c) => [Number(c.id), c]));
@@ -111,6 +112,9 @@ export async function listarContatosNono(): Promise<AlunoContatos[]> {
 export const CONVITE_9ANO_DESDE = "2026-11-21T06:00:00-03:00";
 
 export interface RespostaPai {
+  chatId: string;
+  /** esperando = a última mensagem é do pai; respondida = a escola já respondeu; resolvida = marcada como resolvida */
+  estado: "esperando" | "respondida" | "resolvida";
   /** quantas mensagens o pai mandou depois do convite */
   msgs: number;
   ultimaEm: string;
@@ -156,7 +160,11 @@ export async function respostasNono(): Promise<Record<string, RespostaPai>> {
     const c = (conv ?? []).find((x) => x.chat_id === chat);
     const chave = chaveTelefone(c?.telefone || chat.split("@")[0]);
     if (!chave) continue;
+    const resolvida = c?.status === "resolvida" || c?.status === "ignorada";
+    const respondida = r.escolaDepois || !!c?.ultima_da_escola;
     out[chave] = {
+      chatId: chat,
+      estado: resolvida ? "resolvida" : respondida ? "respondida" : "esperando",
       msgs: r.msgs,
       ultimaEm: r.ultimaEm,
       resumo: r.resumo,

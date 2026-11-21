@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { chaveCelular, listarContatosNono, respostasNono, TEXTO_CONVITE_9ANO, type AlunoContatos, type RespostaPai } from "@/lib/homenagem-9ano-envio";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { ListaEnvio } from "./lista";
 
 /**
@@ -14,8 +15,16 @@ export default async function EnvioConvite9Ano() {
   let alunos: AlunoContatos[] = [];
   let erro: string | null = null;
   let porChave: Record<string, RespostaPai> = {};
+  let gravaram: number[] = [];
   try {
-    [alunos, porChave] = await Promise.all([listarContatosNono(), respostasNono().catch(() => ({}))]);
+    const [a, p, g] = await Promise.all([
+      listarContatosNono(),
+      respostasNono().catch(() => ({})),
+      createAdminClient().from("homenagem_9ano_envios").select("aluno_id, parte1, parte2"),
+    ]);
+    alunos = a;
+    porChave = p;
+    gravaram = (g.data ?? []).filter((x) => x.parte1 || x.parte2).map((x) => Number(x.aluno_id));
   } catch (e) {
     erro = `Não consegui ler a turma do Activesoft (${(e as Error).message}). Recarregue a página em instantes.`;
   }
@@ -38,6 +47,7 @@ export default async function EnvioConvite9Ano() {
           alunos={alunos}
           texto={TEXTO_CONVITE_9ANO}
           imagem="/homenagem-9ano/convite-surpresa.png"
+          gravaram={gravaram}
           respostas={Object.fromEntries(
             alunos.flatMap((a) => a.contatos).flatMap((c) => (c.celular && porChave[chaveCelular(c.celular)] ? [[c.celular, porChave[chaveCelular(c.celular)]]] : [])),
           )}

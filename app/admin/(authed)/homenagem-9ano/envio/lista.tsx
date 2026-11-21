@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { marcarResolvida } from "./actions";
 import type { AlunoContatos, RespostaPai } from "@/lib/homenagem-9ano-envio";
 
 const CHAVE = "convite-9ano-enviados";
@@ -17,7 +18,8 @@ function ler(): Record<string, 1> {
 
 const hora = (iso: string) => new Date(iso).toLocaleString("pt-BR", { timeZone: "America/Recife", weekday: "short", hour: "2-digit", minute: "2-digit" });
 
-export function ListaEnvio({ alunos, texto, imagem, respostas }: { alunos: AlunoContatos[]; texto: string; imagem: string; respostas: Record<string, RespostaPai> }) {
+export function ListaEnvio({ alunos, texto, imagem, respostas, gravaram }: { alunos: AlunoContatos[]; texto: string; imagem: string; respostas: Record<string, RespostaPai>; gravaram: number[] }) {
+  const [aba, setAba] = useState<"enviar" | "respostas">("enviar");
   const [feitos, setFeitos] = useState<Record<string, 1>>({});
   const [aviso, setAviso] = useState("");
   const [podeCompartilhar, setPodeCompartilhar] = useState(false);
@@ -92,9 +94,21 @@ export function ListaEnvio({ alunos, texto, imagem, respostas }: { alunos: Aluno
   const enviados = alunos.reduce((s, a) => s + a.contatos.filter((c) => c.celular && feitos[c.celular]).length, 0);
   const botao = "inline-flex min-h-11 items-center justify-center rounded-xl px-4 text-sm font-bold";
   const lista = Object.values(respostas);
-  const esperando = lista.filter((r) => !r.respondida).length;
+  const esperando = lista.filter((r) => r.estado === "esperando").length;
+  const abaCls = (k: string) => `min-h-11 rounded-t-xl px-4 text-sm font-bold ${aba === k ? "bg-white text-amadeus-blue" : "text-muted-foreground hover:text-amadeus-blue"}`;
 
   return (
+    <>
+    <div className="mt-6 flex gap-1 border-b border-border/60">
+      <button type="button" className={abaCls("enviar")} onClick={() => setAba("enviar")}>Enviar convite</button>
+      <button type="button" className={abaCls("respostas")} onClick={() => setAba("respostas")}>
+        Respostas ({lista.length})
+        {esperando > 0 && <span className="ml-2 rounded-full bg-amber-500 px-2 py-0.5 text-xs text-white">{esperando}</span>}
+      </button>
+    </div>
+    {aba === "respostas" ? (
+      <Respostas alunos={alunos} respostas={respostas} gravaram={gravaram} />
+    ) : (
     <div className="mt-6 grid gap-6 lg:grid-cols-[320px_1fr]">
       <div className="space-y-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -122,8 +136,7 @@ export function ListaEnvio({ alunos, texto, imagem, respostas }: { alunos: Aluno
         <p className="font-bold text-amadeus-blue">{enviados} de {total} enviados</p>
         <p className="mb-3 text-sm">
           <b>{lista.length}</b> responderam
-          {esperando > 0 ? <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 font-bold text-amber-800">{esperando} esperando sua resposta</span> : null}
-          {" "}<Link href="/admin/comunicacao/whatsapp" className="ml-2 font-semibold text-amadeus-blue underline">Abrir o painel do WhatsApp</Link>
+          {esperando > 0 ? <button type="button" onClick={() => setAba("respostas")} className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 font-bold text-amber-800">{esperando} esperando sua resposta</button> : null}
         </p>
         <div className="space-y-2">
           {alunos.map((a) => (
@@ -140,21 +153,11 @@ export function ListaEnvio({ alunos, texto, imagem, respostas }: { alunos: Aluno
                       {c.semNove && <span className="block text-xs text-amber-700">Cadastro sem o 9: conferir o número</span>}
                       {!c.celular && <span className="block text-xs text-amber-700">Número com erro no cadastro</span>}
                     </span>
-                    {c.celular && respostas[c.celular] && (() => {
-                      const r = respostas[c.celular!];
-                      return (
-                        <div className={`w-full rounded-lg px-3 py-2 ${r.respondida ? "bg-emerald-50 text-emerald-900" : "bg-amber-50 text-amber-900"}`}>
-                          <p className="font-bold">
-                            {r.respondida ? "Respondeu e já teve resposta" : "Respondeu e está esperando você"}
-                            <span className="font-normal text-muted-foreground"> · {hora(r.ultimaEm)}{r.msgs > 1 ? ` · ${r.msgs} mensagens` : ""}</span>
-                          </p>
-                          {r.resumo && <p className="mt-0.5">{r.resumo}</p>}
-                          <a href={`https://wa.me/55${c.celular}`} target="_blank" rel="noopener noreferrer" className={`${botao} mt-2 bg-[#1F8F4E] text-white`}>
-                            Responder no WhatsApp
-                          </a>
-                        </div>
-                      );
-                    })()}
+                    {c.celular && respostas[c.celular] && (
+                      <button type="button" onClick={() => setAba("respostas")} className={`rounded-full px-3 py-1 text-xs font-bold ${respostas[c.celular].estado === "esperando" ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}`}>
+                        {respostas[c.celular].estado === "esperando" ? "Respondeu: esperando você" : "Respondeu"}
+                      </button>
+                    )}
                     {c.celular && (
                       <>
                         <a
@@ -177,6 +180,102 @@ export function ListaEnvio({ alunos, texto, imagem, respostas }: { alunos: Aluno
             </div>
           ))}
         </div>
+      </div>
+    </div>
+    )}
+    </>
+  );
+}
+
+type Filtro = "esperando" | "respondida" | "resolvida" | "sem";
+const ROTULO: Record<RespostaPai["estado"], { t: string; c: string }> = {
+  esperando: { t: "Esperando você", c: "bg-amber-100 text-amber-800" },
+  respondida: { t: "Você já respondeu", c: "bg-sky-100 text-sky-800" },
+  resolvida: { t: "Resolvida", c: "bg-emerald-100 text-emerald-800" },
+};
+
+/** Aba Respostas: quem respondeu o convite no WhatsApp comercial, para responder e marcar como resolvida. */
+function Respostas({ alunos, respostas, gravaram }: { alunos: AlunoContatos[]; respostas: Record<string, RespostaPai>; gravaram: number[] }) {
+  const router = useRouter();
+  const [pendente, comecar] = useTransition();
+  const gravou = new Set(gravaram);
+  const linhas = alunos.flatMap((a) => a.contatos.filter((c) => c.celular).map((c) => ({ aluno: a, c, r: respostas[c.celular!] as RespostaPai | undefined })));
+  const cont: Record<Filtro, number> = { esperando: 0, respondida: 0, resolvida: 0, sem: 0 };
+  for (const l of linhas) cont[l.r ? l.r.estado : "sem"]++;
+  const [filtro, setFiltro] = useState<Filtro>(cont.esperando ? "esperando" : cont.respondida ? "respondida" : "sem");
+  const vis = linhas
+    .filter((l) => (l.r ? l.r.estado : "sem") === filtro)
+    .sort((x, y) => (y.r?.ultimaEm ?? "").localeCompare(x.r?.ultimaEm ?? "") || x.aluno.nome.localeCompare(y.aluno.nome, "pt-BR"));
+  const marcar = (chat: string, sim: boolean) =>
+    comecar(async () => {
+      await marcarResolvida(chat, sim);
+      router.refresh();
+    });
+  const chip = (k: Filtro, t: string) => (
+    <button
+      type="button"
+      onClick={() => setFiltro(k)}
+      className={`min-h-11 rounded-xl border px-4 text-sm font-bold ${filtro === k ? "border-amadeus-blue bg-amadeus-blue text-white" : "border-border bg-white text-amadeus-blue"}`}
+    >
+      {t} ({cont[k]})
+    </button>
+  );
+  const btn = "inline-flex min-h-11 items-center justify-center rounded-xl px-4 text-sm font-bold";
+  return (
+    <div className="mt-4">
+      <p className="text-sm text-muted-foreground">
+        Respostas que chegaram no WhatsApp comercial desde o envio do convite. Atualiza a cada 5 minutos: recarregue a página para ver as novas. O painel guarda um
+        resumo do que o pai escreveu, não o texto inteiro.
+      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {chip("esperando", "Esperando você")}
+        {chip("respondida", "Você já respondeu")}
+        {chip("resolvida", "Resolvidas")}
+        {chip("sem", "Ainda não responderam")}
+      </div>
+      <div className="mt-4 space-y-2">
+        {!vis.length && <p className="rounded-xl bg-white p-4 text-sm text-muted-foreground">Ninguém aqui por enquanto.</p>}
+        {vis.map(({ aluno, c, r }) => (
+          <div key={c.celular} className="rounded-xl bg-white p-4 text-sm">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="font-bold">{aluno.nome}</p>
+              {gravou.has(aluno.id) ? (
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-800">Já gravou o vídeo</span>
+              ) : (
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600">Ainda não gravou</span>
+              )}
+              {r && <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${ROTULO[r.estado].c}`}>{ROTULO[r.estado].t}</span>}
+            </div>
+            <p className="mt-1 text-muted-foreground">
+              {c.nome} · {telLegivel(c.celular!)}
+            </p>
+            {r && (
+              <div className="mt-2 rounded-lg bg-[#F7F3EA] px-3 py-2">
+                <p className="text-xs text-muted-foreground">
+                  {hora(r.ultimaEm)}
+                  {r.msgs > 1 ? ` · ${r.msgs} mensagens` : ""}
+                  {r.assunto ? ` · ${r.assunto}` : ""}
+                </p>
+                <p className="mt-0.5">{r.resumo ?? "Sem resumo (pode ser áudio, foto ou figurinha)."}</p>
+              </div>
+            )}
+            <div className="mt-3 flex flex-wrap gap-2">
+              <a href={`https://wa.me/55${c.celular}`} target="_blank" rel="noopener noreferrer" className={`${btn} bg-[#1F8F4E] text-white`}>
+                Responder no WhatsApp
+              </a>
+              {r && r.estado !== "resolvida" && (
+                <button type="button" disabled={pendente} onClick={() => marcar(r.chatId, true)} className={`${btn} border border-border bg-white text-amadeus-blue`}>
+                  Marcar como resolvida
+                </button>
+              )}
+              {r && r.estado === "resolvida" && (
+                <button type="button" disabled={pendente} onClick={() => marcar(r.chatId, false)} className={`${btn} border border-border bg-white text-muted-foreground`}>
+                  Reabrir
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
