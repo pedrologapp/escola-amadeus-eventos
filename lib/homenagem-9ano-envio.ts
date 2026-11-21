@@ -12,9 +12,10 @@ export const TEXTO_CONVITE_9ANO = `*Pais e responsáveis do 9º ano*
 
 Vamos fazer uma *homenagem surpresa* para mostrar aos nossos alunos o quanto eles são amados. Sua presença é indispensável.
 
-*1. Grave um vídeo para o seu filho ou sua filha*
-Até 2 minutos, pelo celular, e mande fotos de quando ele ou ela era pequeno.
+*1. Entre no site e grave a sua homenagem*
+Estamos preparando um vídeo surpresa para a formatura. Entre neste site para gravar a sua mensagem para o seu filho ou sua filha (até 2 minutos) e enviar fotos de quando ele ou ela era pequeno:
 https://eventos.escolaamadeus.com/homenagem9ano
+A gravação e o envio são feitos no próprio site, não precisa mandar pelo WhatsApp.
 
 *2. Venha à escola na quinta, 26/11, às 10h*
 Traga uma homenagem: fotos de quando era criança (numa cartolina ou num porta-retrato), um cartaz com mensagens de carinho, uma flor, um balão ou uma cartinha.
