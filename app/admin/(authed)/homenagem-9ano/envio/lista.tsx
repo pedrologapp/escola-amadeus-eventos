@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { AlunoContatos } from "@/lib/homenagem-9ano-envio";
 
 const CHAVE = "convite-9ano-enviados";
@@ -18,6 +18,11 @@ export function ListaEnvio({ alunos, texto, imagem }: { alunos: AlunoContatos[];
   const [feitos, setFeitos] = useState<Record<string, 1>>({});
   const [aviso, setAviso] = useState("");
   const [podeCompartilhar, setPodeCompartilhar] = useState(false);
+  // a imagem já fica carregada para o clique em "Abrir no WhatsApp" copiar na hora
+  const imgPronta = useRef<Blob | null>(null);
+  useEffect(() => {
+    fetch(imagem).then((r) => r.blob()).then((b) => (imgPronta.current = b)).catch(() => {});
+  }, [imagem]);
 
   // lê a marca deste aparelho depois de montar (localStorage não existe no servidor)
   useEffect(() => {
@@ -58,6 +63,21 @@ export function ListaEnvio({ alunos, texto, imagem }: { alunos: AlunoContatos[];
       setAviso("Não deu para copiar o texto aqui.");
     }
   };
+  // ao abrir a conversa: o texto vai no link e a imagem fica copiada (no computador é só Ctrl+V)
+  const abrir = (cel: string) => {
+    marca(cel);
+    if (podeCompartilhar) return;
+    try {
+      const b = imgPronta.current;
+      const item = new ClipboardItem({ "image/png": b ?? fetch(imagem).then((r) => r.blob()) });
+      navigator.clipboard.write([item]).then(
+        () => setAviso("Imagem copiada: na conversa, aperte Ctrl+V e depois Enter."),
+        () => setAviso("Não deu para copiar a imagem. Use Copiar a imagem."),
+      );
+    } catch {
+      setAviso("Não deu para copiar a imagem. Use Copiar a imagem.");
+    }
+  };
   const compartilha = async () => {
     try {
       const f = new File([await blob()], "homenagem-9ano.png", { type: "image/png" });
@@ -86,8 +106,8 @@ export function ListaEnvio({ alunos, texto, imagem }: { alunos: AlunoContatos[];
         <div className="rounded-xl bg-white p-4 text-sm">
           <b>Como enviar</b>
           <ol className="mt-1 list-decimal space-y-1 pl-5">
-            <li>Toque em <b>Abrir no WhatsApp</b>: abre a conversa com o texto já escrito.</li>
-            <li>Para a imagem ir junto: no computador, <b>Copiar a imagem</b> e Ctrl+V na conversa; no celular, <b>Baixar a imagem</b> uma vez e anexar pela galeria.</li>
+            <li>Clique em <b>Abrir no WhatsApp</b>: abre a conversa com o texto já escrito e a imagem já fica copiada.</li>
+            <li>No computador, na conversa: <b>Ctrl+V</b> para a imagem entrar e <b>Enter</b> para enviar. No celular, <b>Baixar a imagem</b> uma vez e anexar pela galeria.</li>
             <li>Envie e volte aqui: a linha fica verde. A marca fica guardada neste aparelho.</li>
           </ol>
         </div>
@@ -116,7 +136,7 @@ export function ListaEnvio({ alunos, texto, imagem }: { alunos: AlunoContatos[];
                           href={`https://wa.me/55${c.celular}?text=${encodeURIComponent(texto)}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          onClick={() => marca(c.celular!)}
+                          onClick={() => abrir(c.celular!)}
                           className={`${botao} bg-[#1F8F4E] text-white`}
                         >
                           Abrir no WhatsApp

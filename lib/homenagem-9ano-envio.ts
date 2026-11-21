@@ -8,29 +8,23 @@ import { nomeBonito } from "@/lib/fotos-infancia";
  * texto pronto). Nada é enviado pelo sistema. Os números só aparecem dentro do admin.
  */
 
-export const TEXTO_CONVITE_9ANO = `Queridos pais e responsáveis do 9º ano,
+export const TEXTO_CONVITE_9ANO = `*Pais e responsáveis do 9º ano*
 
-Na próxima *quinta-feira, 26/11, às 10h*, teremos um momento muito especial aqui na escola, e a sua presença é indispensável.
+Vamos fazer uma *homenagem surpresa* para mostrar aos nossos alunos o quanto eles são amados. Sua presença é indispensável.
 
-Vamos preparar uma *grande homenagem surpresa* para os nossos alunos, para mostrar o quanto eles são amados e importantes.
+*1. Grave um vídeo para o seu filho ou sua filha*
+Até 2 minutos, pelo celular, e mande fotos de quando ele ou ela era pequeno.
+https://eventos.escolaamadeus.com/homenagem9ano
 
-*O que trazer*
-Pedimos que cada família traga uma homenagem personalizada. Algumas ideias:
-- Fotos de quando eram bebês ou crianças (coladas numa cartolina ou num porta-retrato);
-- Um cartaz com mensagens de carinho e orgulho;
-- Uma flor, um balão ou uma cartinha escrita à mão.
+*2. Venha à escola na quinta, 26/11, às 10h*
+Traga uma homenagem: fotos de quando era criança (numa cartolina ou num porta-retrato), um cartaz com mensagens de carinho, uma flor, um balão ou uma cartinha.
 
 *Um pedido de coração*
-Sabemos que a rotina é corrida, mas faça o possível para estar presente. Para muitos deles, principalmente os que caminham conosco desde pequenininhos, ver os colegas sendo abraçados pelas famílias enquanto ficam sem ninguém pode trazer uma grande tristeza.
+Sabemos que a rotina é corrida, mas faça o possível para vir. Ver os colegas abraçados pela família e ficar sem ninguém seria muito triste para eles. Se não puder, mande alguém querido no seu lugar (avó, avô, tio, padrinho).
 
-Se você realmente não puder vir, *envie um representante* (avô, avó, tio, padrinho ou alguém querido) para abraçar seu filho ou sua filha em seu nome. Nenhum aluno merece se sentir sozinho num dia tão marcante.
+*É SURPRESA: não conte nada ao seu filho ou à sua filha, para não estragar a emoção.*
 
-*ATENÇÃO: É SURPRESA!*
-Por favor, não comentem nada com seu filho ou sua filha, para não estragar a emoção do momento.
-
-Contamos com o carinho, o esforço e a cumplicidade de todos.
-
-Com carinho,
+Contamos com o carinho e a cumplicidade de todos.
 *Equipe da Escola Amadeus*`;
 
 export interface ContatoNono {
