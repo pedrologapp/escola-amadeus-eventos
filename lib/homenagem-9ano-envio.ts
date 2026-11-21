@@ -1,6 +1,8 @@
 import "server-only";
 
 import { nomeBonito } from "@/lib/fotos-infancia";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { chaveTelefone } from "@/lib/whatsapp-contatos";
 
 /**
  * Convite da homenagem surpresa do 9º ano (quinta 26/11, 10h): a lista dos responsáveis com celular,
@@ -104,3 +106,67 @@ export async function listarContatosNono(): Promise<AlunoContatos[]> {
   }
   return out.sort((x, y) => x.nome.localeCompare(y.nome, "pt-BR"));
 }
+
+/** O convite começou a sair em 21/11/2026 de manhã; respostas antes disso não contam. */
+export const CONVITE_9ANO_DESDE = "2026-11-21T06:00:00-03:00";
+
+export interface RespostaPai {
+  /** quantas mensagens o pai mandou depois do convite */
+  msgs: number;
+  ultimaEm: string;
+  /** resumo da última mensagem dele (o painel não guarda o texto) */
+  resumo: string | null;
+  assunto: string | null;
+  importancia: string | null;
+  /** a escola já respondeu depois da última mensagem dele */
+  respondida: boolean;
+}
+
+/**
+ * Quem respondeu o convite no WhatsApp comercial da escola (o mesmo lido pelo painel do WhatsApp, a cada
+ * 5 min). Chave: DDD + 8 últimos dígitos, porque o WhatsApp guarda muitos números do RN sem o 9.
+ */
+export async function respostasNono(): Promise<Record<string, RespostaPai>> {
+  const db = createAdminClient();
+  const { data: ev } = await db
+    .from("whatsapp_eventos")
+    .select("chat_id, da_escola, em, resumo, assunto, importancia")
+    .gte("em", CONVITE_9ANO_DESDE)
+    .order("em");
+  const porChat = new Map<string, { msgs: number; ultimaEm: string; resumo: string | null; assunto: string | null; importancia: string | null; escolaDepois: boolean }>();
+  for (const e of ev ?? []) {
+    const atual = porChat.get(e.chat_id);
+    if (e.da_escola) {
+      if (atual) atual.escolaDepois = true;
+      continue;
+    }
+    porChat.set(e.chat_id, {
+      msgs: (atual?.msgs ?? 0) + 1,
+      ultimaEm: e.em,
+      resumo: e.resumo ?? atual?.resumo ?? null,
+      assunto: e.assunto ?? atual?.assunto ?? null,
+      importancia: e.importancia ?? atual?.importancia ?? null,
+      escolaDepois: false,
+    });
+  }
+  if (!porChat.size) return {};
+  const { data: conv } = await db.from("whatsapp_conversas").select("chat_id, telefone, ultima_da_escola, status").in("chat_id", [...porChat.keys()]);
+  const out: Record<string, RespostaPai> = {};
+  for (const [chat, r] of porChat) {
+    const c = (conv ?? []).find((x) => x.chat_id === chat);
+    const chave = chaveTelefone(c?.telefone || chat.split("@")[0]);
+    if (!chave) continue;
+    out[chave] = {
+      msgs: r.msgs,
+      ultimaEm: r.ultimaEm,
+      resumo: r.resumo,
+      assunto: r.assunto,
+      importancia: r.importancia,
+      respondida: r.escolaDepois || !!c?.ultima_da_escola || c?.status === "resolvida" || c?.status === "respondida",
+    };
+  }
+  return out;
+}
+
+/** Mesma chave do painel do WhatsApp, para cruzar com o celular do cadastro. */
+export const chaveCelular = (t: string) => `${t.slice(0, 2)}${t.slice(-8)}`;

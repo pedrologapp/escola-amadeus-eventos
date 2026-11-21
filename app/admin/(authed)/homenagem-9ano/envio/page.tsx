@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { listarContatosNono, TEXTO_CONVITE_9ANO, type AlunoContatos } from "@/lib/homenagem-9ano-envio";
+import { chaveCelular, listarContatosNono, respostasNono, TEXTO_CONVITE_9ANO, type AlunoContatos, type RespostaPai } from "@/lib/homenagem-9ano-envio";
 import { ListaEnvio } from "./lista";
 
 /**
@@ -13,8 +13,9 @@ export const dynamic = "force-dynamic";
 export default async function EnvioConvite9Ano() {
   let alunos: AlunoContatos[] = [];
   let erro: string | null = null;
+  let porChave: Record<string, RespostaPai> = {};
   try {
-    alunos = await listarContatosNono();
+    [alunos, porChave] = await Promise.all([listarContatosNono(), respostasNono().catch(() => ({}))]);
   } catch (e) {
     erro = `Não consegui ler a turma do Activesoft (${(e as Error).message}). Recarregue a página em instantes.`;
   }
@@ -27,10 +28,20 @@ export default async function EnvioConvite9Ano() {
       <p className="mt-1 text-sm text-muted-foreground">
         Quinta, 26/11, às 10h. Cada botão abre a conversa com o texto pronto; você confere e aperta enviar. Nada sai daqui sozinho.
       </p>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Envie pelo WhatsApp <b>comercial da escola</b> (no celular, escolha WhatsApp Business): as respostas dos pais aparecem aqui, ao lado de cada nome, em até 5 minutos. Recarregue a página para atualizar.
+      </p>
       {erro ? (
         <p className="mt-6 rounded-xl bg-red-50 p-4 text-sm text-red-700">{erro}</p>
       ) : (
-        <ListaEnvio alunos={alunos} texto={TEXTO_CONVITE_9ANO} imagem="/homenagem-9ano/convite-surpresa.png" />
+        <ListaEnvio
+          alunos={alunos}
+          texto={TEXTO_CONVITE_9ANO}
+          imagem="/homenagem-9ano/convite-surpresa.png"
+          respostas={Object.fromEntries(
+            alunos.flatMap((a) => a.contatos).flatMap((c) => (c.celular && porChave[chaveCelular(c.celular)] ? [[c.celular, porChave[chaveCelular(c.celular)]]] : [])),
+          )}
+        />
       )}
     </div>
   );

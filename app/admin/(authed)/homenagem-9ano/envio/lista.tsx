@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { AlunoContatos } from "@/lib/homenagem-9ano-envio";
+import Link from "next/link";
+import type { AlunoContatos, RespostaPai } from "@/lib/homenagem-9ano-envio";
 
 const CHAVE = "convite-9ano-enviados";
 const telLegivel = (t: string) => `(${t.slice(0, 2)}) ${t.slice(2, 7)}-${t.slice(7)}`;
@@ -14,7 +15,9 @@ function ler(): Record<string, 1> {
   }
 }
 
-export function ListaEnvio({ alunos, texto, imagem }: { alunos: AlunoContatos[]; texto: string; imagem: string }) {
+const hora = (iso: string) => new Date(iso).toLocaleString("pt-BR", { timeZone: "America/Recife", weekday: "short", hour: "2-digit", minute: "2-digit" });
+
+export function ListaEnvio({ alunos, texto, imagem, respostas }: { alunos: AlunoContatos[]; texto: string; imagem: string; respostas: Record<string, RespostaPai> }) {
   const [feitos, setFeitos] = useState<Record<string, 1>>({});
   const [aviso, setAviso] = useState("");
   const [podeCompartilhar, setPodeCompartilhar] = useState(false);
@@ -88,6 +91,8 @@ export function ListaEnvio({ alunos, texto, imagem }: { alunos: AlunoContatos[];
   const total = alunos.reduce((s, a) => s + a.contatos.filter((c) => c.celular).length, 0);
   const enviados = alunos.reduce((s, a) => s + a.contatos.filter((c) => c.celular && feitos[c.celular]).length, 0);
   const botao = "inline-flex min-h-11 items-center justify-center rounded-xl px-4 text-sm font-bold";
+  const lista = Object.values(respostas);
+  const esperando = lista.filter((r) => !r.respondida).length;
 
   return (
     <div className="mt-6 grid gap-6 lg:grid-cols-[320px_1fr]">
@@ -114,7 +119,12 @@ export function ListaEnvio({ alunos, texto, imagem }: { alunos: AlunoContatos[];
       </div>
 
       <div>
-        <p className="mb-3 font-bold text-amadeus-blue">{enviados} de {total} enviados</p>
+        <p className="font-bold text-amadeus-blue">{enviados} de {total} enviados</p>
+        <p className="mb-3 text-sm">
+          <b>{lista.length}</b> responderam
+          {esperando > 0 ? <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 font-bold text-amber-800">{esperando} esperando sua resposta</span> : null}
+          {" "}<Link href="/admin/comunicacao/whatsapp" className="ml-2 font-semibold text-amadeus-blue underline">Abrir o painel do WhatsApp</Link>
+        </p>
         <div className="space-y-2">
           {alunos.map((a) => (
             <div key={a.nome} className="rounded-xl bg-white p-3">
@@ -130,6 +140,21 @@ export function ListaEnvio({ alunos, texto, imagem }: { alunos: AlunoContatos[];
                       {c.semNove && <span className="block text-xs text-amber-700">Cadastro sem o 9: conferir o número</span>}
                       {!c.celular && <span className="block text-xs text-amber-700">Número com erro no cadastro</span>}
                     </span>
+                    {c.celular && respostas[c.celular] && (() => {
+                      const r = respostas[c.celular!];
+                      return (
+                        <div className={`w-full rounded-lg px-3 py-2 ${r.respondida ? "bg-emerald-50 text-emerald-900" : "bg-amber-50 text-amber-900"}`}>
+                          <p className="font-bold">
+                            {r.respondida ? "Respondeu e já teve resposta" : "Respondeu e está esperando você"}
+                            <span className="font-normal text-muted-foreground"> · {hora(r.ultimaEm)}{r.msgs > 1 ? ` · ${r.msgs} mensagens` : ""}</span>
+                          </p>
+                          {r.resumo && <p className="mt-0.5">{r.resumo}</p>}
+                          <a href={`https://wa.me/55${c.celular}`} target="_blank" rel="noopener noreferrer" className={`${botao} mt-2 bg-[#1F8F4E] text-white`}>
+                            Responder no WhatsApp
+                          </a>
+                        </div>
+                      );
+                    })()}
                     {c.celular && (
                       <>
                         <a
