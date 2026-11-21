@@ -265,6 +265,11 @@ export function Homenagem() {
             <p className="mx-auto mt-5 max-w-sm text-[15.5px] leading-relaxed text-[#D9D1C3]">
               Estamos preparando um vídeo surpresa para a formatura, com a voz de todas as famílias da turma. Leva uns 10 minutos.
             </p>
+            {PRAZO_HOMENAGEM && (
+              <p className="mx-auto mt-4 inline-flex items-center gap-2 rounded-full border border-[#D4B068] bg-[#D4B068]/10 px-4 py-2 text-[15.5px] text-[#F3EBDD]">
+                <Clock className="h-4 w-4 text-[#D4B068]" /> Grave e envie até <b>{PRAZO_HOMENAGEM}</b>
+              </p>
+            )}
           </div>
 
           <Moldura>

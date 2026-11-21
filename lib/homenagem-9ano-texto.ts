@@ -11,7 +11,7 @@ export const BUCKET_HOMENAGEM = "homenagem-9ano";
 export const URL_HOMENAGEM = "https://eventos.escolaamadeus.com/homenagem9ano";
 
 /** Prazo para os pais enviarem, ex. "30 de novembro". Vazio = a página não fala de prazo. */
-export const PRAZO_HOMENAGEM = "";
+export const PRAZO_HOMENAGEM = "segunda-feira, 23/11";
 
 export const ESTROFES: { titulo: string; versos: string[] }[] = [
   {
