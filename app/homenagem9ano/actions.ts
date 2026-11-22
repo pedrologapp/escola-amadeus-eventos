@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { alunoDoPasse, conferirAluno, listarTurma, passeDe, primeiroNome, sugerirAlunos } from "@/lib/homenagem-9ano";
 import { BUCKET_HOMENAGEM, MAX_FOTOS, QUEM_OPCOES, type StatusParte } from "@/lib/homenagem-9ano-texto";
@@ -53,7 +54,34 @@ async function alunoPeloPasse(passe: string) {
 
 /** Nomes da turma enquanto o pai digita (a partir de 3 letras). */
 export async function buscarAluno(termo: string) {
-  return sugerirAlunos(termo).catch(() => []);
+  const r = await sugerirAlunos(termo).catch(() => []);
+  const t = String(termo ?? "").replace(/\s+/g, " ").trim();
+  if (!r.length && t.length >= 4) await registrar({ resultado: "nome_nao_achado", termo: t.slice(0, 80) });
+  return r;
+}
+
+/** Resumo do aparelho (para a escola orientar: "no iPhone", "pelo navegador do WhatsApp"...). */
+function aparelhoDe(ua: string) {
+  const so = /iPhone|iPad/i.test(ua) ? "iPhone" : /Android/i.test(ua) ? "Android" : /Windows/i.test(ua) ? "Windows" : /Mac OS/i.test(ua) ? "Mac" : "outro";
+  const nav = /WhatsApp/i.test(ua) ? "WhatsApp" : /Instagram/i.test(ua) ? "Instagram" : /SamsungBrowser/i.test(ua) ? "Samsung" : /CriOS|Chrome/i.test(ua) ? "Chrome" : /Safari/i.test(ua) ? "Safari" : /Firefox/i.test(ua) ? "Firefox" : "navegador";
+  return `${so} · ${nav}`;
+}
+
+/** Guarda a tentativa de entrada (nunca atrapalha a família: erro aqui é ignorado). */
+async function registrar(t: { resultado: "entrou" | "data_errada" | "nome_nao_achado" | "erro"; alunoId?: number; alunoNome?: string; termo?: string; data?: string }) {
+  try {
+    const ua = (await headers()).get("user-agent") ?? "";
+    await createAdminClient().from("homenagem_9ano_tentativas").insert({
+      resultado: t.resultado,
+      aluno_id: t.alunoId ?? null,
+      aluno_nome: t.alunoNome ?? null,
+      termo: t.termo ?? null,
+      data_digitada: t.data ?? null,
+      aparelho: aparelhoDe(ua),
+    });
+  } catch {
+    /* o registro é só para a escola acompanhar */
+  }
 }
 
 /** Aluno escolhido na lista + data de nascimento. */
@@ -63,9 +91,16 @@ export async function entrar(alunoId: number, nascimento: string): Promise<Entra
   try {
     aluno = await conferirAluno(Number(alunoId), nascimento);
   } catch {
+    await registrar({ resultado: "erro", alunoId: Number(alunoId) });
     return { ok: false, erro: "Não consegui consultar a lista da turma agora. Tente de novo em alguns minutos." };
   }
-  if (!aluno) return { ok: false, erro: "A data de nascimento não confere. Confira e tente de novo." };
+  if (!aluno) {
+    const nome = (await listarTurma().catch(() => [])).find((a) => a.id === Number(alunoId))?.nome;
+    const [a, m, d] = String(nascimento ?? "").split("-");
+    await registrar({ resultado: "data_errada", alunoId: Number(alunoId), alunoNome: nome, data: d && m && a ? `${d}/${m}/${a}` : String(nascimento ?? "").slice(0, 20) });
+    return { ok: false, erro: "A data de nascimento não confere. Confira e tente de novo." };
+  }
+  await registrar({ resultado: "entrou", alunoId: aluno.id, alunoNome: aluno.nome });
   return { ok: true, passe: passeDe(aluno.id), nome: aluno.nome, primeiro: primeiroNome(aluno.nome), envios: await enviosDo(aluno.id) };
 }
 
