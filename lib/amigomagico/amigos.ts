@@ -25,18 +25,18 @@ export const AMIGOS: AmigoMagico[] = [
   { nome: "João Lucas Pontes da Silva", slug: "joao-lucas", amigo: "Benício", artigo: "o" },
   { nome: "Larissa Prado de Melo", slug: "larissa", amigo: "Arco-Íris", artigo: "a" },
   { nome: "Maria Mayane Silva de Oliveira", slug: "maria-mayane", amigo: "José", artigo: "a" },
-  // Grupo V B (23/11/2026): imagens feitas a partir do que as professoras escreveram no Diário; ilhas pedidas à conversa da ilha
-  { nome: "Maria Luiza Morais Borges", slug: "maria-luiza", amigo: "Luizinha", artigo: "a", doAmigo: "a", ilha: false },
-  { nome: "Aurora Maria Borges da Fonseca Silva", slug: "aurora", amigo: "Rosinha", artigo: "a", doAmigo: "a", ilha: false },
-  { nome: "Raika Cândido de Lima", slug: "raika", amigo: "Alice", artigo: "a", doAmigo: "a", ilha: false },
-  { nome: "Arthur Mafra de Medeiros", slug: "arthur-mafra", amigo: "Furta-Cor", artigo: "o", ilha: false },
-  { nome: "João Guilherme Inácio de Lira", slug: "joao-guilherme", amigo: "Fofinho", artigo: "o", ilha: false },
-  { nome: "Heitor Gabriel de Farias Silva", slug: "heitor-gabriel", amigo: "João", artigo: "o", ilha: false },
-  { nome: "José Vicente Maia de Araújo", slug: "jose-vicente", amigo: "Cachoeira", artigo: "o", ilha: false },
-  { nome: "Arthur Gregório Tavares da Silva", slug: "arthur-gregorio", amigo: "Astronauta", artigo: "o", ilha: false },
-  { nome: "Arthur Gabriel da Rocha Rufino", slug: "arthur-gabriel", amigo: "Plantinha", artigo: "o", ilha: false },
-  { nome: "Lucca Gabriel Santos Abdon", slug: "lucca", amigo: "Tião", artigo: "o", ilha: false },
-  { nome: "Douglas Chirino Fernandez", slug: "douglas", amigo: "Ian", artigo: "o", ilha: false },
+  // Grupo V B (23/11/2026): imagens feitas a partir do que as professoras escreveram no Diário; ilhas 3D no ar desde 23/11
+  { nome: "Maria Luiza Morais Borges", slug: "maria-luiza", amigo: "Luizinha", artigo: "a", doAmigo: "a" },
+  { nome: "Aurora Maria Borges da Fonseca Silva", slug: "aurora", amigo: "Rosinha", artigo: "a", doAmigo: "a" },
+  { nome: "Raika Cândido de Lima", slug: "raika", amigo: "Alice", artigo: "a", doAmigo: "a" },
+  { nome: "Arthur Mafra de Medeiros", slug: "arthur-mafra", amigo: "Furta-Cor", artigo: "o" },
+  { nome: "João Guilherme Inácio de Lira", slug: "joao-guilherme", amigo: "Fofinho", artigo: "o" },
+  { nome: "Heitor Gabriel de Farias Silva", slug: "heitor-gabriel", amigo: "João", artigo: "o" },
+  { nome: "José Vicente Maia de Araújo", slug: "jose-vicente", amigo: "Cachoeira", artigo: "o" },
+  { nome: "Arthur Gregório Tavares da Silva", slug: "arthur-gregorio", amigo: "Astronauta", artigo: "o" },
+  { nome: "Arthur Gabriel da Rocha Rufino", slug: "arthur-gabriel", amigo: "Plantinha", artigo: "o" },
+  { nome: "Lucca Gabriel Santos Abdon", slug: "lucca", amigo: "Tião", artigo: "o" },
+  { nome: "Douglas Chirino Fernandez", slug: "douglas", amigo: "Ian", artigo: "o" },
 ];
 
 export const ILHA_DO_AMIGO = "https://ilha-do-amigo.vercel.app/";
