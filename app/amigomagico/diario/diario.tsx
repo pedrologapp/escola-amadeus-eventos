@@ -303,10 +303,11 @@ function Conversa({ turma, alunoId, voltar }: { turma: Turma; alunoId: string; v
           <div>
             <p>O amigo mágico d{amigo.artigo} {nome.split(" ")[0]}</p>
             {amigo.amigo && <b>{amigo.amigo}</b>}
-            <button type="button" className="dd-mostrar" onClick={() => abrirIlha(amigo.slug)}>
+            {amigo.ilha && <button type="button" className="dd-mostrar" onClick={() => abrirIlha(amigo.slug)}>
               <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 3.5 L16.5 10 L6 16.5 Z" /></svg>
               Mostrar para {amigo.artigo} {nome.split(" ")[0]}
-            </button>
+            </button>}
+            {!amigo.ilha && <small className="dd-ilha-breve">A ilha d{amigo.doAmigo} {amigo.amigo ?? "amigo"} chega em breve.</small>}
           </div>
         </div>
       )}

@@ -185,3 +185,8 @@ html:has(.dd-turmas), html:has(.dd-alunos) { background: var(--capa-escura, #162
 .dd-abrir-ilha { display: flex; margin: 6px 0 4px; }
 /* o × da ilha, grande para o dedo */
 .dd-fechar { width: 58px; height: 58px; font-size: 38px !important; }
+
+/* enquanto a ilha 3D do amigo não está pronta */
+.dd-ilha-breve { display: block; margin-top: 6px; font-size: 14px; color: var(--tinta-2); }
+/* o adesivo no canto não cobre o nome (nomes compridos da turma B) */
+.dd-adesivo { width: 38%; max-width: 54px; right: -14px; bottom: -18px; }

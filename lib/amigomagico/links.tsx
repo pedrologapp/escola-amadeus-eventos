@@ -23,7 +23,7 @@ export function slugDaIlha(url: string): string | null {
 
 export function nomeDoAmigo(slug: string): string {
   const a = AMIGOS.find((x) => x.slug === slug);
-  return a?.amigo ? `do ${a.amigo}` : "do amigo mágico";
+  return a?.amigo ? `d${a.doAmigo ?? "o"} ${a.amigo}` : "do amigo mágico";
 }
 
 export function comLinks(texto: string, className?: string, abrirIlha?: (slug: string) => void, classeBotao?: string): ReactNode[] {
@@ -70,5 +70,5 @@ export function marcaDoAmigo(texto: string): { texto: string; slug: string | nul
 
 export function botaoApresentar(slug: string): string {
   const a = AMIGOS.find((x) => x.slug === slug);
-  return a?.amigo ? `Apresentar o ${a.amigo}` : "Apresentar o amigo mágico";
+  return a?.amigo ? `Apresentar ${a.doAmigo ?? "o"} ${a.amigo}` : "Apresentar o amigo mágico";
 }
