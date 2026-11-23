@@ -55,7 +55,7 @@ const enviar = (name, pos, operation, extra) => node(name, "@devlikeapro/n8n-nod
 
 const nodes = [
   node("Instruções", "n8n-nodes-base.stickyNote", 1, [-520, -300], {
-    content: "## WHATSAPP · RESPONDER (MANUAL PELO ADMIN)\n\nSó dispara quando alguém da equipe escreve no painel (admin → Comunicação → WhatsApp) e clica em Enviar. Nunca é automático.\n\nTexto, imagem ou arquivo pelo WhatsApp da escola. Conversa existente (chatId) ou nova (telefone, conferido com e sem o 9).\n\nGerado por docs/n8n/gerar-workflow-whatsapp-responder.mjs",
+    content: "## WHATSAPP · RESPONDER (MANUAL PELO ADMIN)\n\nSó dispara quando alguém da equipe escreve no painel (admin → Comunicação → WhatsApp) e clica em Enviar. Nunca é automático.\n\nTexto, imagem ou arquivo pelo WhatsApp da escola. Com \"digitando\": true, mostra digitando... antes (envios em lote, para não parecer robô). Conversa existente (chatId) ou nova (telefone, conferido com e sem o 9).\n\nGerado por docs/n8n/gerar-workflow-whatsapp-responder.mjs",
     height: 300, width: 440,
   }),
   node("Webhook", "n8n-nodes-base.webhook", 2, [-500, 120], { httpMethod: "POST", path: "whatsapp-responder", responseMode: "responseNode", options: {} }, { webhookId: "9e5b0000-0000-4000-8000-0000000000aa" }),
@@ -84,6 +84,20 @@ const nodes = [
   ifExiste("Existe com 9?", [740, 580], "com9"),
   setChat("Usar com 9", [940, 520], "={{ $('Formatar Telefone').first().json.chatIdComNove }}"),
   responder("Sem WhatsApp", [940, 680], 200, "={{ { ok: false, status: 'sem_whatsapp' } }}"),
+  // "digitando: true" no corpo: mostra "digitando..." por digitandoSegundos (padrão 6, até 20) e só então envia.
+  // Sem o campo, segue direto como sempre (o painel do WhatsApp não manda).
+  node("Digitando?", "n8n-nodes-base.if", 2.2, [160, -260], {
+    conditions: {
+      options: { caseSensitive: true, leftValue: "", typeValidation: "loose", version: 2 },
+      conditions: [{ id: "dig", leftValue: `={{ ${corpo("digitando")} === true }}`, rightValue: true, operator: { type: "boolean", operation: "true", singleValue: true } }],
+      combinator: "and",
+    },
+    options: {},
+  }),
+  enviar("Marcar lido", [380, -380], "Send Seen", {}),
+  enviar("Começar a digitar", [580, -380], "Start Typing", {}),
+  node("Esperar digitando", "n8n-nodes-base.wait", 1.1, [780, -380], { amount: `={{ Math.min(20, Math.max(2, Number(${corpo("digitandoSegundos")}) || 6)) }}`, unit: "seconds" }, { webhookId: "9e5b0000-0000-4000-8000-0000000000bb" }),
+  enviar("Parar de digitar", [980, -380], "Stop Typing", {}),
   node("Tipo", "n8n-nodes-base.switch", 3.2, [160, 100], {
     rules: {
       values: ["texto", "imagem", "arquivo"].map((t) => ({
@@ -106,11 +120,13 @@ const nodes = [
 const liga = (de, para, saida = 0) => ({ de, para, saida });
 const ligacoes = [
   liga("Webhook", "Chave confere?"), liga("Chave confere?", "Tem conversa?", 0), liga("Chave confere?", "Negar", 1),
-  liga("Tem conversa?", "Tipo", 0), liga("Tem conversa?", "Formatar Telefone", 1),
+  liga("Tem conversa?", "Digitando?", 0), liga("Tem conversa?", "Formatar Telefone", 1),
   liga("Formatar Telefone", "Check Sem 9"), liga("Check Sem 9", "Existe sem 9?"),
   liga("Existe sem 9?", "Usar sem 9", 0), liga("Existe sem 9?", "Check Com 9", 1),
   liga("Check Com 9", "Existe com 9?"), liga("Existe com 9?", "Usar com 9", 0), liga("Existe com 9?", "Sem WhatsApp", 1),
-  liga("Usar sem 9", "Tipo"), liga("Usar com 9", "Tipo"),
+  liga("Usar sem 9", "Digitando?"), liga("Usar com 9", "Digitando?"),
+  liga("Digitando?", "Marcar lido", 0), liga("Digitando?", "Tipo", 1),
+  liga("Marcar lido", "Começar a digitar"), liga("Começar a digitar", "Esperar digitando"), liga("Esperar digitando", "Parar de digitar"), liga("Parar de digitar", "Tipo"),
   liga("Tipo", "Enviar texto", 0), liga("Tipo", "Enviar imagem", 1), liga("Tipo", "Enviar arquivo", 2),
   liga("Enviar texto", "Resultado"), liga("Enviar imagem", "Resultado"), liga("Enviar arquivo", "Resultado"),
 ];
