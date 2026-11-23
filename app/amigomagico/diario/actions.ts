@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { professoraLogada } from "@/lib/amigomagico-acesso";
+import { amigoDaCrianca, type AmigoNoDiario } from "@/lib/amigomagico/amigos";
 import { alunoDoDiario as alunoDoGrupo, BUCKET_DIARIO, ehTurma, listarAlunos, mensagensDe, type MensagemDiario } from "@/lib/formatura-diario";
 
 /** Toda ação confere no servidor o login do kit (o cookie das professoras): sem ele, nenhum aluno é achado. */
@@ -25,6 +26,7 @@ export interface AlunoQuadro {
   id: string;
   curto: string;
   registros: number;
+  amigo: AmigoNoDiario | null; // o amigo mágico, quando já está pronto (lib/amigomagico/amigos.ts)
 }
 
 export async function alunosDaTurma(turma: string): Promise<{ ok: true; alunos: AlunoQuadro[] } | { ok: false; erro: string }> {
@@ -38,7 +40,7 @@ export async function alunosDaTurma(turma: string): Promise<{ ok: true; alunos: 
       .eq("turma", turma);
     const conta = new Map<string, number>();
     for (const m of data ?? []) conta.set(m.aluno_id, (conta.get(m.aluno_id) ?? 0) + 1);
-    return { ok: true, alunos: alunos.map((a) => ({ id: a.id, curto: a.curto, registros: conta.get(a.id) ?? 0 })) };
+    return { ok: true, alunos: alunos.map((a) => ({ id: a.id, curto: a.curto, registros: conta.get(a.id) ?? 0, amigo: amigoDaCrianca(a.nome) })) };
   } catch {
     return { ok: false, erro: "Não consegui abrir a turma agora. Tente de novo." };
   }
@@ -47,11 +49,11 @@ export async function alunosDaTurma(turma: string): Promise<{ ok: true; alunos: 
 type Publica = Omit<MensagemDiario, "baixar" | "arquivo">;
 const publica = (m: MensagemDiario): Publica => ({ id: m.id, tipo: m.tipo, texto: m.texto, url: m.url, duracao: m.duracao, criadoEm: m.criadoEm });
 
-export async function conversa(alunoId: string): Promise<{ ok: true; curto: string; nome: string; mensagens: Publica[] } | { ok: false; erro: string }> {
+export async function conversa(alunoId: string): Promise<{ ok: true; curto: string; nome: string; amigo: AmigoNoDiario | null; mensagens: Publica[] } | { ok: false; erro: string }> {
   const aluno = await alunoDoDiario(alunoId);
   if (!aluno) return { ok: false, erro: (await professoraLogada()) ? "Aluno não encontrado." : SEM_LOGIN };
   const m = await mensagensDe([aluno.id]);
-  return { ok: true, curto: aluno.curto, nome: aluno.nome, mensagens: (m.get(aluno.id) ?? []).map(publica) };
+  return { ok: true, curto: aluno.curto, nome: aluno.nome, amigo: amigoDaCrianca(aluno.nome), mensagens: (m.get(aluno.id) ?? []).map(publica) };
 }
 
 async function cabeMais(alunoId: string) {

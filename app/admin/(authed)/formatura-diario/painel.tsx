@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Check, Copy, Download, ExternalLink, Image as ImagemIcone, Mic, Search, Trash2, Type, X } from "lucide-react";
 import { apagarMensagem } from "./actions";
+import { botaoApresentar, comLinks, marcaDoAmigo } from "@/lib/amigomagico/links";
 
 export interface MensagemAdmin {
   id: string;
@@ -105,7 +106,7 @@ function Conversa({ aluno, fechar }: { aluno: AlunoAdmin; fechar: () => void }) 
             const i = n;
             return (
               <div key={m.id} className="rounded-2xl border border-border/60 bg-white p-3">
-                {m.tipo === "texto" && <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-slate-800">{m.texto}</p>}
+                {m.tipo === "texto" && <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-slate-800">{comLinks(marcaDoAmigo(m.texto ?? "").texto, "font-semibold text-amadeus-blue underline break-all")}{marcaDoAmigo(m.texto ?? "").slug && <span className="mt-1 block text-xs font-bold text-amber-700">Botão para a professora: {botaoApresentar(marcaDoAmigo(m.texto ?? "").slug!)}</span>}</p>}
                 {m.tipo === "foto" && m.url && (
                   <a href={m.url} target="_blank" rel="noreferrer">
                     {/* eslint-disable-next-line @next/next/no-img-element */}

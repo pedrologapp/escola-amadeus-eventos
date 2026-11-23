@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { alunosDaTurma, conversa, mandarTexto, prepararArquivo, salvarArquivo, type AlunoQuadro } from "./actions";
+import { ILHA_DO_AMIGO, type AmigoNoDiario } from "@/lib/amigomagico/amigos";
+import { botaoApresentar, comLinks, marcaDoAmigo } from "@/lib/amigomagico/links";
 import { encolherFoto, extensaoAudio, subir } from "./subir";
 
 /**
@@ -127,9 +129,11 @@ function EscolherAluno({ turma, ir, voltar }: { turma: Turma; ir: (t: Tela) => v
             style={{ ["--colunas" as string]: alunos.length > 15 ? 4 : 3, ["--linhas" as string]: Math.ceil(alunos.length / (alunos.length > 15 ? 4 : 3)) }}
           >
             {alunos.map((a) => (
-              <button key={a.id} className={`dd-aluno ${a.registros ? "tem" : ""}`} onClick={() => ir({ qual: "conversa", turma, aluno: a.id })}>
+              <button key={a.id} className={`dd-aluno ${a.registros ? "tem" : ""} ${a.amigo ? "pronto" : ""}`} onClick={() => ir({ qual: "conversa", turma, aluno: a.id })}>
                 <span className="dd-inicial" aria-hidden="true">{a.curto[0]}</span>
                 <b>{a.curto}</b>
+                {/* (23/11, Pedro) quem já tem o amigo mágico pronto: borda amarela e o adesivo no cantinho */}
+                {a.amigo && <img className="dd-adesivo" src={a.amigo.adesivo} alt="" />}
                 {a.registros > 0 && <small aria-label={`${a.registros} registros`}>{a.registros}</small>}
               </button>
             ))}
@@ -140,9 +144,33 @@ function EscolherAluno({ turma, ir, voltar }: { turma: Turma; ir: (t: Tela) => v
   );
 }
 
+/** O texto de um balão: links clicáveis, o link da ilha vira botão e a marca do amigo ([[amigo:slug]]) vira "Apresentar o <amigo>". */
+function Texto({ texto, abrirIlha }: { texto: string; abrirIlha: (slug: string) => void }) {
+  const { texto: limpo, slug } = marcaDoAmigo(texto);
+  return (
+    <>
+      <p>{comLinks(limpo, "dd-link", abrirIlha, "dd-mostrar dd-abrir-ilha")}</p>
+      {slug && (
+        <button type="button" className="dd-mostrar dd-abrir-ilha" onClick={() => abrirIlha(slug)}>
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M6 3.5 L16.5 10 L6 16.5 Z" />
+          </svg>
+          {botaoApresentar(slug)}
+        </button>
+      )}
+    </>
+  );
+}
+
 function Conversa({ turma, alunoId, voltar }: { turma: Turma; alunoId: string; voltar: () => void }) {
   const [nome, setNome] = useState("");
   const [completo, setCompleto] = useState("");
+  const [amigo, setAmigo] = useState<AmigoNoDiario | null>(null);
+  // a ilha 3D do amigo abre por cima de tudo, dentro do Diário; fica no endereço para o voltar do tablet fechar
+  // (23/11) "&ilha=<slug>": o cartão abre a ilha da criança e o botão de uma mensagem abre a ilha do link dela
+  const ilhaSlug = useSearchParams().get("ilha");
+  const ilhaAberta = !!ilhaSlug && /^[a-z0-9-]{1,40}$/.test(ilhaSlug);
+  const abrirIlha = (slug: string) => history.pushState(null, "", `/amigomagico/diario?turma=${turma}&aluno=${alunoId}&ilha=${slug}`);
   const [msgs, setMsgs] = useState<Mensagem[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [texto, setTexto] = useState("");
@@ -160,6 +188,7 @@ function Conversa({ turma, alunoId, voltar }: { turma: Turma; alunoId: string; v
       if (r.ok) {
         setNome(r.curto);
         setCompleto(r.nome);
+        setAmigo(r.amigo);
         setMsgs(r.mensagens);
       } else setErro(r.erro);
     });
@@ -268,6 +297,25 @@ function Conversa({ turma, alunoId, voltar }: { turma: Turma; alunoId: string; v
         </span>
         <a className="dd-menu" href="/amigomagico">menu</a>
       </header>
+      {amigo && (
+        <div className="dd-amigo">
+          <img src={amigo.adesivo} alt="" />
+          <div>
+            <p>O amigo mágico d{amigo.artigo} {nome.split(" ")[0]}</p>
+            {amigo.amigo && <b>{amigo.amigo}</b>}
+            <button type="button" className="dd-mostrar" onClick={() => abrirIlha(amigo.slug)}>
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 3.5 L16.5 10 L6 16.5 Z" /></svg>
+              Mostrar para {amigo.artigo} {nome.split(" ")[0]}
+            </button>
+          </div>
+        </div>
+      )}
+      {ilhaAberta && (
+        <div className="dd-ilha" role="dialog" aria-modal="true" aria-label="A ilha do amigo mágico">
+          <iframe src={`${ILHA_DO_AMIGO}?c=${encodeURIComponent(ilhaSlug ?? "")}`} title="A ilha do amigo mágico" allow="autoplay; fullscreen; accelerometer; gyroscope; xr-spatial-tracking" />
+          <button type="button" className="dd-fechar" onClick={() => history.back()} aria-label="Fechar e voltar ao diário">×</button>
+        </div>
+      )}
       <div className="dd-falas">
         {msgs === null && !erro && <p className="dd-vazio">abrindo…</p>}
         {msgs?.length === 0 && (
@@ -283,7 +331,7 @@ function Conversa({ turma, alunoId, voltar }: { turma: Turma; alunoId: string; v
             <div key={m.id}>
               {novoDia && <p className="dd-dia"><span>{rotuloDia(m.criadoEm)}</span></p>}
               <div className={`dd-balao ${m.tipo} ${m.falhou ? "falhou" : ""}`}>
-                {m.tipo === "texto" && <p>{m.texto}</p>}
+                {m.tipo === "texto" && <Texto texto={m.texto ?? ""} abrirIlha={abrirIlha} />}
                 {m.tipo === "foto" && m.url && (
                   <a href={m.url} target="_blank" rel="noreferrer">
                     <img src={m.url} alt="Foto do registro" />
