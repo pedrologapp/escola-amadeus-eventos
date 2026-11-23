@@ -94,7 +94,6 @@ const nodes = [
     },
     options: {},
   }),
-  enviar("Marcar lido", [380, -380], "Send Seen", {}),
   enviar("Começar a digitar", [580, -380], "Start Typing", {}),
   node("Esperar digitando", "n8n-nodes-base.wait", 1.1, [780, -380], { amount: `={{ Math.min(20, Math.max(2, Number(${corpo("digitandoSegundos")}) || 6)) }}`, unit: "seconds" }, { webhookId: "9e5b0000-0000-4000-8000-0000000000bb" }),
   enviar("Parar de digitar", [980, -380], "Stop Typing", {}),
@@ -125,8 +124,8 @@ const ligacoes = [
   liga("Existe sem 9?", "Usar sem 9", 0), liga("Existe sem 9?", "Check Com 9", 1),
   liga("Check Com 9", "Existe com 9?"), liga("Existe com 9?", "Usar com 9", 0), liga("Existe com 9?", "Sem WhatsApp", 1),
   liga("Usar sem 9", "Digitando?"), liga("Usar com 9", "Digitando?"),
-  liga("Digitando?", "Marcar lido", 0), liga("Digitando?", "Tipo", 1),
-  liga("Marcar lido", "Começar a digitar"), liga("Começar a digitar", "Esperar digitando"), liga("Esperar digitando", "Parar de digitar"), liga("Parar de digitar", "Tipo"),
+  liga("Digitando?", "Começar a digitar", 0), liga("Digitando?", "Tipo", 1),
+  liga("Começar a digitar", "Esperar digitando"), liga("Esperar digitando", "Parar de digitar"), liga("Parar de digitar", "Tipo"),
   liga("Tipo", "Enviar texto", 0), liga("Tipo", "Enviar imagem", 1), liga("Tipo", "Enviar arquivo", 2),
   liga("Enviar texto", "Resultado"), liga("Enviar imagem", "Resultado"), liga("Enviar arquivo", "Resultado"),
 ];
