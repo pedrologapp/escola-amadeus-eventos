@@ -15,7 +15,7 @@
 <meta property="og:description" content="A programação da formatura do Grupo 5: de 5 a 20 de dezembro, os ensaios, a festa e o que levar em cada dia.">
 <meta name="theme-color" content="#FFFDF8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Cormorant+Garamond:ital,wght@1,600&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
 <style>
   /* (24/11, Pedro: "eles da educação infantil, você pode fazer no layout do infantil; não coloque nada de quarto, é só um aviso")
      o estilo do livrinho do Infantil (o da Semana da Criança): papel creme com linhas de caderno, bandeirinhas, letra de mão e giz colorido */
@@ -144,8 +144,6 @@
   .abas button { font: 700 26px/1 Caveat, cursive; color: var(--suave); padding-bottom: 2px; border-bottom: 3px solid transparent; text-shadow: 0 0 12px rgba(255,253,248,.95); }
   .abas button.on { color: var(--tinta); border-bottom-color: #FFB000; }
   .sair { margin-top: 0; font: 700 16px/1 Caveat, cursive; color: var(--suave); text-shadow: 0 0 10px rgba(255,253,248,.95); }
-  .entrar-topo { display: block; font-size: 19px; line-height: 1.1; text-align: center; color: var(--tinta); }
-  .entrar-topo b { display: block; font-weight: 700; color: #E9832A; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
   .preco.ok { color: var(--turq) !important; font-size: 20px; }
   .preco.ok small { color: var(--turq) !important; }
   .pix-dados-cad { margin-top: 12px; font-size: 13px; font-weight: 700; color: var(--suave); }
@@ -201,6 +199,32 @@
   .pix-irmaos label { display: flex; align-items: center; gap: 8px; font: 700 22px/1 Caveat, cursive; color: var(--tinta); }
   .pix-irmaos input { width: 20px; height: 20px; accent-color: var(--turq); }
   .pix-irmaos .ja { font: 700 19px/1 Caveat, cursive; color: var(--turq); }
+  .conf { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 0 28px; background: rgba(8,48,120,.35); opacity: 0; transition: opacity .2s; }
+  .conf.on { opacity: 1; }
+  .conf-caixa { width: 100%; max-width: 360px; padding: 22px 22px 18px; background: var(--papel); border-radius: 22px; text-align: center; box-shadow: 0 18px 40px rgba(8,48,120,.25); }
+  .conf-p { font: 800 10.5px/1 Nunito, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--suave); }
+  .conf-nome { margin-top: 10px; font: 700 32px/1.05 Caveat, cursive; color: var(--tinta); }
+  .conf-turma { margin-top: 4px; font-size: 13px; font-weight: 700; color: var(--suave); }
+  .conf-bts { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; margin-top: 20px; }
+  .conf-nao { font: 700 20px/1 Caveat, cursive; color: var(--suave); }
+  body.sem-login .tela { padding-top: max(4svh, env(safe-area-inset-top)); }
+  body.sem-login .tela::before { height: 22svh; }
+  body.sem-login .ola { margin-top: 2.2svh; }
+  .area { position: relative; margin-top: 12px; padding: 11px 16px 9px; border-radius: 16px; text-align: center;
+    background: linear-gradient(160deg, #143A78, #0B2A5B 70%); box-shadow: 0 8px 22px rgba(11,42,91,.18); }
+  .area::after { content: ""; position: absolute; inset: 4px; border: 1px solid rgba(242,193,78,.35); border-radius: 12px; pointer-events: none; }
+  .area-rot { font: italic 600 21px/1 "Cormorant Garamond", Georgia, serif; letter-spacing: .02em; color: #F2D48A; }
+  .area .capa-botoes { position: relative; z-index: 1; width: 100%; max-width: none; margin-top: 4px; flex-direction: row; flex-wrap: wrap; align-items: flex-end; gap: 4px 14px; }
+  .area .capa-busca { flex: 1 1 0; }
+  .area .capa-campo { color: #FFF6E0; border-bottom: 1px solid rgba(255,246,224,.35); font-size: 14.5px; font-weight: 700; padding: 6px 2px; text-align: left; }
+  .area .capa-campo::placeholder { color: rgba(255,246,224,.55); font-weight: 600; }
+  .area .capa-campo:focus { border-bottom-color: #F2C14E; }
+  .area #lniver { order: 3; flex: 1 0 100%; }
+  .area .capa-erro { order: 4; flex: 1 0 100%; color: #FFC2B8; font-size: 12px; }
+  .area .capa-ir { flex: none; margin: 0; font: 800 14px/1 Nunito, sans-serif; letter-spacing: .03em; color: #F2D48A; padding: 0 0 6px; border-bottom: 1.5px solid #F2C14E; }
+  .area .capa-sug { top: 100%; bottom: auto; margin: 6px 0 0; box-shadow: 0 14px 30px rgba(11,42,91,.3); }
+  .area .capa-sem { display: none; }
+  @media (max-height: 700px) { .area { margin-top: 8px; padding: 8px 14px 7px; } .area-rot { font-size: 19px; } .area .capa-campo { font-size: 14px; padding: 4px 2px; } }
   .pix-alunos { list-style: none; }
   .pix-alunos button { width: 100%; display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--fio); font-size: 14.5px; font-weight: 800; color: var(--tinta); }
   .pix-alunos small { font-size: 11.5px; font-weight: 700; color: var(--suave); white-space: nowrap; }
@@ -270,8 +294,14 @@
     <img class="logo" src="/formandos2026/logo-amadeus.png" alt="Escola Amadeus">
     <h1>Formandos 2026</h1>
     <p class="sub">Educação Infantil · Grupo 5 · 5 a 20 de dezembro</p>
-    <div class="abas-linha"><nav class="abas" id="abas" hidden></nav><button class="sair" id="sair" hidden></button><button class="sair entrar-topo" id="entrartopo" hidden></button></div>
+    <div class="abas-linha"><nav class="abas" id="abas" hidden></nav><button class="sair" id="sair" hidden></button></div>
   </header>
+
+  <!-- a Área do formando: o card para o pai entrar (o formulário da capa vem para cá quando ele abre sem entrar) -->
+  <section class="area" id="area" hidden>
+    <p class="area-rot"></p>
+    <div class="area-form" id="areaform"></div>
+  </section>
 
   <p class="ola">A <b>formatura dos nossos pequenos</b> está chegando! Toque em cada dia para ver o que levar.</p>
 
@@ -315,7 +345,7 @@
 <script>
 const GIZ = {"festa":"<svg class=\"giz\" viewBox=\"0 0 220 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Festa\">\n    <defs><filter id=\"giz1\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"3\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz1)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M62 70 L72 30 L94 56 L110 22 L126 56 L148 30 L158 70 Z\" stroke=\"#FFB000\" stroke-width=\"6\" fill=\"#FFB00055\"/><path d=\"M24 118 C22 90 64 90 84 100 C98 106 104 112 110 114 C116 112 122 106 136 100 C156 90 198 90 196 118 C194 152 150 156 128 138 C120 132 114 128 110 128 C106 128 100 132 92 138 C70 156 26 152 24 118 Z\" stroke=\"#8A63D2\" stroke-width=\"6\" fill=\"#8A63D244\"/><path d=\"M50 120 a16 11 0 1 0 32 0 a16 11 0 1 0 -32 0M138 120 a16 11 0 1 0 32 0 a16 11 0 1 0 -32 0\" stroke=\"#083078\" stroke-width=\"5\" fill=\"#FFFFFF\"/></g></svg>","tv":"<svg class=\"giz\" viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"TV\">\n    <defs><filter id=\"giz2\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"4\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz2)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M30 62 H170 V156 H30 Z\" stroke=\"#083078\" stroke-width=\"7\" fill=\"#2BA3D633\"/><path d=\"M44 76 H156 V142 H44 Z\" stroke=\"#1D4FA0\" stroke-width=\"5\" fill=\"#FFFFFF\"/><path d=\"M78 30 L100 58 L122 30\" stroke=\"#E0524C\" stroke-width=\"6\" fill=\"none\"/><path d=\"M70 156 L60 176 M130 156 L140 176\" stroke=\"#083078\" stroke-width=\"6\" fill=\"none\"/><path d=\"M132 122 a6 6 0 1 0 12 0 a6 6 0 1 0 -12 0\" stroke=\"#FFB000\" stroke-width=\"5\" fill=\"#FFB00088\"/></g></svg>","gota":"<svg class=\"giz\" viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Dia da água\">\n    <defs><filter id=\"giz3\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"5\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz3)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M100 24 C70 70 52 100 52 128 a48 48 0 0 0 96 0 C148 100 130 70 100 24 Z\" stroke=\"#2BA3D6\" stroke-width=\"7\" fill=\"#2BA3D640\"/><path d=\"M78 128 q4 20 22 26\" stroke=\"#FFFFFF\" stroke-width=\"6\" fill=\"none\"/></g></svg>","toalha":"<svg class=\"giz\" viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Toalhinha\">\n    <defs><filter id=\"giz4\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"6\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz4)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M46 50 H154 V158 H46 Z\" stroke=\"#3FA66B\" stroke-width=\"7\" fill=\"#3FA66B26\"/><path d=\"M46 134 H154 M46 146 H154\" stroke=\"#3FA66B\" stroke-width=\"5\" fill=\"none\"/><path d=\"M70 50 V40 M100 50 V40 M130 50 V40\" stroke=\"#1D4FA0\" stroke-width=\"5\" fill=\"none\"/><path d=\"M66 80 h68 M66 100 h48\" stroke=\"#3FA66B\" stroke-width=\"4\" fill=\"none\"/></g></svg>","bolo":"<svg class=\"giz\" viewBox=\"0 0 220 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Parabéns\">\n    <defs><filter id=\"giz5\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"7\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz5)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M40 110 H180 V176 H40 Z\" stroke=\"#E86FA6\" stroke-width=\"7\" fill=\"#E86FA633\"/><path d=\"M40 132 C70 146 90 120 110 134 C130 148 150 122 180 132\" stroke=\"#FFFFFF\" stroke-width=\"7\" fill=\"none\"/><path d=\"M80 110 V76 M110 110 V70 M140 110 V76\" stroke=\"#1D4FA0\" stroke-width=\"7\" fill=\"none\"/><path d=\"M80 66 q-6 -10 0 -18 q6 8 0 18 M110 60 q-6 -10 0 -18 q6 8 0 18 M140 66 q-6 -10 0 -18 q6 8 0 18\" stroke=\"#FFB000\" stroke-width=\"5\" fill=\"#FFB00088\"/></g></svg>","moedas":"<svg class=\"giz\" viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Financeiro\">\n    <defs><filter id=\"giz6\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"8\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz6)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M32 150 a48 16 0 1 0 96 0 a48 16 0 1 0 -96 0\" stroke=\"#FFB000\" stroke-width=\"6\" fill=\"#FFB00055\"/><path d=\"M32 150 V126 M128 150 V126\" stroke=\"#FFB000\" stroke-width=\"6\" fill=\"none\"/><path d=\"M32 126 a48 16 0 1 0 96 0 a48 16 0 1 0 -96 0\" stroke=\"#FFB000\" stroke-width=\"6\" fill=\"#FFB00055\"/><path d=\"M104 72 a36 36 0 1 0 72 0 a36 36 0 1 0 -72 0\" stroke=\"#3FA66B\" stroke-width=\"6\" fill=\"#3FA66B33\"/><path d=\"M140 52 V92 M130 62 q10 -8 20 0 q-20 10 0 20 q10 8 20 0\" stroke=\"#3FA66B\" stroke-width=\"5\" fill=\"none\"/></g></svg>","prancheta":"<svg class=\"giz\" viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Atividades\">\n    <defs><filter id=\"giz7\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"2\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz7)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M46 40 H154 V176 H46 Z\" stroke=\"#1D4FA0\" stroke-width=\"7\" fill=\"#FFFFFF\"/><path d=\"M76 26 H124 V54 H76 Z\" stroke=\"#083078\" stroke-width=\"7\" fill=\"#08307833\"/><path d=\"M66 84 l9 10 l16 -19\" stroke=\"#3FA66B\" stroke-width=\"7\" fill=\"none\"/><path d=\"M104 86 H138\" stroke=\"#1D4FA0\" stroke-width=\"6\" fill=\"none\"/><path d=\"M66 124 l9 10 l16 -19\" stroke=\"#3FA66B\" stroke-width=\"7\" fill=\"none\"/><path d=\"M104 126 H138\" stroke=\"#1D4FA0\" stroke-width=\"6\" fill=\"none\"/></g></svg>","sol":"<svg class=\"giz\" viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"O dia\">\n    <defs><filter id=\"giz8\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"3\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz8)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M52 100 a48 48 0 1 0 96 0 a48 48 0 1 0 -96 0\" stroke=\"#FFB000\" stroke-width=\"6\" fill=\"#FFB00040\"/><path d=\"M100 34v-22 M100 166v22 M34 100h-22 M166 100h22 M54 54l-14-14 M146 54l14-14 M54 146l-14 14 M146 146l14 14\" stroke=\"#FFB000\" stroke-width=\"6\" fill=\"none\"/><path d=\"M84 92 h0.1 M116 92 h0.1\" stroke=\"#083078\" stroke-width=\"9\" fill=\"none\"/><path d=\"M80 112 q20 18 40 0\" stroke=\"#083078\" stroke-width=\"5\" fill=\"none\"/><path d=\"M66 110 a6 6 0 1 0 12 0 a6 6 0 1 0 -12 0M122 110 a6 6 0 1 0 12 0 a6 6 0 1 0 -12 0\" stroke=\"#E86FA6\" stroke-width=\"4\" fill=\"#E86FA666\"/></g></svg>","calendario":"<svg class=\"giz\" viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Calendário\">\n    <defs><filter id=\"giz9\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"4\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz9)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M36 50 H164 V170 H36 Z\" stroke=\"#1D4FA0\" stroke-width=\"7\" fill=\"#FFFFFF\"/><path d=\"M36 50 H164 V86 H36 Z\" stroke=\"#E0524C\" stroke-width=\"7\" fill=\"#E0524C66\"/><path d=\"M70 34 V62 M130 34 V62\" stroke=\"#083078\" stroke-width=\"7\" fill=\"none\"/><path d=\"M62 112 h14 M94 112 h14 M126 112 h14 M62 142 h14 M94 142 h14\" stroke=\"#1D4FA0\" stroke-width=\"8\" fill=\"none\"/><path d=\"M123 142 a10 10 0 1 0 20 0 a10 10 0 1 0 -20 0\" stroke=\"#FFB000\" stroke-width=\"5\" fill=\"#FFB00066\"/></g></svg>","nota":"<svg class=\"giz\" viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Música\">\n    <defs><filter id=\"giz10\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"5\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz10)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M76 150 V48 L156 32 V132\" stroke=\"#8A63D2\" stroke-width=\"8\" fill=\"none\"/><path d=\"M76 64 L156 48\" stroke=\"#8A63D2\" stroke-width=\"8\" fill=\"none\"/><path d=\"M36 152 a22 16 0 1 0 44 0 a22 16 0 1 0 -44 0M116 134 a22 16 0 1 0 44 0 a22 16 0 1 0 -44 0\" stroke=\"#8A63D2\" stroke-width=\"7\" fill=\"#8A63D255\"/><path d=\"M30 52 v16 M22 60 h16M176 165 v14 M169 172 h14\" stroke=\"#FFB000\" stroke-width=\"4\" fill=\"none\"/></g></svg>","balao":"<svg class=\"giz\" viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Festa\">\n    <defs><filter id=\"giz11\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"6\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz11)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M58 74 a42 52 0 1 0 84 0 a42 52 0 1 0 -84 0\" stroke=\"#E0524C\" stroke-width=\"7\" fill=\"#E0524C44\"/><path d=\"M100 126 C90 150 112 166 100 190\" stroke=\"#083078\" stroke-width=\"4\" fill=\"none\"/><path d=\"M84 52 q6 -12 18 -14\" stroke=\"#FFFFFF\" stroke-width=\"6\" fill=\"none\"/></g></svg>","lanche":"<svg class=\"giz\" viewBox=\"0 0 220 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Lanche\">\n    <defs><filter id=\"giz12\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"7\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz12)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M30 96 C30 60 190 60 190 96 Z\" stroke=\"#F28C28\" stroke-width=\"7\" fill=\"#F28C2844\"/><path d=\"M26 112 C60 100 160 124 194 108\" stroke=\"#3FA66B\" stroke-width=\"8\" fill=\"none\"/><path d=\"M30 124 H190\" stroke=\"#E0524C\" stroke-width=\"8\" fill=\"none\"/><path d=\"M30 140 C30 160 190 160 190 140 Z\" stroke=\"#F28C28\" stroke-width=\"7\" fill=\"#F28C2844\"/></g></svg>","camiseta":"<svg class=\"giz\" viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Troca de roupa\">\n    <defs><filter id=\"giz13\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"8\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz13)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M70 40 L40 58 L28 92 L56 102 L60 166 H140 L144 102 L172 92 L160 58 L130 40 Q100 66 70 40 Z\" stroke=\"#2BA3D6\" stroke-width=\"7\" fill=\"#2BA3D633\"/><path d=\"M82 46 Q100 60 118 46\" stroke=\"#1D4FA0\" stroke-width=\"5\" fill=\"none\"/><path d=\"M100 104 v24 M88 116 h24\" stroke=\"#FFB000\" stroke-width=\"6\" fill=\"none\"/></g></svg>","pessoas":"<svg class=\"giz\" viewBox=\"0 0 220 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Reunião\">\n    <defs><filter id=\"giz14\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"2\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz14)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M56 68 a22 22 0 1 0 44 0 a22 22 0 1 0 -44 0\" stroke=\"#083078\" stroke-width=\"6\" fill=\"#FFE3C866\"/><path d=\"M124 68 a22 22 0 1 0 44 0 a22 22 0 1 0 -44 0\" stroke=\"#083078\" stroke-width=\"6\" fill=\"#FFE3C866\"/><path d=\"M40 170 C40 120 116 120 116 170 M108 170 C108 120 184 120 184 170\" stroke=\"#1D4FA0\" stroke-width=\"7\" fill=\"#1D4FA033\"/></g></svg>"};
 // o servidor do pagamento: na página de teste é o mesmo endereço; no site da escola (escolaamadeus.com/programacaoinfantil), o de teste
-const API = location.hostname.endsWith("vercel.app") || location.hostname === "localhost" ? "" : "https://fim-de-ano-infantil.vercel.app";
+const API = location.hostname.endsWith("vercel.app") || location.hostname === "localhost" || /^[0-9.]+$/.test(location.hostname) ? "" : "https://fim-de-ano-infantil.vercel.app";
 // cada dia: o que aparece na linha e o que abre no cartão (o texto é o da coordenação, só arrumado em partes)
 const DIAS = [
   { parte: 1, sem: "Sábado", d: "5/12", dia: "Sábado, 5 de dezembro", giz: "nota", t: "Auto de Natal", s: "15h · no auditório",
@@ -324,12 +354,12 @@ const DIAS = [
   { parte: 1, sem: "Segunda-feira", d: "7/12", dia: "Segunda-feira, 7 de dezembro", giz: "tv", t: "Cineminha e baile à fantasia", s: "Aula normal · traga pipoca",
     itens: [["O quê", "Encerramento <b>bilíngue</b>, com cineminha e baile à fantasia"], ["Levar", "O lanche de sempre e <b>um pacote de pipoca</b>"], ["Roupa", "A criança pode vir <b>fantasiada</b>!"]] },
   { parte: 1, sem: "Terça-feira", d: "8/12", dia: "Terça-feira, 8 de dezembro", giz: "gota", t: "Dia de diversão na água", s: "Banho de mangueira",
-    itens: [["Roupa", "Vir com <b>traje de banho</b>"], ["Mochila", "<b>Toalha</b> e uma <b>muda de roupa</b> extra"]] },
+    itens: [["Roupa", "Vir com <b>traje de banho</b>"], ["Mochila", "<b>Toalha</b> e uma <b>muda de roupa</b> extra"], ["Levar", "O <b>lanche</b>, uma <b>garrafinha de água</b> e uma <b>fruta</b>"]] },
   { parte: 1, sem: "Quarta-feira", d: "9/12", dia: "Quarta-feira, 9 de dezembro", giz: "bolo", t: "Aula da Saudade", s: "Despedida com todo o Grupo 5",
     itens: [["O quê", "Momento especial de despedida e confraternização com todos os alunos do Grupo 5"], ["Quem", "<b>Todos os alunos</b>, independentemente da participação na formatura"], ["Lanche", "Lanche e guloseimas pela contribuição de <b>R$&nbsp;20,00</b> (até 30/11)"]],
     nota: "Quem optar por não contribuir deve enviar o lanche individual da criança nesse dia. Nesse caso, ela não recebe o lanche e as guloseimas, que são comprados com os valores arrecadados." },
-  { parte: 1, sem: "Quinta-feira", d: "10/12", dia: "Quinta-feira, 10 de dezembro", giz: "prancheta", t: "Plantão pedagógico", s: "15h às 20h · início das férias", ferias: true,
-    itens: [["Hora", "<b>Das 15h às 20h</b>"], ["Férias", "A partir deste dia, <b>todos os alunos estão de férias</b>"]] },
+  { parte: 1, sem: "Quinta-feira", d: "10/12", dia: "Quinta-feira, 10 de dezembro", giz: "prancheta", t: "Plantão pedagógico", s: "15h às 20h · escola e família", ferias: true,
+    itens: [["Hora", "<b>Das 15h às 20h</b>"], ["Para quê", "<b>Atendimento às famílias</b> e <b>entrega das atividades</b> dos alunos"]] },
   { parte: 2, sem: "Segunda e terça-feira", d: "14 e 15/12", dia: "Segunda e terça-feira, 14 e 15 de dezembro", giz: "pessoas", t: "Ensaios da formatura", s: "Sem aula · das 7h às 11h",
     itens: [["Hora", "<b>Das 7h às 11h</b>"], ["Aula", "Não haverá aula"], ["Roupa", "Sem fardamento: <b>roupa comum e confortável</b>"], ["Levar", "O <b>lanche</b> e uma <b>garrafinha de água</b>"]] },
   { parte: 2, sem: "Quarta e quinta-feira", d: "16 e 17/12", dia: "Quarta e quinta-feira, 16 e 17 de dezembro", giz: "pessoas", t: "Ensaios da formatura", s: "Sem aula · das 13h às 17h",
@@ -342,7 +372,7 @@ const DIAS = [
 const FESTA = [
   { sem: "Até segunda-feira", d: "30/11", dia: "Até segunda-feira, 30 de novembro", giz: "moedas", t: "Contribuição da festa", s: "Lanche e guloseimas · Aula da Saudade", roxo: true, preco: "R$ 20", por: "aluno", pix: { evento: "contribuicao-confraternizacao-infantil", preco: 20, qtd: false, acao: "Pagar com Pix" },
     itens: [["Valor", "<b>R$&nbsp;20,00</b> por aluno"], ["Para quê", "O <b>lanche</b> e as <b>guloseimas</b> da Aula da Saudade (9/12)"], ["Prazo", "Até <b>segunda-feira, 30/11</b>"]],
-    nota: "Quem optar por não contribuir deve enviar o lanche individual da criança no dia 9/12. Nesse caso, ela não recebe o lanche e as guloseimas da festa." },
+    nota: "Quem optar por não contribuir deve enviar o lanche individual do aluno no dia 9/12. Nesse caso, ele não recebe o lanche nem as guloseimas, que são comprados com os valores arrecadados." },
 ];
 // (24/11) entrado: o que a criança da aba já pagou (o servidor diz quantas senhas/contribuições pagas; sem o evento no sistema, nada)
 const pagoDe = (x) => (SESSAO && x.pix ? SESSAO.criancas[ATUAL].pago[x.pix.evento] : undefined);
@@ -358,8 +388,8 @@ document.querySelectorAll("#partes button").forEach((b) => { b.classList.toggle(
 let SESSAO = null, ATUAL = 0; // o login (bilhete + crianças) e a aba de agora
 // (24/11, Pedro: "se no outro aviso a pessoa colocar o login, cair direto na página dos formandos") são duas páginas: a do Infantil e a dos
 // formandos (Grupo 5). Entrou com um aluno do Grupo 5 na do Infantil (ou o contrário), vai para a página dele, já entrado (o login fica no celular).
-const PAGINA = "formandos", TITULO = "Formandos", CHAMADO = "Para ver os horários de ensaio,";
-const TESTE = location.hostname.endsWith("vercel.app") || location.hostname === "localhost";
+const PAGINA = "formandos", TITULO = "Formandos", CHAMADO = "Área do formando";
+const TESTE = location.hostname.endsWith("vercel.app") || location.hostname === "localhost" || /^[0-9.]+$/.test(location.hostname);
 const ENDERECO = { infantil: TESTE ? "/" : "/programacaoinfantil", formandos: TESTE ? "/grupo5/" : "/formandos2026" };
 try { const a = +new URLSearchParams(location.search).get("aba"); if (a > 0) ATUAL = a; } catch {}
 function paginaCerta(k) {
@@ -399,6 +429,18 @@ function senhasHtml(x) {
 // (24/11, Pedro: "faça um teste, que eu faço o pagamento") o Pix dentro do cartão: três campos, o QR Code, o copia e cola e a espera
 let espera = 0;
 function fechar() { zoom.classList.remove("on"); clearInterval(espera); }
+// antes de pagar, a confirmação: é mesmo esta criança?
+function confirmarAluno(a, sim) {
+  const c = document.createElement("div"); c.className = "conf";
+  c.innerHTML = `<div class="conf-caixa" role="dialog" aria-modal="true"><p class="conf-p">É esta criança?</p>
+    <p class="conf-nome">${a.nome_completo}</p><p class="conf-turma">${a.serie} ${a.turma}</p>
+    <div class="conf-bts"><button type="button" class="conf-nao">Não, voltar</button><button type="button" class="principal conf-sim">Sim, confirmo ›</button></div></div>`;
+  document.body.appendChild(c); requestAnimationFrame(() => c.classList.add("on"));
+  const sai = () => { c.classList.remove("on"); setTimeout(() => c.remove(), 200); };
+  c.querySelector(".conf-nao").onclick = sai;
+  c.onclick = (e) => { if (e.target === c) sai(); };
+  c.querySelector(".conf-sim").onclick = () => { sai(); sim(a); };
+}
 function formPix(x) {
   const P = x.pix; let aluno = null, busca = 0;
   cartao.innerHTML = `<p class="c-dia">${x.t}</p><h3 class="c-titulo">${P.acao}</h3>
@@ -474,7 +516,7 @@ function formPix(x) {
         if (!r.ok) { lista.innerHTML = `<li class="vazio">${j.erro || "Não deu certo."}</li>`; return; }
         lista.innerHTML = j.alunos.length ? j.alunos.map((a, i) => `<li><button type="button" data-i="${i}">${a.nome_completo}<small>${a.serie} ${a.turma}</small></button></li>`).join("")
           : `<li class="vazio">Nenhuma criança com esse nome</li>`;
-        lista.querySelectorAll("button").forEach((b) => b.onclick = () => escolher(j.alunos[+b.dataset.i]));
+        lista.querySelectorAll("button").forEach((b) => b.onclick = () => confirmarAluno(j.alunos[+b.dataset.i], escolher));
       } catch { lista.innerHTML = `<li class="vazio">Sem internet?</li>`; }
     }, 300);
   };
@@ -547,9 +589,13 @@ function mostrarPix(x, p) {
 const capa = document.getElementById("capa");
 const abrirCapa = () => { capa.classList.add("aberta"); chamarEntrada(); };
 // quem abriu sem entrar: lá em cima, o chamado para entrar; tocar volta para a capa, com o nome
-const etopo = document.getElementById("entrartopo");
-function chamarEntrada() { etopo.hidden = !!SESSAO; etopo.innerHTML = CHAMADO + " <b>entre com o nome do aluno ›</b>"; }
-etopo.onclick = () => { capa.style.transition = ""; capa.classList.remove("aberta"); setTimeout(() => lnome.focus(), 450); };
+const area = document.getElementById("area");
+area.querySelector(".area-rot").textContent = CHAMADO;
+function chamarEntrada() {
+  if (SESSAO) return;
+  document.getElementById("areaform").appendChild(document.getElementById("flogin"));
+  area.hidden = false; document.body.classList.add("sem-login");
+}
 document.getElementById("vercapa").onclick = abrirCapa;
 capa.querySelector(".etiqueta").onclick = abrirCapa;
 const GUARDA = "fim-de-ano-login";
@@ -604,7 +650,7 @@ function entrou(s) {
   abas.hidden = s.criancas.length < 2;
   abas.innerHTML = s.criancas.map((c, i) => `<button class="${i === ATUAL ? "on" : ""}" data-i="${i}">${c.nome}</button>`).join("");
   abas.querySelectorAll("button").forEach((b) => b.onclick = () => { ATUAL = +b.dataset.i; entrou(SESSAO); });
-  etopo.hidden = true;
+  area.hidden = true; document.body.classList.remove("sem-login");
   const sair = document.getElementById("sair");
   sair.hidden = false; sair.textContent = (s.criancas.length > 1 ? "Não são vocês?" : "Não é " + k.nome + "?") + " Sair";
   desenharLinhas(); lerFeitos(); contarFalta();
@@ -631,7 +677,7 @@ if (guardado) {
 const CHECK = [
   { dia: "Até segunda-feira, 30/11", c: "#B47A12", itens: [["festa", "Pagar a contribuição (R$ 20,00)"], ["senhas", "Senhas do Auto de Natal"]] },
   { dia: "Segunda-feira, 7/12 · Cineminha", c: "#0B2A5B", itens: [["pipoca", "Pacote de pipoca"], ["fantasia", "Fantasia (se quiser)"]] },
-  { dia: "Terça-feira, 8/12 · Água", c: "#0B2A5B", itens: [["banho", "Traje de banho"], ["toalha", "Toalha"], ["muda", "Muda de roupa extra"]] },
+  { dia: "Terça-feira, 8/12 · Água", c: "#0B2A5B", itens: [["banho", "Traje de banho"], ["toalha", "Toalha"], ["muda", "Muda de roupa extra"], ["fruta", "Lanche, água e fruta"]] },
   { dia: "Quarta-feira, 9/12 · Aula da Saudade", c: "#0B2A5B", itens: [["lanche9", "Lanche individual (se não contribuiu)"]] },
   { dia: "Ensaios · 14 a 17/12", c: "#0E8C80", itens: [["ens-lanche", "Lanche"], ["ens-agua", "Garrafinha de água"], ["ens-roupa", "Roupa comum e confortável"]] },
   { dia: "Domingo, 20/12 · Formatura", c: "#B47A12", itens: [["form", "Chegar ao salão a partir das 17h"]] },

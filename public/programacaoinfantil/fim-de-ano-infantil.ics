@@ -8,7 +8,7 @@ DTSTAMP:20261124T120000Z
 DTSTART;VALUE=DATE:20261130
 DTEND;VALUE=DATE:20261201
 SUMMARY:Prazo da contribuição de R$ 20,00 (festa do Infantil)
-DESCRIPTION:Lanche e guloseimas da confraternização do dia 9/12.
+DESCRIPTION:Lanche e lembrancinha com guloseimas da festa de encerramento do dia 9/12.
 END:VEVENT
 BEGIN:VEVENT
 UID:fim-de-ano-infantil-2026-1@escolaamadeus.com
@@ -39,8 +39,8 @@ UID:fim-de-ano-infantil-2026-4@escolaamadeus.com
 DTSTAMP:20261124T120000Z
 DTSTART;VALUE=DATE:20261209
 DTEND;VALUE=DATE:20261210
-SUMMARY:Confraternização (Infantil)
-DESCRIPTION:Despedida e confraternização com todos os alunos.
+SUMMARY:Festa de encerramento (Infantil)
+DESCRIPTION:No auditório, com o momento FitDance. Quem não contribuiu envia o lanche de sempre.
 END:VEVENT
 BEGIN:VEVENT
 UID:fim-de-ano-infantil-2026-5@escolaamadeus.com
@@ -48,6 +48,6 @@ DTSTAMP:20261124T120000Z
 DTSTART:20261210T180000Z
 DTEND:20261210T230000Z
 SUMMARY:Plantão pedagógico (Infantil)
-DESCRIPTION:Das 15h às 20h. A partir deste dia, todos de férias.
+DESCRIPTION:Das 15h às 20h. Atendimento às famílias e entrega das atividades.
 END:VEVENT
 END:VCALENDAR
