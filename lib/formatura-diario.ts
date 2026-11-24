@@ -21,7 +21,11 @@ export interface AlunoDiario {
   nome: string; // completo (só no servidor e no admin)
   curto: string; // o que aparece na página aberta
   turma: Turma;
+  formando: boolean; // está na lista da placa (formatura_placa_aluno); os outros são "Alunos" no Diário
 }
+
+/** (25/11, Pedro: "cria uma aba dos não formandos dentro do diário... coloca Alunos e o outro Formandos") */
+export type GrupoDiario = "formandos" | "alunos" | "todos";
 
 const LIGA = new Set(["de", "da", "do", "das", "dos", "e"]);
 
@@ -53,17 +57,18 @@ async function formandos(): Promise<Set<string>> {
   return new Set((data ?? []).map((f) => `${String(f.turma ?? "").slice(-1)}|${chaveNome(f.nome)}`));
 }
 
-export async function listarAlunos(turma?: Turma): Promise<AlunoDiario[]> {
+export async function listarAlunos(turma?: Turma, grupo: GrupoDiario = "formandos"): Promise<AlunoDiario[]> {
   let q = createAdminClient().from("alunos").select("id, nome_completo, turma").eq("serie", SERIE_DIARIO);
   if (turma) q = q.eq("turma", turma);
   const [{ data, error }, vao] = await Promise.all([q, formandos()]);
   if (error) throw new Error(error.message);
-  const porTurma = new Map<Turma, { id: string; nome: string }[]>();
+  const porTurma = new Map<Turma, { id: string; nome: string; formando: boolean }[]>();
   for (const a of data ?? []) {
     if (!ehTurma(a.turma)) continue;
-    if (!vao.has(`${a.turma}|${chaveNome(String(a.nome_completo ?? ""))}`)) continue;
+    const formando = vao.has(`${a.turma}|${chaveNome(String(a.nome_completo ?? ""))}`);
+    if ((grupo === "formandos" && !formando) || (grupo === "alunos" && formando)) continue;
     const l = porTurma.get(a.turma) ?? [];
-    l.push({ id: a.id as string, nome: nomeBonito(String(a.nome_completo ?? "")) });
+    l.push({ id: a.id as string, nome: nomeBonito(String(a.nome_completo ?? "")), formando });
     porTurma.set(a.turma, l);
   }
   const todos: AlunoDiario[] = [];
@@ -75,12 +80,15 @@ export async function listarAlunos(turma?: Turma): Promise<AlunoDiario[]> {
   return todos.sort((x, y) => x.turma.localeCompare(y.turma) || x.nome.localeCompare(y.nome, "pt-BR"));
 }
 
-/** O aluno, se for mesmo um formando do Grupo V (toda ação do diário confere isso). */
+/** O aluno, se for mesmo do Grupo V, formando ou não (toda ação do diário confere isso). O nome curto vem do grupo dele. */
 export async function alunoDoDiario(id: string): Promise<AlunoDiario | null> {
   if (!/^[0-9a-f-]{36}$/i.test(String(id ?? ""))) return null;
   const { data } = await createAdminClient().from("alunos").select("id, turma, serie").eq("id", id).maybeSingle();
   if (!data || data.serie !== SERIE_DIARIO || !ehTurma(data.turma)) return null;
-  return (await listarAlunos(data.turma)).find((a) => a.id === id) ?? null;
+  const todos = await listarAlunos(data.turma, "todos");
+  const eu = todos.find((a) => a.id === id);
+  if (!eu) return null;
+  return (await listarAlunos(data.turma, eu.formando ? "formandos" : "alunos")).find((a) => a.id === id) ?? null;
 }
 
 export interface MensagemDiario {

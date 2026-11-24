@@ -30,11 +30,11 @@ export interface AlunoQuadro {
   amigo: AmigoNoDiario | null; // o amigo mágico, quando já está pronto (lib/amigomagico/amigos.ts)
 }
 
-export async function alunosDaTurma(turma: string): Promise<{ ok: true; alunos: AlunoQuadro[] } | { ok: false; erro: string }> {
+export async function alunosDaTurma(turma: string, grupo: string = "formandos"): Promise<{ ok: true; alunos: AlunoQuadro[] } | { ok: false; erro: string }> {
   if (!(await professoraLogada())) return { ok: false, erro: SEM_LOGIN };
   if (!ehTurma(turma)) return { ok: false, erro: "Turma inválida." };
   try {
-    const alunos = await listarAlunos(turma);
+    const alunos = await listarAlunos(turma, grupo === "alunos" ? "alunos" : "formandos");
     const { data } = await createAdminClient()
       .from("formatura_diario_mensagens")
       .select("aluno_id")

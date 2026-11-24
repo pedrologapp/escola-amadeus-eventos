@@ -190,3 +190,8 @@ html:has(.dd-turmas), html:has(.dd-alunos) { background: var(--capa-escura, #162
 .dd-ilha-breve { display: block; margin-top: 6px; font-size: 14px; color: var(--tinta-2); }
 /* o adesivo no canto não cobre o nome (nomes compridos da turma B) */
 .dd-adesivo { width: 38%; max-width: 54px; right: -14px; bottom: -18px; }
+
+/* (25/11, Pedro) abas "Formandos" e "Alunos" na lista da turma: a escolhida só com cor e uma linha embaixo (nunca fundo atrás da palavra) */
+.dd-abas { display: flex; gap: 22px; margin: -4px 0 -6px; }
+.dd-abas button { padding: 4px 2px 6px !important; font: 700 23px/1 var(--t) !important; color: rgba(220, 226, 247, .6) !important; border-bottom: 3px solid transparent !important; border-radius: 0 !important; }
+.dd-abas button.on { color: #F8CC3A !important; border-bottom-color: #F8CC3A !important; }

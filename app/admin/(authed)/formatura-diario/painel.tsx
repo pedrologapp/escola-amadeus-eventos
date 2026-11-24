@@ -21,6 +21,7 @@ export interface AlunoAdmin {
   nome: string;
   curto: string;
   turma: "A" | "B";
+  formando: boolean; // false = aba "Alunos" do Diário (não formando)
   mensagens: MensagemAdmin[];
 }
 
@@ -215,7 +216,10 @@ export function PainelDiario({ link, alunos }: { link: string; alunos: AlunoAdmi
               className={`rounded-2xl border p-4 text-left transition hover:shadow-md ${total ? "border-amadeus-blue/20 bg-white" : "border-border/60 bg-white/60"}`}
             >
               <div className="flex items-start justify-between gap-2">
-                <p className="font-extrabold text-amadeus-blue">{a.nome}</p>
+                <p className="font-extrabold text-amadeus-blue">
+                  {a.nome}
+                  {!a.formando && <span className="ml-2 rounded-full bg-sky-100 px-2 py-0.5 align-middle text-[11px] font-bold text-sky-800">aluno (não formando)</span>}
+                </p>
                 <span className={`flex-none rounded-full px-2 py-0.5 text-xs font-bold ${total ? "bg-amadeus-yellow-100 text-amadeus-yellow-dark" : "bg-muted text-muted-foreground"}`}>
                   {total === 1 ? "1 registro" : `${total} registros`}
                 </span>

@@ -17,7 +17,8 @@ import { encolherFoto, extensaoAudio, subir } from "./subir";
  */
 
 type Turma = "A" | "B";
-type Tela = { qual: "turma" } | { qual: "alunos"; turma: Turma } | { qual: "conversa"; turma: Turma; aluno: string };
+type Grupo = "formandos" | "alunos";
+type Tela = { qual: "turma" } | { qual: "alunos"; turma: Turma; grupo?: Grupo } | { qual: "conversa"; turma: Turma; aluno: string };
 
 interface Mensagem {
   id: string;
@@ -46,10 +47,13 @@ export function Diario() {
   // (pushState com URL é o jeito que o roteador do Next acompanha; estado próprio no histórico faz ele recarregar).
   const sp = useSearchParams();
   const t = sp.get("turma"), a = sp.get("aluno");
-  const tela: Tela = t === "A" || t === "B" ? (a ? { qual: "conversa", turma: t, aluno: a } : { qual: "alunos", turma: t }) : { qual: "turma" };
-  const ir = useCallback((n: Tela) => {
-    const q = n.qual === "turma" ? "" : n.qual === "alunos" ? `?turma=${n.turma}` : `?turma=${n.turma}&aluno=${n.aluno}`;
-    history.pushState(null, "", `/amigomagico/diario${q}`);
+  const g: Grupo = sp.get("grupo") === "alunos" ? "alunos" : "formandos";
+  const tela: Tela = t === "A" || t === "B" ? (a ? { qual: "conversa", turma: t, aluno: a } : { qual: "alunos", turma: t, grupo: g }) : { qual: "turma" };
+  const ir = useCallback((n: Tela, trocarAba = false) => {
+    const q = n.qual === "turma" ? "" : n.qual === "alunos" ? `?turma=${n.turma}${n.grupo === "alunos" ? "&grupo=alunos" : ""}` : `?turma=${n.turma}&aluno=${n.aluno}`;
+    // trocar de aba não empilha no histórico: o voltar continua indo para a escolha da turma
+    if (trocarAba) history.replaceState(null, "", `/amigomagico/diario${q}`);
+    else history.pushState(null, "", `/amigomagico/diario${q}`);
   }, []);
   const voltar = () => {
     if (history.length > 1) history.back();
@@ -59,7 +63,7 @@ export function Diario() {
   return (
     <div className="dd-livro">
       {tela.qual === "turma" && <EscolherTurma ir={ir} />}
-      {tela.qual === "alunos" && <EscolherAluno turma={tela.turma} ir={ir} voltar={voltar} />}
+      {tela.qual === "alunos" && <EscolherAluno turma={tela.turma} grupo={tela.grupo ?? "formandos"} ir={ir} voltar={voltar} />}
       {tela.qual === "conversa" && <Conversa turma={tela.turma} alunoId={tela.aluno} voltar={voltar} />}
     </div>
   );
@@ -101,12 +105,13 @@ function EscolherTurma({ ir }: { ir: (t: Tela) => void }) {
   );
 }
 
-function EscolherAluno({ turma, ir, voltar }: { turma: Turma; ir: (t: Tela) => void; voltar: () => void }) {
+function EscolherAluno({ turma, grupo, ir, voltar }: { turma: Turma; grupo: Grupo; ir: (t: Tela, trocarAba?: boolean) => void; voltar: () => void }) {
   const [alunos, setAlunos] = useState<AlunoQuadro[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   useEffect(() => {
     let vivo = true;
-    alunosDaTurma(turma).then((r) => {
+    setAlunos(null);
+    alunosDaTurma(turma, grupo).then((r) => {
       if (!vivo) return;
       if (r.ok) setAlunos(r.alunos);
       else setErro(r.erro);
@@ -114,14 +119,22 @@ function EscolherAluno({ turma, ir, voltar }: { turma: Turma; ir: (t: Tela) => v
     return () => {
       vivo = false;
     };
-  }, [turma]);
+  }, [turma, grupo]);
   const feitos = alunos?.filter((a) => a.registros > 0).length ?? 0;
   return (
     <>
       <Faixa titulo={`Grupo V ${turma}`} voltar={voltar} />
       <main className="dd-folha dd-alunos">
+        {/* (25/11, Pedro) "Formandos" (os da placa, com o amigo e a ilha) e "Alunos" (os outros da turma, que também querem um amigo) */}
+        <nav className="dd-abas" aria-label="Quem aparece">
+          {(["formandos", "alunos"] as Grupo[]).map((x) => (
+            <button key={x} className={grupo === x ? "on" : ""} aria-current={grupo === x ? "page" : undefined} onClick={() => ir({ qual: "alunos", turma, grupo: x }, true)}>
+              {x === "formandos" ? "Formandos" : "Alunos"}
+            </button>
+          ))}
+        </nav>
         <p className="dd-intro">
-          {alunos ? `${alunos.length} crianças · ${feitos} já com registro` : erro ?? "abrindo a turma…"}
+          {alunos ? (alunos.length ? `${alunos.length} ${grupo === "alunos" ? "alunos" : "formandos"} · ${feitos} já com registro` : "Nenhum aluno nesta aba.") : erro ?? "abrindo a turma…"}
         </p>
         {alunos && (
           <div

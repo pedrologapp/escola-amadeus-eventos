@@ -15,12 +15,12 @@ export default async function DiarioAdmin() {
   let alunos: AlunoDiario[] = [];
   let erro: string | null = null;
   try {
-    alunos = await listarAlunos();
+    alunos = await listarAlunos(undefined, "todos"); // formandos e os outros alunos do Grupo V (aba "Alunos" do Diário)
   } catch (e) {
     erro = `Não consegui ler os alunos do Grupo V (${(e as Error).message}).`;
   }
   const rev = await revisoesDe(alunos.map((a) => a.id));
-  const comAmigo = alunos.filter((a) => amigoDaCrianca(a.nome));
+  const comAmigo = alunos.filter((a) => a.formando && amigoDaCrianca(a.nome));
   const revisao: LinhaRevisao[] = comAmigo
     .filter((a) => rev.get(a.id)?.conferido)
     .map((a) => {
@@ -34,6 +34,7 @@ export default async function DiarioAdmin() {
     nome: a.nome,
     curto: a.curto,
     turma: a.turma,
+    formando: a.formando,
     mensagens: (porAluno.get(a.id) ?? []).map((m) => ({
       id: m.id,
       tipo: m.tipo,
