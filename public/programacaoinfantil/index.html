@@ -99,6 +99,31 @@
   .capa-ck { font: 700 22px/1 Caveat, cursive; color: rgba(255,255,255,.8); }
   @media (max-height: 700px) { .capa-gato { width: 96px; margin-top: 3svh; } .et-assina { font-size: 16px; } .etiqueta { padding: 20px 18px 12px; margin-top: 2.5svh; } .etiqueta h2 { font-size: 29px; } .et-texto { font-size: 13px; } .capa-logo { width: 170px; } }
 
+  /* (24/11) a entrada na capa: dois campos sobre o azul (linha branca embaixo, sem caixa) */
+  /* (24/11) a entrada no topo: dois campos numa linha, só com o traço embaixo (sem caixa), e o "Entrar" em letra de mão */
+  .entrar-convite { margin-top: 10px; font: 700 19px/1.1 Caveat, cursive; color: #8A6BD1; text-align: center; text-shadow: 0 0 12px rgba(255,253,248,.95); }
+  .entrar-topo { display: flex; align-items: flex-end; gap: 10px; width: 100%; max-width: 360px; margin-top: 2px; }
+  .entrar-topo input { min-width: 0; padding: 5px 0; border: 0; border-bottom: 1.5px solid rgba(8,48,120,.35); background: none; font: 700 14px/1.2 Nunito, sans-serif; color: var(--tinta); outline: none; text-align: center; }
+  .entrar-topo input::placeholder { color: #6B7386; }
+  .entrar-topo input:focus { border-bottom-color: #FFB000; }
+  #lnome { flex: 1.3; } #lniver { flex: 1.2; }
+  .entrar-topo button { flex: none; font: 700 22px/1 Caveat, cursive; color: var(--tinta); border-bottom: 2.5px solid #FFB000; padding-bottom: 1px; }
+  @media (max-height: 700px) { .ola { margin-top: 2svh !important; } .entrar-convite { font-size: 16px; margin-top: 2px; } .entrar-topo input { font-size: 13px; padding: 3px 0; } .entrar-topo button { font-size: 19px; } }
+  .entrar-erro { min-height: 0; font-size: 12px; font-weight: 800; color: #C0453A; text-align: center; }
+  .entrar-erro:empty { display: none; }
+  .capa-campo { width: 100%; padding: 8px 2px; border: 0; border-bottom: 2px solid rgba(255,255,255,.45); background: none; color: #fff; font: 700 18px/1.2 Nunito, sans-serif; outline: none; text-align: center; }
+  .capa-campo::placeholder { color: rgba(255,255,255,.6); }
+  .capa-campo:focus { border-bottom-color: #E9832A; }
+  .capa-erro { min-height: 18px; font-size: 13px; font-weight: 800; color: #FFC2B8; text-align: center; }
+  /* as abas dos irmãos: o nome em letra de mão; a aba de agora com a cor e o traço dourado, sem nada atrás */
+  .abas-linha { display: flex; align-items: baseline; justify-content: center; gap: 18px; margin-top: 6px; }
+  .abas { display: flex; justify-content: center; gap: 22px; }
+  .abas button { font: 700 26px/1 Caveat, cursive; color: var(--suave); padding-bottom: 2px; border-bottom: 3px solid transparent; text-shadow: 0 0 12px rgba(255,253,248,.95); }
+  .abas button.on { color: var(--tinta); border-bottom-color: #FFB000; }
+  .sair { margin-top: 0; font: 700 16px/1 Caveat, cursive; color: var(--suave); text-shadow: 0 0 10px rgba(255,253,248,.95); }
+  .preco.ok { color: var(--turq) !important; font-size: 20px; }
+  .preco.ok small { color: var(--turq) !important; }
+  .pix-dados-cad { margin-top: 12px; font-size: 13px; font-weight: 700; color: var(--suave); }
   /* o checklist (como o "Meu checklist" da Agenda: uma lista do que ter em mãos, dia por dia; o toque marca) */
   .ck-t { font-size: 30px; }
   .ck-dia { margin-top: 10px; font: 800 10.5px/1 Nunito, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--c, var(--suave)); }
@@ -173,6 +198,14 @@
     <img class="logo" src="/programacaoinfantil/logo-amadeus.png" alt="Escola Amadeus">
     <h1>Fim de ano</h1>
     <p class="sub">Educação Infantil · 5 a 10 de dezembro</p>
+    <p class="entrar-convite" id="lconvite">Veja tudo da sua criança: o nome e o aniversário</p>
+    <form class="entrar-topo" id="flogin" autocomplete="off">
+      <input id="lnome" placeholder="Nome da criança" aria-label="Nome da criança" autocomplete="off" enterkeyhint="next">
+      <input id="lniver" placeholder="dd/mm/aaaa" aria-label="Aniversário da criança" inputmode="numeric" enterkeyhint="go">
+      <button id="entrar">Entrar ›</button>
+    </form>
+    <p class="entrar-erro" id="lerro"></p>
+    <div class="abas-linha"><nav class="abas" id="abas" hidden></nav><button class="sair" id="sair" hidden></button></div>
   </header>
 
   <p class="ola">O <b>fim de ano dos nossos pequenos</b> está chegando! Toque em cada dia para ver o que levar.</p>
@@ -235,11 +268,21 @@ const FESTA = [
     itens: [["Valor", "<b>R$&nbsp;20,00</b> por aluno"], ["Para quê", "O <b>lanche</b> e as <b>guloseimas</b> da confraternização (9/12)"], ["Prazo", "Até <b>segunda-feira, 30/11</b>"]],
     nota: "Quem optar por não contribuir deve enviar o lanche individual da criança no dia 9/12. Nesse caso, ela não recebe o lanche e as guloseimas da festa." },
 ];
+// (24/11) entrado: o que a criança da aba já pagou (o servidor diz quantas senhas/contribuições pagas; sem o evento no sistema, nada)
+const pagoDe = (x) => (SESSAO && x.pix ? SESSAO.criancas[ATUAL].pago[x.pix.evento] : undefined);
+const precoDe = (x) => { const n = pagoDe(x); if (!x.preco) return "";
+  if (n > 0) return `<span class="preco ok">✓ ${x.pix.qtd ? n + (n > 1 ? " senhas" : " senha") : "paga"}<small>${x.pix.qtd ? "compradas" : "contribuição"}</small></span>`;
+  return `<span class="preco">${x.preco}<small>por ${x.por}</small></span>`; };
 const linha = (x, i, grupo) => `<li><button class="linha${x.ouro ? " ouro" : ""}${x.roxo ? " roxo" : ""}${x.ferias ? " ferias" : ""}" data-g="${grupo}" data-i="${i}" style="--c:${x.roxo ? "#8A6BD1" : x.ouro ? "#C8860A" : ["#E0685A", "#2F7FD0", "#0E9C8E", "#8A6BD1", "#D9922B"][i % 5]}">
   <span class="giz">${GIZ[x.giz] || ""}</span>
-  <span class="txt"><span class="sem" style="--c:${x.roxo ? "#8A6BD1" : x.ouro ? "#C8860A" : ["#E0685A", "#2F7FD0", "#0E9C8E", "#8A6BD1", "#D9922B"][i % 5]}">${x.sem} <em>${x.d}</em></span>${x.t}<small>${x.s}</small></span>${x.preco ? `<span class="preco">${x.preco}<small>por ${x.por}</small></span>` : ""}<span class="seta">›</span></button></li>`;
-document.getElementById("linhas").innerHTML = DIAS.map((x, i) => linha(x, i, "d")).join("");
-document.getElementById("festa").innerHTML = FESTA.map((x, i) => linha(x, i, "f")).join("");
+  <span class="txt"><span class="sem" style="--c:${x.roxo ? "#8A6BD1" : x.ouro ? "#C8860A" : ["#E0685A", "#2F7FD0", "#0E9C8E", "#8A6BD1", "#D9922B"][i % 5]}">${x.sem} <em>${x.d}</em></span>${x.t}<small>${x.s}</small></span>${precoDe(x)}<span class="seta">›</span></button></li>`;
+let SESSAO = null, ATUAL = 0; // o login (bilhete + crianças) e a aba de agora
+function desenharLinhas() {
+  document.getElementById("linhas").innerHTML = DIAS.map((x, i) => linha(x, i, "d")).join("");
+  document.getElementById("festa").innerHTML = FESTA.map((x, i) => linha(x, i, "f")).join("");
+  document.querySelectorAll(".linha").forEach((b) => b.onclick = () => abrir((b.dataset.g === "d" ? DIAS : FESTA)[+b.dataset.i]));
+}
+desenharLinhas();
 
 const zoom = document.getElementById("zoom"), cartao = document.getElementById("cartao");
 function abrir(x) {
@@ -267,10 +310,13 @@ function formPix(x) {
         <button type="button" id="menos">−</button><b id="pq">1</b><button type="button" id="mais">+</button></div>` : ""}
       <div class="pix-forma"><button type="button" class="on" data-m="pix">Pix</button><button type="button" data-m="cartao">Cartão</button></div>
       <p class="pix-total" id="ptotal"></p>
-      <label>Seu nome<input name="responsavel" autocomplete="name" required></label>
-      <label>Seu CPF<input name="cpf" inputmode="numeric" autocomplete="off" required></label>
-      <label>Seu e-mail<input name="email" type="email" autocomplete="email" required></label>
-      <label>Seu WhatsApp<input name="telefone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(84) 9…" required></label>
+      ${SESSAO ? `<p class="pix-dados-cad" id="pcad">Os seus dados (nome, CPF e WhatsApp) vêm do cadastro da escola.</p>` : ""}
+      <div id="pdados"${SESSAO ? " hidden" : ""}>
+      <label data-c="responsavel">Seu nome<input name="responsavel" autocomplete="name"${SESSAO ? "" : " required"}></label>
+      <label data-c="cpf">Seu CPF<input name="cpf" inputmode="numeric" autocomplete="off"${SESSAO ? "" : " required"}></label>
+      <label data-c="email">Seu e-mail<input name="email" type="email" autocomplete="email"${SESSAO ? "" : " required"}></label>
+      <label data-c="telefone">Seu WhatsApp<input name="telefone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(84) 9…"${SESSAO ? "" : " required"}></label>
+      </div>
       <p class="pix-erro" id="perro"></p>
       <button class="principal ir" id="gerar">Gerar o Pix ›</button>
       </div>
@@ -305,7 +351,12 @@ function formPix(x) {
   document.getElementById("ptroca").onclick = () => {
     aluno = null; passo1.hidden = false; esc.hidden = true; resto.hidden = true; campo.value = ""; campo.focus();
   };
-  setTimeout(() => campo.focus(), 300);
+  if (SESSAO) {
+    // entrado: a criança é a da aba (não precisa buscar nem trocar)
+    const k = SESSAO.criancas[ATUAL];
+    escolher({ id: k.id, nome_completo: k.nomeCompleto, serie: "", turma: k.turma });
+    document.getElementById("ptroca").hidden = true;
+  } else setTimeout(() => campo.focus(), 300);
   // a busca da criança (como no site de eventos): escreve, aparece a lista, toca no nome
   campo.oninput = () => {
     aluno = null; clearTimeout(busca); const t = campo.value.trim();
@@ -327,8 +378,14 @@ function formPix(x) {
     bt.disabled = true; bt.textContent = "Gerando…"; erro.textContent = "";
     try {
       const r = await fetch(API + "/api/pix", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ evento: P.evento, metodo, aluno_id: aluno.id, qtd, responsavel: f.get("responsavel"), cpf: f.get("cpf"), email: f.get("email"), telefone: f.get("telefone") }) });
+        body: JSON.stringify({ token: SESSAO ? SESSAO.token : undefined, evento: P.evento, metodo, aluno_id: aluno.id, qtd, responsavel: f.get("responsavel"), cpf: f.get("cpf"), email: f.get("email"), telefone: f.get("telefone") }) });
       const j = await r.json();
+      if (j.faltam) {
+        // o cadastro da escola não tem tudo: mostra só os campos que faltam
+        const box = document.getElementById("pdados"); box.hidden = false;
+        box.querySelectorAll("label").forEach((l) => { const falta = j.faltam.includes(l.dataset.c); l.hidden = !falta; l.querySelector("input").required = falta; });
+        const cad = document.getElementById("pcad"); if (cad) cad.textContent = "Faltou isto no cadastro da escola:";
+      }
       if (!r.ok) throw new Error(j.erro || "Não deu certo.");
       j.cartao ? mostrarCartao(x, j) : mostrarPix(x, j);
     } catch (err) { erro.textContent = err.message; bt.disabled = false; total(); }
@@ -350,7 +407,7 @@ function esperarPago(id, valor) {
     try {
       const j = await (await fetch(API + "/api/pix?id=" + id)).json();
       if (j.pago) {
-        clearInterval(espera);
+        clearInterval(espera); setTimeout(atualizar, 2500);
         cartao.innerHTML = `<h3 class="c-titulo pix-ok">Pago ✓</h3><p class="pix-espera">Obrigado! Recebemos R$&nbsp;${valor}.</p><button class="fechar" id="fechar">Fechar</button>`;
         document.getElementById("fechar").onclick = fechar;
       }
@@ -372,7 +429,7 @@ function mostrarPix(x, p) {
     try {
       const j = await (await fetch(API + "/api/pix?id=" + p.id)).json();
       if (j.pago) {
-        clearInterval(espera);
+        clearInterval(espera); setTimeout(atualizar, 2500);
         cartao.innerHTML = `<h3 class="c-titulo pix-ok">Pago ✓</h3><p class="pix-espera">Obrigado! Recebemos R$&nbsp;${valor}.</p><button class="fechar" id="fechar">Fechar</button>`;
         document.getElementById("fechar").onclick = fechar;
       }
@@ -385,6 +442,55 @@ const abrirCapa = () => capa.classList.add("aberta");
 document.getElementById("vercapa").onclick = abrirCapa;
 capa.querySelector(".etiqueta").onclick = abrirCapa;
 document.getElementById("ckcapa").onclick = () => { abrirCapa(); setTimeout(abrirChecklist, 350); };
+const GUARDA = "fim-de-ano-login";
+// o aniversário só com números: as barras entram sozinhas
+const niver = document.getElementById("lniver");
+niver.oninput = () => { const d = niver.value.replace(/\D/g, "").slice(0, 8); niver.value = [d.slice(0, 2), d.slice(2, 4), d.slice(4)].filter(Boolean).join("/"); };
+document.getElementById("flogin").onsubmit = async (e) => {
+  e.preventDefault();
+  const erro = document.getElementById("lerro"), bt = document.getElementById("entrar");
+  erro.textContent = ""; bt.disabled = true; bt.textContent = "…";
+  try {
+    const r = await fetch(API + "/api/entrar", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nome: document.getElementById("lnome").value, nascimento: niver.value }) });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.erro || "Não deu certo.");
+    try { localStorage.setItem(GUARDA, j.token); } catch {}
+    entrou({ token: j.token, criancas: j.criancas });
+    abrirCapa();
+  } catch (err) { erro.textContent = err.message; }
+  bt.disabled = false; bt.textContent = "Entrar ›";
+};
+// entrou: o título, as abas dos irmãos, o "sair", as linhas e o checklist da criança da aba
+function entrou(s) {
+  SESSAO = s; ATUAL = Math.min(ATUAL, s.criancas.length - 1);
+  const k = s.criancas[ATUAL];
+  document.querySelector(".topo h1").textContent = "Fim de ano · " + k.nome;
+  const abas = document.getElementById("abas");
+  abas.hidden = s.criancas.length < 2;
+  abas.innerHTML = s.criancas.map((c, i) => `<button class="${i === ATUAL ? "on" : ""}" data-i="${i}">${c.nome}</button>`).join("");
+  abas.querySelectorAll("button").forEach((b) => b.onclick = () => { ATUAL = +b.dataset.i; entrou(SESSAO); });
+  document.getElementById("flogin").hidden = true; document.getElementById("lconvite").hidden = true; document.getElementById("lerro").textContent = "";
+  const sair = document.getElementById("sair");
+  sair.hidden = false; sair.textContent = (s.criancas.length > 1 ? "Não são vocês?" : "Não é " + k.nome + "?") + " Sair";
+  desenharLinhas(); lerFeitos(); contarFalta();
+}
+document.getElementById("sair").onclick = () => { try { localStorage.removeItem(GUARDA); } catch {} location.reload(); };
+// lê de novo o que já foi pago (depois de pagar, ou ao abrir com o login guardado)
+async function atualizar() {
+  if (!SESSAO) return;
+  try {
+    const r = await fetch(API + "/api/entrar", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: SESSAO.token }) });
+    if (r.status === 401) { try { localStorage.removeItem(GUARDA); } catch {} location.reload(); return; }
+    const j = await r.json(); if (r.ok) entrou({ token: SESSAO.token, criancas: j.criancas });
+  } catch {}
+}
+// o celular lembra: quem já entrou abre direto na programação da criança
+let guardado = null; try { guardado = localStorage.getItem(GUARDA); } catch {}
+if (guardado) {
+  capa.style.transition = "none"; capa.classList.add("aberta");
+  SESSAO = { token: guardado, criancas: [{ nome: "", nomeCompleto: "", turma: "", pago: {} }] }; // até o servidor responder
+  atualizar().then(() => { if (SESSAO && !SESSAO.criancas[0].nome) SESSAO = null; });
+}
 
 // o checklist: o que ter em mãos, dia por dia (do comunicado da coordenação); fica guardado no celular
 const CHECK = [
@@ -395,8 +501,13 @@ const CHECK = [
   { dia: "Quarta-feira, 9/12 · Confraternização", c: "#8A6BD1", itens: [["lanche9", "Lanche individual", "Só se não contribuiu com os R$ 20,00"]] },
 ];
 let feitos = {};
-try { feitos = JSON.parse(localStorage.getItem("fim-de-ano-checklist") || "{}"); } catch {}
-const guardar = () => { try { localStorage.setItem("fim-de-ano-checklist", JSON.stringify(feitos)); } catch {} };
+const chaveCk = () => "fim-de-ano-checklist" + (SESSAO ? ":" + SESSAO.criancas[ATUAL].id : "");
+function lerFeitos() {
+  try { feitos = JSON.parse(localStorage.getItem(chaveCk()) || "{}"); } catch { feitos = {}; }
+  if (SESSAO) { const p = SESSAO.criancas[ATUAL].pago; if (p["auto-de-natal"] > 0) feitos.senhas = true; if (p["contribuicao-confraternizacao-infantil"] > 0) feitos.festa = true; }
+}
+lerFeitos();
+const guardar = () => { try { localStorage.setItem(chaveCk(), JSON.stringify(feitos)); } catch {} };
 const total = CHECK.reduce((n, g) => n + g.itens.length, 0);
 function contarFalta() {
   const falta = total - CHECK.reduce((n, g) => n + g.itens.filter(([k]) => feitos[k]).length, 0);
@@ -405,7 +516,7 @@ function contarFalta() {
 }
 // a lista em texto, para o WhatsApp: ✅ o que já foi separado, ⬜ o que falta
 function textoWhats() {
-  const linhas = ["*Fim de ano do Infantil · Meu checklist*", ""];
+  const linhas = ["*Fim de ano do Infantil · " + (SESSAO ? "Checklist · " + SESSAO.criancas[ATUAL].nome : "Meu checklist") + "*", ""];
   for (const g of CHECK) {
     linhas.push("*" + g.dia + "*");
     for (const [k, t] of g.itens) linhas.push((feitos[k] ? "✅ " : "⬜ ") + t);
@@ -417,7 +528,7 @@ function textoWhats() {
 function abrirChecklist() {
   const desenhar = () => {
     const falta = contarFalta();
-    cartao.innerHTML = `<p class="c-dia">Educação Infantil · 30/11 a 9/12</p><h3 class="c-titulo ck-t">Meu checklist</h3>
+    cartao.innerHTML = `<p class="c-dia">Educação Infantil · 30/11 a 9/12</p><h3 class="c-titulo ck-t">${SESSAO ? "Checklist · " + SESSAO.criancas[ATUAL].nome : "Meu checklist"}</h3>
       ${CHECK.map((g) => `<p class="ck-dia" style="--c:${g.c}">${g.dia}</p><ul class="ck-lista">${g.itens.map(([k, t, s]) =>
         `<li><button class="ck-item${feitos[k] ? " ok" : ""}" data-k="${k}"><i>${feitos[k] ? "✓" : ""}</i><span>${t}${s ? `<small>${s}</small>` : ""}</span></button></li>`).join("")}</ul>`).join("")}
       <p class="ck-falta">${falta ? "Falta" + (falta > 1 ? "m " : " ") + falta : "Tudo pronto! 🎉"}</p>
@@ -433,7 +544,6 @@ document.getElementById("abrirck").onclick = abrirChecklist;
 contarFalta();
 zoom.addEventListener("click", (e) => { if (e.target === zoom) fechar(); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") fechar(); });
-document.querySelectorAll(".linha").forEach((b) => b.onclick = () => abrir((b.dataset.g === "d" ? DIAS : FESTA)[+b.dataset.i]));
 </script>
 </body>
 </html>
