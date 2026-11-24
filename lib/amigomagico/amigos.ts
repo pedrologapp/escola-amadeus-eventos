@@ -44,6 +44,7 @@ export const AMIGOS: AmigoMagico[] = [
   { nome: "Arthur Gabriel da Rocha Rufino", slug: "arthur-gabriel", amigo: "Plantinha", tipo: "plantinha", artigo: "o" },
   { nome: "Lucca Gabriel Santos Abdon", slug: "lucca", amigo: "Tião", tipo: "coelho", artigo: "o" },
   { nome: "Douglas Chirino Fernandez", slug: "douglas", amigo: "Ian", tipo: "carrinho com asas", artigo: "o" },
+  { nome: "Gael Artidone Marinho de Oliveira", slug: "gael", amigo: "Bruninho", tipo: "jujuba (ursinho de goma)", artigo: "o" },
 ];
 
 export const ILHA_DO_AMIGO = "https://ilha-do-amigo.vercel.app/";
