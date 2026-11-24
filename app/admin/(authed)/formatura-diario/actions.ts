@@ -22,3 +22,12 @@ export async function apagarMensagem(id: string) {
   revalidatePath("/admin/formatura-diario");
   return { ok: true as const };
 }
+
+/** Revisão das professoras: marca que a troca do nome (ou a observação) já foi feita na ilha 3D. */
+export async function marcarAplicadoNaIlha(alunoId: string) {
+  await exigirLogin();
+  const { error } = await createAdminClient().from("formatura_amigos_revisao").update({ aplicado_na_ilha: true }).eq("aluno_id", alunoId);
+  if (error) return { ok: false as const, erro: error.message };
+  revalidatePath("/admin/formatura-diario");
+  return { ok: true as const };
+}

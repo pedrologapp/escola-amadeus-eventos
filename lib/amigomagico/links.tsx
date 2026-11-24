@@ -68,7 +68,7 @@ export function marcaDoAmigo(texto: string): { texto: string; slug: string | nul
   return m ? { texto: texto.slice(0, m.index), slug: m[1] } : { texto, slug: null };
 }
 
-export function botaoApresentar(slug: string): string {
-  const a = AMIGOS.find((x) => x.slug === slug);
+export function botaoApresentar(slug: string, revisado?: { slug: string; amigo: string | null; doAmigo: "a" | "o" } | null): string {
+  const a = revisado && revisado.slug === slug ? revisado : AMIGOS.find((x) => x.slug === slug);
   return a?.amigo ? `Apresentar ${a.doAmigo ?? "o"} ${a.amigo}` : "Apresentar o amigo mágico";
 }

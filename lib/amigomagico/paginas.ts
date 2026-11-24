@@ -17,7 +17,7 @@ export function paginaDoKit(nome: "menu" | "caderno"): string {
   return cache.get(nome)!;
 }
 
-export const DESTINOS = { caderno: "/amigomagico/caderno", diario: "/amigomagico/diario" } as const;
+export const DESTINOS = { caderno: "/amigomagico/caderno", diario: "/amigomagico/diario", revisar: "/amigomagico/revisar" } as const;
 export type Destino = keyof typeof DESTINOS;
 export const ehDestino = (d: unknown): d is Destino => typeof d === "string" && d in DESTINOS;
 

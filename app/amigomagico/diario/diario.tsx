@@ -145,7 +145,7 @@ function EscolherAluno({ turma, ir, voltar }: { turma: Turma; ir: (t: Tela) => v
 }
 
 /** O texto de um balão: links clicáveis, o link da ilha vira botão e a marca do amigo ([[amigo:slug]]) vira "Apresentar o <amigo>". */
-function Texto({ texto, abrirIlha }: { texto: string; abrirIlha: (slug: string) => void }) {
+function Texto({ texto, abrirIlha, amigo }: { texto: string; abrirIlha: (slug: string) => void; amigo: AmigoNoDiario | null }) {
   const { texto: limpo, slug } = marcaDoAmigo(texto);
   return (
     <>
@@ -155,7 +155,7 @@ function Texto({ texto, abrirIlha }: { texto: string; abrirIlha: (slug: string) 
           <svg viewBox="0 0 20 20" aria-hidden="true">
             <path d="M6 3.5 L16.5 10 L6 16.5 Z" />
           </svg>
-          {botaoApresentar(slug)}
+          {botaoApresentar(slug, amigo)}
         </button>
       )}
     </>
@@ -332,7 +332,7 @@ function Conversa({ turma, alunoId, voltar }: { turma: Turma; alunoId: string; v
             <div key={m.id}>
               {novoDia && <p className="dd-dia"><span>{rotuloDia(m.criadoEm)}</span></p>}
               <div className={`dd-balao ${m.tipo} ${m.falhou ? "falhou" : ""}`}>
-                {m.tipo === "texto" && <Texto texto={m.texto ?? ""} abrirIlha={abrirIlha} />}
+                {m.tipo === "texto" && <Texto texto={m.texto ?? ""} abrirIlha={abrirIlha} amigo={amigo} />}
                 {m.tipo === "foto" && m.url && (
                   <a href={m.url} target="_blank" rel="noreferrer">
                     <img src={m.url} alt="Foto do registro" />

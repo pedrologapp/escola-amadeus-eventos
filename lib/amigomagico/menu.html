@@ -50,8 +50,8 @@ body::before { content: ""; position: fixed; left: 0; top: 0; bottom: 0; width: 
 /* as quatro etiquetas quadradas: a grade encolhe para caber na altura que sobra */
 .grade { flex: 1; min-height: 0; display: grid; place-content: center; padding-top: 14px; }
 .grade-in { display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
-  width: min(calc(100vw - 70px), 420px, calc((100vh - 210px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) + 14px));
-  width: min(calc(100vw - 70px), 420px, calc((100dvh - 210px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) + 14px)); }
+  width: min(calc(100vw - 70px), 420px, calc((100vh - 296px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) + 14px));
+  width: min(calc(100vw - 70px), 420px, calc((100dvh - 296px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) + 14px)); }
 .quadro { aspect-ratio: 1 / 1; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 10px 8px;
   text-align: center; text-decoration: none; color: inherit; font: inherit; border: 0; cursor: pointer;
   background: var(--papel) repeating-linear-gradient(180deg, transparent 0 21px, #E3EBF4 21px 22px); border-radius: 10px; box-shadow: 0 8px 16px rgba(0,0,0,.3); }
@@ -64,6 +64,10 @@ body::before { content: ""; position: fixed; left: 0; top: 0; bottom: 0; width: 
 .quadro svg { width: 46%; height: auto; max-height: 52%; flex: none; }
 .quadro b { font: 700 clamp(17px, 5vw, 21px)/1.02 var(--titulo); }
 .quadro small { font-size: 13px; line-height: 1.1; color: var(--tinta-2); }
+/* (24/11, Pedro) a 5ª etiqueta: "Revisar amigos", uma faixa larga embaixo da grade */
+.quadro.largo { grid-column: 1 / -1; aspect-ratio: auto; height: 72px; flex-direction: row; gap: 12px; padding: 8px 14px; rotate: .6deg; transform: none; }
+.quadro.largo svg { width: 46px; max-height: none; }
+.quadro.largo span { display: grid; text-align: left; }
 
 /* o vídeo em tela cheia */
 .cinema { position: fixed; inset: 0; z-index: 10; display: none; flex-direction: column; background: #0b0f1d; color: #fff;
@@ -90,6 +94,7 @@ body::before { content: ""; position: fixed; left: 0; top: 0; bottom: 0; width: 
       <button class="quadro" type="button" id="abrir-video"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M20 6 L30 16 M44 6 L34 16" stroke="#22338A" stroke-width="2.5" stroke-linecap="round"/><rect x="6" y="16" width="52" height="36" rx="6" fill="#fff" stroke="#22338A" stroke-width="2.5"/><rect x="12" y="22" width="40" height="24" rx="3" fill="#E8F3FB"/><path d="M28 28 L38 34 L28 40 Z" fill="#E9832A"/></svg><b>Vídeo para as crianças</b><small>passe na TV</small></button>
       <a class="quadro" href="/amigomagico/caderno-da-crianca.pdf" download><svg viewBox="0 0 64 64" aria-hidden="true"><rect x="14" y="6" width="36" height="50" rx="3" fill="#fff" stroke="#22338A" stroke-width="2.5"/><rect x="19" y="14" width="12" height="12" rx="2" fill="none" stroke="#E9832A" stroke-width="2"/><rect x="33" y="14" width="12" height="12" rx="2" fill="none" stroke="#E9832A" stroke-width="2"/><rect x="19" y="30" width="12" height="12" rx="2" fill="none" stroke="#E9832A" stroke-width="2"/><rect x="33" y="30" width="12" height="12" rx="2" fill="none" stroke="#E9832A" stroke-width="2"/><path d="M44 44 L56 56" stroke="#22338A" stroke-width="3" stroke-linecap="round"/><path d="M53 53 L58 58" stroke="#F8CC3A" stroke-width="5" stroke-linecap="round"/></svg><b>Caderno da criança</b><small>PDF para imprimir</small></a>
       <a class="quadro" href="/amigomagico/diario"><svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="8" width="44" height="32" rx="10" fill="#FFF2B5" stroke="#22338A" stroke-width="2.5"/><path d="M16 40 L13 50 L26 40" fill="#FFF2B5" stroke="#22338A" stroke-width="2.5" stroke-linejoin="round"/><path d="M16 20 H40 M16 28 H32" stroke="#22338A" stroke-width="2.5" stroke-linecap="round"/><circle cx="50" cy="44" r="10" fill="#E9832A"/><path d="M46 44 L49 47 L55 40" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg><b>Diário da formatura</b><small>registre cada criança</small></a>
+      <a class="quadro largo" href="/amigomagico/revisar"><svg viewBox="0 0 64 64" aria-hidden="true"><rect x="10" y="6" width="38" height="50" rx="4" fill="#fff" stroke="#22338A" stroke-width="2.5"/><path d="M18 20 L23 25 L32 15 M18 36 L23 41 L32 31" stroke="#7FCF6B" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M36 21 H42 M36 37 H42" stroke="#4A5A9E" stroke-width="2.5" stroke-linecap="round"/><path d="M40 52 L56 36 L61 41 L45 57 L38 59 Z" fill="#E9832A" stroke="#22338A" stroke-width="2.5" stroke-linejoin="round"/></svg><span><b>Revisar amigos</b><small>confira e corrija o nome de cada amigo</small></span></a>
     </nav>
   </main>
 

@@ -1,0 +1,38 @@
+/* Revisar amigos: a mesma capa azul do Diário e etiquetas creme, uma por criança (esta tela rola: tem campos para editar) */
+.rv { height: auto; min-height: 100%; }
+.dd-mesa:has(.rv) { height: auto; min-height: 100dvh; overflow: visible; }
+html:has(.rv) { background: #16205A; }
+.rv-folha { position: relative; flex: 1; padding: 16px 30px calc(24px + env(safe-area-inset-bottom)) 26px;
+  background:
+    radial-gradient(120% 70% at 25% 0%, rgba(255, 255, 255, .07), transparent 60%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, .025) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, .05) 0 1px, transparent 1px 3px),
+    linear-gradient(170deg, var(--capa), var(--capa-escura)); }
+.rv-folha::after { content: ""; position: absolute; top: 0; bottom: 0; right: 18px; width: 10px; background: linear-gradient(90deg, #C9661A, var(--laranja) 40%, #F5A35A 60%, #C9661A); pointer-events: none; }
+.rv-intro { margin: 0 0 12px; color: #DCE2F7; font: 700 20px/24px var(--t); }
+.rv-quem { display: block; color: #DCE2F7; font-size: 15px; }
+.rv-quem input { display: block; width: 100%; margin-top: 4px; padding: 9px 12px; border: 0; border-radius: 10px; background: var(--papel); font: 400 17px var(--m); color: var(--tinta); }
+.rv-abas { display: flex; gap: 8px; margin: 14px 0 6px; }
+.rv-abas button { flex: 1; padding: 9px 0; border-radius: 22px !important; background: rgba(255, 255, 255, .12) !important; color: #fff !important; font: 700 21px/1 var(--t) !important; }
+.rv-abas button.on { background: var(--laranja) !important; }
+.rv-conta { margin: 6px 0 10px; color: #F8CC3A; font: 700 19px/1 var(--t); }
+.rv-erro { margin: 6px 0; padding: 6px 10px; border-radius: 8px; background: #FDECEC; color: #B33A45; font-size: 14px; }
+.rv-lista { display: grid; gap: 16px; }
+.rv-cartao { position: relative; display: grid; grid-template-columns: 76px 1fr; gap: 10px; align-items: start; padding: 12px 12px 12px 10px; border-radius: 10px;
+  background: var(--papel) repeating-linear-gradient(180deg, transparent 0 21px, #E3EBF4 21px 22px); box-shadow: 0 8px 16px rgba(0, 0, 0, .3); }
+.rv-cartao:nth-child(odd) { rotate: -.6deg; } .rv-cartao:nth-child(even) { rotate: .5deg; }
+.rv-cartao.ok { box-shadow: 0 0 0 3px #7FCF6B, 0 8px 16px rgba(0, 0, 0, .3); }
+.rv-cartao.falta { opacity: .92; }
+.rv-adesivo { width: 76px; height: auto; filter: drop-shadow(0 2px 3px rgba(0,0,0,.2)); }
+.rv-sem { width: 64px; height: 64px; margin: 4px auto 0; border-radius: 50%; display: grid; place-items: center; background: #DCE2F7; color: var(--tinta-2); font: 700 36px/1 var(--t); }
+.rv-txt { min-width: 0; display: grid; gap: 4px; }
+.rv-txt b { font: 700 21px/1.05 var(--t); color: var(--tinta); }
+.rv-txt small { font-size: 14px; color: var(--tinta-2); }
+.rv-txt label { display: grid; gap: 2px; margin-top: 4px; font-size: 14px; color: var(--tinta-2); }
+.rv-txt input, .rv-txt textarea { width: 100%; padding: 8px 10px; border: 1.5px solid var(--tinta-3); border-radius: 8px; background: #fff; font: 400 17px/1.25 var(--m); color: var(--tinta); resize: vertical; }
+.rv-txt input:focus, .rv-txt textarea:focus { outline: 3px solid rgba(233, 131, 42, .4); border-color: var(--laranja); }
+.rv-aviso { margin: 2px 0 0; padding: 5px 8px; border-radius: 6px; background: #FFF2B5; color: #7A5A00; font-size: 14px; line-height: 1.25; }
+.rv-antes { margin: 0; font-size: 13px; color: var(--tinta-3); }
+.rv-certo { justify-self: start; margin-top: 6px; padding: 9px 18px !important; border-radius: 24px !important; background: var(--laranja) !important; color: #fff !important; font: 700 21px/1 var(--t) !important; box-shadow: 0 4px 0 #C9661A; }
+.rv-certo:disabled { opacity: .6; }
+.rv-feito { margin: 6px 0 0; color: #3E8A2E; font: 700 18px/1.15 var(--t); }

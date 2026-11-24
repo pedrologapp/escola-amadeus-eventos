@@ -1,5 +1,8 @@
 import { listarAlunos, mensagensDe, type AlunoDiario } from "@/lib/formatura-diario";
 import { PainelDiario, type AlunoAdmin } from "./painel";
+import { RevisaoAmigos, type LinhaRevisao } from "./revisao";
+import { amigoDaCrianca } from "@/lib/amigomagico/amigos";
+import { revisoesDe } from "@/lib/amigomagico/revisao";
 
 /**
  * Diário da formatura do Grupo V (18/12/2026): o que as professoras registraram em /amigomagico/diario,
@@ -16,6 +19,15 @@ export default async function DiarioAdmin() {
   } catch (e) {
     erro = `Não consegui ler os alunos do Grupo V (${(e as Error).message}).`;
   }
+  const rev = await revisoesDe(alunos.map((a) => a.id));
+  const comAmigo = alunos.filter((a) => amigoDaCrianca(a.nome));
+  const revisao: LinhaRevisao[] = comAmigo
+    .filter((a) => rev.get(a.id)?.conferido)
+    .map((a) => {
+      const am = amigoDaCrianca(a.nome)!, r = rev.get(a.id)!;
+      return { alunoId: a.id, aluno: a.nome, turma: a.turma, slug: am.slug, original: am.amigo, novo: r.nomeAmigo, observacao: r.observacao, conferidoPor: r.conferidoPor, conferidoEm: r.conferidoEm, aplicadoNaIlha: r.aplicadoNaIlha };
+    })
+    .sort((x, y) => Number(x.aplicadoNaIlha) - Number(y.aplicadoNaIlha) || (y.conferidoEm ?? "").localeCompare(x.conferidoEm ?? ""));
   const porAluno = await mensagensDe(alunos.map((a) => a.id), { horas: 8, baixar: true });
   const lista: AlunoAdmin[] = alunos.map((a) => ({
     id: a.id,
@@ -41,6 +53,9 @@ export default async function DiarioAdmin() {
         O que as professoras registram em cada criança no dia da atividade: as respostas por escrito, as fotos e a voz. Clique no aluno para ver a conversa e baixar as fotos e os áudios.
       </p>
       {erro && <p className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{erro}</p>}
+      <div className="mt-6">
+        <RevisaoAmigos linhas={revisao} total={comAmigo.length} />
+      </div>
       <PainelDiario link="https://www.escolaamadeus.com/amigomagico/diario" alunos={lista} />
     </div>
   );

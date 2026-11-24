@@ -2,7 +2,8 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { professoraLogada } from "@/lib/amigomagico-acesso";
-import { amigoDaCrianca, type AmigoNoDiario } from "@/lib/amigomagico/amigos";
+import { amigoDaCrianca, comNomeRevisado, type AmigoNoDiario } from "@/lib/amigomagico/amigos";
+import { revisoesDe } from "@/lib/amigomagico/revisao";
 import { alunoDoDiario as alunoDoGrupo, BUCKET_DIARIO, ehTurma, listarAlunos, mensagensDe, type MensagemDiario } from "@/lib/formatura-diario";
 
 /** Toda ação confere no servidor o login do kit (o cookie das professoras): sem ele, nenhum aluno é achado. */
@@ -40,7 +41,8 @@ export async function alunosDaTurma(turma: string): Promise<{ ok: true; alunos: 
       .eq("turma", turma);
     const conta = new Map<string, number>();
     for (const m of data ?? []) conta.set(m.aluno_id, (conta.get(m.aluno_id) ?? 0) + 1);
-    return { ok: true, alunos: alunos.map((a) => ({ id: a.id, curto: a.curto, registros: conta.get(a.id) ?? 0, amigo: amigoDaCrianca(a.nome) })) };
+    const rev = await revisoesDe(alunos.map((a) => a.id)); // o nome que a professora confirmou vale aqui
+    return { ok: true, alunos: alunos.map((a) => ({ id: a.id, curto: a.curto, registros: conta.get(a.id) ?? 0, amigo: comNomeRevisado(amigoDaCrianca(a.nome), rev.get(a.id)?.nomeAmigo) })) };
   } catch {
     return { ok: false, erro: "Não consegui abrir a turma agora. Tente de novo." };
   }
@@ -53,7 +55,8 @@ export async function conversa(alunoId: string): Promise<{ ok: true; curto: stri
   const aluno = await alunoDoDiario(alunoId);
   if (!aluno) return { ok: false, erro: (await professoraLogada()) ? "Aluno não encontrado." : SEM_LOGIN };
   const m = await mensagensDe([aluno.id]);
-  return { ok: true, curto: aluno.curto, nome: aluno.nome, amigo: amigoDaCrianca(aluno.nome), mensagens: (m.get(aluno.id) ?? []).map(publica) };
+  const rev = (await revisoesDe([aluno.id])).get(aluno.id);
+  return { ok: true, curto: aluno.curto, nome: aluno.nome, amigo: comNomeRevisado(amigoDaCrianca(aluno.nome), rev?.nomeAmigo), mensagens: (m.get(aluno.id) ?? []).map(publica) };
 }
 
 async function cabeMais(alunoId: string) {
