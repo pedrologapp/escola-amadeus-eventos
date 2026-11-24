@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- PROPOSTA (24/11/2026, Pedro): o comunicado da programação de fim de ano do Infantil, num link para os pais (eles ainda não têm a agenda),
+     no visual do livrinho do Infantil (o da Semana da Criança e da agenda do Infantil: papel creme, Caveat nos títulos, Nunito no texto, giz,
+     bandeirinhas, foto do Infantil no topo). Depois o mesmo aviso entra na agenda. Gerado por montar.cjs a partir deste modelo. -->
+<title>Formandos 2026 · Grupo 5 · Escola Amadeus</title>
+<meta name="description" content="A programação de 5 a 10 de dezembro da Educação Infantil da Escola Amadeus.">
+<meta property="og:title" content="Formandos 2026 · Grupo 5 · Escola Amadeus">
+<meta property="og:image" content="https://www.escolaamadeus.com/formandos2026/capa-link.jpg">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta property="og:url" content="https://www.escolaamadeus.com/formandos2026">
+<meta property="og:description" content="A programação da formatura do Grupo 5: de 5 a 20 de dezembro, os ensaios, a festa e o que levar em cada dia.">
+<meta name="theme-color" content="#FFFDF8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  /* (24/11, Pedro: "eles da educação infantil, você pode fazer no layout do infantil; não coloque nada de quarto, é só um aviso")
+     o estilo do livrinho do Infantil (o da Semana da Criança): papel creme com linhas de caderno, bandeirinhas, letra de mão e giz colorido */
+  :root { --tinta: #083078; --suave: #7A8296; --fio: rgba(29, 79, 160, .12); --papel: #FFFDF7; --ouro: #C8860A; --turq: #0E9C8E; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { font-family: Nunito, system-ui, sans-serif; color: var(--tinta); background: #EFE9DC; -webkit-tap-highlight-color: transparent; }
+  button { background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; }
+
+  body { background: #EFE8D8; }
+  /* (24/11, Pedro: "mais enxuto; deixe 8% do topo e do fundo livres") tudo cabe entre 8% e 92% da altura */
+  .tela { position: relative; isolation: isolate; max-width: 480px; height: 100svh; margin: 0 auto; display: flex; flex-direction: column;
+    padding: max(8svh, env(safe-area-inset-top)) 22px max(8svh, env(safe-area-inset-bottom));
+    background: var(--papel); } /* (24/11, Pedro: "não gosto desse fundo de linha; se é linha, a palavra tem que estar em cima dela") papel liso */
+  .data b { color: var(--c, var(--tinta)); }
+  /* a foto do topo, que se desfaz no papel */
+  .tela::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 26svh; z-index: -1; pointer-events: none;
+    background: linear-gradient(180deg, rgba(255,253,248,.05) 0%, rgba(255,253,248,0) 55%, rgba(255,253,248,.7) 85%, #FFFDF8 100%), url("/formandos2026/topo-g5.webp") center bottom / cover no-repeat; }
+  .topo { display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .logo { width: 34px; height: 34px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(255,253,248,.9)); }
+  h1 { margin-top: 2px; font: 700 38px/1 Caveat, cursive; text-shadow: 0 0 18px rgba(255,253,248,.95), 0 0 3px rgba(255,253,248,.9); }
+  .sub { margin-top: 4px; font: 800 13px/1.2 Nunito, sans-serif; text-shadow: 0 0 12px rgba(255,253,248,.95); }
+  .ola { margin-top: 5svh; font-size: 13.5px; font-weight: 600; line-height: 1.35; color: #3A4459; }
+  .ola b { color: var(--tinta); }
+
+  .rot { display: flex; align-items: center; gap: 10px; margin-top: 14px; font: 800 10px/1 Nunito, sans-serif; letter-spacing: .18em; text-transform: uppercase; color: var(--suave); }
+  .rot::after { content: ""; flex: 1; height: 1px; background: var(--fio); }
+  .rot.ouro { color: var(--ouro); }
+  .rot.roxo { color: #8A6BD1; }
+  .linha.roxo .sem, .linha.roxo .txt small, .linha.roxo .preco, .linha.roxo .preco small { color: #8A6BD1; --c: #8A6BD1; }
+
+  .linhas { list-style: none; margin-top: 2px; }
+  .linha { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 4px 0; }
+  li + li .linha { border-top: 1px solid var(--fio); }
+  .data { flex: none; width: 44px; display: flex; flex-direction: column; align-items: flex-start; }
+  .data b { font: 700 25px/0.9 Caveat, cursive; }
+  .data small { font-size: 10px; font-weight: 800; color: var(--suave); }
+  .giz { flex: none; width: 34px; height: 30px; }
+  .giz svg { width: 100%; height: 100%; display: block; }
+  .txt { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 14px; font-weight: 800; line-height: 1.2; }
+  .txt small { margin-top: 1px; font-size: 11.5px; font-weight: 600; color: var(--suave); }
+  .seta { flex: none; font: 700 20px/1 Caveat, cursive; color: var(--suave); }
+  /* o dia da semana em letra de mão, colorido, em cima do que acontece */
+  .sem { font: 700 21px/1 Caveat, cursive; color: var(--c); margin-bottom: 1px; }
+  .sem em { font: 800 11px/1 Nunito, sans-serif; font-style: normal; color: var(--suave); margin-left: 4px; }
+  /* (24/11, Pedro: "tudo que for pago, colocar o valor do lado, para o pai ver sem clicar") o valor à direita, em dourado */
+  .preco { flex: none; display: flex; flex-direction: column; align-items: flex-end; font: 700 24px/1 Caveat, cursive; color: var(--c); }
+  .preco small { font: 800 10px/1.2 Nunito, sans-serif; color: var(--c); }
+  .principal.ir { display: table; margin: 16px auto 0; }
+  .linha.ouro .data b, .linha.ouro .txt small { color: var(--ouro); }
+  .linha.ferias .txt small { color: var(--turq); font-weight: 800; }
+
+  /* (24/11, Pedro: "tá esse espaço em branco todo, você pode espaçar mais") as linhas crescem e dividem o espaço que sobra */
+  #linhas { flex: 5 1 auto; } #festa { flex: 1 1 auto; }
+  #linhas, #festa { display: flex; flex-direction: column; } #linhas li, #festa li { flex: 1; display: flex; } #linhas .linha, #festa .linha { flex: 1; }
+  .barra { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--fio); }
+  .barra .principal { font-size: 24px; }
+  .barra .principal small { font: 800 11px/1 Nunito, sans-serif; color: #C0453A; vertical-align: super; }
+
+  /* a capa (as cores do caderno do kit: azul #1E2C78 → #16205A, elástico laranja, papel #FFFDF7, fita rosa) */
+  .capa { position: fixed; inset: 0; z-index: 20; display: flex; flex-direction: column; align-items: center; overflow: hidden;
+    padding: max(8svh, env(safe-area-inset-top)) 66px max(8svh, env(safe-area-inset-bottom)) 22px;
+    background: repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 3px), radial-gradient(90% 50% at 50% 0%, rgba(255,255,255,.14), transparent 70%), linear-gradient(170deg, #1E2C78, #16205A);
+    transition: transform .7s cubic-bezier(.6,.05,.3,1), opacity .5s .3s; transform-origin: left center; }
+  .capa.aberta { transform: perspective(1400px) rotateY(-100deg); opacity: 0; pointer-events: none; }
+  @media (min-width: 520px) { .capa { left: 50%; width: 480px; margin-left: -240px; } }
+  .elastico { position: absolute; top: 0; bottom: 0; right: 22px; width: 12px; background: linear-gradient(90deg, #C9661A, #E9832A 40%, #F5A35A 60%, #C9661A); box-shadow: -2px 0 6px rgba(0,0,0,.18); }
+  .capa-logo { width: 200px; height: auto; }
+  /* (24/11) o mascote do Amadeus (o globinho de capelo, opção 1 do Pedro), com a borda branca de adesivo dos amigos mágicos para não sumir no azul */
+  .capa-gato { width: 170px; height: auto; margin-top: 3svh; filter: drop-shadow(5px 0 0 #fff) drop-shadow(-5px 0 0 #fff) drop-shadow(0 5px 0 #fff) drop-shadow(0 -5px 0 #fff) drop-shadow(0 12px 14px rgba(0,0,0,.35)); animation: voa 3.2s ease-in-out infinite; }
+  @keyframes voa { 0%, 100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-10px) rotate(2deg); } }
+  .etiqueta { position: relative; width: 100%; max-width: 330px; margin-top: 3svh; padding: 26px 22px 18px; text-align: center; background: #FFFDF7; color: #22338A;
+    border-radius: 6px; box-shadow: 0 14px 30px rgba(0,0,0,.28); transform: rotate(-.8deg); }
+  .fita { position: absolute; top: -12px; left: 50%; width: 96px; height: 24px; margin-left: -48px; background: rgba(229,116,125,.78); transform: rotate(2deg); }
+  .et-sobre { font: 800 11px/1 Nunito, sans-serif; letter-spacing: .2em; text-transform: uppercase; color: #E9832A; }
+  .etiqueta h2 { margin-top: 6px; font: 700 34px/1.02 Caveat, cursive; text-wrap: balance; }
+  .et-texto { margin-top: 10px; font-size: 14px; font-weight: 600; line-height: 1.4; color: #4A5A9E; }
+  .et-assina { margin-top: 10px; font: 700 19px/1 Caveat, cursive; color: #8E98C6; }
+  .capa-botoes { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  /* a entrada na capa: campos com o traço embaixo (sem caixa) e a lista de nomes subindo por cima, em papel */
+  .capa .capa-botoes { width: 100%; max-width: 330px; gap: 8px; }
+  .capa-busca { position: relative; width: 100%; }
+  .capa-campo { width: 100%; padding: 8px 2px; border: 0; border-bottom: 2px solid rgba(255,255,255,.45); background: none; color: #fff; font: 700 17px/1.2 Nunito, sans-serif; outline: none; text-align: center; }
+  .capa-campo::placeholder { color: rgba(255,255,255,.62); }
+  .capa-campo:focus { border-bottom-color: #F2C14E; }
+  .capa-sug { position: absolute; left: 0; right: 0; bottom: 100%; margin-bottom: 6px; list-style: none; background: #FFFDF8; border-radius: 14px; box-shadow: 0 14px 30px rgba(0,0,0,.3); overflow: hidden; z-index: 2; }
+  .capa-sug button { width: 100%; display: flex; flex-direction: column; align-items: flex-start; padding: 9px 14px; font: 800 14.5px/1.2 Nunito, sans-serif; color: #0B2A5B; text-align: left; }
+  .capa-sug li + li button { border-top: 1px solid rgba(11,42,91,.08); }
+  .capa-sug small { font-size: 11.5px; font-weight: 700; color: #6B7386; }
+  .capa-sug .vazio { padding: 10px 14px; font: 700 13px/1.2 Nunito, sans-serif; color: #6B7386; }
+  .capa-erro { min-height: 16px; font: 800 12.5px/1.25 Nunito, sans-serif; color: #FFC2B8; text-align: center; }
+  .capa-erro:empty { min-height: 0; }
+  .capa .capa-ck { font-size: 18px; }
+  /* (24/11, Pedro: "bem discreta") o ver sem entrar: pequeno, apagado, sem traço */
+  .capa-sem { margin-top: 2px; font: 700 12px/1 Nunito, sans-serif; letter-spacing: .02em; color: rgba(255,255,255,.45); padding: 6px 10px; }
+  /* com a entrada, a capa aperta: mascote menor e etiqueta mais curta, para os 8% de baixo ficarem livres */
+  .capa .capa-gato { width: 132px; margin-top: 2svh; }
+  .capa .etiqueta { padding: 22px 20px 14px; margin-top: 2.5svh; }
+  .capa .etiqueta h2 { font-size: 30px; }
+  .capa .et-texto { font-size: 13px; margin-top: 6px; }
+  .capa .et-assina { font-size: 17px; margin-top: 6px; }
+  @media (max-height: 760px) { .capa .capa-gato { width: 80px; margin-top: 1svh; } .capa .capa-logo { width: 150px; } .capa .etiqueta { margin-top: 2svh; padding: 18px 16px 10px; } .capa .etiqueta h2 { font-size: 24px; } .capa .et-texto { font-size: 12px; } .capa .et-assina { display: none; } .capa-campo { font-size: 15.5px; padding: 6px 2px; } .capa .capa-ir { font-size: 26px; } .capa .capa-ck { font-size: 16px; } }
+  .capa-ir { font: 700 32px/1 Caveat, cursive; color: #fff; padding-bottom: 4px; border-bottom: 3px solid #E9832A; }
+  .capa-ck { font: 700 22px/1 Caveat, cursive; color: rgba(255,255,255,.8); }
+  @media (max-height: 700px) { .capa-gato { width: 96px; margin-top: 3svh; } .et-assina { font-size: 16px; } .etiqueta { padding: 20px 18px 12px; margin-top: 2.5svh; } .etiqueta h2 { font-size: 29px; } .et-texto { font-size: 13px; } .capa-logo { width: 170px; } }
+
+  /* (24/11) a entrada na capa: dois campos sobre o azul (linha branca embaixo, sem caixa) */
+  /* (24/11) a entrada no topo: dois campos numa linha, só com o traço embaixo (sem caixa), e o "Entrar" em letra de mão */
+  .entrar-convite { margin-top: 10px; font: 700 19px/1.1 Caveat, cursive; color: #8A6BD1; text-align: center; text-shadow: 0 0 12px rgba(255,253,248,.95); }
+  .entrar-topo { display: flex; align-items: flex-end; gap: 10px; width: 100%; max-width: 360px; margin-top: 2px; }
+  .entrar-topo input { min-width: 0; padding: 5px 0; border: 0; border-bottom: 1.5px solid rgba(8,48,120,.35); background: none; font: 700 14px/1.2 Nunito, sans-serif; color: var(--tinta); outline: none; text-align: center; }
+  .entrar-topo input::placeholder { color: #6B7386; }
+  .entrar-topo input:focus { border-bottom-color: #FFB000; }
+  #lnome { flex: 1.3; } #lniver { flex: 1.2; }
+  .entrar-topo button { flex: none; font: 700 22px/1 Caveat, cursive; color: var(--tinta); border-bottom: 2.5px solid #FFB000; padding-bottom: 1px; }
+  @media (max-height: 700px) { .ola { margin-top: 2svh !important; } .entrar-convite { font-size: 16px; margin-top: 2px; } .entrar-topo input { font-size: 13px; padding: 3px 0; } .entrar-topo button { font-size: 19px; } }
+  .entrar-erro { min-height: 0; font-size: 12px; font-weight: 800; color: #C0453A; text-align: center; }
+  .entrar-erro:empty { display: none; }
+  .capa-campo { width: 100%; padding: 8px 2px; border: 0; border-bottom: 2px solid rgba(255,255,255,.45); background: none; color: #fff; font: 700 18px/1.2 Nunito, sans-serif; outline: none; text-align: center; }
+  .capa-campo::placeholder { color: rgba(255,255,255,.6); }
+  .capa-campo:focus { border-bottom-color: #E9832A; }
+  .capa-erro { min-height: 18px; font-size: 13px; font-weight: 800; color: #FFC2B8; text-align: center; }
+  /* as abas dos irmãos: o nome em letra de mão; a aba de agora com a cor e o traço dourado, sem nada atrás */
+  .abas-linha { display: flex; align-items: baseline; justify-content: center; gap: 18px; margin-top: 6px; }
+  .abas { display: flex; justify-content: center; gap: 22px; }
+  .abas button { font: 700 26px/1 Caveat, cursive; color: var(--suave); padding-bottom: 2px; border-bottom: 3px solid transparent; text-shadow: 0 0 12px rgba(255,253,248,.95); }
+  .abas button.on { color: var(--tinta); border-bottom-color: #FFB000; }
+  .sair { margin-top: 0; font: 700 16px/1 Caveat, cursive; color: var(--suave); text-shadow: 0 0 10px rgba(255,253,248,.95); }
+  .preco.ok { color: var(--turq) !important; font-size: 20px; }
+  .preco.ok small { color: var(--turq) !important; }
+  .pix-dados-cad { margin-top: 12px; font-size: 13px; font-weight: 700; color: var(--suave); }
+  /* o checklist (como o "Meu checklist" da Agenda: uma lista do que ter em mãos, dia por dia; o toque marca) */
+  .ck-t { font-size: 30px; }
+  .ck-dia { margin-top: 10px; font: 800 10.5px/1 Nunito, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--c, var(--suave)); }
+  .ck-lista { list-style: none; margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px 16px; }
+  .ck-item { display: flex; align-items: center; gap: 10px; min-height: 32px; padding: 2px 0; font-size: 14px; line-height: 1.2; font-weight: 700; color: var(--tinta); text-align: left; }
+  .ck-item i { flex: none; width: 22px; height: 22px; border-radius: 7px; border: 2px solid #b9c0cc; display: grid; place-items: center; font: 900 14px/1 Nunito, sans-serif; font-style: normal; color: #fff; }
+  .ck-item.ok { color: var(--suave); text-decoration: line-through; text-decoration-color: rgba(122,130,150,.6); }
+  .ck-item.ok i { border-color: var(--turq); background: var(--turq); }
+  .ck-item small { display: block; font-size: 11px; font-weight: 600; color: var(--suave); text-decoration: none; }
+  @media (max-height: 700px) { .ck-t { font-size: 26px; } .ck-dia { margin-top: 7px; } .ck-item { min-height: 26px; padding: 1px 0; font-size: 13px; } .ck-item i { width: 18px; height: 18px; border-radius: 5px; font-size: 11px; } .ck-item small { display: none; } .cartao:has(.ck-t) { max-height: 90svh; padding-top: 16px; } .cartao:has(.ck-t) .fechar { margin-top: 2px; min-height: 28px; } .ck-whats { font-size: 20px !important; margin-top: 4px !important; } .ck-falta { margin-top: 4px; font-size: 19px; } }
+  .ck-whats { font-size: 24px !important; margin-top: 8px !important; }
+  .ck-falta { margin-top: 8px; text-align: center; font: 700 22px/1 Caveat, cursive; color: var(--turq); }
+  .principal { font: 700 26px/1 Caveat, cursive; color: var(--tinta); border-bottom: 3px solid #FFB000; padding-bottom: 3px; white-space: nowrap; text-decoration: none; }
+
+  /* o cartão de zoom (igual ao da agenda) */
+  .zoom { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding: 0 18px; visibility: hidden;
+    background: rgba(11,42,91,0); transition: background .24s ease, visibility 0s .24s; }
+  .zoom.on { visibility: visible; background: rgba(11,42,91,.28); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); transition: background .24s ease; }
+  .cartao { width: 100%; max-width: 440px; max-height: 80svh; overflow-y: auto; padding: 20px 20px 10px; background: var(--papel); border-radius: 24px;
+    box-shadow: 0 24px 60px rgba(11,42,91,.25); transform: scale(.85); opacity: 0; transition: transform .28s cubic-bezier(.2,.8,.2,1), opacity .2s ease; }
+  .zoom.on .cartao { transform: none; opacity: 1; }
+  .c-topo { display: flex; align-items: center; gap: 14px; }
+  .c-topo .giz { width: 64px; height: 56px; }
+  .c-dia { font: 800 12px/1.2 Nunito, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--suave); }
+  .c-titulo { margin-top: 2px; font: 700 34px/1 Caveat, cursive; text-wrap: balance; }
+  .c-itens { list-style: none; margin-top: 14px; }
+  .c-itens li { display: flex; gap: 10px; padding: 8px 0; font-size: 15px; font-weight: 600; line-height: 1.45; color: #3A4459; }
+  .c-itens li + li { border-top: 1px solid var(--fio); }
+  .c-itens i { flex: none; width: 58px; font: 800 10.5px/1.9 Nunito, sans-serif; font-style: normal; letter-spacing: .12em; text-transform: uppercase; color: var(--suave); }
+  .c-itens b { color: var(--tinta); }
+  .c-nota { margin-top: 8px; padding-left: 12px; border-left: 3px solid #FFB000; font-size: 13.5px; font-weight: 600; line-height: 1.45; color: #3A4459; }
+  /* o Pix dentro do cartão */
+  .pix label { display: block; margin-top: 12px; font: 800 10.5px/1 Nunito, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: var(--suave); }
+  .pix input { display: block; width: 100%; margin-top: 6px; padding: 6px 0; border: 0; border-bottom: 1.5px solid var(--fio); background: none; font: 700 17px/1.2 Nunito, sans-serif; color: var(--tinta); letter-spacing: 0; text-transform: none; outline: none; }
+  .pix input:focus { border-bottom-color: #8A6BD1; }
+  .pix-erro { min-height: 18px; margin-top: 8px; font-size: 13px; font-weight: 700; color: #C0453A; }
+  .sn-tit { margin-top: 14px; font: 800 10.5px/1 Nunito, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--turq); }
+  .sn-grade { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+  .sn-grade figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .sn-qr { width: 100%; aspect-ratio: 1; height: auto; padding: 4px; background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(11,42,91,.12); transition: width .2s, height .2s; }
+  .sn-qr.grande { position: fixed; z-index: 30; left: 50%; top: 50%; width: min(80vw, 320px); transform: translate(-50%, -50%); padding: 12px; box-shadow: 0 30px 80px rgba(11,42,91,.45); }
+  .sn-qr.usada { opacity: .35; }
+  .sn-grade figcaption { font: 700 16px/1 Caveat, cursive; color: var(--tinta); }
+  /* com as senhas na tela, a linha que explica o preço sai (o cartão cabe sem rolar) */
+  .cartao:has(.sn-grade) .c-itens li:last-child { display: none; }
+  .sn-dica { margin-top: 6px; font-size: 12px; font-weight: 600; color: var(--suave); }
+  .sn-ok { margin-top: 14px; font: 700 22px/1.1 Caveat, cursive; color: var(--turq); }
+  .pix-irmaos { margin-top: 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; }
+  .pix-irmaos span { width: 100%; font-size: 14px; font-weight: 800; color: var(--tinta); }
+  .pix-irmaos label { display: flex; align-items: center; gap: 8px; font: 700 22px/1 Caveat, cursive; color: var(--tinta); }
+  .pix-irmaos input { width: 20px; height: 20px; accent-color: var(--turq); }
+  .pix-irmaos .ja { font: 700 19px/1 Caveat, cursive; color: var(--turq); }
+  .pix-alunos { list-style: none; }
+  .pix-alunos button { width: 100%; display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--fio); font-size: 14.5px; font-weight: 800; color: var(--tinta); }
+  .pix-alunos small { font-size: 11.5px; font-weight: 700; color: var(--suave); white-space: nowrap; }
+  .pix-alunos .vazio { padding: 8px 0; font-size: 13px; font-weight: 700; color: var(--suave); }
+  .pix-qtd { display: flex; align-items: center; gap: 14px; margin-top: 14px; }
+  .pix-qtd span { flex: 1; font-size: 14px; font-weight: 800; color: var(--tinta); display: flex; flex-direction: column; }
+  .pix-qtd small { font-size: 11.5px; font-weight: 600; color: var(--suave); }
+  .pix-qtd button { width: 40px; height: 40px; font: 700 28px/1 Caveat, cursive; color: var(--tinta); text-align: center; }
+  .pix-qtd b { min-width: 24px; text-align: center; font: 700 30px/1 Caveat, cursive; }
+  .outro { display: table; margin: 10px auto 0; font: 700 18px/1 Caveat, cursive; color: var(--suave); text-decoration: none; }
+  [hidden] { display: none !important; }
+  .pix-escolhida { display: flex; align-items: center; gap: 12px; margin-top: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--fio); }
+  .pix-escolhida span { flex: 1; display: flex; flex-direction: column; }
+  .pix-escolhida b { font: 700 26px/1.05 Caveat, cursive; color: var(--tinta); }
+  .pix-escolhida small { font-size: 12px; font-weight: 700; color: var(--suave); }
+  .pix-escolhida button { font: 700 19px/1 Caveat, cursive; color: var(--suave); }
+  .pix-forma { display: flex; gap: 22px; margin-top: 16px; }
+  .pix-forma button { font: 700 24px/1 Caveat, cursive; color: var(--suave); padding-bottom: 3px; border-bottom: 3px solid transparent; }
+  .pix-forma button.on { color: var(--tinta); border-bottom-color: #FFB000; }
+  .pix-total { margin-top: 8px; font-size: 13.5px; font-weight: 800; color: var(--tinta); }
+  .pix-qr { display: block; width: 220px; height: 220px; margin: 12px auto 0; }
+  .pix-espera { margin-top: 10px; text-align: center; font-size: 13.5px; font-weight: 700; color: var(--suave); }
+  .pix-ok { margin-top: 8px; text-align: center; color: var(--turq); font-size: 44px; }
+  button.principal:disabled { color: #b8bfcb; border-bottom-color: #e8e2d4; }
+  .fechar { display: block; margin: 12px auto 4px; font: 700 22px/1 Caveat, cursive; color: var(--suave); min-height: 40px; }
+
+  @media (max-height: 700px) {
+    .logo { width: 28px; height: 28px; } h1 { font-size: 32px; } .sub { font-size: 12px; } .ola { margin-top: 3svh; font-size: 12.5px; }
+    .sem { font-size: 18px; } .linha { min-height: 38px; padding: 1px 0; } .txt { font-size: 12.5px; } .txt small { font-size: 10.5px; } .data b { font-size: 20px; } .rot { margin-top: 7px; }
+  }
+
+  /* (24/11) Formandos 2026: o visual da agenda do 6º ao 9º (src/agenda/comum/premium/kit.css) */
+  :root { --tinta: #0B2A5B; --suave: #6B7386; --fio: rgba(11, 42, 91, .10); --papel: #FFFDF8; --ouro: #B47A12; --turq: #0E8C80; }
+  body { background: #ECEAE4; }
+  .rot.roxo, .linha.roxo .sem, .linha.roxo .txt small, .linha.roxo .preco, .linha.roxo .preco small { color: var(--ouro) !important; --c: var(--ouro); }
+  .entrar-convite { color: var(--ouro); }
+  /* as duas partes: o nome em letra de mão, a de agora com o traço dourado (sem nada atrás) */
+  .partes { display: flex; gap: 22px; margin-top: 14px; }
+  .partes button { font: 700 23px/1 Caveat, cursive; color: var(--suave); padding-bottom: 2px; border-bottom: 3px solid transparent; }
+  .partes button.on { color: var(--tinta); border-bottom-color: #FFB000; }
+  /* a capa adulta: só o azul-marinho, o logo, um fio dourado e o título */
+  .capa { background: radial-gradient(90% 55% at 50% 0%, rgba(255,255,255,.10), transparent 70%), linear-gradient(170deg, #12356E, #0B2A5B 55%, #081F45); padding-right: 22px; }
+  .capa::after { content: ""; position: absolute; inset: 14px; border: 1px solid rgba(242,193,78,.45); border-radius: 18px; pointer-events: none; }
+  .capa .etiqueta { margin-top: auto; background: none; box-shadow: none; transform: none; color: #FFF6E0; padding: 0 10px; max-width: 340px; }
+  .capa .et-sobre { color: #F2C14E; letter-spacing: .24em; }
+  .capa .etiqueta h2 { color: #FFF6E0; font-size: 46px; margin-top: 10px; }
+  .capa .etiqueta h2::after { content: ""; display: block; width: 64px; height: 3px; margin: 16px auto 0; border-radius: 2px; background: #F2C14E; }
+  .capa .et-texto { color: rgba(255,246,224,.82); font-size: 15px; margin-top: 16px; }
+  .capa .et-assina { color: rgba(255,246,224,.6); margin-top: 16px; }
+  .capa .capa-ir { border-bottom-color: #F2C14E; }
+  .capa .capa-botoes { margin-top: auto; }
+  .capa-logo { width: 220px; }
+  /* (24/11, Pedro: "4 fontes diferentes numa só capa, deixe mais bonito") a capa só com a Nunito, em pesos diferentes */
+  .capa .etiqueta h2 { font: 800 34px/1.12 Nunito, sans-serif !important; letter-spacing: -.01em; }
+  .capa .et-assina { font: 700 13px/1.2 Nunito, sans-serif; letter-spacing: .04em; }
+  .capa .capa-ir { font: 800 17px/1 Nunito, sans-serif; letter-spacing: .02em; padding-bottom: 6px; }
+  .capa .capa-ck { font: 700 14px/1 Nunito, sans-serif; color: rgba(255,246,224,.75); }
+  @media (max-height: 700px) { .capa .etiqueta h2 { font-size: 29px !important; } }
+  /* o checklist do Grupo 5 tem mais dias: um pouco mais junto, para caber sem rolar */
+  .ck-item { min-height: 28px; padding: 1px 0; } .ck-dia { margin-top: 8px; } .ck-falta { margin-top: 4px; } .ck-whats { margin-top: 4px !important; }
+  @media (max-height: 700px) { .ola { margin-top: 1svh !important; } .capa .etiqueta h2 { font-size: 38px; } .capa .et-texto { font-size: 13.5px; } .partes { margin-top: 4px; } .ck-item { min-height: 23px; padding: 0; font-size: 12.5px; } .ck-dia { margin-top: 5px; font-size: 9.5px; } .ck-t { font-size: 24px !important; } .partes button { font-size: 20px; } }
+</style>
+</head>
+<body>
+<main class="tela">
+  <header class="topo">
+    <img class="logo" src="/formandos2026/logo-amadeus.png" alt="Escola Amadeus">
+    <h1>Formandos 2026</h1>
+    <p class="sub">Educação Infantil · Grupo 5 · 5 a 20 de dezembro</p>
+    <div class="abas-linha"><nav class="abas" id="abas" hidden></nav><button class="sair" id="sair" hidden></button></div>
+  </header>
+
+  <p class="ola">A <b>formatura dos nossos pequenos</b> está chegando! Toque em cada dia para ver o que levar.</p>
+
+  <nav class="partes" id="partes"><button class="on" data-p="1">Até 10/12</button><button data-p="2">Ensaios e formatura</button></nav>
+  <ul class="linhas" id="linhas"></ul>
+
+  <h2 class="rot roxo" id="rotfesta">Para a Aula da Saudade</h2>
+  <ul class="linhas" id="festa"></ul>
+
+  <div class="barra">
+    <button class="principal" id="abrirck">Meu checklist <small id="ckfalta"></small></button>
+    <a class="principal" href="/formandos2026/formandos-2026.ics" download>Pôr na agenda</a>
+  </div>
+</main>
+
+<!-- a capa: o caderno azul com o elástico laranja, a etiqueta de papel com fita rosa e o gato Bigode voando -->
+<section class="capa" id="capa" aria-label="Capa">
+  <img class="capa-logo" src="/formandos2026/amadeus-horizontal.webp" alt="Centro Educacional Amadeus">
+  <div class="etiqueta">
+    <p class="et-sobre">Formandos 2026 · Grupo 5</p>
+    <h2>A formatura está chegando!</h2>
+    <p class="et-texto">De 5 a 20 de dezembro: a programação especial, os ensaios e a festa de formatura. Veja cada dia e o que levar.</p>
+    <p class="et-assina">Com carinho, Coordenação Pedagógica</p>
+  </div>
+  <form class="capa-botoes" id="flogin" autocomplete="off">
+    <div class="capa-busca">
+      <ul class="capa-sug" id="lsug" hidden></ul>
+      <input class="capa-campo" id="lnome" placeholder="Nome do aluno" aria-label="Nome do aluno" autocomplete="off" enterkeyhint="search">
+    </div>
+    <input class="capa-campo" id="lniver" placeholder="Aniversário do aluno: dd/mm/aaaa" aria-label="Aniversário do aluno" inputmode="numeric" enterkeyhint="go" hidden>
+    <p class="capa-erro" id="lerro"></p>
+    <button class="capa-ir" id="entrar">Entrar ›</button>
+    <button type="button" class="capa-sem" id="vercapa">ver sem entrar</button>
+  </form>
+</section>
+
+<div class="zoom" id="zoom" role="dialog" aria-modal="true">
+  <div class="cartao" id="cartao"></div>
+</div>
+
+<script>
+const GIZ = {"festa":"<svg class=\"giz\" viewBox=\"0 0 220 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Festa\">\n    <defs><filter id=\"giz1\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"3\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz1)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M62 70 L72 30 L94 56 L110 22 L126 56 L148 30 L158 70 Z\" stroke=\"#FFB000\" stroke-width=\"6\" fill=\"#FFB00055\"/><path d=\"M24 118 C22 90 64 90 84 100 C98 106 104 112 110 114 C116 112 122 106 136 100 C156 90 198 90 196 118 C194 152 150 156 128 138 C120 132 114 128 110 128 C106 128 100 132 92 138 C70 156 26 152 24 118 Z\" stroke=\"#8A63D2\" stroke-width=\"6\" fill=\"#8A63D244\"/><path d=\"M50 120 a16 11 0 1 0 32 0 a16 11 0 1 0 -32 0M138 120 a16 11 0 1 0 32 0 a16 11 0 1 0 -32 0\" stroke=\"#083078\" stroke-width=\"5\" fill=\"#FFFFFF\"/></g></svg>","tv":"<svg class=\"giz\" viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"TV\">\n    <defs><filter id=\"giz2\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"4\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz2)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M30 62 H170 V156 H30 Z\" stroke=\"#083078\" stroke-width=\"7\" fill=\"#2BA3D633\"/><path d=\"M44 76 H156 V142 H44 Z\" stroke=\"#1D4FA0\" stroke-width=\"5\" fill=\"#FFFFFF\"/><path d=\"M78 30 L100 58 L122 30\" stroke=\"#E0524C\" stroke-width=\"6\" fill=\"none\"/><path d=\"M70 156 L60 176 M130 156 L140 176\" stroke=\"#083078\" stroke-width=\"6\" fill=\"none\"/><path d=\"M132 122 a6 6 0 1 0 12 0 a6 6 0 1 0 -12 0\" stroke=\"#FFB000\" stroke-width=\"5\" fill=\"#FFB00088\"/></g></svg>","gota":"<svg class=\"giz\" viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Dia da água\">\n    <defs><filter id=\"giz3\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"5\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz3)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M100 24 C70 70 52 100 52 128 a48 48 0 0 0 96 0 C148 100 130 70 100 24 Z\" stroke=\"#2BA3D6\" stroke-width=\"7\" fill=\"#2BA3D640\"/><path d=\"M78 128 q4 20 22 26\" stroke=\"#FFFFFF\" stroke-width=\"6\" fill=\"none\"/></g></svg>","toalha":"<svg class=\"giz\" viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Toalhinha\">\n    <defs><filter id=\"giz4\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"6\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz4)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M46 50 H154 V158 H46 Z\" stroke=\"#3FA66B\" stroke-width=\"7\" fill=\"#3FA66B26\"/><path d=\"M46 134 H154 M46 146 H154\" stroke=\"#3FA66B\" stroke-width=\"5\" fill=\"none\"/><path d=\"M70 50 V40 M100 50 V40 M130 50 V40\" stroke=\"#1D4FA0\" stroke-width=\"5\" fill=\"none\"/><path d=\"M66 80 h68 M66 100 h48\" stroke=\"#3FA66B\" stroke-width=\"4\" fill=\"none\"/></g></svg>","bolo":"<svg class=\"giz\" viewBox=\"0 0 220 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Parabéns\">\n    <defs><filter id=\"giz5\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"7\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz5)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M40 110 H180 V176 H40 Z\" stroke=\"#E86FA6\" stroke-width=\"7\" fill=\"#E86FA633\"/><path d=\"M40 132 C70 146 90 120 110 134 C130 148 150 122 180 132\" stroke=\"#FFFFFF\" stroke-width=\"7\" fill=\"none\"/><path d=\"M80 110 V76 M110 110 V70 M140 110 V76\" stroke=\"#1D4FA0\" stroke-width=\"7\" fill=\"none\"/><path d=\"M80 66 q-6 -10 0 -18 q6 8 0 18 M110 60 q-6 -10 0 -18 q6 8 0 18 M140 66 q-6 -10 0 -18 q6 8 0 18\" stroke=\"#FFB000\" stroke-width=\"5\" fill=\"#FFB00088\"/></g></svg>","moedas":"<svg class=\"giz\" viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Financeiro\">\n    <defs><filter id=\"giz6\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"8\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz6)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M32 150 a48 16 0 1 0 96 0 a48 16 0 1 0 -96 0\" stroke=\"#FFB000\" stroke-width=\"6\" fill=\"#FFB00055\"/><path d=\"M32 150 V126 M128 150 V126\" stroke=\"#FFB000\" stroke-width=\"6\" fill=\"none\"/><path d=\"M32 126 a48 16 0 1 0 96 0 a48 16 0 1 0 -96 0\" stroke=\"#FFB000\" stroke-width=\"6\" fill=\"#FFB00055\"/><path d=\"M104 72 a36 36 0 1 0 72 0 a36 36 0 1 0 -72 0\" stroke=\"#3FA66B\" stroke-width=\"6\" fill=\"#3FA66B33\"/><path d=\"M140 52 V92 M130 62 q10 -8 20 0 q-20 10 0 20 q10 8 20 0\" stroke=\"#3FA66B\" stroke-width=\"5\" fill=\"none\"/></g></svg>","prancheta":"<svg class=\"giz\" viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Atividades\">\n    <defs><filter id=\"giz7\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"2\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz7)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M46 40 H154 V176 H46 Z\" stroke=\"#1D4FA0\" stroke-width=\"7\" fill=\"#FFFFFF\"/><path d=\"M76 26 H124 V54 H76 Z\" stroke=\"#083078\" stroke-width=\"7\" fill=\"#08307833\"/><path d=\"M66 84 l9 10 l16 -19\" stroke=\"#3FA66B\" stroke-width=\"7\" fill=\"none\"/><path d=\"M104 86 H138\" stroke=\"#1D4FA0\" stroke-width=\"6\" fill=\"none\"/><path d=\"M66 124 l9 10 l16 -19\" stroke=\"#3FA66B\" stroke-width=\"7\" fill=\"none\"/><path d=\"M104 126 H138\" stroke=\"#1D4FA0\" stroke-width=\"6\" fill=\"none\"/></g></svg>","sol":"<svg class=\"giz\" viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"O dia\">\n    <defs><filter id=\"giz8\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"3\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz8)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M52 100 a48 48 0 1 0 96 0 a48 48 0 1 0 -96 0\" stroke=\"#FFB000\" stroke-width=\"6\" fill=\"#FFB00040\"/><path d=\"M100 34v-22 M100 166v22 M34 100h-22 M166 100h22 M54 54l-14-14 M146 54l14-14 M54 146l-14 14 M146 146l14 14\" stroke=\"#FFB000\" stroke-width=\"6\" fill=\"none\"/><path d=\"M84 92 h0.1 M116 92 h0.1\" stroke=\"#083078\" stroke-width=\"9\" fill=\"none\"/><path d=\"M80 112 q20 18 40 0\" stroke=\"#083078\" stroke-width=\"5\" fill=\"none\"/><path d=\"M66 110 a6 6 0 1 0 12 0 a6 6 0 1 0 -12 0M122 110 a6 6 0 1 0 12 0 a6 6 0 1 0 -12 0\" stroke=\"#E86FA6\" stroke-width=\"4\" fill=\"#E86FA666\"/></g></svg>","calendario":"<svg class=\"giz\" viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Calendário\">\n    <defs><filter id=\"giz9\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"4\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz9)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M36 50 H164 V170 H36 Z\" stroke=\"#1D4FA0\" stroke-width=\"7\" fill=\"#FFFFFF\"/><path d=\"M36 50 H164 V86 H36 Z\" stroke=\"#E0524C\" stroke-width=\"7\" fill=\"#E0524C66\"/><path d=\"M70 34 V62 M130 34 V62\" stroke=\"#083078\" stroke-width=\"7\" fill=\"none\"/><path d=\"M62 112 h14 M94 112 h14 M126 112 h14 M62 142 h14 M94 142 h14\" stroke=\"#1D4FA0\" stroke-width=\"8\" fill=\"none\"/><path d=\"M123 142 a10 10 0 1 0 20 0 a10 10 0 1 0 -20 0\" stroke=\"#FFB000\" stroke-width=\"5\" fill=\"#FFB00066\"/></g></svg>","nota":"<svg class=\"giz\" viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Música\">\n    <defs><filter id=\"giz10\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"5\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz10)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M76 150 V48 L156 32 V132\" stroke=\"#8A63D2\" stroke-width=\"8\" fill=\"none\"/><path d=\"M76 64 L156 48\" stroke=\"#8A63D2\" stroke-width=\"8\" fill=\"none\"/><path d=\"M36 152 a22 16 0 1 0 44 0 a22 16 0 1 0 -44 0M116 134 a22 16 0 1 0 44 0 a22 16 0 1 0 -44 0\" stroke=\"#8A63D2\" stroke-width=\"7\" fill=\"#8A63D255\"/><path d=\"M30 52 v16 M22 60 h16M176 165 v14 M169 172 h14\" stroke=\"#FFB000\" stroke-width=\"4\" fill=\"none\"/></g></svg>","balao":"<svg class=\"giz\" viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Festa\">\n    <defs><filter id=\"giz11\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"6\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz11)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M58 74 a42 52 0 1 0 84 0 a42 52 0 1 0 -84 0\" stroke=\"#E0524C\" stroke-width=\"7\" fill=\"#E0524C44\"/><path d=\"M100 126 C90 150 112 166 100 190\" stroke=\"#083078\" stroke-width=\"4\" fill=\"none\"/><path d=\"M84 52 q6 -12 18 -14\" stroke=\"#FFFFFF\" stroke-width=\"6\" fill=\"none\"/></g></svg>","lanche":"<svg class=\"giz\" viewBox=\"0 0 220 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Lanche\">\n    <defs><filter id=\"giz12\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"7\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz12)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M30 96 C30 60 190 60 190 96 Z\" stroke=\"#F28C28\" stroke-width=\"7\" fill=\"#F28C2844\"/><path d=\"M26 112 C60 100 160 124 194 108\" stroke=\"#3FA66B\" stroke-width=\"8\" fill=\"none\"/><path d=\"M30 124 H190\" stroke=\"#E0524C\" stroke-width=\"8\" fill=\"none\"/><path d=\"M30 140 C30 160 190 160 190 140 Z\" stroke=\"#F28C28\" stroke-width=\"7\" fill=\"#F28C2844\"/></g></svg>","camiseta":"<svg class=\"giz\" viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Troca de roupa\">\n    <defs><filter id=\"giz13\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"8\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz13)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M70 40 L40 58 L28 92 L56 102 L60 166 H140 L144 102 L172 92 L160 58 L130 40 Q100 66 70 40 Z\" stroke=\"#2BA3D6\" stroke-width=\"7\" fill=\"#2BA3D633\"/><path d=\"M82 46 Q100 60 118 46\" stroke=\"#1D4FA0\" stroke-width=\"5\" fill=\"none\"/><path d=\"M100 104 v24 M88 116 h24\" stroke=\"#FFB000\" stroke-width=\"6\" fill=\"none\"/></g></svg>","pessoas":"<svg class=\"giz\" viewBox=\"0 0 220 200\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Reunião\">\n    <defs><filter id=\"giz14\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\" seed=\"2\"/><feDisplacementMap in=\"SourceGraphic\" scale=\"2.6\"/></filter></defs>\n    <g filter=\"url(#giz14)\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M56 68 a22 22 0 1 0 44 0 a22 22 0 1 0 -44 0\" stroke=\"#083078\" stroke-width=\"6\" fill=\"#FFE3C866\"/><path d=\"M124 68 a22 22 0 1 0 44 0 a22 22 0 1 0 -44 0\" stroke=\"#083078\" stroke-width=\"6\" fill=\"#FFE3C866\"/><path d=\"M40 170 C40 120 116 120 116 170 M108 170 C108 120 184 120 184 170\" stroke=\"#1D4FA0\" stroke-width=\"7\" fill=\"#1D4FA033\"/></g></svg>"};
+// o servidor do pagamento: na página de teste é o mesmo endereço; no site da escola (escolaamadeus.com/programacaoinfantil), o de teste
+const API = location.hostname.endsWith("vercel.app") || location.hostname === "localhost" ? "" : "https://fim-de-ano-infantil.vercel.app";
+// cada dia: o que aparece na linha e o que abre no cartão (o texto é o da coordenação, só arrumado em partes)
+const DIAS = [
+  { parte: 1, sem: "Sábado", d: "5/12", dia: "Sábado, 5 de dezembro", giz: "nota", t: "Auto de Natal", s: "15h · no auditório",
+    preco: "R$ 20", por: "convidado", pix: { evento: "auto-de-natal", preco: 20, qtd: true, unidade: "senha", acao: "Comprar senhas" }, link: "https://eventos.escolaamadeus.com/eventos/auto-de-natal", acao: "ou pelo site de eventos",
+    itens: [["Hora", "<b>15h</b>"], ["Onde", "Auditório da escola"], ["Quem", "Os alunos que fizeram a inscrição"], ["Senhas", "Aluno participante: <b>grátis</b>. Acompanhantes e convidados: <b>R$&nbsp;20,00 por pessoa</b> (decoração e acesso ao auditório), até <b>30/11</b>"]] },
+  { parte: 1, sem: "Segunda-feira", d: "7/12", dia: "Segunda-feira, 7 de dezembro", giz: "tv", t: "Cineminha e baile à fantasia", s: "Aula normal · traga pipoca",
+    itens: [["O quê", "Encerramento <b>bilíngue</b>, com cineminha e baile à fantasia"], ["Levar", "O lanche de sempre e <b>um pacote de pipoca</b>"], ["Roupa", "A criança pode vir <b>fantasiada</b>!"]] },
+  { parte: 1, sem: "Terça-feira", d: "8/12", dia: "Terça-feira, 8 de dezembro", giz: "gota", t: "Dia de diversão na água", s: "Banho de mangueira",
+    itens: [["Roupa", "Vir com <b>traje de banho</b>"], ["Mochila", "<b>Toalha</b> e uma <b>muda de roupa</b> extra"]] },
+  { parte: 1, sem: "Quarta-feira", d: "9/12", dia: "Quarta-feira, 9 de dezembro", giz: "bolo", t: "Aula da Saudade", s: "Despedida com todo o Grupo 5",
+    itens: [["O quê", "Momento especial de despedida e confraternização com todos os alunos do Grupo 5"], ["Quem", "<b>Todos os alunos</b>, independentemente da participação na formatura"], ["Lanche", "Lanche e guloseimas pela contribuição de <b>R$&nbsp;20,00</b> (até 30/11)"]],
+    nota: "Quem optar por não contribuir deve enviar o lanche individual da criança nesse dia. Nesse caso, ela não recebe o lanche e as guloseimas, que são comprados com os valores arrecadados." },
+  { parte: 1, sem: "Quinta-feira", d: "10/12", dia: "Quinta-feira, 10 de dezembro", giz: "prancheta", t: "Plantão pedagógico", s: "15h às 20h · início das férias", ferias: true,
+    itens: [["Hora", "<b>Das 15h às 20h</b>"], ["Férias", "A partir deste dia, <b>todos os alunos estão de férias</b>"]] },
+  { parte: 2, sem: "Segunda e terça-feira", d: "14 e 15/12", dia: "Segunda e terça-feira, 14 e 15 de dezembro", giz: "pessoas", t: "Ensaios da formatura", s: "Sem aula · das 7h às 11h",
+    itens: [["Hora", "<b>Das 7h às 11h</b>"], ["Aula", "Não haverá aula"], ["Roupa", "Sem fardamento: <b>roupa comum e confortável</b>"], ["Levar", "O <b>lanche</b> e uma <b>garrafinha de água</b>"]] },
+  { parte: 2, sem: "Quarta e quinta-feira", d: "16 e 17/12", dia: "Quarta e quinta-feira, 16 e 17 de dezembro", giz: "pessoas", t: "Ensaios da formatura", s: "Sem aula · das 13h às 17h",
+    itens: [["Hora", "<b>Das 13h às 17h</b>"], ["Aula", "Não haverá aula"], ["Roupa", "Sem fardamento: <b>roupa comum e confortável</b>"], ["Levar", "O <b>lanche</b> e uma <b>garrafinha de água</b>"]] },
+  { parte: 2, sem: "Sexta-feira", d: "18/12", dia: "Sexta-feira, 18 de dezembro", giz: "calendario", t: "Preparação da formatura", s: "Sem aula e sem ensaio",
+    itens: [["O quê", "Dia destinado exclusivamente à <b>preparação e organização</b> da festa de formatura"], ["Aula", "Não haverá aula nem ensaio"]] },
+  { parte: 2, sem: "Domingo", d: "20/12", dia: "Domingo, 20 de dezembro", giz: "balao", t: "Festa de formatura", s: "O salão abre às 17h",
+    itens: [["Abertura", "O salão será aberto <b>precisamente às 17h</b>, sem possibilidade de entrada antes"]] },
+]
+const FESTA = [
+  { sem: "Até segunda-feira", d: "30/11", dia: "Até segunda-feira, 30 de novembro", giz: "moedas", t: "Contribuição da festa", s: "Lanche e guloseimas · Aula da Saudade", roxo: true, preco: "R$ 20", por: "aluno", pix: { evento: "contribuicao-confraternizacao-infantil", preco: 20, qtd: false, acao: "Pagar com Pix" },
+    itens: [["Valor", "<b>R$&nbsp;20,00</b> por aluno"], ["Para quê", "O <b>lanche</b> e as <b>guloseimas</b> da Aula da Saudade (9/12)"], ["Prazo", "Até <b>segunda-feira, 30/11</b>"]],
+    nota: "Quem optar por não contribuir deve enviar o lanche individual da criança no dia 9/12. Nesse caso, ela não recebe o lanche e as guloseimas da festa." },
+];
+// (24/11) entrado: o que a criança da aba já pagou (o servidor diz quantas senhas/contribuições pagas; sem o evento no sistema, nada)
+const pagoDe = (x) => (SESSAO && x.pix ? SESSAO.criancas[ATUAL].pago[x.pix.evento] : undefined);
+const precoDe = (x) => { const n = pagoDe(x); if (!x.preco) return "";
+  if (n > 0) return `<span class="preco ok">✓ ${x.pix.qtd ? n + (n > 1 ? " senhas" : " senha") : "paga"}<small>${x.pix.qtd ? "compradas" : "contribuição"}</small></span>`;
+  return `<span class="preco">${x.preco}<small>por ${x.por}</small></span>`; };
+const linha = (x, i, grupo) => `<li><button class="linha${x.ouro ? " ouro" : ""}${x.roxo ? " roxo" : ""}${x.ferias ? " ferias" : ""}" data-g="${grupo}" data-i="${i}" style="--c:${x.roxo ? "#B47A12" : x.ouro ? "#C8860A" : "#0B2A5B"}">
+  <span class="giz">${GIZ[x.giz] || ""}</span>
+  <span class="txt"><span class="sem" style="--c:${x.roxo ? "#B47A12" : x.ouro ? "#C8860A" : "#0B2A5B"}">${x.sem} <em>${x.d}</em></span>${x.t}<small>${x.s}</small></span>${precoDe(x)}<span class="seta">›</span></button></li>`;
+// a parte que aparece: até 10/12 (1) ou ensaios e formatura (2); depois do dia 10, abre direto na 2
+let PARTE = new Date() > new Date(2026, 11, 10, 20) ? 2 : 1;
+document.querySelectorAll("#partes button").forEach((b) => { b.classList.toggle("on", +b.dataset.p === PARTE); b.onclick = () => { PARTE = +b.dataset.p; document.querySelectorAll("#partes button").forEach((o) => o.classList.toggle("on", o === b)); desenharLinhas(); }; });
+let SESSAO = null, ATUAL = 0; // o login (bilhete + crianças) e a aba de agora
+// (24/11, Pedro: "se no outro aviso a pessoa colocar o login, cair direto na página dos formandos") são duas páginas: a do Infantil e a dos
+// formandos (Grupo 5). Entrou com um aluno do Grupo 5 na do Infantil (ou o contrário), vai para a página dele, já entrado (o login fica no celular).
+const PAGINA = "formandos", TITULO = "Formandos";
+const TESTE = location.hostname.endsWith("vercel.app") || location.hostname === "localhost";
+const ENDERECO = { infantil: TESTE ? "/" : "/programacaoinfantil", formandos: TESTE ? "/grupo5/" : "/formandos2026" };
+try { const a = +new URLSearchParams(location.search).get("aba"); if (a > 0) ATUAL = a; } catch {}
+function paginaCerta(k) {
+  const certa = k.formando ? "formandos" : "infantil";
+  if (certa === PAGINA) return false;
+  location.replace(ENDERECO[certa] + "?aba=" + ATUAL);
+  return true;
+}
+function desenharLinhas() {
+  document.getElementById("linhas").innerHTML = DIAS.map((x, i) => (x.parte === PARTE ? linha(x, i, "d") : "")).join("");
+  for (const id of ["rotfesta", "festa"]) document.getElementById(id).hidden = PARTE !== 1;
+  document.getElementById("festa").innerHTML = FESTA.map((x, i) => linha(x, i, "f")).join("");
+  document.querySelectorAll(".linha").forEach((b) => b.onclick = () => abrir((b.dataset.g === "d" ? DIAS : FESTA)[+b.dataset.i]));
+}
+desenharLinhas();
+
+const zoom = document.getElementById("zoom"), cartao = document.getElementById("cartao");
+function abrir(x) {
+  cartao.innerHTML = `<div class="c-topo"><span class="giz">${GIZ[x.giz] || ""}</span><div><p class="c-dia">${x.dia}</p><h3 class="c-titulo">${x.t}</h3></div></div>
+    <ul class="c-itens">${x.itens.map(([a, b]) => `<li><i>${a}</i><span>${b}</span></li>`).join("")}</ul>
+    ${x.nota ? `<p class="c-nota">${x.nota}</p>` : ""}${senhasHtml(x)}${x.pix && !(SESSAO && !x.pix.qtd && pagoDe(x) > 0) ? `<button class="principal ir" id="pagar">${SESSAO && x.pix.qtd && pagoDe(x) > 0 ? "Comprar mais senhas" : x.pix.acao} ›</button>` : ""}${x.link ? `<a class="${x.pix ? "outro" : "principal ir"}" href="${x.link}" target="_blank" rel="noopener">${x.acao} ›</a>` : ""}<button class="fechar" id="fechar">Fechar</button>`;
+  zoom.classList.add("on");
+  document.getElementById("fechar").onclick = fechar;
+  const bp = document.getElementById("pagar"); if (bp) bp.onclick = () => formPix(x);
+  cartao.querySelectorAll(".sn-qr").forEach((im) => im.onclick = () => im.classList.toggle("grande"));
+}
+// as senhas (QR Codes) do aluno da aba, que o n8n gerou depois do pagamento; tocar aumenta, para mostrar na entrada
+function senhasHtml(x) {
+  if (!SESSAO || !x.pix) return "";
+  const k = SESSAO.criancas[ATUAL], sn = (k.senhas || {})[x.pix.evento] || [];
+  if (!x.pix.qtd) return pagoDe(x) > 0 ? `<p class="sn-ok">✓ Contribuição de ${k.nome} paga</p>` : "";
+  if (!sn.length) return pagoDe(x) > 0 ? `<p class="sn-ok">✓ Pago. As senhas chegam pelo WhatsApp em instantes.</p>` : "";
+  return `<p class="sn-tit">Senhas de ${k.nome} · ${sn.length}</p><div class="sn-grade">${sn.map((s, i) =>
+    `<figure><img class="sn-qr${s.usada ? " usada" : ""}" src="${s.qr}" alt="Senha ${i + 1}"><figcaption>Senha ${i + 1}${s.usada ? " · usada" : ""}</figcaption></figure>`).join("")}</div>
+    <p class="sn-dica">Toque para aumentar · cada uma vale uma pessoa</p>`;
+}
+// (24/11, Pedro: "faça um teste, que eu faço o pagamento") o Pix dentro do cartão: três campos, o QR Code, o copia e cola e a espera
+let espera = 0;
+function fechar() { zoom.classList.remove("on"); clearInterval(espera); }
+function formPix(x) {
+  const P = x.pix; let aluno = null, busca = 0;
+  cartao.innerHTML = `<p class="c-dia">${x.t}</p><h3 class="c-titulo">${P.acao}</h3>
+    <form class="pix" id="fpix" autocomplete="on">
+      <div id="passo1">
+        <label>Primeiro, qual é a criança?<input id="pbusca" autocomplete="off" placeholder="Escreva o nome dela…"></label>
+        <ul class="pix-alunos" id="palunos"></ul>
+      </div>
+      <div class="pix-escolhida" id="pesc" hidden><span><b id="pnome"></b><small id="pturma"></small></span><button type="button" id="ptroca">trocar</button></div>
+      <div id="presto" hidden>
+      ${!P.qtd && SESSAO && SESSAO.criancas.length > 1 ? `<div class="pix-irmaos" id="pirm"><span>Pagar junto, no mesmo Pix:</span>${SESSAO.criancas.map((c, i) => i === ATUAL || !c.id ? "" : (c.pago[P.evento] > 0 ? `<p class="ja">✓ ${c.nome} já está paga</p>` : `<label><input type="checkbox" value="${c.id}" checked> ${c.nome}</label>`)).join("")}</div>` : ""}
+      ${P.qtd ? `<div class="pix-qtd"><span>Quantas senhas?<small>A criança que apresenta não paga</small></span>
+        <button type="button" id="menos">−</button><b id="pq">1</b><button type="button" id="mais">+</button></div>` : ""}
+      <div class="pix-forma"><button type="button" class="on" data-m="pix">Pix</button><button type="button" data-m="cartao">Cartão</button></div>
+      <p class="pix-total" id="ptotal"></p>
+      ${SESSAO ? `<p class="pix-dados-cad" id="pcad">Os seus dados (nome, CPF e WhatsApp) vêm do cadastro da escola.</p>` : ""}
+      <div id="pdados"${SESSAO ? " hidden" : ""}>
+      <label data-c="responsavel">Seu nome<input name="responsavel" autocomplete="name"${SESSAO ? "" : " required"}></label>
+      <label data-c="cpf">Seu CPF<input name="cpf" inputmode="numeric" autocomplete="off"${SESSAO ? "" : " required"}></label>
+      <label data-c="email">Seu e-mail<input name="email" type="email" autocomplete="email"${SESSAO ? "" : " required"}></label>
+      <label data-c="telefone">Seu WhatsApp<input name="telefone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(84) 9…"${SESSAO ? "" : " required"}></label>
+      </div>
+      <p class="pix-erro" id="perro"></p>
+      <button class="principal ir" id="gerar">Gerar o Pix ›</button>
+      </div>
+    </form><button class="fechar" id="fechar">Fechar</button>`;
+  document.getElementById("fechar").onclick = fechar;
+  const erro = document.getElementById("perro"), lista = document.getElementById("palunos"), campo = document.getElementById("pbusca");
+  let qtd = 1, metodo = "pix";
+  // o total na hora: no Pix, o preço; no cartão, com a taxa (a mesma conta do site de eventos)
+  const dinheiro = (v) => "R$\u00a0" + v.toFixed(2).replace(".", ",");
+  const irm = () => [...cartao.querySelectorAll("#pirm input:checked")].map((x) => x.value);
+  cartao.querySelectorAll("#pirm input").forEach((x) => x.onchange = () => total());
+  const total = () => {
+    if (!P.qtd) qtd = 1 + irm().length;
+    const base = qtd * P.preco, v = metodo === "cartao" ? Math.round((base * 1.0414 + 0.49) * 100) / 100 : base;
+    document.getElementById("ptotal").textContent = "Total: " + dinheiro(v) + (metodo === "cartao" ? " no cartão (com a taxa)" : " no Pix");
+    document.getElementById("gerar").textContent = metodo === "cartao" ? "Pagar com cartão ›" : "Gerar o Pix ›";
+  };
+  cartao.querySelectorAll(".pix-forma button").forEach((b) => b.onclick = () => {
+    metodo = b.dataset.m; cartao.querySelectorAll(".pix-forma button").forEach((o) => o.classList.toggle("on", o === b)); total();
+  });
+  if (P.qtd) {
+    const pq = document.getElementById("pq");
+    document.getElementById("menos").onclick = () => { qtd = Math.max(1, qtd - 1); pq.textContent = qtd; total(); };
+    document.getElementById("mais").onclick = () => { qtd = Math.min(10, qtd + 1); pq.textContent = qtd; total(); };
+  }
+  total();
+  // a criança escolhida sobe para o topo e o resto do formulário aparece; "trocar" volta para a busca
+  const passo1 = document.getElementById("passo1"), esc = document.getElementById("pesc"), resto = document.getElementById("presto");
+  function escolher(a) {
+    aluno = a;
+    document.getElementById("pnome").textContent = a.nome_completo;
+    document.getElementById("pturma").textContent = a.serie + " " + a.turma;
+    passo1.hidden = true; esc.hidden = false; resto.hidden = false; lista.innerHTML = "";
+  }
+  document.getElementById("ptroca").onclick = () => {
+    aluno = null; passo1.hidden = false; esc.hidden = true; resto.hidden = true; campo.value = ""; campo.focus();
+  };
+  if (SESSAO) {
+    // entrado: a criança é a da aba (não precisa buscar nem trocar)
+    const k = SESSAO.criancas[ATUAL];
+    escolher({ id: k.id, nome_completo: k.nomeCompleto, serie: "", turma: k.turma });
+    document.getElementById("ptroca").hidden = true;
+  } else setTimeout(() => campo.focus(), 300);
+  // a busca da criança (como no site de eventos): escreve, aparece a lista, toca no nome
+  campo.oninput = () => {
+    aluno = null; clearTimeout(busca); const t = campo.value.trim();
+    if (t.length < 2) { lista.innerHTML = ""; return; }
+    busca = setTimeout(async () => {
+      try {
+        const r = await fetch(API + "/api/alunos?evento=" + P.evento + "&q=" + encodeURIComponent(t)), j = await r.json();
+        if (!r.ok) { lista.innerHTML = `<li class="vazio">${j.erro || "Não deu certo."}</li>`; return; }
+        lista.innerHTML = j.alunos.length ? j.alunos.map((a, i) => `<li><button type="button" data-i="${i}">${a.nome_completo}<small>${a.serie} ${a.turma}</small></button></li>`).join("")
+          : `<li class="vazio">Nenhuma criança com esse nome</li>`;
+        lista.querySelectorAll("button").forEach((b) => b.onclick = () => escolher(j.alunos[+b.dataset.i]));
+      } catch { lista.innerHTML = `<li class="vazio">Sem internet?</li>`; }
+    }, 300);
+  };
+  document.getElementById("fpix").onsubmit = async (e) => {
+    e.preventDefault();
+    if (!aluno) { erro.textContent = "Escolha a criança na lista."; return; }
+    const f = new FormData(e.target), bt = document.getElementById("gerar");
+    bt.disabled = true; bt.textContent = "Gerando…"; erro.textContent = "";
+    try {
+      const r = await fetch(API + "/api/pix", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: SESSAO ? SESSAO.token : undefined, evento: P.evento, metodo, aluno_id: aluno.id, irmaos: P.qtd ? [] : irm(), qtd, responsavel: f.get("responsavel"), cpf: f.get("cpf"), email: f.get("email"), telefone: f.get("telefone") }) });
+      const j = await r.json();
+      if (j.faltam) {
+        // o cadastro da escola não tem tudo: mostra só os campos que faltam
+        const box = document.getElementById("pdados"); box.hidden = false;
+        box.querySelectorAll("label").forEach((l) => { const falta = j.faltam.includes(l.dataset.c); l.hidden = !falta; l.querySelector("input").required = falta; });
+        const cad = document.getElementById("pcad"); if (cad) cad.textContent = "Faltou isto no cadastro da escola:";
+      }
+      if (!r.ok) throw new Error(j.erro || "Não deu certo.");
+      j.cartao ? mostrarCartao(x, j) : mostrarPix(x, j);
+    } catch (err) { erro.textContent = err.message; bt.disabled = false; total(); }
+  };
+}
+// o cartão: a página do Asaas abre noutra aba (só ela vê o cartão); aqui fica esperando e vira "Pago ✓" sozinha
+function mostrarCartao(x, p) {
+  const valor = p.valor.toFixed(2).replace(".", ",");
+  cartao.innerHTML = `<p class="c-dia">${x.t}</p><h3 class="c-titulo">R$&nbsp;${valor} no cartão</h3>
+    <p class="pix-espera">O cartão é digitado na página segura do Asaas.</p>
+    <a class="principal ir" href="${p.url}" target="_blank" rel="noopener">Abrir a página do cartão ›</a>
+    <p class="pix-espera">Depois de pagar, volte aqui: esta tela muda sozinha.</p><button class="fechar" id="fechar">Fechar</button>`;
+  document.getElementById("fechar").onclick = fechar;
+  esperarPago(p.id, valor);
+}
+function esperarPago(id, valor) {
+  clearInterval(espera);
+  espera = setInterval(async () => {
+    try {
+      const j = await (await fetch(API + "/api/pix?id=" + id)).json();
+      if (j.pago) {
+        clearInterval(espera); setTimeout(atualizar, 2500);
+        cartao.innerHTML = `<h3 class="c-titulo pix-ok">Pago ✓</h3><p class="pix-espera">Obrigado! Recebemos R$&nbsp;${valor}.</p><button class="fechar" id="fechar">Fechar</button>`;
+        document.getElementById("fechar").onclick = fechar;
+      }
+    } catch {}
+  }, 4000);
+}
+function mostrarPix(x, p) {
+  const valor = p.valor.toFixed(2).replace(".", ",");
+  cartao.innerHTML = `<p class="c-dia">${x.t}</p><h3 class="c-titulo">R$&nbsp;${valor} no Pix</h3>
+    <img class="pix-qr" src="data:image/png;base64,${p.imagem}" alt="QR Code do Pix">
+    <button class="principal ir" id="copiar">Copiar o código Pix</button>
+    <p class="pix-espera" id="pstatus">Esperando o pagamento…</p><button class="fechar" id="fechar">Fechar</button>`;
+  document.getElementById("fechar").onclick = fechar;
+  document.getElementById("copiar").onclick = async (e) => {
+    try { await navigator.clipboard.writeText(p.copiaecola); e.target.textContent = "Copiado ✓"; } catch { prompt("Copie o código:", p.copiaecola); }
+  };
+  clearInterval(espera);
+  espera = setInterval(async () => {
+    try {
+      const j = await (await fetch(API + "/api/pix?id=" + p.id)).json();
+      if (j.pago) {
+        clearInterval(espera); setTimeout(atualizar, 2500);
+        cartao.innerHTML = `<h3 class="c-titulo pix-ok">Pago ✓</h3><p class="pix-espera">Obrigado! Recebemos R$&nbsp;${valor}.</p><button class="fechar" id="fechar">Fechar</button>`;
+        document.getElementById("fechar").onclick = fechar;
+      }
+    } catch {}
+  }, 4000);
+}
+// a capa: "Ver a programação" (ou tocar no gato/etiqueta) abre o caderno; "Meu checklist" abre direto a lista
+const capa = document.getElementById("capa");
+const abrirCapa = () => capa.classList.add("aberta");
+document.getElementById("vercapa").onclick = abrirCapa;
+capa.querySelector(".etiqueta").onclick = abrirCapa;
+const GUARDA = "fim-de-ano-login";
+// o aniversário só com números: as barras entram sozinhas
+const niver = document.getElementById("lniver");
+niver.oninput = () => { const d = niver.value.replace(/\D/g, "").slice(0, 8); niver.value = [d.slice(0, 2), d.slice(2, 4), d.slice(4)].filter(Boolean).join("/"); };
+// a busca do nome: enquanto digita, a lista do Infantil; tocar no nome mostra o campo do aniversário
+let ALUNO = null, buscaT = 0;
+const lnome = document.getElementById("lnome"), lsug = document.getElementById("lsug");
+lnome.oninput = () => {
+  ALUNO = null; niver.hidden = true; clearTimeout(buscaT);
+  const t = lnome.value.trim();
+  if (t.replace(/\s/g, "").length < 3) { lsug.hidden = true; return; }
+  buscaT = setTimeout(async () => {
+    try {
+      const j = await (await fetch(API + "/api/buscar?q=" + encodeURIComponent(t))).json();
+      if (lnome.value.trim() !== t) return;
+      lsug.innerHTML = (j.alunos || []).length
+        ? j.alunos.map((a, i) => `<li><button type="button" data-i="${i}">${a.nome}<small>${a.turma}</small></button></li>`).join("")
+        : `<li class="vazio">${j.erro || "Nenhum aluno com esse nome"}</li>`;
+      lsug.hidden = false;
+      lsug.querySelectorAll("button").forEach((b) => b.onclick = () => {
+        ALUNO = j.alunos[+b.dataset.i]; lnome.value = ALUNO.nome; lsug.hidden = true;
+        niver.hidden = false; niver.focus(); document.getElementById("lerro").textContent = "";
+      });
+    } catch { lsug.innerHTML = `<li class="vazio">Sem internet?</li>`; lsug.hidden = false; }
+  }, 250);
+};
+document.getElementById("flogin").onsubmit = async (e) => {
+  e.preventDefault();
+  if (!ALUNO) { document.getElementById("lerro").textContent = "Escreva o nome e toque no aluno na lista."; lnome.focus(); return; }
+  if (!/^\d{2}\/\d{2}\/\d{4}$/.test(niver.value)) { document.getElementById("lerro").textContent = "Escreva o aniversário do aluno (dia/mês/ano)."; niver.focus(); return; }
+  const erro = document.getElementById("lerro"), bt = document.getElementById("entrar");
+  erro.textContent = ""; bt.disabled = true; bt.textContent = "…";
+  try {
+    const r = await fetch(API + "/api/entrar", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ aluno: ALUNO.id, nascimento: niver.value }) });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.erro || "Não deu certo.");
+    try { localStorage.setItem(GUARDA, j.token); } catch {}
+    entrou({ token: j.token, criancas: j.criancas });
+    abrirCapa();
+  } catch (err) { erro.textContent = err.message; }
+  bt.disabled = false; bt.textContent = "Entrar ›";
+};
+// entrou: o título, as abas dos irmãos, o "sair", as linhas e o checklist da criança da aba
+function entrou(s) {
+  SESSAO = s; ATUAL = Math.min(ATUAL, s.criancas.length - 1);
+  const k = s.criancas[ATUAL];
+  if (k.nome && paginaCerta(k)) return;
+  document.querySelector(".topo h1").textContent = TITULO + " · " + k.nome;
+  const abas = document.getElementById("abas");
+  abas.hidden = s.criancas.length < 2;
+  abas.innerHTML = s.criancas.map((c, i) => `<button class="${i === ATUAL ? "on" : ""}" data-i="${i}">${c.nome}</button>`).join("");
+  abas.querySelectorAll("button").forEach((b) => b.onclick = () => { ATUAL = +b.dataset.i; entrou(SESSAO); });
+  const sair = document.getElementById("sair");
+  sair.hidden = false; sair.textContent = (s.criancas.length > 1 ? "Não são vocês?" : "Não é " + k.nome + "?") + " Sair";
+  desenharLinhas(); lerFeitos(); contarFalta();
+}
+document.getElementById("sair").onclick = () => { try { localStorage.removeItem(GUARDA); } catch {} location.reload(); };
+// lê de novo o que já foi pago (depois de pagar, ou ao abrir com o login guardado)
+async function atualizar() {
+  if (!SESSAO) return;
+  try {
+    const r = await fetch(API + "/api/entrar", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: SESSAO.token }) });
+    if (r.status === 401) { try { localStorage.removeItem(GUARDA); } catch {} location.reload(); return; }
+    const j = await r.json(); if (r.ok) entrou({ token: SESSAO.token, criancas: j.criancas });
+  } catch {}
+}
+// o celular lembra: quem já entrou abre direto na programação da criança
+let guardado = null; try { guardado = localStorage.getItem(GUARDA); } catch {}
+if (guardado) {
+  capa.style.transition = "none"; capa.classList.add("aberta");
+  SESSAO = { token: guardado, criancas: [{ nome: "", nomeCompleto: "", turma: "", pago: {} }] }; // até o servidor responder
+  atualizar().then(() => { if (SESSAO && !SESSAO.criancas[0].nome) SESSAO = null; });
+}
+
+// o checklist: o que ter em mãos, dia por dia (do comunicado da coordenação); fica guardado no celular
+const CHECK = [
+  { dia: "Até segunda-feira, 30/11", c: "#B47A12", itens: [["festa", "Pagar a contribuição (R$ 20,00)"], ["senhas", "Senhas do Auto de Natal"]] },
+  { dia: "Segunda-feira, 7/12 · Cineminha", c: "#0B2A5B", itens: [["pipoca", "Pacote de pipoca"], ["fantasia", "Fantasia (se quiser)"]] },
+  { dia: "Terça-feira, 8/12 · Água", c: "#0B2A5B", itens: [["banho", "Traje de banho"], ["toalha", "Toalha"], ["muda", "Muda de roupa extra"]] },
+  { dia: "Quarta-feira, 9/12 · Aula da Saudade", c: "#0B2A5B", itens: [["lanche9", "Lanche individual (se não contribuiu)"]] },
+  { dia: "Ensaios · 14 a 17/12", c: "#0E8C80", itens: [["ens-lanche", "Lanche"], ["ens-agua", "Garrafinha de água"], ["ens-roupa", "Roupa comum e confortável"]] },
+  { dia: "Domingo, 20/12 · Formatura", c: "#B47A12", itens: [["form", "Chegar ao salão a partir das 17h"]] },
+]
+let feitos = {};
+const chaveCk = () => "formandos-2026-checklist" + (SESSAO ? ":" + SESSAO.criancas[ATUAL].id : "");
+function lerFeitos() {
+  try { feitos = JSON.parse(localStorage.getItem(chaveCk()) || "{}"); } catch { feitos = {}; }
+  if (SESSAO) { const p = SESSAO.criancas[ATUAL].pago; if (p["auto-de-natal"] > 0) feitos.senhas = true; if (p["contribuicao-confraternizacao-infantil"] > 0) feitos.festa = true; }
+}
+lerFeitos();
+const guardar = () => { try { localStorage.setItem(chaveCk(), JSON.stringify(feitos)); } catch {} };
+const total = CHECK.reduce((n, g) => n + g.itens.length, 0);
+function contarFalta() {
+  const falta = total - CHECK.reduce((n, g) => n + g.itens.filter(([k]) => feitos[k]).length, 0);
+  document.getElementById("ckfalta").textContent = falta ? falta : "✓";
+  return falta;
+}
+// a lista em texto, para o WhatsApp: ✅ o que já foi separado, ⬜ o que falta
+function textoWhats() {
+  const linhas = ["*Formandos 2026 · Grupo 5 · " + (SESSAO ? "Checklist · " + SESSAO.criancas[ATUAL].nome : "Meu checklist") + "*", ""];
+  for (const g of CHECK) {
+    linhas.push("*" + g.dia + "*");
+    for (const [k, t] of g.itens) linhas.push((feitos[k] ? "✅ " : "⬜ ") + t);
+    linhas.push("");
+  }
+  linhas.push("Programação completa: " + location.origin);
+  return linhas.join("\n");
+}
+function abrirChecklist() {
+  const desenhar = () => {
+    const falta = contarFalta();
+    cartao.innerHTML = `<p class="c-dia">Formandos 2026 · Grupo 5</p><h3 class="c-titulo ck-t">${SESSAO ? "Checklist · " + SESSAO.criancas[ATUAL].nome : "Meu checklist"}</h3>
+      ${CHECK.map((g) => `<p class="ck-dia" style="--c:${g.c}">${g.dia}</p><ul class="ck-lista">${g.itens.map(([k, t, s]) =>
+        `<li><button class="ck-item${feitos[k] ? " ok" : ""}" data-k="${k}"><i>${feitos[k] ? "✓" : ""}</i><span>${t}${s ? `<small>${s}</small>` : ""}</span></button></li>`).join("")}</ul>`).join("")}
+      <p class="ck-falta">${falta ? "Falta" + (falta > 1 ? "m " : " ") + falta : "Tudo pronto! 🎉"}</p>
+      <a class="principal ir ck-whats" href="https://wa.me/?text=${encodeURIComponent(textoWhats())}" target="_blank" rel="noopener">Mandar a lista no WhatsApp ›</a>
+      <button class="fechar" id="fechar">Fechar</button>`;
+    document.getElementById("fechar").onclick = fechar;
+    cartao.querySelectorAll(".ck-item").forEach((b) => b.onclick = () => { feitos[b.dataset.k] = !feitos[b.dataset.k]; guardar(); const y = cartao.scrollTop; desenhar(); cartao.scrollTop = y; });
+  };
+  desenhar();
+  zoom.classList.add("on");
+}
+document.getElementById("abrirck").onclick = abrirChecklist;
+contarFalta();
+zoom.addEventListener("click", (e) => { if (e.target === zoom) fechar(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") fechar(); });
+</script>
+</body>
+</html>

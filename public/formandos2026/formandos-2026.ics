@@ -1,0 +1,101 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Escola Amadeus//Formandos 2026//PT
+CALSCALE:GREGORIAN
+BEGIN:VEVENT
+UID:formandos-2026-0@escolaamadeus.com
+DTSTAMP:20261124T120000Z
+DTSTART;VALUE=DATE:20261130
+DTEND;VALUE=DATE:20261201
+SUMMARY:Prazo da contribuição de R$ 20,00 (Aula da Saudade · Grupo 5)
+DESCRIPTION:Lanche e guloseimas da Aula da Saudade do dia 9/12.
+END:VEVENT
+BEGIN:VEVENT
+UID:formandos-2026-1@escolaamadeus.com
+DTSTAMP:20261124T120000Z
+DTSTART:20261205T180000Z
+DTEND:20261205T190000Z
+SUMMARY:Auto de Natal
+DESCRIPTION:15h, no auditório da escola. Para os alunos que fizeram a inscrição.
+END:VEVENT
+BEGIN:VEVENT
+UID:formandos-2026-2@escolaamadeus.com
+DTSTAMP:20261124T120000Z
+DTSTART;VALUE=DATE:20261207
+DTEND;VALUE=DATE:20261208
+SUMMARY:Cineminha e baile à fantasia (Grupo 5)
+DESCRIPTION:Aula normal. Trazer o lanche de sempre e um pacote de pipoca. Pode vir fantasiado.
+END:VEVENT
+BEGIN:VEVENT
+UID:formandos-2026-3@escolaamadeus.com
+DTSTAMP:20261124T120000Z
+DTSTART;VALUE=DATE:20261208
+DTEND;VALUE=DATE:20261209
+SUMMARY:Dia de diversão na água (Grupo 5)
+DESCRIPTION:Vir com traje de banho; na mochila, toalha e muda de roupa.
+END:VEVENT
+BEGIN:VEVENT
+UID:formandos-2026-4@escolaamadeus.com
+DTSTAMP:20261124T120000Z
+DTSTART;VALUE=DATE:20261209
+DTEND;VALUE=DATE:20261210
+SUMMARY:Aula da Saudade (Grupo 5)
+DESCRIPTION:Despedida e confraternização com todos os alunos do Grupo 5.
+END:VEVENT
+BEGIN:VEVENT
+UID:formandos-2026-5@escolaamadeus.com
+DTSTAMP:20261124T120000Z
+DTSTART:20261210T180000Z
+DTEND:20261210T230000Z
+SUMMARY:Plantão pedagógico
+DESCRIPTION:Das 15h às 20h. A partir deste dia, todos de férias.
+END:VEVENT
+BEGIN:VEVENT
+UID:formandos-2026-6@escolaamadeus.com
+DTSTAMP:20261124T120000Z
+DTSTART:20261214T100000Z
+DTEND:20261214T140000Z
+SUMMARY:Ensaio da formatura (Grupo 5)
+DESCRIPTION:Das 7h às 11h. Sem aula. Roupa comum e confortável; trazer lanche e garrafinha de água.
+END:VEVENT
+BEGIN:VEVENT
+UID:formandos-2026-7@escolaamadeus.com
+DTSTAMP:20261124T120000Z
+DTSTART:20261215T100000Z
+DTEND:20261215T140000Z
+SUMMARY:Ensaio da formatura (Grupo 5)
+DESCRIPTION:Das 7h às 11h. Sem aula. Roupa comum e confortável; trazer lanche e garrafinha de água.
+END:VEVENT
+BEGIN:VEVENT
+UID:formandos-2026-8@escolaamadeus.com
+DTSTAMP:20261124T120000Z
+DTSTART:20261216T160000Z
+DTEND:20261216T200000Z
+SUMMARY:Ensaio da formatura (Grupo 5)
+DESCRIPTION:Das 13h às 17h. Sem aula. Roupa comum e confortável; trazer lanche e garrafinha de água.
+END:VEVENT
+BEGIN:VEVENT
+UID:formandos-2026-9@escolaamadeus.com
+DTSTAMP:20261124T120000Z
+DTSTART:20261217T160000Z
+DTEND:20261217T200000Z
+SUMMARY:Ensaio da formatura (Grupo 5)
+DESCRIPTION:Das 13h às 17h. Sem aula. Roupa comum e confortável; trazer lanche e garrafinha de água.
+END:VEVENT
+BEGIN:VEVENT
+UID:formandos-2026-10@escolaamadeus.com
+DTSTAMP:20261124T120000Z
+DTSTART;VALUE=DATE:20261218
+DTEND;VALUE=DATE:20261219
+SUMMARY:Preparação da formatura (sem aula)
+DESCRIPTION:Sem aula nem ensaio.
+END:VEVENT
+BEGIN:VEVENT
+UID:formandos-2026-11@escolaamadeus.com
+DTSTAMP:20261124T120000Z
+DTSTART:20261220T200000Z
+DTEND:20261220T230000Z
+SUMMARY:Festa de formatura (Grupo 5)
+DESCRIPTION:O salão abre precisamente às 17h.
+END:VEVENT
+END:VCALENDAR
