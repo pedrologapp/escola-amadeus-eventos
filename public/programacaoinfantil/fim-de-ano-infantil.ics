@@ -1,0 +1,53 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Escola Amadeus//Fim de ano Infantil//PT
+CALSCALE:GREGORIAN
+BEGIN:VEVENT
+UID:fim-de-ano-infantil-2026-0@escolaamadeus.com
+DTSTAMP:20261124T120000Z
+DTSTART;VALUE=DATE:20261130
+DTEND;VALUE=DATE:20261201
+SUMMARY:Prazo da contribuição de R$ 20,00 (festa do Infantil)
+DESCRIPTION:Lanche e guloseimas da confraternização do dia 9/12.
+END:VEVENT
+BEGIN:VEVENT
+UID:fim-de-ano-infantil-2026-1@escolaamadeus.com
+DTSTAMP:20261124T120000Z
+DTSTART:20261205T180000Z
+DTEND:20261205T190000Z
+SUMMARY:Auto de Natal (Infantil)
+DESCRIPTION:15h, no auditório da escola. Para os alunos que fizeram a inscrição.
+END:VEVENT
+BEGIN:VEVENT
+UID:fim-de-ano-infantil-2026-2@escolaamadeus.com
+DTSTAMP:20261124T120000Z
+DTSTART;VALUE=DATE:20261207
+DTEND;VALUE=DATE:20261208
+SUMMARY:Cineminha e baile à fantasia (Infantil)
+DESCRIPTION:Aula normal. Trazer o lanche de sempre e um pacote de pipoca. Pode vir fantasiado.
+END:VEVENT
+BEGIN:VEVENT
+UID:fim-de-ano-infantil-2026-3@escolaamadeus.com
+DTSTAMP:20261124T120000Z
+DTSTART;VALUE=DATE:20261208
+DTEND;VALUE=DATE:20261209
+SUMMARY:Dia de diversão na água (Infantil)
+DESCRIPTION:Vir com traje de banho; na mochila, toalha e muda de roupa.
+END:VEVENT
+BEGIN:VEVENT
+UID:fim-de-ano-infantil-2026-4@escolaamadeus.com
+DTSTAMP:20261124T120000Z
+DTSTART;VALUE=DATE:20261209
+DTEND;VALUE=DATE:20261210
+SUMMARY:Confraternização (Infantil)
+DESCRIPTION:Despedida e confraternização com todos os alunos.
+END:VEVENT
+BEGIN:VEVENT
+UID:fim-de-ano-infantil-2026-5@escolaamadeus.com
+DTSTAMP:20261124T120000Z
+DTSTART:20261210T180000Z
+DTEND:20261210T230000Z
+SUMMARY:Plantão pedagógico (Infantil)
+DESCRIPTION:Das 15h às 20h. A partir deste dia, todos de férias.
+END:VEVENT
+END:VCALENDAR

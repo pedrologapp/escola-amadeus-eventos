@@ -30,6 +30,8 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       { source: "/semanadacrianca", destination: "/semanadacrianca/index.html" },
+      // (24/11/2026) a programação de fim de ano do Infantil (5 a 10/12): comunicado para os pais, sem login, com checklist e pagamento
+      { source: "/programacaoinfantil", destination: "/programacaoinfantil/index.html" },
       // a Feira de Ciências / Culminância do Arboria (13/11/2026): teste das 8 inteligências com envio pelo WhatsApp (n8n)
       { source: "/feira", destination: "/feira/index.html" },
       // Casa Interpessoal (Arbória, prof. Francinildo): telas do projeto em loop na TV, sem senha (12/11)
