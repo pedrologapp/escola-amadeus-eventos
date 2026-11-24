@@ -258,12 +258,12 @@ export function Homenagem() {
       {tela === "entrada" && (
         <div className="hom-entra space-y-8">
           <div className="pt-2 text-center">
-            <p className="text-[11px] font-bold uppercase tracking-[0.36em] text-[#D4B068]">Formatura 2026 · 9º ano</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.36em] text-[#D4B068]">Último dia de aula · 9º ano</p>
             <h1 className="font-hom-script mt-3 text-[68px] leading-[0.95] text-[#F3EBDD]">Uma homenagem</h1>
             <p className="font-hom-serif mt-2 text-[22px] italic text-[#EAD7A4]">de quem mais te ama</p>
             <div className="hom-filete mx-auto mt-5" />
             <p className="mx-auto mt-5 max-w-sm text-[15.5px] leading-relaxed text-[#D9D1C3]">
-              Estamos preparando um vídeo surpresa para a formatura, com a voz de todas as famílias da turma. Leva uns 10 minutos.
+              Estamos preparando um vídeo surpresa para o último dia de aula (sexta, 27/11), com a voz de todas as famílias da turma. Leva uns 10 minutos.
             </p>
             {PRAZO_HOMENAGEM && (
               <p className="mx-auto mt-4 inline-flex items-center gap-2 rounded-full border border-[#D4B068] bg-[#D4B068]/10 px-4 py-2 text-[15.5px] text-[#F3EBDD]">
@@ -360,7 +360,7 @@ export function Homenagem() {
                 <div>
                   <p className="font-hom-serif text-[23px] font-bold text-[#F3EBDD]">O poema</p>
                   <p className="mt-1 text-[15px] leading-relaxed text-[#D9D1C3]">
-                    Um poema que <b className="text-[#F3EBDD]">todas as famílias</b> vão ler. No vídeo da formatura, cada verso sai na voz de uma família diferente, e no fim todas falam juntas. O texto aparece na tela enquanto você grava.
+                    Um poema que <b className="text-[#F3EBDD]">todas as famílias</b> vão ler. No vídeo, cada verso sai na voz de uma família diferente, e no fim todas falam juntas. O texto aparece na tela enquanto você grava.
                   </p>
                   <button type="button" onClick={() => setVerPoema((v) => !v)} className="hom-acao mt-4 w-full">
                     {verPoema ? "Esconder o poema" : "Ler o poema agora"}
@@ -486,7 +486,7 @@ export function Homenagem() {
       {tela === "fotos" && familia && (
         <div className="hom-entra space-y-5">
           <Titulo sobre="Se quiser">Fotos de {primeiro}</Titulo>
-          <p className="text-center text-[15.5px] leading-relaxed text-[#D9D1C3]">Do bebê até hoje: as fotos podem entrar no vídeo da formatura. Até {MAX_FOTOS}.</p>
+          <p className="text-center text-[15.5px] leading-relaxed text-[#D9D1C3]">Do bebê até hoje: as fotos podem entrar no vídeo. Até {MAX_FOTOS}.</p>
           {fotos.length > 0 && (
             <div className="grid grid-cols-3 gap-2">
               {fotos.map((f, i) => (
@@ -527,7 +527,7 @@ export function Homenagem() {
           <p className="text-[15.5px] leading-relaxed text-[#D9D1C3]">
             Recebemos tudo. A escola vai assistir aos vídeos e, se alguma parte precisar ser gravada de novo, avisaremos por aqui e pelo WhatsApp.
           </p>
-          <p className="font-hom-serif text-[21px] italic text-[#EAD7A4]">Lembre: é surpresa. Nos vemos na formatura.</p>
+          <p className="font-hom-serif text-[21px] italic text-[#EAD7A4]">Lembre: é surpresa. Nos vemos na quinta, 26/11, às 10h.</p>
           <div className="space-y-3">
             <button type="button" onClick={() => { setQuem(null); setOutro(""); setQuemGrava(""); ir("quem"); }} className="hom-botao-claro w-full">
               <UserPlus className="h-5 w-5" /> Outra pessoa da família quer gravar

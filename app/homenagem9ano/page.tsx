@@ -9,7 +9,7 @@ const script = localFont({ src: "../../lib/fontes/arquivos/great-vibes-400.woff2
 
 export const metadata: Metadata = {
   title: "Homenagem do 9º ano",
-  description: "Grave uma mensagem para o seu filho ou a sua filha. É surpresa para a formatura.",
+  description: "Grave uma mensagem para o seu filho ou a sua filha. É surpresa para o último dia de aula.",
   robots: { index: false, follow: false },
 };
 
@@ -29,7 +29,7 @@ export default function HomenagemPage() {
       </div>
       <Homenagem />
       <p className="mx-auto mt-12 max-w-xs text-center text-xs leading-relaxed text-[#8E8778]">
-        Os vídeos e as fotos ficam guardados só com a escola e são usados apenas no vídeo da formatura.
+        Os vídeos e as fotos ficam guardados só com a escola e são usados apenas no vídeo da homenagem.
       </p>
     </main>
   );

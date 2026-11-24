@@ -122,7 +122,7 @@ export function PainelHomenagem({ link, turma, envios }: { link: string; turma: 
   const texto = [
     "Queridas famílias do 9º ano,",
     "",
-    "Estamos preparando uma surpresa para a formatura: um vídeo com a voz de todas as famílias da turma.",
+    "Estamos preparando uma surpresa para o último dia de aula (sexta, 27/11): um vídeo com a voz de todas as famílias da turma.",
     "",
     "Pedimos que cada família grave uma mensagem curta para o filho ou a filha e leia um poema que preparamos. É tudo pelo celular, em uns 10 minutos:",
     "",
