@@ -45,21 +45,13 @@ END:VEVENT
 BEGIN:VEVENT
 UID:formandos-2026-5@escolaamadeus.com
 DTSTAMP:20261124T120000Z
-DTSTART:20261210T180000Z
-DTEND:20261210T230000Z
-SUMMARY:Plantão pedagógico
-DESCRIPTION:Das 15h às 20h. Atendimento às famílias e entrega das atividades.
-END:VEVENT
-BEGIN:VEVENT
-UID:formandos-2026-6@escolaamadeus.com
-DTSTAMP:20261124T120000Z
 DTSTART:20261214T100000Z
 DTEND:20261214T140000Z
 SUMMARY:Ensaio da formatura (Grupo 5)
 DESCRIPTION:Das 7h às 11h. Sem aula. Roupa comum e confortável; trazer lanche e garrafinha de água.
 END:VEVENT
 BEGIN:VEVENT
-UID:formandos-2026-7@escolaamadeus.com
+UID:formandos-2026-6@escolaamadeus.com
 DTSTAMP:20261124T120000Z
 DTSTART:20261215T100000Z
 DTEND:20261215T140000Z
@@ -67,7 +59,7 @@ SUMMARY:Ensaio da formatura (Grupo 5)
 DESCRIPTION:Das 7h às 11h. Sem aula. Roupa comum e confortável; trazer lanche e garrafinha de água.
 END:VEVENT
 BEGIN:VEVENT
-UID:formandos-2026-8@escolaamadeus.com
+UID:formandos-2026-7@escolaamadeus.com
 DTSTAMP:20261124T120000Z
 DTSTART:20261216T160000Z
 DTEND:20261216T200000Z
@@ -75,7 +67,7 @@ SUMMARY:Ensaio da formatura (Grupo 5)
 DESCRIPTION:Das 13h às 17h. Sem aula. Roupa comum e confortável; trazer lanche e garrafinha de água.
 END:VEVENT
 BEGIN:VEVENT
-UID:formandos-2026-9@escolaamadeus.com
+UID:formandos-2026-8@escolaamadeus.com
 DTSTAMP:20261124T120000Z
 DTSTART:20261217T160000Z
 DTEND:20261217T200000Z
@@ -83,7 +75,7 @@ SUMMARY:Ensaio da formatura (Grupo 5)
 DESCRIPTION:Das 13h às 17h. Sem aula. Roupa comum e confortável; trazer lanche e garrafinha de água.
 END:VEVENT
 BEGIN:VEVENT
-UID:formandos-2026-10@escolaamadeus.com
+UID:formandos-2026-9@escolaamadeus.com
 DTSTAMP:20261124T120000Z
 DTSTART;VALUE=DATE:20261218
 DTEND;VALUE=DATE:20261219
@@ -91,7 +83,7 @@ SUMMARY:Preparação da formatura (sem aula)
 DESCRIPTION:Sem aula nem ensaio.
 END:VEVENT
 BEGIN:VEVENT
-UID:formandos-2026-11@escolaamadeus.com
+UID:formandos-2026-10@escolaamadeus.com
 DTSTAMP:20261124T120000Z
 DTSTART:20261220T200000Z
 DTEND:20261220T230000Z

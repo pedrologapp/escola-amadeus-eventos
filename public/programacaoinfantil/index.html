@@ -306,7 +306,6 @@
     <input class="capa-campo" id="lniver" placeholder="Aniversário do aluno: dd/mm/aaaa" aria-label="Aniversário do aluno" inputmode="numeric" enterkeyhint="go" hidden>
     <p class="capa-erro" id="lerro"></p>
     <button class="capa-ir" id="entrar">Entrar ›</button>
-    <button type="button" class="capa-sem" id="vercapa">ver sem entrar</button>
   </form>
 </section>
 
@@ -360,9 +359,13 @@ function paginaCerta(k) {
   location.replace(ENDERECO[certa] + "?aba=" + ATUAL);
   return true;
 }
+// o que este aluno vê: sem "so", todos; "f", só quem vai à formatura; "nf", só quem não vai
+const naoVai = () => !!(SESSAO && SESSAO.criancas[ATUAL] && SESSAO.criancas[ATUAL].formatura === false);
+const VE = (x) => !x.so || x.so === (naoVai() ? "nf" : "f");
+const CK = () => CHECK.map((g) => ({ ...g, itens: g.itens.filter((it) => !it[3] || it[3] === (naoVai() ? "nf" : "f")) })).filter((g) => VE(g) && g.itens.length);
 function desenharLinhas() {
-  document.getElementById("linhas").innerHTML = DIAS.map((x, i) => linha(x, i, "d")).join("");
-  document.getElementById("festa").innerHTML = FESTA.map((x, i) => linha(x, i, "f")).join("");
+  document.getElementById("linhas").innerHTML = DIAS.map((x, i) => (VE(x) ? linha(x, i, "d") : "")).join("");
+  document.getElementById("festa").innerHTML = FESTA.map((x, i) => (VE(x) ? linha(x, i, "f") : "")).join("");
   document.querySelectorAll(".linha").forEach((b) => b.onclick = () => abrir((b.dataset.g === "d" ? DIAS : FESTA)[+b.dataset.i]));
 }
 desenharLinhas();
@@ -557,8 +560,7 @@ function chamarEntrada() {
   document.getElementById("areaform").appendChild(document.getElementById("flogin"));
   area.hidden = false; document.body.classList.add("sem-login");
 }
-document.getElementById("vercapa").onclick = abrirCapa;
-capa.querySelector(".etiqueta").onclick = abrirCapa;
+// (24/11, Pedro: "melhor deixar a entrada só com o login, porque tem muitas divisões") sem "ver sem entrar": a capa só abre entrando
 const GUARDA = "fim-de-ano-login";
 // o aniversário só com números: as barras entram sozinhas
 const niver = document.getElementById("lniver");
@@ -602,11 +604,18 @@ document.getElementById("flogin").onsubmit = async (e) => {
   bt.disabled = false; bt.textContent = "Entrar ›";
 };
 // entrou: o título, as abas dos irmãos, o "sair", as linhas e o checklist da criança da aba
+// (24/11, Pedro: "coloque sempre o nome e o 2º nome; embaixo, a série dela: Infantil - Grupo IV")
+const LIGA = /^(de|da|do|das|dos|e)$/i;
+function doisNomes(n) { const p = String(n || "").trim().split(/\s+/); const r = [p[0]]; for (const x of p.slice(1)) { r.push(x); if (!LIGA.test(x)) break; } return r.join(" "); }
+function serieDe(t) { return String(t || "").toLowerCase().replace(/\s*-\s*/g, " ").replace(/\S+/g, (w) => /^(i|ii|iii|iv|v|[a-z])$/.test(w) ? w.toUpperCase() : w[0].toUpperCase() + w.slice(1)).trim(); }
+const DATAS = "5 a 10 de dezembro";
 function entrou(s) {
   SESSAO = s; ATUAL = Math.min(ATUAL, s.criancas.length - 1);
+  for (const c of s.criancas) if (c.nomeCompleto) c.nome = doisNomes(c.nomeCompleto);
   const k = s.criancas[ATUAL];
   if (k.nome && paginaCerta(k)) return;
   document.querySelector(".topo h1").textContent = TITULO + " · " + k.nome;
+  if (k.turma) document.querySelector(".topo .sub").textContent = "Infantil · " + serieDe(k.turma) + " · " + DATAS;
   const abas = document.getElementById("abas");
   abas.hidden = s.criancas.length < 2;
   abas.innerHTML = s.criancas.map((c, i) => `<button class="${i === ATUAL ? "on" : ""}" data-i="${i}">${c.nome}</button>`).join("");
@@ -650,16 +659,16 @@ function lerFeitos() {
 }
 lerFeitos();
 const guardar = () => { try { localStorage.setItem(chaveCk(), JSON.stringify(feitos)); } catch {} };
-const total = CHECK.reduce((n, g) => n + g.itens.length, 0);
 function contarFalta() {
-  const falta = total - CHECK.reduce((n, g) => n + g.itens.filter(([k]) => feitos[k]).length, 0);
+  const total = CK().reduce((n, g) => n + g.itens.length, 0);
+  const falta = total - CK().reduce((n, g) => n + g.itens.filter(([k]) => feitos[k]).length, 0);
   document.getElementById("ckfalta").textContent = falta ? falta : "✓";
   return falta;
 }
 // a lista em texto, para o WhatsApp: ✅ o que já foi separado, ⬜ o que falta
 function textoWhats() {
   const linhas = ["*Fim de ano do Infantil · " + (SESSAO ? "Checklist · " + SESSAO.criancas[ATUAL].nome : "Meu checklist") + "*", ""];
-  for (const g of CHECK) {
+  for (const g of CK()) {
     linhas.push("*" + g.dia + "*");
     for (const [k, t] of g.itens) linhas.push((feitos[k] ? "✅ " : "⬜ ") + t);
     linhas.push("");
@@ -671,7 +680,7 @@ function abrirChecklist() {
   const desenhar = () => {
     const falta = contarFalta();
     cartao.innerHTML = `<p class="c-dia">Educação Infantil · 30/11 a 9/12</p><h3 class="c-titulo ck-t">${SESSAO ? "Checklist · " + SESSAO.criancas[ATUAL].nome : "Meu checklist"}</h3>
-      ${CHECK.map((g) => `<p class="ck-dia" style="--c:${g.c}">${g.dia}</p><ul class="ck-lista">${g.itens.map(([k, t, s]) =>
+      ${CK().map((g) => `<p class="ck-dia" style="--c:${g.c}">${g.dia}</p><ul class="ck-lista">${g.itens.map(([k, t, s]) =>
         `<li><button class="ck-item${feitos[k] ? " ok" : ""}" data-k="${k}"><i>${feitos[k] ? "✓" : ""}</i><span>${t}${s ? `<small>${s}</small>` : ""}</span></button></li>`).join("")}</ul>`).join("")}
       <p class="ck-falta">${falta ? "Falta" + (falta > 1 ? "m " : " ") + falta : "Tudo pronto! 🎉"}</p>
       <a class="principal ir ck-whats" href="https://wa.me/?text=${encodeURIComponent(textoWhats())}" target="_blank" rel="noopener">Mandar a lista no WhatsApp ›</a>
