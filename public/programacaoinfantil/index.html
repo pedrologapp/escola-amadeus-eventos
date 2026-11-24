@@ -144,6 +144,8 @@
   .abas button { font: 700 26px/1 Caveat, cursive; color: var(--suave); padding-bottom: 2px; border-bottom: 3px solid transparent; text-shadow: 0 0 12px rgba(255,253,248,.95); }
   .abas button.on { color: var(--tinta); border-bottom-color: #FFB000; }
   .sair { margin-top: 0; font: 700 16px/1 Caveat, cursive; color: var(--suave); text-shadow: 0 0 10px rgba(255,253,248,.95); }
+  .entrar-topo { display: block; font-size: 19px; line-height: 1.1; text-align: center; color: var(--tinta); }
+  .entrar-topo b { display: block; font-weight: 700; color: #E9832A; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
   .preco.ok { color: var(--turq) !important; font-size: 20px; }
   .preco.ok small { color: var(--turq) !important; }
   .pix-dados-cad { margin-top: 12px; font-size: 13px; font-weight: 700; color: var(--suave); }
@@ -237,7 +239,7 @@
     <img class="logo" src="/programacaoinfantil/logo-amadeus.png" alt="Escola Amadeus">
     <h1>Fim de ano</h1>
     <p class="sub">Educação Infantil · 5 a 10 de dezembro</p>
-    <div class="abas-linha"><nav class="abas" id="abas" hidden></nav><button class="sair" id="sair" hidden></button></div>
+    <div class="abas-linha"><nav class="abas" id="abas" hidden></nav><button class="sair" id="sair" hidden></button><button class="sair entrar-topo" id="entrartopo" hidden></button></div>
   </header>
 
   <p class="ola">O <b>fim de ano dos nossos pequenos</b> está chegando! Toque em cada dia para ver o que levar.</p>
@@ -317,7 +319,7 @@ const linha = (x, i, grupo) => `<li><button class="linha${x.ouro ? " ouro" : ""}
 let SESSAO = null, ATUAL = 0; // o login (bilhete + crianças) e a aba de agora
 // (24/11, Pedro: "se no outro aviso a pessoa colocar o login, cair direto na página dos formandos") são duas páginas: a do Infantil e a dos
 // formandos (Grupo 5). Entrou com um aluno do Grupo 5 na do Infantil (ou o contrário), vai para a página dele, já entrado (o login fica no celular).
-const PAGINA = "infantil", TITULO = "Fim de ano";
+const PAGINA = "infantil", TITULO = "Fim de ano", CHAMADO = "Para pagar e ver as senhas,";
 const TESTE = location.hostname.endsWith("vercel.app") || location.hostname === "localhost";
 const ENDERECO = { infantil: TESTE ? "/" : "/programacaoinfantil", formandos: TESTE ? "/grupo5/" : "/formandos2026" };
 try { const a = +new URLSearchParams(location.search).get("aba"); if (a > 0) ATUAL = a; } catch {}
@@ -503,7 +505,11 @@ function mostrarPix(x, p) {
 }
 // a capa: "Ver a programação" (ou tocar no gato/etiqueta) abre o caderno; "Meu checklist" abre direto a lista
 const capa = document.getElementById("capa");
-const abrirCapa = () => capa.classList.add("aberta");
+const abrirCapa = () => { capa.classList.add("aberta"); chamarEntrada(); };
+// quem abriu sem entrar: lá em cima, o chamado para entrar; tocar volta para a capa, com o nome
+const etopo = document.getElementById("entrartopo");
+function chamarEntrada() { etopo.hidden = !!SESSAO; etopo.innerHTML = CHAMADO + " <b>entre com o nome do aluno ›</b>"; }
+etopo.onclick = () => { capa.style.transition = ""; capa.classList.remove("aberta"); setTimeout(() => lnome.focus(), 450); };
 document.getElementById("vercapa").onclick = abrirCapa;
 capa.querySelector(".etiqueta").onclick = abrirCapa;
 const GUARDA = "fim-de-ano-login";
@@ -558,6 +564,7 @@ function entrou(s) {
   abas.hidden = s.criancas.length < 2;
   abas.innerHTML = s.criancas.map((c, i) => `<button class="${i === ATUAL ? "on" : ""}" data-i="${i}">${c.nome}</button>`).join("");
   abas.querySelectorAll("button").forEach((b) => b.onclick = () => { ATUAL = +b.dataset.i; entrou(SESSAO); });
+  etopo.hidden = true;
   const sair = document.getElementById("sair");
   sair.hidden = false; sair.textContent = (s.criancas.length > 1 ? "Não são vocês?" : "Não é " + k.nome + "?") + " Sair";
   desenharLinhas(); lerFeitos(); contarFalta();
