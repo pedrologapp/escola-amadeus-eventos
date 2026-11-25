@@ -149,9 +149,12 @@
   .pix-dados-cad { margin-top: 12px; font-size: 13px; font-weight: 700; color: var(--suave); }
   /* o checklist (como o "Meu checklist" da Agenda: uma lista do que ter em mãos, dia por dia; o toque marca) */
   .ck-t { font-size: 30px; }
-  .ck-dia { margin-top: 10px; font: 800 10.5px/1 Nunito, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--c, var(--suave)); }
+  /* (24/11, Pedro) o dia da semana com cor, maior, para separar e ler melhor; a data e o tema em cinza */
+  .ck-dia { margin-top: 6px; font: 700 13px/1.15 Nunito, sans-serif; color: var(--suave); }
+  .cartao:has(.ck-t) { max-height: 89svh; }
+  .ck-dia b { font-weight: 900; font-size: 15.5px; color: var(--c, var(--tinta)); }
   .ck-lista { list-style: none; margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px 16px; }
-  .ck-item { display: flex; align-items: center; gap: 10px; min-height: 32px; padding: 2px 0; font-size: 14px; line-height: 1.2; font-weight: 700; color: var(--tinta); text-align: left; }
+  .ck-item { display: flex; align-items: center; gap: 10px; min-height: 28px; padding: 2px 0; font-size: 14px; line-height: 1.2; font-weight: 700; color: var(--tinta); text-align: left; }
   .ck-item i { flex: none; width: 22px; height: 22px; border-radius: 7px; border: 2px solid #b9c0cc; display: grid; place-items: center; font: 900 14px/1 Nunito, sans-serif; font-style: normal; color: #fff; }
   .ck-item.ok { color: var(--suave); text-decoration: line-through; text-decoration-color: rgba(122,130,150,.6); }
   .ck-item.ok i { border-color: var(--turq); background: var(--turq); }
@@ -257,7 +260,7 @@
 
   @media (max-height: 700px) {
     .logo { width: 28px; height: 28px; } h1 { font-size: 32px; } .sub { font-size: 12px; } .ola { margin-top: 3svh; font-size: 12.5px; }
-    .sem { font-size: 18px; } .linha { min-height: 38px; padding: 1px 0; } .txt { font-size: 12.5px; } .txt small { font-size: 10.5px; } .data b { font-size: 20px; } .rot { margin-top: 7px; }
+    .sem { font-size: 18px; } .linha { min-height: 35px; padding: 1px 0; } .txt { font-size: 12.5px; } .txt small { font-size: 10.5px; } .data b { font-size: 20px; } .rot { margin-top: 7px; }
   }
 </style>
 </head>
@@ -336,6 +339,9 @@ const DIAS = [
   { sem: "Quinta-feira", d: "10/12", dia: "Quinta-feira, 10 de dezembro", giz: "prancheta", t: "Plantão pedagógico", s: "15h às 20h · escola e família", ferias: true,
     itens: [["Hora", "<b>Das 15h às 20h</b>"], ["Para quê", "<b>Atendimento às famílias</b> e <b>entrega das atividades</b> dos alunos"]],
     nota: "Um momento importante de encontro entre escola e família. Contamos com a presença de vocês!" },
+  // (25/11, Pedro) o feriado do dia 11
+  { sem: "Sexta-feira", d: "11/12", dia: "Sexta-feira, 11 de dezembro", giz: "sol", t: "Feriado", s: "Emancipação de São Gonçalo · sem aula",
+    itens: [["O quê", "<b>Feriado</b> da emancipação política de <b>São Gonçalo do Amarante</b>"], ["Aula", "Não haverá aula"]] },
 ];
 const FESTA = [
   { sem: "Até segunda-feira", d: "30/11", dia: "Até segunda-feira, 30 de novembro", giz: "moedas", t: "Contribuição da festa", s: "Lanche e lembrancinha · 9/12", roxo: true, preco: "R$ 20", por: "aluno", pix: { evento: "contribuicao-confraternizacao-infantil", preco: 20, qtd: false, acao: "Pagar com Pix" },
@@ -650,11 +656,12 @@ if (guardado) {
 
 // o checklist: o que ter em mãos, dia por dia (do comunicado da coordenação); fica guardado no celular
 const CHECK = [
-  { dia: "Até segunda-feira, 30/11", c: "#8A6BD1", itens: [["festa", "Pagar a contribuição da festa", "R$ 20,00 por aluno"], ["senhas", "Comprar as senhas do Auto de Natal", "R$ 20,00 por convidado"]] },
+  { dia: "Até segunda-feira, 30/11", c: "#B47A12", itens: [["festa", "Pagar a contribuição da festa", "R$ 20,00 por aluno"], ["senhas", "Comprar as senhas do Auto de Natal", "R$ 20,00 por convidado"]] },
   { dia: "Sábado, 5/12 · Auto de Natal", c: "#E0685A", itens: [["auto", "Chegar às 15h no auditório, com as senhas"]] },
   { dia: "Segunda-feira, 7/12 · Cineminha", c: "#2F7FD0", itens: [["lanche7", "Lanche de sempre"], ["pipoca", "Um pacote de pipoca"], ["fantasia", "Fantasia (se quiser)"]] },
   { dia: "Terça-feira, 8/12 · Água", c: "#0E9C8E", itens: [["banho", "Vir com traje de banho"], ["toalha", "Toalha na mochila"], ["muda", "Uma muda de roupa extra"], ["fruta", "Lanche, garrafinha de água e uma fruta"]] },
   { dia: "Quarta-feira, 9/12 · Festa de encerramento", c: "#8A6BD1", itens: [["lanche9", "Lanche de sempre", "Só se não contribuiu com os R$ 20,00"]] },
+  { dia: "Quinta-feira, 10/12 · Plantão pedagógico", c: "#D9922B", itens: [["plantao", "Ir à escola das 15h às 20h"]] },
 ];
 let feitos = {};
 const chaveCk = () => "fim-de-ano-checklist" + (SESSAO ? ":" + SESSAO.criancas[ATUAL].id : "");
@@ -685,7 +692,7 @@ function abrirChecklist() {
   const desenhar = () => {
     const falta = contarFalta();
     cartao.innerHTML = `<p class="c-dia">Educação Infantil · 30/11 a 9/12</p><h3 class="c-titulo ck-t">${SESSAO ? "Checklist · " + SESSAO.criancas[ATUAL].nome : "Meu checklist"}</h3>
-      ${CK().map((g) => `<p class="ck-dia" style="--c:${g.c}">${g.dia}</p><ul class="ck-lista">${g.itens.map(([k, t, s]) =>
+      ${CK().map((g) => `<p class="ck-dia" style="--c:${g.c}">${g.dia.replace(/^([^,·]+)/, "<b>$1</b>")}</p><ul class="ck-lista">${g.itens.map(([k, t, s]) =>
         `<li><button class="ck-item${feitos[k] ? " ok" : ""}" data-k="${k}"><i>${feitos[k] ? "✓" : ""}</i><span>${t}${s ? `<small>${s}</small>` : ""}</span></button></li>`).join("")}</ul>`).join("")}
       <p class="ck-falta">${falta ? "Falta" + (falta > 1 ? "m " : " ") + falta : "Tudo pronto! 🎉"}</p>
       <a class="principal ir ck-whats" href="https://wa.me/?text=${encodeURIComponent(textoWhats())}" target="_blank" rel="noopener">Mandar a lista no WhatsApp ›</a>

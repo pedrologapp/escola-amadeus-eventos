@@ -149,9 +149,12 @@
   .pix-dados-cad { margin-top: 12px; font-size: 13px; font-weight: 700; color: var(--suave); }
   /* o checklist (como o "Meu checklist" da Agenda: uma lista do que ter em mãos, dia por dia; o toque marca) */
   .ck-t { font-size: 30px; }
-  .ck-dia { margin-top: 10px; font: 800 10.5px/1 Nunito, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--c, var(--suave)); }
+  /* (24/11, Pedro) o dia da semana com cor, maior, para separar e ler melhor; a data e o tema em cinza */
+  .ck-dia { margin-top: 6px; font: 700 13px/1.15 Nunito, sans-serif; color: var(--suave); }
+  .cartao:has(.ck-t) { max-height: 89svh; }
+  .ck-dia b { font-weight: 900; font-size: 15.5px; color: var(--c, var(--tinta)); }
   .ck-lista { list-style: none; margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px 16px; }
-  .ck-item { display: flex; align-items: center; gap: 10px; min-height: 32px; padding: 2px 0; font-size: 14px; line-height: 1.2; font-weight: 700; color: var(--tinta); text-align: left; }
+  .ck-item { display: flex; align-items: center; gap: 10px; min-height: 28px; padding: 2px 0; font-size: 14px; line-height: 1.2; font-weight: 700; color: var(--tinta); text-align: left; }
   .ck-item i { flex: none; width: 22px; height: 22px; border-radius: 7px; border: 2px solid #b9c0cc; display: grid; place-items: center; font: 900 14px/1 Nunito, sans-serif; font-style: normal; color: #fff; }
   .ck-item.ok { color: var(--suave); text-decoration: line-through; text-decoration-color: rgba(122,130,150,.6); }
   .ck-item.ok i { border-color: var(--turq); background: var(--turq); }
@@ -257,7 +260,7 @@
 
   @media (max-height: 700px) {
     .logo { width: 28px; height: 28px; } h1 { font-size: 32px; } .sub { font-size: 12px; } .ola { margin-top: 3svh; font-size: 12.5px; }
-    .sem { font-size: 18px; } .linha { min-height: 38px; padding: 1px 0; } .txt { font-size: 12.5px; } .txt small { font-size: 10.5px; } .data b { font-size: 20px; } .rot { margin-top: 7px; }
+    .sem { font-size: 18px; } .linha { min-height: 35px; padding: 1px 0; } .txt { font-size: 12.5px; } .txt small { font-size: 10.5px; } .data b { font-size: 20px; } .rot { margin-top: 7px; }
   }
 
   /* (24/11) Formandos 2026: o visual da agenda do 6º ao 9º (src/agenda/comum/premium/kit.css) */
@@ -288,8 +291,8 @@
   .capa .capa-ck { font: 700 14px/1 Nunito, sans-serif; color: rgba(255,246,224,.75); }
   @media (max-height: 700px) { .capa .etiqueta h2 { font-size: 29px !important; } }
   /* o checklist do Grupo 5 tem mais dias: um pouco mais junto, para caber sem rolar */
-  .ck-item { min-height: 28px; padding: 1px 0; } .ck-dia { margin-top: 8px; } .ck-falta { margin-top: 4px; } .ck-whats { margin-top: 4px !important; }
-  @media (max-height: 700px) { .ola { margin-top: 1svh !important; } .capa .etiqueta h2 { font-size: 38px; } .capa .et-texto { font-size: 13.5px; } .partes { margin-top: 4px; } .ck-item { min-height: 23px; padding: 0; font-size: 12.5px; } .ck-dia { margin-top: 5px; font-size: 9.5px; } .ck-t { font-size: 24px !important; } .partes button { font-size: 20px; } }
+  .ck-item { min-height: 27px; padding: 1px 0; } .ck-dia { margin-top: 5px; } .linha { padding: 1px 0; } .ck-falta { margin-top: 4px; } .ck-whats { margin-top: 4px !important; }
+  @media (max-height: 700px) { .linha { min-height: 33px; } .ola { margin-top: 1svh !important; } .capa .etiqueta h2 { font-size: 38px; } .capa .et-texto { font-size: 13.5px; } .partes { margin-top: 4px; } .ck-item { min-height: 23px; padding: 0; font-size: 12.5px; } .ck-dia { margin-top: 5px; font-size: 9.5px; } .ck-t { font-size: 24px !important; } .partes button { font-size: 20px; } }
 </style>
 </head>
 <body>
@@ -309,7 +312,7 @@
 
   <p class="ola">A <b>formatura dos nossos pequenos</b> está chegando! Toque em cada dia para ver o que levar.</p>
 
-  <nav class="partes" id="partes"><button class="on" data-p="1">Até 9/12</button><button data-p="2">Ensaios e formatura</button></nav>
+  <nav class="partes" id="partes"><button class="on" data-p="1">Até 11/12</button><button data-p="2">Ensaios e formatura</button></nav>
   <ul class="linhas" id="linhas"></ul>
 
   <h2 class="rot roxo" id="rotfesta">Para a Aula da Saudade</h2>
@@ -364,6 +367,12 @@ const DIAS = [
   { parte: 1, so: "nf", sem: "Quarta-feira", d: "9/12", dia: "Quarta-feira, 9 de dezembro", giz: "bolo", t: "Aula da Saudade", s: "Despedida · depois, férias", ferias: true,
     itens: [["O quê", "Momento especial de despedida e confraternização com todos os alunos do Grupo 5"], ["Quem", "<b>Todos os alunos</b>, independentemente da participação na formatura"], ["Lanche", "Lanche, guloseimas e uma lembrança especial pela contribuição de <b>R$&nbsp;20,00</b> (até 30/11)"], ["Férias", "Após o dia 9/12, os alunos <b>entram de férias</b>!"]],
     nota: "Caso a família opte por não contribuir, pedimos a gentileza de enviar o lanche habitual da criança nesse dia. Nessa opção, o aluno não recebe o lanche da festa nem a lembrancinha, adquiridos exclusivamente com o valor arrecadado." },
+  // (25/11, Pedro) o plantão e o feriado valem para todo o Grupo 5
+  { parte: 1, sem: "Quinta-feira", d: "10/12", dia: "Quinta-feira, 10 de dezembro", giz: "prancheta", t: "Plantão pedagógico", s: "15h às 20h · escola e família",
+    itens: [["Hora", "<b>Das 15h às 20h</b>"], ["Para quê", "<b>Atendimento às famílias</b> e <b>entrega das atividades</b> dos alunos"]],
+    nota: "Um momento importante de encontro entre escola e família. Contamos com a presença de vocês!" },
+  { parte: 1, sem: "Sexta-feira", d: "11/12", dia: "Sexta-feira, 11 de dezembro", giz: "sol", t: "Feriado", s: "Emancipação de São Gonçalo · sem aula",
+    itens: [["O quê", "<b>Feriado</b> da emancipação política de <b>São Gonçalo do Amarante</b>"], ["Aula", "Não haverá aula"]] },
   { parte: 2, so: "f", sem: "Segunda e terça-feira", d: "14 e 15/12", dia: "Segunda e terça-feira, 14 e 15 de dezembro", giz: "pessoas", t: "Ensaios da formatura", s: "Sem aula · das 7h às 11h",
     itens: [["Hora", "<b>Das 7h às 11h</b>"], ["Aula", "Não haverá aula"], ["Roupa", "Sem fardamento: <b>roupa comum e confortável</b>"], ["Levar", "O <b>lanche</b> e uma <b>garrafinha de água</b>"]] },
   { parte: 2, so: "f", sem: "Quarta e quinta-feira", d: "16 e 17/12", dia: "Quarta e quinta-feira, 16 e 17 de dezembro", giz: "pessoas", t: "Ensaios da formatura", s: "Sem aula · das 13h às 17h",
@@ -377,7 +386,7 @@ const FESTA = [
   { so: "nf", sem: "Até segunda-feira", d: "30/11", dia: "Até segunda-feira, 30 de novembro", giz: "moedas", t: "Contribuição da festa", s: "Lanche, guloseimas e lembrança · 9/12", roxo: true, preco: "R$ 20", por: "aluno", pix: { evento: "contribuicao-confraternizacao-infantil", preco: 20, qtd: false, acao: "Pagar com Pix" },
     itens: [["Valor", "<b>R$&nbsp;20,00</b> por aluno"], ["Para quê", "O <b>lanche</b>, as <b>guloseimas</b> e uma <b>lembrança especial</b> da Aula da Saudade (9/12)"], ["Prazo", "Até <b>segunda-feira, 30/11</b>"]],
     nota: "Caso a família opte por não contribuir, envie o lanche habitual da criança no dia 9/12. Nessa opção, o aluno não recebe o lanche da festa nem a lembrancinha." },
-  { so: "f", sem: "Até segunda-feira", d: "30/11", dia: "Até segunda-feira, 30 de novembro", giz: "moedas", t: "Contribuição da festa", s: "Lanche e guloseimas · Aula da Saudade", roxo: true, preco: "R$ 20", por: "aluno", pix: { evento: "contribuicao-confraternizacao-infantil", preco: 20, qtd: false, acao: "Pagar com Pix" },
+  { so: "f", sem: "Até segunda-feira", d: "30/11", dia: "Até segunda-feira, 30 de novembro", giz: "moedas", t: "Contribuição da festa", s: "Lanche e guloseimas · 9/12", roxo: true, preco: "R$ 20", por: "aluno", pix: { evento: "contribuicao-confraternizacao-infantil", preco: 20, qtd: false, acao: "Pagar com Pix" },
     itens: [["Valor", "<b>R$&nbsp;20,00</b> por aluno"], ["Para quê", "O <b>lanche</b> e as <b>guloseimas</b> da Aula da Saudade (9/12)"], ["Prazo", "Até <b>segunda-feira, 30/11</b>"]],
     nota: "Quem optar por não contribuir deve enviar o lanche individual do aluno no dia 9/12. Nesse caso, ele não recebe o lanche nem as guloseimas, que são comprados com os valores arrecadados." },
 ];
@@ -413,7 +422,7 @@ function desenharLinhas() {
   if (naoVai()) PARTE = 1;
   document.getElementById("linhas").innerHTML = DIAS.map((x, i) => (x.parte === PARTE && VE(x) ? linha(x, i, "d") : "")).join("");
   document.getElementById("partes").hidden = naoVai();
-  document.querySelector(".topo .sub").textContent = "Infantil · " + (SESSAO && SESSAO.criancas[ATUAL].turma ? serieDe(SESSAO.criancas[ATUAL].turma) : "Grupo V") + " · 5 a " + (naoVai() ? "9" : "20") + " de dezembro";
+  document.querySelector(".topo .sub").textContent = "Infantil · " + (SESSAO && SESSAO.criancas[ATUAL].turma ? serieDe(SESSAO.criancas[ATUAL].turma) : "Grupo V") + " · 5 a " + (naoVai() ? "10" : "20") + " de dezembro";
   for (const id of ["rotfesta", "festa"]) document.getElementById(id).hidden = PARTE !== 1;
   document.getElementById("festa").innerHTML = FESTA.map((x, i) => (VE(x) ? linha(x, i, "f") : "")).join("");
   document.querySelectorAll(".linha").forEach((b) => b.onclick = () => abrir((b.dataset.g === "d" ? DIAS : FESTA)[+b.dataset.i]));
@@ -697,11 +706,12 @@ if (guardado) {
 // o checklist: o que ter em mãos, dia por dia (do comunicado da coordenação); fica guardado no celular
 const CHECK = [
   { dia: "Até segunda-feira, 30/11", c: "#B47A12", itens: [["festa", "Pagar a contribuição (R$ 20,00)"], ["senhas", "Senhas do Auto de Natal"]] },
-  { dia: "Segunda-feira, 7/12 · Cineminha", c: "#0B2A5B", itens: [["pipoca", "Pacote de pipoca"], ["fantasia", "Fantasia (se quiser)"]] },
-  { dia: "Terça-feira, 8/12 · Água", c: "#0B2A5B", itens: [["banho", "Traje de banho"], ["toalha", "Toalha"], ["muda", "Muda de roupa extra"], ["fruta", "Lanche, água e fruta"]] },
-  { dia: "Quarta-feira, 9/12 · Aula da Saudade", c: "#0B2A5B", itens: [["lanche9", "Lanche individual (se não contribuiu)"]] },
-  { so: "f", dia: "Ensaios · 14 a 17/12", c: "#0E8C80", itens: [["ens-lanche", "Lanche"], ["ens-agua", "Garrafinha de água"], ["ens-roupa", "Roupa comum e confortável"]] },
-  { so: "f", dia: "Domingo, 20/12 · Formatura", c: "#B47A12", itens: [["form", "Chegar ao salão a partir das 17h"]] },
+  { dia: "Segunda-feira, 7/12 · Cineminha", c: "#2F7FD0", itens: [["pipoca", "Pacote de pipoca"], ["fantasia", "Fantasia (se quiser)"]] },
+  { dia: "Terça-feira, 8/12 · Água", c: "#0E9C8E", itens: [["banho", "Traje de banho"], ["toalha", "Toalha"], ["muda", "Muda de roupa extra"], ["fruta", "Lanche, água e fruta"]] },
+  { dia: "Quarta-feira, 9/12 · Aula da Saudade", c: "#8A6BD1", itens: [["lanche9", "Lanche individual (se não contribuiu)"]] },
+  { dia: "Quinta-feira, 10/12 · Plantão pedagógico", c: "#D9922B", itens: [["plantao", "Ir à escola das 15h às 20h"]] },
+  { so: "f", dia: "Ensaios · 14 a 17/12", c: "#E07A2F", itens: [["ens-lanche", "Lanche"], ["ens-agua", "Garrafinha de água"], ["ens-roupa", "Roupa comum e confortável"]] },
+  { so: "f", dia: "Domingo, 20/12 · Formatura", c: "#D14D8A", itens: [["form", "Chegar ao salão a partir das 17h"]] },
 ]
 let feitos = {};
 const chaveCk = () => "formandos-2026-checklist" + (SESSAO ? ":" + SESSAO.criancas[ATUAL].id : "");
@@ -732,7 +742,7 @@ function abrirChecklist() {
   const desenhar = () => {
     const falta = contarFalta();
     cartao.innerHTML = `<p class="c-dia">Formandos 2026 · Grupo 5</p><h3 class="c-titulo ck-t">${SESSAO ? "Checklist · " + SESSAO.criancas[ATUAL].nome : "Meu checklist"}</h3>
-      ${CK().map((g) => `<p class="ck-dia" style="--c:${g.c}">${g.dia}</p><ul class="ck-lista">${g.itens.map(([k, t, s]) =>
+      ${CK().map((g) => `<p class="ck-dia" style="--c:${g.c}">${g.dia.replace(/^([^,·]+)/, "<b>$1</b>")}</p><ul class="ck-lista">${g.itens.map(([k, t, s]) =>
         `<li><button class="ck-item${feitos[k] ? " ok" : ""}" data-k="${k}"><i>${feitos[k] ? "✓" : ""}</i><span>${t}${s ? `<small>${s}</small>` : ""}</span></button></li>`).join("")}</ul>`).join("")}
       <p class="ck-falta">${falta ? "Falta" + (falta > 1 ? "m " : " ") + falta : "Tudo pronto! 🎉"}</p>
       <a class="principal ir ck-whats" href="https://wa.me/?text=${encodeURIComponent(textoWhats())}" target="_blank" rel="noopener">Mandar a lista no WhatsApp ›</a>

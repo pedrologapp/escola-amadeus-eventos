@@ -50,4 +50,12 @@ DTEND:20261210T230000Z
 SUMMARY:Plantão pedagógico (Infantil)
 DESCRIPTION:Das 15h às 20h. Atendimento às famílias e entrega das atividades.
 END:VEVENT
+BEGIN:VEVENT
+UID:fim-de-ano-infantil-2026-6@escolaamadeus.com
+DTSTAMP:20261124T120000Z
+DTSTART;VALUE=DATE:20261211
+DTEND;VALUE=DATE:20261212
+SUMMARY:Feriado: emancipação política de São Gonçalo do Amarante
+DESCRIPTION:Não haverá aula.
+END:VEVENT
 END:VCALENDAR
