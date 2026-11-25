@@ -249,6 +249,10 @@
   .pix-espera { margin-top: 10px; text-align: center; font-size: 13.5px; font-weight: 700; color: var(--suave); }
   .pix-ok { margin-top: 8px; text-align: center; color: var(--turq); font-size: 44px; }
   button.principal:disabled { color: #b8bfcb; border-bottom-color: #e8e2d4; }
+  /* (24/11, Pedro) o pai toca e vê que está carregando */
+  button.principal.carregando, button.principal.carregando:disabled { color: var(--tinta); }
+  .gira { display: inline-block; width: 0.8em; height: 0.8em; margin-right: 0.35em; vertical-align: -0.05em; border: 3px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: gira 0.8s linear infinite; }
+  @keyframes gira { to { transform: rotate(360deg); } }
   .fechar { display: block; margin: 12px auto 4px; font: 700 22px/1 Caveat, cursive; color: var(--suave); min-height: 40px; }
 
   @media (max-height: 700px) {
@@ -376,8 +380,6 @@ const FESTA = [
   { so: "f", sem: "Até segunda-feira", d: "30/11", dia: "Até segunda-feira, 30 de novembro", giz: "moedas", t: "Contribuição da festa", s: "Lanche e guloseimas · Aula da Saudade", roxo: true, preco: "R$ 20", por: "aluno", pix: { evento: "contribuicao-confraternizacao-infantil", preco: 20, qtd: false, acao: "Pagar com Pix" },
     itens: [["Valor", "<b>R$&nbsp;20,00</b> por aluno"], ["Para quê", "O <b>lanche</b> e as <b>guloseimas</b> da Aula da Saudade (9/12)"], ["Prazo", "Até <b>segunda-feira, 30/11</b>"]],
     nota: "Quem optar por não contribuir deve enviar o lanche individual do aluno no dia 9/12. Nesse caso, ele não recebe o lanche nem as guloseimas, que são comprados com os valores arrecadados." },
-  { so: "f", sem: "Até segunda-feira", d: "30/11", dia: "Até segunda-feira, 30 de novembro", giz: "moedas", t: "Contribuição da formatura", s: "Guloseimas · entregar até 30/11", roxo: true, preco: "R$ 15", por: "aluno",
-    itens: [["Valor", "<b>R$&nbsp;15,00</b> por aluno"], ["Para quê", "A compra de <b>guloseimas</b> para as crianças"], ["Prazo", "Entregar até <b>segunda-feira, 30/11</b>"]] },
 ];
 // (24/11) entrado: o que a criança da aba já pagou (o servidor diz quantas senhas/contribuições pagas; sem o evento no sistema, nada)
 const pagoDe = (x) => (SESSAO && x.pix ? SESSAO.criancas[ATUAL].pago[x.pix.evento] : undefined);
@@ -536,7 +538,7 @@ function formPix(x) {
     e.preventDefault();
     if (!aluno) { erro.textContent = "Escolha a criança na lista."; return; }
     const f = new FormData(e.target), bt = document.getElementById("gerar");
-    bt.disabled = true; bt.textContent = "Gerando…"; erro.textContent = "";
+    bt.disabled = true; bt.classList.add("carregando"); bt.innerHTML = '<span class="gira"></span>Gerando o Pix'; erro.textContent = "";
     try {
       const r = await fetch(API + "/api/pix", { method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: SESSAO ? SESSAO.token : undefined, evento: P.evento, metodo, aluno_id: aluno.id, irmaos: P.qtd ? [] : irm(), qtd, responsavel: f.get("responsavel"), cpf: f.get("cpf"), email: f.get("email"), telefone: f.get("telefone") }) });
@@ -549,7 +551,7 @@ function formPix(x) {
       }
       if (!r.ok) throw new Error(j.erro || "Não deu certo.");
       j.cartao ? mostrarCartao(x, j) : mostrarPix(x, j);
-    } catch (err) { erro.textContent = err.message; bt.disabled = false; total(); }
+    } catch (err) { erro.textContent = err.message; bt.disabled = false; bt.classList.remove("carregando"); total(); }
   };
 }
 // o cartão: a página do Asaas abre noutra aba (só ela vê o cartão); aqui fica esperando e vira "Pago ✓" sozinha
@@ -640,16 +642,17 @@ document.getElementById("flogin").onsubmit = async (e) => {
   if (!ALUNO) { document.getElementById("lerro").textContent = "Escreva o nome e toque no aluno na lista."; lnome.focus(); return; }
   if (!/^\d{2}\/\d{2}\/\d{4}$/.test(niver.value)) { document.getElementById("lerro").textContent = "Escreva o aniversário do aluno (dia/mês/ano)."; niver.focus(); return; }
   const erro = document.getElementById("lerro"), bt = document.getElementById("entrar");
-  erro.textContent = ""; bt.disabled = true; bt.textContent = "…";
+  erro.textContent = ""; bt.disabled = true; bt.classList.add("carregando"); bt.innerHTML = '<span class="gira"></span>Entrando';
   try {
     const r = await fetch(API + "/api/entrar", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ aluno: ALUNO.id, nascimento: niver.value }) });
     const j = await r.json();
     if (!r.ok) throw new Error(j.erro || "Não deu certo.");
     try { localStorage.setItem(GUARDA, j.token); } catch {}
-    entrou({ token: j.token, criancas: j.criancas });
+    // indo para a página do Grupo 5: o círculo continua girando até ela abrir
+    if (entrou({ token: j.token, criancas: j.criancas })) return;
     abrirCapa();
   } catch (err) { erro.textContent = err.message; }
-  bt.disabled = false; bt.textContent = "Entrar ›";
+  bt.disabled = false; bt.classList.remove("carregando"); bt.textContent = "Entrar ›";
 };
 // entrou: o título, as abas dos irmãos, o "sair", as linhas e o checklist da criança da aba
 // (24/11, Pedro: "coloque sempre o nome e o 2º nome; embaixo, a série dela: Infantil - Grupo IV")
@@ -661,7 +664,7 @@ function entrou(s) {
   SESSAO = s; ATUAL = Math.min(ATUAL, s.criancas.length - 1);
   for (const c of s.criancas) if (c.nomeCompleto) c.nome = doisNomes(c.nomeCompleto);
   const k = s.criancas[ATUAL];
-  if (k.nome && paginaCerta(k)) return;
+  if (k.nome && paginaCerta(k)) return true;
   document.querySelector(".topo h1").textContent = TITULO + " · " + k.nome;
   if (k.turma) document.querySelector(".topo .sub").textContent = "Infantil · " + serieDe(k.turma) + " · " + DATAS;
   const abas = document.getElementById("abas");
@@ -693,7 +696,7 @@ if (guardado) {
 
 // o checklist: o que ter em mãos, dia por dia (do comunicado da coordenação); fica guardado no celular
 const CHECK = [
-  { dia: "Até segunda-feira, 30/11", c: "#B47A12", itens: [["festa", "Pagar a contribuição (R$ 20,00)"], ["senhas", "Senhas do Auto de Natal"], ["form15", "Entregar a contribuição da formatura (R$ 15,00)", "", "f"]] },
+  { dia: "Até segunda-feira, 30/11", c: "#B47A12", itens: [["festa", "Pagar a contribuição (R$ 20,00)"], ["senhas", "Senhas do Auto de Natal"]] },
   { dia: "Segunda-feira, 7/12 · Cineminha", c: "#0B2A5B", itens: [["pipoca", "Pacote de pipoca"], ["fantasia", "Fantasia (se quiser)"]] },
   { dia: "Terça-feira, 8/12 · Água", c: "#0B2A5B", itens: [["banho", "Traje de banho"], ["toalha", "Toalha"], ["muda", "Muda de roupa extra"], ["fruta", "Lanche, água e fruta"]] },
   { dia: "Quarta-feira, 9/12 · Aula da Saudade", c: "#0B2A5B", itens: [["lanche9", "Lanche individual (se não contribuiu)"]] },
