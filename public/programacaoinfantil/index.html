@@ -45,6 +45,10 @@
   .rot::after { content: ""; flex: 1; height: 1px; background: var(--fio); }
   .rot.ouro { color: var(--ouro); }
   .rot.roxo { color: #8A6BD1; }
+  /* (25/11, Pedro) a aba do Auto de Natal: só para quem comprou as senhas; letra de mão, a de agora com o traço dourado, sem nada atrás */
+  .partes { display: flex; gap: 22px; margin-top: 14px; }
+  .partes button { font: 700 23px/1 Caveat, cursive; color: var(--suave); padding-bottom: 2px; border-bottom: 3px solid transparent; }
+  .partes button.on { color: var(--tinta); border-bottom-color: #FFB000; }
   .linha.roxo .sem, .linha.roxo .txt small, .linha.roxo .preco, .linha.roxo .preco small { color: #8A6BD1; --c: #8A6BD1; }
 
   .linhas { list-style: none; margin-top: 2px; }
@@ -281,10 +285,11 @@
 
   <p class="ola">O <b>fim de ano dos nossos pequenos</b> está chegando! Toque em cada dia para ver o que levar.</p>
 
-  <h2 class="rot">Os dias</h2>
+  <nav class="partes" id="abasauto" hidden><button class="on" data-a="0">Os dias</button><button data-a="1">Auto de Natal</button></nav>
+  <h2 class="rot" id="rotdias">Os dias</h2>
   <ul class="linhas" id="linhas"></ul>
 
-  <h2 class="rot roxo">Para a festa de encerramento</h2>
+  <h2 class="rot roxo" id="rotfesta">Para a festa de encerramento</h2>
   <ul class="linhas" id="festa"></ul>
 
   <div class="barra">
@@ -343,6 +348,14 @@ const DIAS = [
   { sem: "Sexta-feira", d: "11/12", dia: "Sexta-feira, 11 de dezembro", giz: "sol", t: "Feriado", s: "Emancipação de São Gonçalo · sem aula",
     itens: [["O quê", "<b>Feriado</b> da emancipação política de <b>São Gonçalo do Amarante</b>"], ["Aula", "Não haverá aula"]] },
 ];
+// (25/11, Pedro) os ensaios do Auto de Natal: só para quem comprou as senhas (a aba "Auto de Natal")
+const ENSAIO = { giz: "nota", t: "Ensaio do Auto de Natal", s: "Das 14h às 15h",
+  itens: [["Hora", "<b>Das 14h às 15h</b>"], ["Quem", "Só os alunos que vão <b>participar</b> do Auto de Natal"]] };
+const ENSAIOS = [
+  { ...ENSAIO, sem: "Quarta-feira", d: "2/12", dia: "Quarta-feira, 2 de dezembro" },
+  { ...ENSAIO, sem: "Quinta-feira", d: "3/12", dia: "Quinta-feira, 3 de dezembro" },
+  { ...ENSAIO, sem: "Sexta-feira", d: "4/12", dia: "Sexta-feira, 4 de dezembro" },
+];
 const FESTA = [
   { sem: "Até segunda-feira", d: "30/11", dia: "Até segunda-feira, 30 de novembro", giz: "moedas", t: "Contribuição da festa", s: "Lanche e lembrancinha · 9/12", roxo: true, preco: "R$ 20", por: "aluno", pix: { evento: "contribuicao-confraternizacao-infantil", preco: 20, qtd: false, acao: "Pagar com Pix" },
     itens: [["Valor", "<b>R$&nbsp;20,00</b> por aluno"], ["Para quê", "O <b>lanche</b> e uma <b>lembrancinha com guloseimas</b> da festa de encerramento (9/12)"], ["Prazo", "Até <b>segunda-feira, 30/11</b>"]],
@@ -373,10 +386,22 @@ function paginaCerta(k) {
 const naoVai = () => !!(SESSAO && SESSAO.criancas[ATUAL] && SESSAO.criancas[ATUAL].formatura === false);
 const VE = (x) => !x.so || x.so === (naoVai() ? "nf" : "f");
 const CK = () => CHECK.map((g) => ({ ...g, itens: g.itens.filter((it) => !it[3] || it[3] === (naoVai() ? "nf" : "f")) })).filter((g) => VE(g) && g.itens.length);
+const comprou = () => !!(SESSAO && SESSAO.criancas[ATUAL] && (SESSAO.criancas[ATUAL].pago || {})["auto-de-natal"] > 0);
+let VERAUTO = false;
+document.querySelectorAll("#abasauto button").forEach((b) => b.onclick = () => { VERAUTO = b.dataset.a === "1"; desenharLinhas(); });
 function desenharLinhas() {
+  if (!comprou()) VERAUTO = false;
+  const na = document.getElementById("abasauto");
+  if (na) { na.hidden = !comprou(); document.getElementById("rotdias").hidden = comprou(); na.querySelectorAll("button").forEach((b) => b.classList.toggle("on", (b.dataset.a === "1") === VERAUTO)); }
   document.getElementById("linhas").innerHTML = DIAS.map((x, i) => (VE(x) ? linha(x, i, "d") : "")).join("");
   document.getElementById("festa").innerHTML = FESTA.map((x, i) => (VE(x) ? linha(x, i, "f") : "")).join("");
-  document.querySelectorAll(".linha").forEach((b) => b.onclick = () => abrir((b.dataset.g === "d" ? DIAS : FESTA)[+b.dataset.i]));
+  // na aba do Auto de Natal: os três ensaios e o dia da apresentação
+  if (VERAUTO) {
+    const ap = DIAS.findIndex((x) => x.t === "Auto de Natal");
+    document.getElementById("linhas").innerHTML = ENSAIOS.map((x, i) => linha(x, i, "e")).join("") + (ap >= 0 ? linha(DIAS[ap], 3, "d").replace('data-i="3"', 'data-i="' + ap + '"') : "");
+    for (const id of ["rotfesta", "festa"]) document.getElementById(id).hidden = true;
+  } else if (document.getElementById("abasauto")) for (const id of ["rotfesta", "festa"]) document.getElementById(id).hidden = false;
+  document.querySelectorAll(".linha").forEach((b) => b.onclick = () => abrir((b.dataset.g === "d" ? DIAS : b.dataset.g === "e" ? ENSAIOS : FESTA)[+b.dataset.i]));
 }
 desenharLinhas();
 
