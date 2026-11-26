@@ -200,6 +200,23 @@
   /* com as senhas na tela, a linha que explica o preço sai (o cartão cabe sem rolar) */
   .cartao:has(.sn-grade) .c-itens li:last-child { display: none; }
   .sn-dica { margin-top: 6px; font-size: 12px; font-weight: 600; color: var(--suave); }
+  /* (26/11, Pedro) a contribuição vai para o Pix da professora da turma */
+  .prof { margin-top: 16px; text-align: center; }
+  .prof-tit { font: 800 10.5px/1 Nunito, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: var(--suave); }
+  .prof-k { margin-top: 12px; padding-top: 12px; border-top: 1.5px dashed var(--fio); }
+  .prof-k:first-of-type { border-top: 0; padding-top: 0; }
+  .prof.varias { margin-top: 10px; }
+  .prof.varias .prof-k { margin-top: 8px; padding-top: 8px; }
+  .prof.varias .prof-quem { font-size: 21px; margin-bottom: 0; }
+  .prof.varias .prof-k small { display: none; }
+  .prof.varias .prof-k b { font-size: 14px; margin-top: 1px; }
+  .prof.varias .prof-ch { display: inline; font-size: 24px; }
+  .prof.varias .prof-k .outro { display: inline; margin: 0 0 0 10px; font-size: 17px; }
+  .prof-quem { font: 700 24px/1.1 Caveat, cursive; color: var(--tinta); margin-bottom: 4px; }
+  .prof-k small { display: block; font-size: 12.5px; font-weight: 700; color: var(--suave); }
+  .prof-k b { display: block; margin-top: 3px; font-size: 16px; font-weight: 800; color: var(--tinta); }
+  .prof-ch { display: block; margin-top: 4px; font: 700 30px/1.1 Caveat, cursive; color: #8A6BD1; letter-spacing: .02em; }
+  .prof-k .outro { margin-top: 6px; color: var(--tinta); border-bottom: 2px solid #FFB000; }
   .sn-ok { margin-top: 14px; font: 700 22px/1.1 Caveat, cursive; color: var(--turq); }
   .pix-irmaos { margin-top: 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; }
   .pix-irmaos span { width: 100%; font-size: 14px; font-weight: 800; color: var(--tinta); }
@@ -364,10 +381,36 @@ const ENSAIOS = [
   { ...ENSAIO, sem: "Sexta-feira", d: "4/12", dia: "Sexta-feira, 4 de dezembro" },
 ];
 const FESTA = [
-  { sem: "Até segunda-feira", d: "30/11", dia: "Até segunda-feira, 30 de novembro", giz: "moedas", t: "Contribuição da festa", s: "Lanche e lembrancinha · 9/12", roxo: true, preco: "R$ 20", por: "aluno", pix: { evento: "contribuicao-confraternizacao-infantil", preco: 20, qtd: false, acao: "Pagar com Pix" },
+  { sem: "Até segunda-feira", d: "30/11", dia: "Até segunda-feira, 30 de novembro", giz: "moedas", t: "Contribuição da festa", s: "Lanche e lembrancinha · 9/12", roxo: true, preco: "R$ 20", por: "aluno", prof: true, pix: { evento: "contribuicao-confraternizacao-infantil", preco: 20, qtd: false, acao: "Pagar com Pix" },
     itens: [["Valor", "<b>R$&nbsp;20,00</b> por aluno"], ["Para quê", "O <b>lanche</b> e uma <b>lembrancinha com guloseimas</b> da festa de encerramento (9/12)"], ["Prazo", "Até <b>segunda-feira, 30/11</b>"]],
     nota: "Não é obrigatória. Quem não contribuir envia o lanche de sempre no dia 9/12: a criança participa normalmente, mas não recebe a lembrancinha com guloseimas." },
 ];
+// (26/11, Pedro) "a taxa da festinha nas salas deverá ser enviada à chave Pix de uma das professoras": uma por grupo
+const PROF = [
+  [/maternalzinho\s*2\b|grupo\s*(ii|2)\b/i, "Grupo 2", "Iasmin da Cunha Barros", "84999491456", "celular"],
+  [/maternal\s*3\b|grupo\s*(iii|3)\b/i, "Grupo 3", "Fernanda Thayna Lopes Costa", "10618249427", "CPF"],
+  [/grupo\s*(iv|4)\b/i, "Grupo 4", "Fabíola de Almeida Pereira", "84987495771", "celular"],
+  [/grupo\s*(v|5)\b/i, "Grupo 5", "Juliana da Silva Ramos", "71313149438", "CPF"],
+];
+const chaveBonita = (k, t) => t === "CPF" ? k.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4") : k.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+// (26/11, Pedro) "cada grupo vai encaminhar o valor para esse Pix; se tem irmão em séries diferentes, cada irmão encaminha o seu valor":
+// entrado, aparece cada criança da família ao lado da professora dela (irmãos no mesmo grupo somam no mesmo Pix)
+const curto = (c) => { const ult = String(c.nomeCompleto || "").trim().split(/\s+/).pop() || "", pri = c.nome || ""; return pri && !pri.endsWith(ult) ? pri + " " + ult : pri || ult; };
+function profHtml(x) {
+  if (!x.prof) return "";
+  const grupos = [];
+  for (const c of SESSAO ? SESSAO.criancas : []) {
+    if (!c.turma || (c.pago || {})[x.pix.evento] > 0) continue;
+    const p = PROF.find((q) => q[0].test(c.turma)); if (!p) continue;
+    let g = grupos.find((g) => g.p === p); if (!g) grupos.push((g = { p, nomes: [] }));
+    g.nomes.push(curto(c));
+  }
+  if (SESSAO && !grupos.length && pagoDe(x) > 0) return "";
+  const lista = grupos.length ? grupos : PROF.map((p) => ({ p, nomes: [] })), so = lista.length === 1;
+  const tit = so ? "Pague no Pix da professora" : grupos.length ? "Cada um no Pix da sua professora" : "Pague no Pix da professora do grupo";
+  return `<div class="prof${so ? "" : " varias"}"><p class="prof-tit">${tit}</p>${lista.map(({ p, nomes }) =>
+    `<div class="prof-k">${nomes.length ? `<p class="prof-quem">${nomes.join(" e ")} · R$&nbsp;${20 * nomes.length},00</p>` : ""}<small>${p[1]} · chave ${p[4]}</small><b>${p[2]}${so ? "" : " · " + p[1]}</b><span class="prof-ch">${chaveBonita(p[3], p[4])}</span>${so ? `<button class="principal ir prof-copia" data-k="${p[3]}">Copiar a chave ›</button>` : `<button class="outro prof-copia" data-k="${p[3]}">copiar a chave</button>`}</div>`).join("")}</div>`;
+}
 // (24/11) entrado: o que a criança da aba já pagou (o servidor diz quantas senhas/contribuições pagas; sem o evento no sistema, nada)
 const pagoDe = (x) => (SESSAO && x.pix ? SESSAO.criancas[ATUAL].pago[x.pix.evento] : undefined);
 const precoDe = (x) => { const n = pagoDe(x); if (!x.preco) return "";
@@ -416,10 +459,13 @@ const zoom = document.getElementById("zoom"), cartao = document.getElementById("
 function abrir(x) {
   cartao.innerHTML = `<div class="c-topo"><span class="giz">${GIZ[x.giz] || ""}</span><div><p class="c-dia">${x.dia}</p><h3 class="c-titulo">${x.t}</h3></div></div>
     <ul class="c-itens">${x.itens.map(([a, b]) => `<li><i>${a}</i><span>${b}</span></li>`).join("")}</ul>
-    ${x.nota ? `<p class="c-nota">${x.nota}</p>` : ""}${senhasHtml(x)}${x.pix && !(SESSAO && !x.pix.qtd && pagoDe(x) > 0) ? `<button class="principal ir" id="pagar">${SESSAO && x.pix.qtd && pagoDe(x) > 0 ? "Comprar mais senhas" : x.pix.acao} ›</button>` : ""}${x.link ? `<a class="${x.pix ? "outro" : "principal ir"}" href="${x.link}" target="_blank" rel="noopener">${x.acao} ›</a>` : ""}<button class="fechar" id="fechar">Fechar</button>`;
+    ${x.nota ? `<p class="c-nota">${x.nota}</p>` : ""}${senhasHtml(x)}${profHtml(x)}${x.pix && !x.prof && !(SESSAO && !x.pix.qtd && pagoDe(x) > 0) ? `<button class="principal ir" id="pagar">${SESSAO && x.pix.qtd && pagoDe(x) > 0 ? "Comprar mais senhas" : x.pix.acao} ›</button>` : ""}${x.link ? `<a class="${x.pix ? "outro" : "principal ir"}" href="${x.link}" target="_blank" rel="noopener">${x.acao} ›</a>` : ""}<button class="fechar" id="fechar">Fechar</button>`;
   zoom.classList.add("on");
   document.getElementById("fechar").onclick = fechar;
   const bp = document.getElementById("pagar"); if (bp) bp.onclick = () => formPix(x);
+  cartao.querySelectorAll(".prof-copia").forEach((b) => b.onclick = async () => {
+    try { await navigator.clipboard.writeText(b.dataset.k); } catch { const t = document.createElement("textarea"); t.value = b.dataset.k; document.body.appendChild(t); t.select(); document.execCommand("copy"); t.remove(); }
+    const antes = b.textContent; b.textContent = "Chave copiada ✓"; setTimeout(() => b.textContent = antes, 2200); });
   cartao.querySelectorAll(".sn-qr").forEach((im) => im.onclick = () => im.classList.toggle("grande"));
 }
 // as senhas (QR Codes) do aluno da aba, que o n8n gerou depois do pagamento; tocar aumenta, para mostrar na entrada
